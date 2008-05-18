@@ -9,7 +9,7 @@ for i in $@; do
 	if [ $i == binary -a $OBJOUT == 1 ];then
 		RMSTACK="-R.stack"
 	fi
-	if [ $i == "-Obinary" ];the
+	if [ $i == "-Obinary" ];then
 		RMSTACK="-R.stack"
 	fi
 done
