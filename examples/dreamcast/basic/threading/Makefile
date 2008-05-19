@@ -7,11 +7,14 @@
 
 all:
 	$(KOS_MAKE) -C general
+	$(KOS_MAKE) -C rwsem
 
 clean:
 	$(KOS_MAKE) -C general clean
+	$(KOS_MAKE) -C rwsem clean
 		
 dist:
 	$(KOS_MAKE) -C general dist
+	$(KOS_MAKE) -C rwsem dist
 
 
