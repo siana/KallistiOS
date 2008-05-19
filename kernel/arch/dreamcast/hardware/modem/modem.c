@@ -109,7 +109,7 @@ int __isLessThan(int x, int y)
 void modemCreateCInfoFromPS(const unsigned char protocol,
                             const unsigned char speed, MODEM_CINFO *cInfo)
 {
-     assert(speed >= 0 && speed <= 15);
+     assert(speed <= 15);
 
      cInfo->protocol = protocol;
      cInfo->speed    = speed;
