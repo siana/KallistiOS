@@ -29,6 +29,7 @@ __BEGIN_DECLS
 #include <kos/limits.h>
 #include <kos/thread.h>
 #include <kos/sem.h>
+#include <kos/rwsem.h>
 #include <kos/mutex.h>
 #include <kos/cond.h>
 #include <kos/genwait.h>
