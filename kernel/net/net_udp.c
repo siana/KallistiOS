@@ -525,6 +525,7 @@ int net_udp_socket(net_socket_t *hnd, int domain, int type, int protocol) {
 
     if(irq_inside_int()) {
         if(mutex_trylock(udp_mutex) == -1) {
+            free(udpsock);
             errno = EWOULDBLOCK;
             return -1;
         }
