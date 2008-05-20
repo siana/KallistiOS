@@ -201,6 +201,60 @@ int rwsem_write_trylock(rw_semaphore_t *s) {
     return rv;
 }
 
+/* "Upgrade" a read lock to a write lock. */
+int rwsem_read_upgrade(rw_semaphore_t *s) {
+    int old, rv = 0;
+
+    if(irq_inside_int()) {
+        dbglog(DBG_WARNING, "rwsem_read_upgrade: called inside interrupt\n");
+        errno = EPERM;
+        return -1;
+    }
+
+    old = irq_disable();
+
+    --s->read_count;
+
+    /* If there are still other readers, wait patiently for our turn. */
+    if(s->read_count) {
+        rv = genwait_wait(&s->write_lock, "rwsem_read_upgrade", 0, NULL);
+
+        if(rv < 0) {
+            assert(errno == EINTR);
+            rv = -1;
+        }
+        else {
+            s->write_lock = 1;
+        }
+    }
+    else {
+        s->write_lock = 1;
+    }
+
+    irq_restore(old);
+    return rv;
+}
+
+/* Attempt to upgrade a read lock to a write lock, but do not block. */
+int rwsem_read_tryupgrade(rw_semaphore_t *s) {
+    int old, rv;
+
+    old = irq_disable();
+
+    if(s->read_count != 1) {
+        rv = -1;
+        errno = EWOULDBLOCK;
+    }
+    else {
+        rv = 0;
+        s->read_count = 0;
+        s->write_lock = 1;
+    }
+
+    irq_restore(old);
+    return rv;
+}
+
 /* Return the current reader count */
 int rwsem_read_count(rw_semaphore_t *s) {
     return s->read_count;

@@ -71,6 +71,17 @@ int rwsem_read_trylock(rw_semaphore_t *s);
     EWOULDBLOCK - would block */
 int rwsem_write_trylock(rw_semaphore_t *s);
 
+/* "Upgrade" a read lock to a write lock. Returns -1 on error.
+    EPERM - called inside an interrupt
+    EINTR - was interrupted */
+int rwsem_read_upgrade(rw_semaphore_t *s);
+
+/* Attempt to upgrade a read lock to a write lock. If the call to
+   rwsem_read_upgrade() would normally block, return -1 for error.
+   Note that on error, the read lock is still held.
+    EWOULDBLOCK - would block */
+int rwsem_read_tryupgrade(rw_semaphore_t *s);
+
 /* Return the reader/writer semaphore reader count */
 int rwsem_read_count(rw_semaphore_t *s);
 
