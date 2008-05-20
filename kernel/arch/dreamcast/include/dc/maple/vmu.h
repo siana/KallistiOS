@@ -1,7 +1,8 @@
 /* KallistiOS ##version##
 
    dc/maple/vmu.h
-   (C)2000-2002 Jordan DeLong and Dan Potter
+   Copyright (C)2000-2002 Jordan DeLong and Dan Potter
+   Copyright (C)2008 Donald Haase
 
    $Id: vmu.h,v 1.3 2002/09/04 03:38:42 bardtx Exp $
 
@@ -15,6 +16,7 @@ __BEGIN_DECLS
 
 #include <arch/types.h>
 
+int vmu_beep_raw(maple_device_t * dev, uint32 beep);
 int vmu_draw_lcd(maple_device_t * dev, void *bitmap);
 int vmu_block_read(maple_device_t * dev, uint16 blocknum, uint8 *buffer);
 int vmu_block_write(maple_device_t * dev, uint16 blocknum, uint8 *buffer);
