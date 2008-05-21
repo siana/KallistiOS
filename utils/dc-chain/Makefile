@@ -92,10 +92,10 @@ build_sh4_targets=build-sh4-binutils build-sh4-gcc build-sh4-gcc-pass1 build-sh4
 build_arm_targets=build-arm-binutils build-arm-gcc build-arm-gcc-pass1
 $(build_sh4_targets): prefix = $(sh_prefix)
 $(build_sh4_targets): target = $(sh_target)
-$(build_arm_targets): extra_configure_args = ""
+$(build_sh4_targets): extra_configure_args = 
 $(build_arm_targets): prefix = $(arm_prefix)
 $(build_arm_targets): target = $(arm_target)
-$(build_arm_targets): extra_configure_args = "--with-arch=armv4"
+$(build_arm_targets): extra_configure_args = --with-arch=armv4
 
 # To avoid code repetition, we use the same commands for both
 # architectures.  But we can't create a single target called 
@@ -116,8 +116,8 @@ $(build_binutils): logdir
 	-mkdir -p $(build)
 	> $(log)
 	cd $(build); ../$(src_dir)/configure --target=$(target) --prefix=$(prefix) $(to_log)
-	make -C $(build) all install $(to_log)
-	make -C $(build)/bfd install_libbfd $(to_log)
+	make -C $(build) all install DESTDIR=$(DESTDIR) $(to_log) 
+	make -C $(build)/bfd install_libbfd DESTDIR=$(DESTDIR) $(to_log)
 	$(clean_up)
 
 $(build_gcc_pass1) $(build_gcc_pass2): build = build-gcc-$(target)-$(gcc_ver)
@@ -128,7 +128,7 @@ $(build_gcc_pass1): logdir
 	-mkdir -p $(build)
 	> $(log)
 	cd $(build);  ../$(src_dir)/configure --target=$(target) --prefix=$(prefix) --without-headers --with-newlib --enable-languages=c $(extra_configure_args) $(to_log)
-	make -C $(build) all-gcc install-gcc $(to_log)
+	make -C $(build) all-gcc install-gcc DESTDIR=$(DESTDIR) $(to_log)
 
 $(build_newlib): build = build-newlib-$(target)-$(newlib_ver)
 $(build_newlib): src_dir = newlib-$(newlib_ver)
@@ -140,10 +140,10 @@ $(build_newlib): logdir
 	cd $(build); ../$(src_dir)/configure --target=$(target) --prefix=$(prefix) $(to_log)
 	make -C $(build) all install CC_FOR_TARGET=$(install)/$(target)-gcc AS_FOR_TARGET=$(install)/$(target)-as \
 	        LD_FOR_TARGET=$(install)/$(target)-ld AR_FOR_TARGET=$(install)/$(target)-ar \
-	        RANLIB_FOR_TARGET=$(install)/$(target)-ranlib $(to_log)
+	        RANLIB_FOR_TARGET=$(install)/$(target)-ranlib DESTDIR=$(DESTDIR) $(to_log)
 	$(clean_up)
 
-fixup-sh4-newlib: newlib_inc=$(sh_prefix)/$(sh_target)/include
+fixup-sh4-newlib: newlib_inc=$(DESTDIR)$(sh_prefix)/$(sh_target)/include
 fixup-sh4-newlib:
 	@echo "+++ Fixing up sh4 newlib includes..."
 # KOS pthread.h is modified
@@ -166,7 +166,7 @@ $(build_gcc_pass2): logdir
 	> $(log)
 	cd $(build);  ../$(src_dir)/configure --target=$(target) --prefix=$(prefix) --with-newlib \
 	   --enable-threads=$(thread_model) --enable-languages=c,c++ $(to_log)
-	make -C $(build) all install $(to_log)
+	make -C $(build) all install DESTDIR=$(DESTDIR) $(to_log)
 	$(clean_up)
 
 # ---- }}}}
@@ -210,7 +210,7 @@ install_gdb: build_gdb install_gdb_stamp
 install_gdb_stamp:
 	@echo "+++ Installing GDB..."
 	rm -f $@
-	make -C build-gdb-$(gdb_ver) install $(to_log)
+	make -C build-gdb-$(gdb_ver) install DESTDIR=$(DESTDIR) $(to_log)
 	touch $@
 
 gdb: install_gdb
@@ -254,7 +254,7 @@ install_insight: build_insight install_insight_stamp
 install_insight_stamp:
 	@echo "+++ Installing INSIGHT..."
 	rm -f $@
-	make -C build-insight-$(insight_ver) install $(to_log)
+	make -C build-insight-$(insight_ver) install DESTDIR=$(DESTDIR) $(to_log)
 	touch $@
 
 insight: install_insight
