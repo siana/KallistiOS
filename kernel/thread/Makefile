@@ -6,7 +6,7 @@
 # $Id: Makefile,v 1.4 2003/02/14 08:25:07 bardtx Exp $
 
 OBJS =  sem.o cond.o mutex.o genwait.o
-OBJS += thread.o rwsem.o
+OBJS += thread.o rwsem.o recursive_lock.o
 SUBDIRS = 
 
 include $(KOS_BASE)/Makefile.prefab

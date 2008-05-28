@@ -105,7 +105,7 @@ KOS_INIT_FLAGS(INIT_DEFAULT);
 int main(int argc, char *argv[]) {
     kthread_t *w0, *w1, *r0, *r1;
 
-    /* Exit if the user presse all buttons at once. */
+    /* Exit if the user presses all buttons at once. */
     cont_btn_callback(0, CONT_START | CONT_A | CONT_B | CONT_X | CONT_Y,
                       arch_exit);
 

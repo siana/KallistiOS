@@ -13,6 +13,7 @@
 #include <kos/thread.h>
 #include <kos/sem.h>
 #include <kos/rwsem.h>
+#include <kos/recursive_lock.h>
 #include <kos/cond.h>
 #include <kos/genwait.h>
 #include <arch/irq.h>
@@ -771,6 +772,7 @@ int thd_init(int mode) {
 	/* Initialize thread sync primitives */
 	genwait_init();
 	rwsem_init();
+	rlock_init();
 	sem_init();
 	cond_init();
 
@@ -812,6 +814,7 @@ void thd_shutdown() {
 
 	/* Shutdown thread sync primitives */
 	rwsem_shutdown();
+	rlock_shutdown();
 	sem_shutdown();
 	cond_shutdown();
 	genwait_shutdown();
