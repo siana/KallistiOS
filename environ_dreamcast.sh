@@ -1,7 +1,7 @@
 # KallistiOS environment variable settings. These are the shared pieces
 # for the Dreamcast(tm) platform.
 
-export KOS_CFLAGS="${KOS_CFLAGS} -ml -m4-single-only -fno-optimize-sibling-calls"
+export KOS_CFLAGS="${KOS_CFLAGS} -ml -m4-single-only -fno-crossjumping"
 export KOS_AFLAGS="${KOS_AFLAGS} -little"
 export KOS_LDFLAGS="${KOS_LDFLAGS} -ml -m4-single-only -Wl,-Ttext=0x8c010000"
 
