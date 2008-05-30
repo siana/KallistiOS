@@ -1733,6 +1733,10 @@ void public_fREe(Void_t* m) {
 	int dmg = 0;
 #endif
 
+	/* standard C says if block is NULL, do not try to free it */
+	if(m == NULL)
+		return;
+
   if (MALLOC_PREACTION != 0) {
     return;
   }
@@ -1743,9 +1747,6 @@ void public_fREe(Void_t* m) {
 	printf("Thread %d/%08lx freeing block @ %08lx\n",
 		thd_current->tid, rv, (uint32)m);
 #endif
-
-	if (m == NULL)
-		return;
 
 	ctl = get_memctl(m);
 	if (ctl->magic != BLOCK_MAGIC) {

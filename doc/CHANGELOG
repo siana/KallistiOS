@@ -154,6 +154,7 @@ KallistiOS version 1.3.0 -----------------------------------------------
 - *** Added support for upgrading a read lock on a reader/writer semaphore to
       a write lock [LS]
 - *** Added a recursive lock synchronization primitive [LS]
+- *** Moved checking for free(NULL) up in code to avoid potential problems [HL]
 
 KallistiOS version 1.2.0 -----------------------------------------------
 - DC  Fix to use DCARM7_CFLAGS when compiling ARM driver [Christian Groessler == CG]
