@@ -138,7 +138,7 @@ static rd_file_t * ramdisk_find_path(rd_dir_t * parent, const char * fn, int dir
 	   in the dir. */
 	if (fn[0] != 0) {
 		f = ramdisk_find(parent, fn, strlen(fn));
-		if (!dir && f->type == STAT_TYPE_DIR)
+		if ((!dir && f->type == STAT_TYPE_DIR) || (dir && f->type != STAT_TYPE_DIR))
 			return NULL;
 	} else {
 		/* We must have been looking for the dir itself */

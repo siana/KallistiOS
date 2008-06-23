@@ -155,6 +155,7 @@ KallistiOS version 1.3.0 -----------------------------------------------
       a write lock [LS]
 - *** Added a recursive lock synchronization primitive [LS]
 - *** Moved checking for free(NULL) up in code to avoid potential problems [HL]
+- DC  fs_ramdisk.c: Don't allow opening a file with O_DIR [CG]
 
 KallistiOS version 1.2.0 -----------------------------------------------
 - DC  Fix to use DCARM7_CFLAGS when compiling ARM driver [Christian Groessler == CG]
