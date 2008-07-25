@@ -157,6 +157,11 @@ KallistiOS version 1.3.0 -----------------------------------------------
 - *** Moved checking for free(NULL) up in code to avoid potential problems [HL]
 - DC  fs_ramdisk.c: Don't allow opening a file with O_DIR [CG]
 - *** Removed legacy libc and libm [HL]
+- DC  Handle potentially misaligned outgoing packets in the BBA driver [LS]
+- DC  Added g2_memset_8 function for doing a memset over G2 with locking [LS]
+- DC  If a packet is < 60 bytes, pad it with null bytes for clarity, rather than
+      just transmitting whatever random junk was in the transmit buffer from
+      previous sends [LS]
 
 KallistiOS version 1.2.0 -----------------------------------------------
 - DC  Fix to use DCARM7_CFLAGS when compiling ARM driver [Christian Groessler == CG]

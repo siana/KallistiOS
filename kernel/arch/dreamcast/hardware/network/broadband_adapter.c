@@ -4,7 +4,7 @@
 
    Copyright (C)2001,2003,2005 Dan Potter
    Copyright (C)2004 Vincent Penne
-   Copyright (C)2007 Lawrence Sebald
+   Copyright (C)2007, 2008 Lawrence Sebald
 
  */
 
@@ -647,12 +647,25 @@ static int bba_tx(const uint8 * pkt, int len, int wait)
 
 	//g2_write_block_8(pkt, txdesc[rtl.cur_tx], len);
 
-	/* VP : g2_write_block_32 works here, use it , it's faster ! */
-	g2_write_block_32((uint32 *) pkt, txdesc[rtl.cur_tx], (len + 3) >> 2);
+	/* Check alignment of the packet, if its 32-bit aligned, use
+	   g2_write_block_32, if its 16-bit aligned, use g2_write_block_16,
+	   otherwise, use g2_write_block_8. */
+	if(!((uint32)pkt & 0x03)) {
+		g2_write_block_32((uint32 *) pkt, txdesc[rtl.cur_tx], (len + 3) >> 2);
+	}
+	else if(!((uint32)pkt & 0x01)) {
+		g2_write_block_16((uint16 *) pkt, txdesc[rtl.cur_tx], (len + 1) >> 1);
+	}
+	else {
+		g2_write_block_8(pkt, txdesc[rtl.cur_tx], len);
+	}
 
-	/* All packets must be at least 60 bytes */
-	if (len < 60)
+	/* All packets must be at least 60 bytes, pad them with null bytes if
+	   they are not already of an appropriate size. */
+	if (len < 60) {
+		g2_memset_8(txdesc[rtl.cur_tx] + len, 0, 60 - len);
 		len = 60;
+	}
 
 	/* Transmit from the current TX buffer */
 	g2_write_32(NIC(RT_TXSTATUS0 + 4 * rtl.cur_tx), len);
@@ -988,20 +1001,20 @@ static void bba_if_netinput(uint8 *pkt, int pktsize) {
 
 /* Set ISP configuration from the flashrom, as long as we're configured staticly */
 static void bba_set_ispcfg() {
-    flashrom_ispcfg_t isp;
+	flashrom_ispcfg_t isp;
 
-    if(flashrom_get_ispcfg(&isp) == -1)
-        return;
+	if(flashrom_get_ispcfg(&isp) == -1)
+		return;
 
-    if(!isp.ip_valid)
-        return;
+	if(!isp.ip_valid)
+		return;
 
-    if(isp.method != FLASHROM_ISP_STATIC)
-        return;
+	if(isp.method != FLASHROM_ISP_STATIC)
+		return;
 
-    memcpy(bba_if.ip_addr, isp.ip, 4);
-    memcpy(bba_if.netmask, isp.nm, 4);
-    memcpy(bba_if.gateway, isp.gw, 4);
+	memcpy(bba_if.ip_addr, isp.ip, 4);
+	memcpy(bba_if.netmask, isp.nm, 4);
+	memcpy(bba_if.gateway, isp.gw, 4);
 }
 
 /* Initialize */
@@ -1040,8 +1053,8 @@ int bba_init() {
 	bba_if.if_rx_poll = bba_if_rx_poll;
 	bba_if.if_set_flags = bba_if_set_flags;
 
-    /* Attempt to set up our IP address et al from the flashrom */
-    bba_set_ispcfg();
+	/* Attempt to set up our IP address et al from the flashrom */
+	bba_set_ispcfg();
 
 #if 0
 	/* Try to detect/init us */

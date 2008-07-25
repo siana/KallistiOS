@@ -201,6 +201,20 @@ void g2_write_block_32(const uint32 * input, uint32 address, int amt) {
 	G2_UNLOCK(old1, old2);
 }
 
+/* A memset-like function for G2 */
+void g2_memset_8(uint32 address, uint8 c, int amt) {
+	vuint8 * output = (vuint8 *)address;
+	int old1, old2;
+
+	G2_LOCK(old1, old2);
+
+	while (amt--) {
+		*output++ = c;
+	}
+
+	G2_UNLOCK(old1, old2);
+}
+
 /* When writing to the SPU RAM, this is required at least every 8 32-bit
    writes that you execute */
 void g2_fifo_wait() {

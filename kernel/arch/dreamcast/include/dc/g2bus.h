@@ -93,6 +93,9 @@ void g2_read_block_32(uint32 * output, uint32 address, int amt);
 /* Write a block of 32-bit values to G2 */
 void g2_write_block_32(const uint32 * input, uint32 address, int amt);
 
+/* memset(), but for use on G2. */
+void g2_memset_8(uint32 address, uint8 c, int amt);
+
 /* When writing to the SPU RAM, this is required at least every 8 32-bit
    writes that you execute */
 void g2_fifo_wait();
