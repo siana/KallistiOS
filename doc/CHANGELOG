@@ -162,6 +162,8 @@ KallistiOS version 1.3.0 -----------------------------------------------
 - DC  If a packet is < 60 bytes, pad it with null bytes for clarity, rather than
       just transmitting whatever random junk was in the transmit buffer from
       previous sends [LS]
+- DC  Rewrote microphone driver to make it support the different encodings
+      available to the hardware [LS]
 
 KallistiOS version 1.2.0 -----------------------------------------------
 - DC  Fix to use DCARM7_CFLAGS when compiling ARM driver [Christian Groessler == CG]
