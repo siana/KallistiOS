@@ -2,6 +2,7 @@
   
    screenshot.c
    (c)2002 Dan Potter
+   (c)2008 Donald Haase
  */
 
 #include <stdio.h>
@@ -11,8 +12,6 @@
 #include <kos/fs.h>
 #include <arch/irq.h>
 
-CVSID("$Id: screenshot.c,v 1.3 2003/02/14 08:13:18 bardtx Exp $");
-
 /*
 
 Provides a very simple screen shot facility (dumps raw RGB PPM files from the
@@ -20,47 +19,90 @@ currently viewed framebuffer).
 
 Destination file system must be writeable and have enough free space.
 
-Assumes display is in 16-bit mode.
+This will now work with any of the supported video modes.
 
 */
 
 int vid_screen_shot(const char *destfn) {
 	file_t	f;
-	int	i, bsize;
+	int	i, numpix;
 	uint8	*buffer;
-	uint16	pixel;
-	uint8	r, g, b;
 	char	header[256];
 	uint32	save;
+	uint32	pixel;	/* to fit 888 mode */
+	uint8	r, g, b;
+	uint8	bpp;
+
+	bpp = 3;	/* output to ppm is 3 bytes per pixel */
+	numpix = vid_mode->width * vid_mode->height;
 
 	/* Allocate a new buffer so we can blast it all at once */
-	bsize = vid_mode->width * vid_mode->height * 3;
-	buffer = (uint8 *)malloc(bsize);
+	buffer = (uint8 *)malloc(numpix * bpp);
 	if (buffer == NULL) {
-		dbglog(DBG_ERROR, "video_screen_shot: can't allocate ss memory\n");
+		dbglog(DBG_ERROR, "vid_screen_shot: can't allocate ss memory\n");
 		return -1;
 	}
 
 	/* Disable interrupts */
 	save = irq_disable();
 
-	/* Write out each 16-bit pixel as 24 bits */
-	for (i=0; i<vid_mode->width*vid_mode->height; i++) {
-		pixel = vram_s[i];
-		r = ((pixel >> 11) & 0x1f) << 3;
-		g = ((pixel >> 5) & 0x3f) << 2;
-		b = ((pixel >> 0) & 0x1f) << 3;
-		buffer[i*3+0] = r;
-		buffer[i*3+1] = g;
-		buffer[i*3+2] = b;
-	}
+	/* Write out each pixel as 24 bits */
+	switch(vid_mode->pm)
+	{
+		case(PM_RGB555):
+		{
+			for (i = 0; i < numpix; i++) {
+				pixel = vram_s[i];
+				r = (((pixel >> 10) & 0x1f) << 3);
+				b = (((pixel >>  5) & 0x1f) << 3);
+				g = (((pixel >>  0) & 0x1f) << 3);
+				buffer[i * 3 + 0] = r;
+				buffer[i * 3 + 1] = g;
+				buffer[i * 3 + 2] = b;
+			}
+			break;
+		}
+		case(PM_RGB565):
+		{
+			for (i = 0; i < numpix; i++) {
+				pixel = vram_s[i];
+				r = (((pixel >> 11) & 0x1f) << 3);
+				b = (((pixel >>  5) & 0x3f) << 2);
+				g = (((pixel >>  0) & 0x1f) << 3);
+				buffer[i * 3 + 0] = r;
+				buffer[i * 3 + 1] = g;
+				buffer[i * 3 + 2] = b;
+			}
+			break;
+		}
+		case(PM_RGB888):
+		{
+			for (i = 0; i < numpix; i++) {
+				pixel = vram_l[i];
+				r = (((pixel >> 16) & 0xff));
+				b = (((pixel >>  8) & 0xff));
+				g = (((pixel >>  0) & 0xff));
+				buffer[i * 3 + 0] = r;
+				buffer[i * 3 + 1] = g;
+				buffer[i * 3 + 2] = b;
+			}
+			break;
+		}
+		default:
+		{
+			dbglog(DBG_ERROR, "vid_screen_shot: can't process pixel mode %d\n", vid_mode->pm);
+			irq_restore(save);
+			free(buffer);
+			return -1;
+		}
+	}	
 
 	irq_restore(save);
 
 	/* Open output file */
 	f = fs_open(destfn, O_WRONLY | O_TRUNC);
 	if (!f) {
-		dbglog(DBG_ERROR, "video_screen_shot: can't open output file '%s'\n", destfn);
+		dbglog(DBG_ERROR, "vid_screen_shot: can't open output file '%s'\n", destfn);
 		free(buffer);
 		return -1;
 	}
@@ -68,15 +110,15 @@ int vid_screen_shot(const char *destfn) {
 	/* Write a small header */
 	sprintf(header, "P6\n#KallistiOS Screen Shot\n%d %d\n255\n", vid_mode->width, vid_mode->height);
 	if (fs_write(f, header, strlen(header)) != strlen(header)) {
-		dbglog(DBG_ERROR, "video_screen_shot: can't write header to output file '%s'\n", destfn);
+		dbglog(DBG_ERROR, "vid_screen_shot: can't write header to output file '%s'\n", destfn);
 		fs_close(f);
 		free(buffer);
 		return -1;
 	}
 
 	/* Write the data */
-	if (fs_write(f, buffer, bsize) != (ssize_t)bsize) {
-		dbglog(DBG_ERROR, "video_screen_shot: can't write data to output file '%s'\n", destfn);
+	if (fs_write(f, buffer, numpix * bpp) != (ssize_t)(numpix * bpp)) {
+		dbglog(DBG_ERROR, "vid_screen_shot: can't write data to output file '%s'\n", destfn);
 		fs_close(f);
 		free(buffer);
 		return -1;
