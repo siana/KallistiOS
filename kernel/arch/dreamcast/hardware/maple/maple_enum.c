@@ -2,6 +2,7 @@
 
    maple_enum.c
    (c)2002 Dan Potter
+   (c)2008 Lawrence Sebald
  */
 
 #include <dc/maple.h>
@@ -41,6 +42,52 @@ maple_device_t * maple_enum_type(int n, uint32 func) {
 			if (dev != NULL && dev->info.functions & func) {
 				if (!n) return dev;
 				n--;
+			}
+		}
+	}
+
+	return NULL;
+}
+
+/* Return the Nth device that is of the requested type and supports the list of
+   capabilities given. */
+maple_device_t * maple_enum_type_ex(int n, uint32 func, uint32 cap) {
+	int p, u, d;
+	maple_device_t *dev;
+	uint32 f, tmp;
+
+	for(p = 0; p < MAPLE_PORT_COUNT; ++p) {
+		for(u = 0; u < MAPLE_UNIT_COUNT; ++u) {
+			dev = maple_enum_dev(p, u);
+
+			/* If the device supports the function code we passed in, check
+			   if it supports the capabilities that the user requested. */
+			if(dev != NULL && (dev->info.functions & func)) {
+				f = dev->info.functions;
+				d = 0;
+				tmp = func;
+
+				/* Figure out which function data we want to look at. Function
+				   data entries are arranged by the function code, most
+				   significant bit first. This is really not pretty, and is
+				   rather inefficient, but its the best I could think of off the
+				   top of my head (i.e, replace me later). */
+				while(tmp != 0x80000000) {
+					if(f & 0x80000000) {
+						++d;
+					}
+
+					f <<= 1;
+					tmp <<= 1;
+				}
+
+				/* Check if the function data for the function type checks out
+				   with what it should be. */
+				if((dev->info.function_data[d] & cap) == cap) {
+					if(!n)
+						return dev;
+					--n;
+				}
 			}
 		}
 	}

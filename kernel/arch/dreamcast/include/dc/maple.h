@@ -341,6 +341,13 @@ maple_device_t * maple_enum_dev(int p, int u);
 /* Return the Nth device of the requested type (where N is zero-indexed) */
 maple_device_t * maple_enum_type(int n, uint32 func);
 
+/* Return the Nth device that is of the requested type and supports the list of
+   capabilities given. Note, this only currently makes sense for controllers,
+   since some devices don't necessarily use the function data in the same manner
+   that controllers do (and controllers are the only devices where we have a
+   list of what all the bits mean at the moment). */
+maple_device_t * maple_enum_type_ex(int n, uint32 func, uint32 cap);
+
 /* Get the status struct for the requested maple device; wait until it's
    valid before returning. Cast to the appropriate type you're expecting. */
 void * maple_dev_status(maple_device_t *dev);

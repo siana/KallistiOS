@@ -75,6 +75,32 @@ int	cont_get_cond(uint8 addr, cont_cond_t *cond);
 typedef void (*cont_btn_callback_t)(uint8 addr, uint32 btns);
 void	cont_btn_callback(uint8 addr, uint32 btns, cont_btn_callback_t cb);
 
+/* Capability bits - These will be set in the function_data for the controller
+   in the reply to the devinfo command if the controller supports the
+   corresponding feature. */
+#define CONT_CAPABILITY_C               (1<<0)
+#define CONT_CAPABILITY_B               (1<<1)
+#define CONT_CAPABILITY_A               (1<<2)
+#define CONT_CAPABILITY_START           (1<<3)
+#define CONT_CAPABILITY_DPAD_UP         (1<<4)
+#define CONT_CAPABILITY_DPAD_DOWN       (1<<5)
+#define CONT_CAPABILITY_DPAD_LEFT       (1<<6)
+#define CONT_CAPABILITY_DPAD_RIGHT      (1<<7)
+#define CONT_CAPABILITY_Z               (1<<8)
+#define CONT_CAPABILITY_Y               (1<<9)
+#define CONT_CAPABILITY_X               (1<<10)
+#define CONT_CAPABILITY_D               (1<<11)
+#define CONT_CAPABILITY_DPAD2_UP        (1<<12)
+#define CONT_CAPABILITY_DPAD2_DOWN      (1<<13)
+#define CONT_CAPABILITY_DPAD2_LEFT      (1<<14)
+#define CONT_CAPABILITY_DPAD2_RIGHT     (1<<15)
+#define CONT_CAPABILITY_RTRIG           (1<<16)
+#define CONT_CAPABILITY_LTRIG           (1<<17)
+#define CONT_CAPABILITY_ANALOG_X        (1<<18)
+#define CONT_CAPABILITY_ANALOG_Y        (1<<19)
+#define CONT_CAPABILITY_ANALOG2_X       (1<<20)
+#define CONT_CAPABILITY_ANALOG2_Y       (1<<21)
+
 __END_DECLS
 
 #endif	/* __DC_MAPLE_CONTROLLER_H */
