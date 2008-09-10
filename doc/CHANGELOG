@@ -169,6 +169,8 @@ KallistiOS version 1.3.0 -----------------------------------------------
       function_data of devinfo for that function has all the bits set that are
       set in the cap parameter [LS]
 - DC  Made vid_screen_shot support any of the video modes [DH]
+- *** Fixes to the network stack to support sending/receiving broadcast packets
+      properly [LS]
 
 KallistiOS version 1.2.0 -----------------------------------------------
 - DC  Fix to use DCARM7_CFLAGS when compiling ARM driver [Christian Groessler == CG]

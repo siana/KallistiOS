@@ -73,6 +73,18 @@ static int is_in_network(const uint8 src[4], const uint8 dest[4],
     return 1;
 }
 
+/* Determine if a given IP is the adapter's broadcast address. */
+static int is_broadcast(const uint8 dest[4], const uint8 bc[4]) {
+    int i;
+
+    for(i = 0; i < 4; ++i) {
+        if(dest[i] != bc[i])
+            return 0;
+    }
+
+    return 1;
+}
+
 /* Send a packet on the specified network adapter */
 int net_ipv4_send_packet(netif_t *net, ip_hdr_t *hdr, const uint8 *data,
                          int size) {
@@ -88,8 +100,8 @@ int net_ipv4_send_packet(netif_t *net, ip_hdr_t *hdr, const uint8 *data,
 
     net_ipv4_parse_address(ntohl(hdr->dest), dest_ip);
 
-    /* Is this the loopback address (127.0.0.1)? */
-    if(ntohl(hdr->dest) == 0x7F000001) {
+    /* Is this a loopback address (127/8)? */
+    if((dest_ip[0] & 0xFF) == 0x7F) {
         /* Put the IP header / data into our packet */
         memcpy(pkt, hdr, 4 * (hdr->version_ihl & 0x0f));
         memcpy(pkt + 4 * (hdr->version_ihl & 0x0f), data, size);
@@ -99,22 +111,29 @@ int net_ipv4_send_packet(netif_t *net, ip_hdr_t *hdr, const uint8 *data,
 
         return 0;
     }
-        
-    /* Is it in our network? */
-    if(!is_in_network(net->ip_addr, dest_ip, net->netmask)) {
-        memcpy(dest_ip, net->gateway, 4);
-    }
 
-    /* Get our destination's MAC address. If we do not have the MAC address
-       cached, return a distinguished error to the upper-level protocol so
-       that it can decide what to do. */
-    err = net_arp_lookup(net, dest_ip, dest_mac);
-    if(err == -1) {
-        errno = ENETUNREACH;
-        return -1;
+    /* Are we sending a broadcast packet? */
+    if(hdr->dest == 0xFFFFFFFF || is_broadcast(dest_ip, net->broadcast)) {
+        /* Set the destination to the datalink layer broadcast address. */
+        memset(dest_mac, 0xFF, 6);
     }
-    else if(err == -2) {
-        return -2;
+    else {
+        /* Is it in our network? */
+        if(!is_in_network(net->ip_addr, dest_ip, net->netmask)) {
+            memcpy(dest_ip, net->gateway, 4);
+        }
+
+        /* Get our destination's MAC address. If we do not have the MAC address
+           cached, return a distinguished error to the upper-level protocol so
+           that it can decide what to do. */
+        err = net_arp_lookup(net, dest_ip, dest_mac);
+        if(err == -1) {
+            errno = ENETUNREACH;
+            return -1;
+        }
+        else if(err == -2) {
+            return -2;
+        }
     }
 
     /* Fill in the ethernet header */

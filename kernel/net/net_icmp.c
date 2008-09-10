@@ -90,15 +90,14 @@ static void net_icmp_input_0(netif_t *src, ip_hdr_t *ip, icmp_hdr_t *icmp,
 /* Handle Echo (ICMP type 8) packets */
 static void net_icmp_input_8(netif_t *src, ip_hdr_t *ip, icmp_hdr_t *icmp,
                              const uint8 *d, int s) {
-	int i;
-
 	/* Set type to echo reply */
 	icmp->type = 0;
 
-	/* Swap source and dest ip addresses */
-	i = ip->src;
-	ip->src = ip->dest;
-	ip->dest = i;
+	/* Set the destination to the original source, and substitute in our IP
+	   for the src (done this way so that pings that are broadcasted get an
+	   appropriate reply). */
+	ip->dest = ip->src;
+	ip->src = htonl(net_ipv4_address(src->ip_addr));
 
 	/* Recompute the IP header checksum */
 	ip->checksum = 0;

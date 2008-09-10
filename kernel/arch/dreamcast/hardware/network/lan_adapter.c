@@ -649,6 +649,7 @@ static void la_set_ispcfg() {
 	memcpy(la_if.ip_addr, isp.ip, 4);
 	memcpy(la_if.netmask, isp.nm, 4);
 	memcpy(la_if.gateway, isp.gw, 4);
+	memcpy(la_if.broadcast, isp.bc, 4);
 }
 
 /* Initialize */

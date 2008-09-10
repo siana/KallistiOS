@@ -55,6 +55,9 @@ typedef struct knetif {
     /* The device's gateway's IP address */
     uint8               gateway[4];
 
+    /* The device's broadcast address */
+    uint8               broadcast[4];
+
 	/* All of the following callback functions should return a negative
 	   value on failure, and a zero or positive value on success. Some
 	   functions have special values, as noted. */

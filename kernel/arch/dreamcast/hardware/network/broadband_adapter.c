@@ -1015,6 +1015,7 @@ static void bba_set_ispcfg() {
 	memcpy(bba_if.ip_addr, isp.ip, 4);
 	memcpy(bba_if.netmask, isp.nm, 4);
 	memcpy(bba_if.gateway, isp.gw, 4);
+	memcpy(bba_if.broadcast, isp.bc, 4);
 }
 
 /* Initialize */
