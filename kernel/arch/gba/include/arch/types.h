@@ -61,9 +61,11 @@ typedef unsigned long	u_long;
 typedef unsigned short	ushort;
 typedef unsigned int	uint;
 
+#if 0
 /* File-specific types */
 typedef size_t ssize_t;
 typedef size_t off_t;
+#endif
 
 /* This type may be used for any generic handle type that is allowed
    to be negative (for errors) and has no specific bit count
