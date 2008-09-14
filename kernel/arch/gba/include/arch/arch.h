@@ -9,14 +9,20 @@
 #ifndef __ARCH_ARCH_H
 #define __ARCH_ARCH_H
 
+#include <kos/cdefs.h>
 #include <arch/types.h>
 
 /* Number of timer ticks per second (if using threads) */
 #define HZ		100
 
+#define PAGESIZE	4096
+
 /* Default thread stack size (if using threads) */
 #define THD_STACK_SIZE	8192
 
+/* Do we need symbol prefixes? */
+#define ELF_SYM_PREFIX "_"
+#define ELF_SYM_PREFIX_LEN 1
 /* Default video mode */
 
 /* Default serial parameters */

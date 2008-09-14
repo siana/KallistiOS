@@ -36,6 +36,7 @@ struct elf_hdr_t {
 
 /* ELF architecture types */
 #define EM_386		3		/* ia32 */
+#define EM_ARM		40		/* arm */
 #define EM_SH		42		/* sh */
 
 /* Section header types */

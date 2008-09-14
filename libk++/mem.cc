@@ -19,6 +19,7 @@ CVSID("$Id: mem.cc,v 1.2 2002/09/23 23:03:34 gilm Exp $");
 extern "C" void free(void*);
 extern "C" void *malloc(unsigned);
 
+#if defined(_arch_dreamcast)
 asm(
 ".text\n"
 ".global __ZdlPv\n"
@@ -42,6 +43,7 @@ asm(
 ".align 2\n"
 "mallocaddr:	.long	_malloc\n"
 );
+#endif
 
 /* void operator delete(void *ptr) {
 	if (ptr)

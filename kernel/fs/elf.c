@@ -21,6 +21,8 @@ CVSID("$Id: elf.c,v 1.6 2003/08/02 23:12:18 bardtx Exp $");
 #	define ARCH_CODE EM_SH
 #elif defined(_arch_ia32)
 #	define ARCH_CODE EM_386
+#elif defined(_arch_gba)
+#	define ARCH_CODE EM_ARM
 #else
 #	error Unknown architecture
 #endif
