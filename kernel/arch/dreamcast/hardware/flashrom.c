@@ -2,6 +2,7 @@
 
    flashrom.c
    Copyright (c)2003 Dan Potter
+   Copyright (C)2008 Lawrence Sebald
 */
 
 /*
@@ -20,8 +21,6 @@
 #include <stdlib.h>
 #include <dc/flashrom.h>
 #include <arch/irq.h>
-
-CVSID("$Id: flashrom.c,v 1.4 2003/03/10 01:45:31 bardtx Exp $");
 
 /* This is the fateful define. Re-enable this at the peril of your
    Dreamcast's soul ;) */
@@ -371,7 +370,9 @@ int flashrom_get_ispcfg(flashrom_ispcfg_t * out) {
 		memcpy(out->dns[1], isp->e0.dns2, 4);
 		memcpy(out->hostname, isp->e0.hostname, 24);
 
-		out->ip_valid = 1;
+		out->valid_fields |= FLASHROM_ISP_IP | FLASHROM_ISP_NETMASK |
+			FLASHROM_ISP_BROADCAST | FLASHROM_ISP_GATEWAY | FLASHROM_ISP_DNS |
+			FLASHROM_ISP_HOSTNAME;
 		found++;
 	}
 
@@ -380,7 +381,7 @@ int flashrom_get_ispcfg(flashrom_ispcfg_t * out) {
 		/* Fill in the values from it */
 		memcpy(out->email, isp->e2.email, 48);
 
-		out->email_valid = 1;
+		out->valid_fields |= FLASHROM_ISP_EMAIL;
 		found++;
 	}
 
@@ -389,7 +390,7 @@ int flashrom_get_ispcfg(flashrom_ispcfg_t * out) {
 		/* Fill in the values from it */
 		memcpy(out->smtp, isp->e4.smtp, 28);
 
-		out->smtp_valid = 1;
+		out->valid_fields |= FLASHROM_ISP_SMTP;
 		found++;
 	}
 
@@ -398,7 +399,7 @@ int flashrom_get_ispcfg(flashrom_ispcfg_t * out) {
 		/* Fill in the values from it */
 		memcpy(out->pop3, isp->e5.pop3, 24);
 
-		out->pop3_valid = 1;
+		out->valid_fields |= FLASHROM_ISP_POP3;
 		found++;
 	}
 
@@ -407,7 +408,7 @@ int flashrom_get_ispcfg(flashrom_ispcfg_t * out) {
 		/* Fill in the values from it */
 		memcpy(out->pop3_login, isp->e6.pop3_login, 20);
 
-		out->pop3_login_valid = 1;
+		out->valid_fields |= FLASHROM_ISP_POP3_USER;
 		found++;
 	}
 
@@ -417,7 +418,7 @@ int flashrom_get_ispcfg(flashrom_ispcfg_t * out) {
 		memcpy(out->pop3_passwd, isp->e7.pop3_passwd, 32);
 		memcpy(out->proxy_host, isp->e7.proxy_host, 16);
 
-		out->pop3_passwd_valid = 1;
+		out->valid_fields |= FLASHROM_ISP_POP3_PASS | FLASHROM_ISP_PROXY_HOST;
 		found++;
 	}
 
@@ -427,7 +428,7 @@ int flashrom_get_ispcfg(flashrom_ispcfg_t * out) {
 		out->proxy_port = isp->e8.proxy_port;
 		memcpy(out->ppp_login, isp->e8.ppp_login, 8);
 
-		out->ppp_login_valid = 1;
+		out->valid_fields |= FLASHROM_ISP_PROXY_PORT | FLASHROM_ISP_PPP_USER;
 		found++;
 	}
 
@@ -436,9 +437,353 @@ int flashrom_get_ispcfg(flashrom_ispcfg_t * out) {
 		/* Fill in the values from it */
 		memcpy(out->ppp_passwd, isp->e9.ppp_passwd, 20);
 
-		out->ppp_passwd_valid = 1;
+		out->valid_fields |= FLASHROM_ISP_PPP_PASS;
 		found++;
 	}
 
 	return found > 0 ? 0 : -1;
+}
+
+/* Structure of the ISP configuration blocks created by PlanetWeb (confirmed on
+   version 1.0 and 2.1; some fields are longer on 2.1, but they always extend
+   into what would be padding in 1.0). */
+typedef struct {
+	union {
+		struct {
+			/* Block 0x80 */
+			uint16	blockid;		/* Should be 0x80 */
+			char	prodname[9];	/* Should be 'PWBrowser' */
+			uint8	unk1[2];		/* Unknown: 00 16 (1.0), 00 1C (2.1) */
+			uint8	dial_areacode;	/* 1 = Dial area code, 0 = don't */
+			char	out_prefix[8];	/* Outside dial prefix */
+			uint8	padding1[8];
+			char	email_pt2[16];	/* Second? part of email address (2.1) */
+			char	cw_prefix[8];	/* Call waiting prefix */
+			uint8	padding2[8];
+			uint16	crc;
+		} b80;
+
+		struct {
+			/* Block 0x81 */
+			uint16	blockid;		/* Should be 0x81 */
+			char	email_pt3[14];	/* Third? part of email address (2.1)*/
+			uint8	padding1[2];
+			char	real_name[30];	/* The "Real Name" (21 bytes on 1.0) */
+			uint8	padding2[14];
+			uint16	crc;
+		} b81;
+
+		struct {
+			/* Block 0x82 */
+			uint16	blockid;		/* Should be 0x82 */
+			uint8	padding1[30];
+			char	modem_str[30];	/* Modem init string (confirmed on 2.1) */
+			uint16	crc;
+		} b82;
+
+		struct {
+			/* Block 0x83 */
+			uint16	blockid;		/* Should be 0x83 */
+			uint8	modem_str2[2];	/* Modem init string continued */
+			char	area_code[3];
+			uint8	padding2[29];
+			char	ld_prefix[20];	/* Long-distance prefix */
+			uint8	padding3[6];
+			uint16	crc;
+		} b83;
+
+		struct {
+			/* Block 0x84 -- This one is pretty much mostly a mystery. */
+			uint16	blockid;		/* Should be 0x84 */
+			uint8	unk1[6];		/* Might be padding, all 0x00s */
+			uint8	use_proxy;		/* 1 = use proxy, 0 = don't */
+			uint8	unk2[53];		/* No idea on this stuff... */
+			uint16	crc;
+		} b84;
+
+		/* Other 0x80 range blocks might be used, but I don't really know what
+		   would be in them. */
+
+		struct {
+			/* Block 0xC0 */
+			uint16	blockid;		/* Should be 0xC0 */
+			uint8	unk1;			/* Might be padding? (0x00) */
+			uint8	settings;		/* Bitfield:
+									   bit 0 = pulse dial (1) or tone dial (0),
+									   bit 7 = blind dial (1) or not (0) */
+			uint8	unk2[2];		/* Might be padding (0x00 0x00) */
+			char	prodname[4];	/* Should be 'SEGA' */
+			char	ppp_login[28];
+			char	ppp_passwd[16];
+			char	ac1[5];			/* Area code for phone 1, in parenthesis */
+			char	phone1_pt1[3];	/* First three digits of phone 1 */
+			uint16	crc;
+		} c0;
+
+		struct {
+			/* Block 0xC1 */
+			uint16	blockid;		/* Should be 0xC1 */
+			char	phone1_pt2[22];	/* Rest of phone 1 */
+			uint8	padding[10];
+			char	ac2[5];			/* Area code for phone 2, in parenthesis */
+			char	phone2_pt1[23];	/* First 23 digits of phone 2 */
+			uint16	crc;
+		} c1;
+
+		struct {
+			/* Block 0xC2 */
+			uint16	blockid;		/* Should be 0xC2 */
+			char	phone2_pt2[2];	/* Last two digits of phone 2 */
+			uint8	padding[50];
+			uint8	dns1[4];		/* DNS 1, big endian notation */
+			uint8	dns2[4];		/* DNS 2, big endian notation */
+			uint16	crc;
+		} c2;
+
+		struct {
+			/* Block 0xC3 */
+			uint16	blockid;		/* Should be 0xC3 */
+			char	email_p1[32];	/* First? part of the email address
+									   (This is the only part on 1.0) */
+			uint8	padding[16];
+			char	out_srv_p1[12];	/* Outgoing email server, first 12 chars */
+			uint16	crc;
+		} c3;
+
+		struct {
+			/* Block 0xC4 */
+			uint16	blockid;		/* Should be 0xC4 */
+			char	out_srv_p2[18];	/* Rest of outgoing email server */
+			uint8	padding1[2];
+			char	in_srv[30];		/* Incoming email server */
+			uint8	padding2[2];
+			char	em_login_p1[8];	/* Email login, first 8 chars */
+			uint16	crc;
+		} c4;
+
+		struct {
+			/* Block 0xC5 */
+			uint16	blockid;		/* Should be 0xC5 */
+			char	em_login_p2[8];	/* Rest of email login */
+			char	em_passwd[16];	/* Email password */
+			char	proxy_srv[30];	/* Proxy Server */
+			uint8	padding1[2];
+			uint16	proxy_port;		/* Proxy port, little endian notation */
+			uint8	padding2[2];
+			uint16	crc;
+		} c5;
+
+		/* Blocks 0xC6 - 0xCB also appear to be used by PlanetWeb, but are
+		   always blank in my tests. My only guess is that they were storage
+		   for a potential second ISP setting set. */
+	};
+} pw_isp_settings_t;
+
+int flashrom_get_pw_ispcfg(flashrom_ispcfg_t *out) {
+	uint8 buffer[64];
+	pw_isp_settings_t *isp = (pw_isp_settings_t *)buffer;
+
+	/* Clear our output buffer completely.  */
+	memset(out, 0, sizeof(flashrom_ispcfg_t));
+
+	/* Get the 0x80 block first, and check if its valid. */
+	if(flashrom_get_block(FLASHROM_PT_BLOCK_1, FLASHROM_B1_PW_SETTINGS_1, buffer) >= 0) {
+		/* Make sure the product name is 'PWBrowser' */
+		if(strncmp(isp->b80.prodname, "PWBrowser", 9)) {
+			return -1;
+		}
+
+		/* Determine if the dial area code option is set or not. */
+		if(isp->b80.dial_areacode) {
+			out->flags |= FLASHROM_ISP_DIAL_AREACODE;
+		}
+
+		/* Copy out the outside dial prefix. */
+		strncpy(out->out_prefix, isp->b80.out_prefix, 8);
+		out->out_prefix[8] = '\0';
+		out->valid_fields |= FLASHROM_ISP_OUT_PREFIX;
+
+		/* Copy out the call waiting prefix. */
+		strncpy(out->cw_prefix, isp->b80.cw_prefix, 8);
+		out->cw_prefix[8] = '\0';
+		out->valid_fields |= FLASHROM_ISP_CW_PREFIX;
+
+		/* Copy the second part of the email address (if it exists). We don't
+		   set the email as valid here, since that really depends on the first
+		   part being found (PW 1.0 doesn't store anything in this place). */
+		strncpy(out->email + 32, isp->b80.email_pt2, 16);
+	}
+	else {
+		/* If we couldn't find the PWBrowser block, punt, the PlanetWeb settings
+		   most likely do not exist. */
+		return -1;
+	}
+
+	/* Grab block 0x81 */
+	if(flashrom_get_block(FLASHROM_PT_BLOCK_1, FLASHROM_B1_PW_SETTINGS_2, buffer) >= 0) {
+		/* Copy the third part of the email address to the appropriate place.
+		   Note that PlanetWeb 1.0 doesn't store anything here, thus we'll just
+		   copy a null terminator. */
+		strncpy(out->email + 32 + 16, isp->b81.email_pt3, 14);
+
+		/* Copy out the "Real Name" field. */
+		strncpy(out->real_name, isp->b81.real_name, 30);
+		out->real_name[30] = '\0';
+		out->valid_fields |= FLASHROM_ISP_REAL_NAME;
+	}
+
+	/* Grab block 0x82 */
+	if(flashrom_get_block(FLASHROM_PT_BLOCK_1, FLASHROM_B1_PW_SETTINGS_3, buffer) >= 0) {
+		/* The only thing in this block is the modem init string, go ahead and
+		   copy it to our destination. */
+		strncpy(out->modem_init, isp->b82.modem_str, 30);
+		out->modem_init[30] = '\0';
+		out->valid_fields |= FLASHROM_ISP_MODEM_INIT;
+	}
+
+	/* Grab block 0x83 */
+	if(flashrom_get_block(FLASHROM_PT_BLOCK_1, FLASHROM_B1_PW_SETTINGS_4, buffer) >= 0) {
+		/* The modem init string continues at the start of this block. */
+		strncpy(out->modem_init + 30, isp->b83.modem_str2, 2);
+		out->modem_init[32] = '\0';
+
+		/* Copy out the area code next. */
+		strncpy(out->area_code, isp->b83.area_code, 3);
+		out->area_code[3] = '\0';
+		out->valid_fields |= FLASHROM_ISP_AREA_CODE;
+
+		/* Copy the long-distance dial prefix */
+		strncpy(out->ld_prefix, isp->b83.ld_prefix, 20);
+		out->ld_prefix[20] = '\0';
+		out->valid_fields |= FLASHROM_ISP_LD_PREFIX;
+	}
+
+	/* Grab block 0x84 -- Most of this block is currently unknown */
+	if(flashrom_get_block(FLASHROM_PT_BLOCK_1, FLASHROM_B1_PW_SETTINGS_5, buffer) >= 0) {
+		/* The only thing currently known in here is the use proxy flag. */
+		if(isp->b84.use_proxy) {
+			out->flags |= FLASHROM_ISP_USE_PROXY;
+		}
+	}
+
+	/* Other 0x85-0x8F blocks might be used, but I have no ideas on their use. */
+
+	/* Grab block 0xC0 */
+	if(flashrom_get_block(FLASHROM_PT_BLOCK_1, FLASHROM_B1_PW_PPP1, buffer) >= 0) {
+		/* Make sure the product id is "SEGA". */
+		if(strncmp(isp->c0.prodname, "SEGA", 4)) {
+			return -1;
+		}
+
+		/* Check the settings first. */
+		if(isp->c0.settings & 0x01) {
+			out->flags |= FLASHROM_ISP_PULSE_DIAL;
+		}
+
+		if(isp->c0.settings & 0x80) {
+			out->flags |= FLASHROM_ISP_BLIND_DIAL;
+		}
+
+		/* Grab the PPP Username. */
+		strncpy(out->ppp_login, isp->c0.ppp_login, 28);
+		out->ppp_login[28] = '\0';
+		out->valid_fields |= FLASHROM_ISP_PPP_USER;
+
+		/* Grab the PPP Password. */
+		strncpy(out->ppp_passwd, isp->c0.ppp_passwd, 16);
+		out->ppp_passwd[16] = '\0';
+		out->valid_fields |= FLASHROM_ISP_PPP_PASS;
+
+		/* Grab the area code for phone 1, stripping away the parenthesis. */
+		strncpy(out->p1_areacode, isp->c0.ac1 + 1, 3);
+		out->p1_areacode[3] = '\0';
+
+		/* Grab the start of phone number 1. */
+		strncpy(out->phone1, isp->c0.phone1_pt1, 3);
+		out->phone1[3] = '\0';
+	}
+
+	/* Grab block 0xC1 */
+	if(flashrom_get_block(FLASHROM_PT_BLOCK_1, FLASHROM_B1_PW_PPP2, buffer) >= 0) {
+		/* Grab the rest of phone number 1. */
+		strncpy(out->phone1 + 3, isp->c1.phone1_pt2, 22);
+		out->phone1[25] = '\0';
+		out->valid_fields |= FLASHROM_ISP_PHONE1;
+
+		/* Grab the area code for phone 2, stripping away the parenthesis. */
+		strncpy(out->p2_areacode, isp->c1.ac2 + 1, 3);
+		out->p2_areacode[3] = '\0';
+		
+		/* Grab the start of phone number 2. */
+		strncpy(out->phone2, isp->c1.phone2_pt1, 23);
+		out->phone2[23] = '\0';
+	}
+
+	/* Grab block 0xC2 */
+	if(flashrom_get_block(FLASHROM_PT_BLOCK_1, FLASHROM_B1_PW_DNS, buffer) >= 0) {
+		/* Grab the last two digits of phone number 2. */
+		out->phone2[23] = isp->c2.phone2_pt2[0];
+		out->phone2[24] = isp->c2.phone2_pt2[1];
+		out->phone2[25] = '\0';
+		out->valid_fields |= FLASHROM_ISP_PHONE2;
+
+		/* Grab the two DNS addresses. */
+		memcpy(out->dns[0], isp->c2.dns1, 4);
+		memcpy(out->dns[1], isp->c2.dns2, 4);
+		out->valid_fields |= FLASHROM_ISP_DNS;
+	}
+
+	/* Grab block 0xC3 */
+	if(flashrom_get_block(FLASHROM_PT_BLOCK_1, FLASHROM_B1_PW_EMAIL1, buffer) >= 0) {
+		/* Grab the beginning of the email address (or all of it in PW 1.0). */
+		strncpy(out->email, isp->c3.email_p1, 32);
+		out->valid_fields |= FLASHROM_ISP_EMAIL;
+
+		/* Grab the beginning of the SMTP server. */
+		strncpy(out->smtp, isp->c3.out_srv_p1, 12);
+		out->smtp[12] = '\0';
+	}
+
+	/* Grab block 0xC4 */
+	if(flashrom_get_block(FLASHROM_PT_BLOCK_1, FLASHROM_B1_PW_EMAIL2, buffer) >= 0) {
+		/* Grab the end of the SMTP server. */
+		strncpy(out->smtp + 12, isp->c4.out_srv_p2, 18);
+		out->smtp[30] = '\0';
+		out->valid_fields |= FLASHROM_ISP_SMTP;
+
+		/* Grab the POP3 server. */
+		strncpy(out->pop3, isp->c4.in_srv, 30);
+		out->pop3[30] = '\0';
+		out->valid_fields |= FLASHROM_ISP_POP3;
+
+		/* Grab the beginning of the POP3 login. */
+		strncpy(out->pop3_login, isp->c4.em_login_p1, 8);
+		out->pop3_login[8] = '\0';
+	}
+
+	/* Grab block 0xC5 */
+	if(flashrom_get_block(FLASHROM_PT_BLOCK_1, FLASHROM_B1_PW_EMAIL_PROXY, buffer) >= 0) {
+		/* Grab the end of the POP3 login. */
+		strncpy(out->pop3_login + 8, isp->c5.em_login_p2, 8);
+		out->pop3_login[16] = '\0';
+		out->valid_fields |= FLASHROM_ISP_POP3_USER;
+
+		/* Grab the POP3 password. */
+		strncpy(out->pop3_passwd, isp->c5.em_passwd, 16);
+		out->pop3_passwd[16] = '\0';
+		out->valid_fields |= FLASHROM_ISP_POP3_PASS;
+
+		/* Grab the proxy server. */
+		strncpy(out->proxy_host, isp->c5.proxy_srv, 30);
+		out->proxy_host[30] = '\0';
+		out->valid_fields |= FLASHROM_ISP_PROXY_HOST;
+
+		/* Grab the proxy port. */
+		out->proxy_port = isp->c5.proxy_port;
+		out->valid_fields |= FLASHROM_ISP_PROXY_PORT;
+	}
+
+	out->method = FLASHROM_ISP_DIALUP;
+
+	return out->valid_fields == 0 ? -2 : 0;
 }

@@ -636,11 +636,13 @@ static int la_if_set_flags(netif_t * self, uint32 flags_and, uint32 flags_or) {
 /* Set ISP configuration from the flashrom, as long as we're configured staticly */
 static void la_set_ispcfg() {
 	flashrom_ispcfg_t isp;
+	uint32 fields = FLASHROM_ISP_IP | FLASHROM_ISP_NETMASK |
+		FLASHROM_ISP_BROADCAST | FLASHROM_ISP_GATEWAY;
 
 	if(flashrom_get_ispcfg(&isp) == -1)
 		return;
 
-	if(!isp.ip_valid)
+	if((isp.valid_fields & fields) != fields)
 		return;
 
 	if(isp.method != FLASHROM_ISP_STATIC)

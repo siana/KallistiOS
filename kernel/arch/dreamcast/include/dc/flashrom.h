@@ -2,8 +2,8 @@
 
    kernel/arch/dreamcast/include/dc/flashrom.h
    Copyright (C)2003 Dan Potter
+   Copyright (C)2008 Lawrence Sebald
 
-   $Id: flashrom.h,v 1.4 2003/03/10 01:45:32 bardtx Exp $
 */
 
 
@@ -36,15 +36,26 @@ __BEGIN_DECLS
 
 /**
   An enumeration of logical blocks available in the flashrom. */
-#define FLASHROM_B1_SYSCFG		0x05	/*< System config (BLOCK_1) */
-#define FLASHROM_B1_IP_SETTINGS	0xE0	/*< IP settings for BBA (BLOCK_1) */
-#define FLASHROM_B1_EMAIL		0xE2	/*< Email address (BLOCK_1) */
-#define FLASHROM_B1_SMTP		0xE4	/*< SMTP server setting (BLOCK_1) */
-#define FLASHROM_B1_POP3		0xE5	/*< POP3 server setting (BLOCK_1) */
-#define FLASHROM_B1_POP3LOGIN	0xE6	/*< POP3 login setting (BLOCK_1) */
-#define FLASHROM_B1_POP3PASSWD	0xE7	/*< POP3 password setting + proxy (BLOCK_1) */
-#define FLASHROM_B1_PPPLOGIN	0xE8	/*< PPP username + proxy (BLOCK_1) */
-#define FLASHROM_B1_PPPPASSWD	0xE9	/*< PPP passwd (BLOCK_1) */
+#define FLASHROM_B1_SYSCFG			0x05	/*< System config (BLOCK_1) */
+#define FLASHROM_B1_PW_SETTINGS_1	0x80	/*< PlanetWeb settings (BLOCK_1) */
+#define FLASHROM_B1_PW_SETTINGS_2	0x81	/*< PlanetWeb settings (BLOCK_1) */
+#define FLASHROM_B1_PW_SETTINGS_3	0x82	/*< PlanetWeb settings (BLOCK_1) */
+#define FLASHROM_B1_PW_SETTINGS_4	0x83	/*< PlanetWeb settings (BLOCK_1) */
+#define FLASHROM_B1_PW_SETTINGS_5	0x84	/*< PlanetWeb settings (BLOCK_1) */
+#define FLASHROM_B1_PW_PPP1			0xC0	/*< PlanetWeb PPP settings (BLOCK_1) */
+#define FLASHROM_B1_PW_PPP2			0xC1	/*< PlanetWeb PPP settings (BLOCK_1) */
+#define FLASHROM_B1_PW_DNS			0xC2	/*< PlanetWeb DNS settings (BLOCK_1) */
+#define FLASHROM_B1_PW_EMAIL1		0xC3	/*< PlanetWeb Email settings (BLOCK_1) */
+#define FLASHROM_B1_PW_EMAIL2		0xC4	/*< PlanetWeb Email settings (BLOCK_1) */
+#define FLASHROM_B1_PW_EMAIL_PROXY	0xC5	/*< PlanetWeb Email/Proxy settings (BLOCK_1) */
+#define FLASHROM_B1_IP_SETTINGS		0xE0	/*< IP settings for BBA (BLOCK_1) */
+#define FLASHROM_B1_EMAIL			0xE2	/*< Email address (BLOCK_1) */
+#define FLASHROM_B1_SMTP			0xE4	/*< SMTP server setting (BLOCK_1) */
+#define FLASHROM_B1_POP3			0xE5	/*< POP3 server setting (BLOCK_1) */
+#define FLASHROM_B1_POP3LOGIN		0xE6	/*< POP3 login setting (BLOCK_1) */
+#define FLASHROM_B1_POP3PASSWD		0xE7	/*< POP3 password setting + proxy (BLOCK_1) */
+#define FLASHROM_B1_PPPLOGIN		0xE8	/*< PPP username + proxy (BLOCK_1) */
+#define FLASHROM_B1_PPPPASSWD		0xE9	/*< PPP passwd (BLOCK_1) */
 
 /**
   Implements the FLASHROM_INFO syscall; given a partition ID,
@@ -133,49 +144,89 @@ int flashrom_get_region();
 #define FLASHROM_ISP_PPPOE	4
 
 /**
-  This struct will be filled by calling flashrom_get_isp_settings below.
-  Thanks to Sam Steele for this info. */
+  Valid field constants in the ispcfg structure. */
+#define FLASHROM_ISP_IP			(1 <<  0)
+#define FLASHROM_ISP_NETMASK	(1 <<  1)
+#define FLASHROM_ISP_BROADCAST	(1 <<  2)
+#define FLASHROM_ISP_GATEWAY	(1 <<  3)
+#define FLASHROM_ISP_DNS		(1 <<  4)
+#define FLASHROM_ISP_HOSTNAME	(1 <<  5)
+#define FLASHROM_ISP_EMAIL		(1 <<  6)
+#define FLASHROM_ISP_SMTP		(1 <<  7)
+#define FLASHROM_ISP_POP3		(1 <<  8)
+#define FLASHROM_ISP_POP3_USER	(1 <<  9)
+#define FLASHROM_ISP_POP3_PASS	(1 << 10)
+#define FLASHROM_ISP_PROXY_HOST	(1 << 11)
+#define FLASHROM_ISP_PROXY_PORT	(1 << 12)
+#define FLASHROM_ISP_PPP_USER	(1 << 13)
+#define FLASHROM_ISP_PPP_PASS	(1 << 14)
+#define FLASHROM_ISP_OUT_PREFIX	(1 << 15)
+#define FLASHROM_ISP_CW_PREFIX	(1 << 16)
+#define FLASHROM_ISP_REAL_NAME	(1 << 17)
+#define FLASHROM_ISP_MODEM_INIT	(1 << 18)
+#define FLASHROM_ISP_AREA_CODE	(1 << 19)
+#define FLASHROM_ISP_LD_PREFIX	(1 << 20)
+#define FLASHROM_ISP_PHONE1		(1 << 21)
+#define FLASHROM_ISP_PHONE2		(1 << 22)
+
+/**
+  Flags for the ispcfg structure */
+#define FLASHROM_ISP_DIAL_AREACODE	(1 <<  0)
+#define FLASHROM_ISP_USE_PROXY		(1 <<  1)
+#define FLASHROM_ISP_PULSE_DIAL		(1 <<  2)
+#define FLASHROM_ISP_BLIND_DIAL		(1 <<  3)
+
+/**
+  This struct will be filled by calling flashrom_get_ispcfg below.
+  Thanks to Sam Steele for the information on DreamPassport's ISP settings.
+  Note that this structure has been completely reworked so that it is more
+  generic and can support both DreamPassport and PlanetWeb's settings. */
 typedef struct flashrom_ispcfg {
-	int	ip_valid;		/*< >0 if the IP settings are valid */
 	int	method;			/*< DHCP, Static, dialup(?), PPPoE */
+	uint32	valid_fields;	/*< Which fields are valid? */
+	uint32	flags;		/*< Various flags that can be set in options */
+
 	uint8	ip[4];		/*< Host IP address */
 	uint8	nm[4];		/*< Netmask */
 	uint8	bc[4];		/*< Broadcast address */
 	uint8	gw[4];		/*< Gateway address */
 	uint8	dns[2][4];	/*< DNS servers (2) */
-	char	hostname[24];	/*< DHCP/Host name */
-
-	int	email_valid;	/*< >0 if the email setting is valid */
-	char	email[48];	/*< Email address */
-
-	int	smtp_valid;		/*< >0 if the smtp setting is valid */
-	char	smtp[28];	/*< SMTP server */
-
-	int	pop3_valid;		/*< >0 if the pop3 setting is valid */
-	char	pop3[24];	/*< POP3 server */
-
-	int	pop3_login_valid;		/*< >0 if the login setting is valid */
-	char	pop3_login[20];		/*< POP3 login */
-
-	int	pop3_passwd_valid;		/*< >0 if the passwd/proxy setting is valid */
-	char	pop3_passwd[32];	/*< POP3 passwd */
-	char	proxy_host[16];		/*< Proxy server hostname */
-
-	int	ppp_login_valid;	/*< >0 if the PPP login/proxy setting is valid */
 	int	proxy_port;			/*< Proxy server port */
-	char	ppp_login[8];	/*< PPP login */
-
-	int	ppp_passwd_valid;	/*< >0 if the PPP passwd setting is valid */
+	char	hostname[24];	/*< DHCP/Host name */
+	char	email[64];	/*< Email address */
+	char	smtp[31];	/*< SMTP server */
+	char	pop3[31];	/*< POP3 server */
+	char	pop3_login[20];		/*< POP3 login */
+	char	pop3_passwd[32];	/*< POP3 passwd */
+	char	proxy_host[31];		/*< Proxy server hostname */
+	char	ppp_login[29];	/*< PPP login */
 	char	ppp_passwd[20];	/*< PPP password */
+	char	out_prefix[9];	/*< Outside dial prefix */
+	char	cw_prefix[9];	/*< Call waiting prefix */
+	char	real_name[31];	/*< The "Real Name" field of PlanetWeb */
+	char	modem_init[33];	/*< The modem init string to use */
+	char	area_code[4];	/*< The area code the user is in */
+	char	ld_prefix[21];	/*< The long-distance dial prefix */
+	char	p1_areacode[4];	/*< Phone number 1's area code */
+	char	phone1[26];	/*< Phone number 1 */
+	char	p2_areacode[4];	/*< Phone number 2's area code */
+	char	phone2[26];	/*< Phone number 2 */
 } flashrom_ispcfg_t;
 
 /**
-  Retrieves the console's ISP settings, if they exist. These are set by
-  programs like Dream Passport 3. Returns -1 on error (none of the settings
-  can be found, or some other error), or >=0 on success. You should check
-  the _valid member of the matching part of the struct before relying on
-  the data. */
+  Retrieves the console's ISP settings as set by DreamPassport, if they exist.
+  Returns -1 on error (none of the settings can be found, or some other error),
+  or >=0 on success. You should check the valid_fields bitfield for the part of
+  the struct you want before relying on the data. */
 int flashrom_get_ispcfg(flashrom_ispcfg_t * out);
+
+/**
+  Retrieves the console's ISP settings as set by PlanetWeb (1.0 and 2.1 have
+  been verified to work), if they exist. Returns -1 on error (generally if the
+  PlanetWeb settings are non-existant) or >= 0 on success. You should check the
+  valid_fields bitfield for the part of the struct you want before relying on
+  the data. */
+int flashrom_get_pw_ispcfg(flashrom_ispcfg_t *out);
 
 /* More to come later */
 

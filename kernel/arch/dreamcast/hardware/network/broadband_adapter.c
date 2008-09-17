@@ -1002,11 +1002,13 @@ static void bba_if_netinput(uint8 *pkt, int pktsize) {
 /* Set ISP configuration from the flashrom, as long as we're configured staticly */
 static void bba_set_ispcfg() {
 	flashrom_ispcfg_t isp;
+	uint32 fields = FLASHROM_ISP_IP | FLASHROM_ISP_NETMASK |
+		FLASHROM_ISP_BROADCAST | FLASHROM_ISP_GATEWAY;
 
 	if(flashrom_get_ispcfg(&isp) == -1)
 		return;
 
-	if(!isp.ip_valid)
+	if((isp.valid_fields & fields) != fields)
 		return;
 
 	if(isp.method != FLASHROM_ISP_STATIC)

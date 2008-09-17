@@ -175,32 +175,37 @@ int netcfg_load_flash(netcfg_t * out) {
 		((src[2]) << 8) | \
 		((src[3]) << 0)
 
-	if (cfg.ip_valid) {
+	if (cfg.valid_fields & FLASHROM_ISP_IP)
 		READIP(out->ip, cfg.ip);
+	if (cfg.valid_fields & FLASHROM_ISP_GATEWAY)
 		READIP(out->gateway, cfg.gw);
+	if (cfg.valid_fields & FLASHROM_ISP_NETMASK)
 		READIP(out->netmask, cfg.nm);
+	if (cfg.valid_fields & FLASHROM_ISP_BROADCAST)
 		READIP(out->broadcast, cfg.bc);
+	if (cfg.valid_fields & FLASHROM_ISP_DNS) {
 		READIP(out->dns[0], cfg.dns[0]);
 		READIP(out->dns[1], cfg.dns[1]);
+	}
+	if (cfg.valid_fields & FLASHROM_ISP_HOSTNAME)
 		strcpy(out->hostname, cfg.hostname);
-	}
-	if (cfg.email_valid)
+	if (cfg.valid_fields & FLASHROM_ISP_EMAIL)
 		strcpy(out->email, cfg.email);
-	if (cfg.smtp_valid)
+	if (cfg.valid_fields & FLASHROM_ISP_SMTP)
 		strcpy(out->smtp, cfg.smtp);
-	if (cfg.pop3_valid)
+	if (cfg.valid_fields & FLASHROM_ISP_POP3)
 		strcpy(out->pop3, cfg.pop3);
-	if (cfg.pop3_login_valid)
+	if (cfg.valid_fields & FLASHROM_ISP_POP3_USER)
 		strcpy(out->pop3_login, cfg.pop3_login);
-	if (cfg.pop3_passwd_valid) {
+	if (cfg.valid_fields & FLASHROM_ISP_POP3_PASS)
 		strcpy(out->pop3_passwd, cfg.pop3_passwd);
+	if (cfg.valid_fields & FLASHROM_ISP_PROXY_PORT)
 		out->proxy_port = cfg.proxy_port;
-	}
-	if (cfg.ppp_login_valid) {
+	if (cfg.valid_fields & FLASHROM_ISP_PROXY_HOST)
 		strcpy(out->proxy_host, cfg.proxy_host);
+	if (cfg.valid_fields & FLASHROM_ISP_PPP_USER)
 		strcpy(out->ppp_login, cfg.ppp_login);
-	}
-	if (cfg.ppp_passwd_valid)
+	if (cfg.valid_fields & FLASHROM_ISP_PPP_PASS)
 		strcpy(out->ppp_passwd, cfg.ppp_passwd);
 
 #undef READIP

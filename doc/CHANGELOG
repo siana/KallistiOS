@@ -172,6 +172,10 @@ KallistiOS version 1.3.0 -----------------------------------------------
 - *** Fixes to the network stack to support sending/receiving broadcast packets
       properly [LS]
 - GBA Fixed arch/types.h so the toolchain can compile. [HL]
+- DC  Adjusted the flashrom_ispcfg_t structure to account for differences
+      between PlanetWeb and DreamPassport [LS]
+- DC  Added reading of the ISP settings from PlanetWeb to the flashrom code [LS]
+- DC  Fixed various pieces of code that rely on flashrom_ispcfg_t [LS]
 
 KallistiOS version 1.2.0 -----------------------------------------------
 - DC  Fix to use DCARM7_CFLAGS when compiling ARM driver [Christian Groessler == CG]
