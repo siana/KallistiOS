@@ -1044,8 +1044,9 @@ int bba_init() {
 	bba_if.flags = NETIF_NO_FLAGS;
 	bba_get_mac(bba_if.mac_addr);
 	memset(bba_if.ip_addr, 0, sizeof(bba_if.ip_addr));
-    memset(bba_if.netmask, 0, sizeof(bba_if.netmask));
-    memset(bba_if.gateway, 0, sizeof(bba_if.gateway));
+	memset(bba_if.netmask, 0, sizeof(bba_if.netmask));
+	memset(bba_if.gateway, 0, sizeof(bba_if.gateway));
+	memset(bba_if.broadcast, 0, sizeof(bba_if.broadcast));
 	bba_if.if_detect = bba_if_detect;
 	bba_if.if_init = bba_if_init;
 	bba_if.if_shutdown = bba_if_shutdown;

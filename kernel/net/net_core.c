@@ -12,7 +12,7 @@
 #include <kos/net.h>
 #include <kos/fs_socket.h>
 
-CVSID("$Id: net_core.c,v 1.5 2002/10/26 07:59:50 bardtx Exp $");
+#include "net_dhcp.h"
 
 /*
 
@@ -151,12 +151,22 @@ int net_init() {
 	/* Initialize the sockets-like interface */
 	fs_socket_init();
 
+    /* Initialize the DHCP system */
+    net_dhcp_init();
+
+    if(net_default_dev && !net_default_dev->ip_addr[0]) {
+        return net_dhcp_request();
+    }
+
 	return 0;
 }
 
 /* Shutdown */
 void net_shutdown() {
 	netif_t *cur;
+
+    /* Shut down DHCP */
+    net_dhcp_shutdown();
 
 	/* Shut down the sockets-like interface */
 	fs_socket_shutdown();

@@ -668,6 +668,7 @@ int la_init() {
 	memset(la_if.ip_addr, 0, sizeof(la_if.ip_addr));
 	memset(la_if.netmask, 0, sizeof(la_if.netmask));
 	memset(la_if.gateway, 0, sizeof(la_if.gateway));
+	memset(la_if.broadcast, 0, sizeof(la_if.broadcast));
 	la_if.if_detect = la_if_detect;
 	la_if.if_init = la_if_init;
 	la_if.if_shutdown = la_if_shutdown;
