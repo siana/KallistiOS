@@ -3,7 +3,6 @@
    arch/ia32/include/cache.h
    (c)2001 Dan Potter
    
-   $Id: cache.h,v 1.1 2003/08/01 03:18:37 bardtx Exp $
 */
 
 #ifndef __ARCH_CACHE_H

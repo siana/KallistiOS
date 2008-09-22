@@ -3,7 +3,6 @@
 # arch/dreamcast/navi/Makefile
 # (c)2002 Dan Potter
 #
-# $Id: Makefile,v 1.1 2002/05/05 22:16:49 bardtx Exp $
 
 # IDE
 OBJS += navi_ide.o

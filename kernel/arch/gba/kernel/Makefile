@@ -2,8 +2,7 @@
 #
 # arch/gba/kernel/Makefile
 # (c)2000 Dan Potter
-#   
-# $Id: Makefile,v 1.3 2003/01/10 13:03:40 gilm Exp $
+#
 
 # Generic kernel abstraction layer: this provides a set of routines
 # that the portable part of the kernel expects to find on every

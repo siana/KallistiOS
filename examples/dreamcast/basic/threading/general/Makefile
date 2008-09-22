@@ -2,8 +2,7 @@
 #
 # basic/threading/Makefile
 # (c)2001 Dan Potter
-#   
-# $Id: Makefile,v 1.3 2002/04/20 06:25:41 bardtx Exp $
+#
 
 all: rm-elf general_threading_test.elf
 

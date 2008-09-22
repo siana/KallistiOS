@@ -1,8 +1,6 @@
 # KallistiOS ##version##
 # 
 # tunnel Makefile
-#
-# $Id: Makefile,v 1.4 2002/09/05 07:40:48 bardtx Exp $
 #   
 
 TARGET = tunnel.elf

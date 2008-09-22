@@ -3,8 +3,6 @@
    kos/elf.h
    Copyright (C)2000,2001,2003 Dan Potter
 
-   $Id: elf.h,v 1.3 2003/08/02 23:08:36 bardtx Exp $
-
 */
 
 #ifndef __KOS_ELF_H

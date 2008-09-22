@@ -1,8 +1,6 @@
 #
 # KallistiGL View Frustum Z-Clipping Test Program
 # (c)2002 Paul Boese
-#
-# $Id
 #   
 
 TARGET = vfzclip.elf

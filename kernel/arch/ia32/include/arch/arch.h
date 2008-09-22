@@ -3,7 +3,6 @@
    arch/ia32/include/arch.h
    Copyright (C)2001,2003 Dan Potter
    
-   $Id: arch.h,v 1.2 2003/08/02 23:09:26 bardtx Exp $
 */
 
 #ifndef __ARCH_ARCH_H

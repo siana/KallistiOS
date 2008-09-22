@@ -3,7 +3,6 @@
    arch/dreamcast/include/arch/stack.h
    (c)2002 Dan Potter
    
-   $Id: stack.h,v 1.1 2002/09/13 04:40:52 bardtx Exp $
 */
 
 #ifndef __ARCH_STACK_H

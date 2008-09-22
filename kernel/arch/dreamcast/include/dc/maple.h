@@ -3,8 +3,6 @@
    kernel/arch/dreamcast/include/dc/maple.h
    (C)2002 Dan Potter
 
-   $Id: maple.h,v 1.10 2003/04/24 03:14:47 bardtx Exp $
-
    This new driver's design is based loosely on the LinuxDC maple
    bus driver.
 */

@@ -11,8 +11,6 @@
 #include <dc/asic.h>
 #include <kos/sem.h>
 
-CVSID("$Id: spudma.c,v 1.4 2002/02/10 02:30:10 bardtx Exp $");
-
 /* testing */
 #define ASIC_IRQ ASIC_IRQB
 

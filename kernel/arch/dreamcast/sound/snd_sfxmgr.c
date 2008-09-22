@@ -21,8 +21,6 @@
 
 #include "arm/aica_cmd_iface.h"
 
-CVSID("$Id: snd_sfxmgr.c,v 1.11 2003/04/24 03:17:08 bardtx Exp $");
-
 struct snd_effect;
 LIST_HEAD(selist, snd_effect);
 

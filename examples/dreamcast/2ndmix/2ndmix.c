@@ -19,9 +19,6 @@ new PVR API.
 #include <stdlib.h>
 #include <assert.h>
 
-CVSID("$Id: 2ndmix.c,v 1.7 2002/09/05 07:49:38 bardtx Exp $");
-
-
 /* Floating-point Sin/Cos; 256 angles, -1.0 to 1.0 */
 #include "sintab.h"
 #define msin(angle) sintab[angle]

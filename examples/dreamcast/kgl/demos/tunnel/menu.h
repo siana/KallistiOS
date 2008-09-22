@@ -5,7 +5,6 @@
 
    A cheap little menu class
 
-   $Id: menu.h,v 1.1 2002/03/04 02:57:32 axlen Exp $
 */
 
 #ifndef __MENU_H

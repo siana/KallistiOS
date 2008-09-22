@@ -25,8 +25,6 @@ on sunsite.unc.edu in /pub/Linux/system/recovery/, or as a package under Debian 
 #include <assert.h>
 #include <errno.h>
 
-CVSID("$Id: fs_romdisk.c,v 1.11 2003/07/31 00:39:08 bardtx Exp $");
-
 /* Header definitions from Linux ROMFS documentation; all integer quantities are
    expressed in big-endian notation. Unfortunately the ROMFS guys were being
    clever and made this header a variable length depending on the size of

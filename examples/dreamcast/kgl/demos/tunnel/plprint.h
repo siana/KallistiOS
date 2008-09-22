@@ -3,7 +3,6 @@
    plprint.h
    (c)2002 Paul Boese
 
-   $Id: plprint.h,v 1.1 2002/03/04 02:57:32 axlen Exp $
 */
 
 #ifndef __PLPRINT_H

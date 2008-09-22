@@ -4,7 +4,6 @@
 # scissor test
 # (c)2002 Paul Boese
 #
-# $Id: Makefile,v 1.4 2002/09/05 07:40:47 bardtx Exp $   
 
 TARGET = scissor.elf
 OBJS = scissor.o

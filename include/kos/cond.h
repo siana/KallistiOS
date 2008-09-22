@@ -3,8 +3,6 @@
    include/kos/cond.h
    Copyright (C)2001,2003 Dan Potter
 
-   $Id: cond.h,v 1.4 2003/07/31 00:38:00 bardtx Exp $
-
 */
 
 #ifndef __KOS_COND_H

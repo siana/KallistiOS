@@ -19,8 +19,6 @@
 #include <kos/genwait.h>
 #include <sys/queue.h>
 
-CVSID("$Id: cond.c,v 1.8 2003/02/17 04:41:58 bardtx Exp $");
-
 /**************************************/
 
 /* Global list of condvars */

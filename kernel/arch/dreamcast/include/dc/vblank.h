@@ -3,7 +3,6 @@
    dc/vblank.h
    Copyright (C)2003 Dan Potter
 
-   $Id: vblank.h,v 1.1 2003/04/24 03:07:20 bardtx Exp $
 */
 
 #ifndef __DC_VBLANK_H

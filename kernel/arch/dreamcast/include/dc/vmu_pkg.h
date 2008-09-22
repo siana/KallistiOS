@@ -3,8 +3,6 @@
    dc/vmu_pkg.h
    (c)2002 Dan Potter
 
-   $Id: vmu_pkg.h,v 1.2 2002/06/11 05:55:36 bardtx Exp $
-
 */
 
 #ifndef __DC_VMU_PKG_H

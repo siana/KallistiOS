@@ -16,8 +16,6 @@
 #include <arch/dbgio.h>
 #include <arch/stack.h>
 
-CVSID("$Id: stack.c,v 1.2 2003/08/02 09:14:46 bardtx Exp $");
-
 /* Do a stack trace from the current function; leave off the first n frames
    (i.e., in assert()). */
 void arch_stk_trace(int n) {

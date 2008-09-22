@@ -3,7 +3,6 @@
    arch/dreamcast/include/types.h
    (c)2000-2001 Dan Potter
    
-   $Id: types.h,v 1.2 2002/01/05 07:33:50 bardtx Exp $
 */
 
 #ifndef __ARCH_TYPES_H

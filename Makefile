@@ -2,8 +2,7 @@
 #
 # Root Makefile
 # Copyright (C)2003 Dan Potter
-#   
-# $Id: Makefile,v 1.5 2002/04/20 17:23:31 bardtx Exp $
+#
 
 # Add stuff to DIRS to auto-compile it with the big tree.
 DIRS = utils

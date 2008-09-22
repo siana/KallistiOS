@@ -3,8 +3,6 @@
    pvr_mem_core.h
    (c)2001 Dan Potter
 
-   $Id: pvr_mem_core.h,v 1.4 2002/07/07 21:51:49 bardtx Exp $
-
    Imported from the public domain source by Doug Lea.
 
  */

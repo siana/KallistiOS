@@ -7,8 +7,6 @@
 #include <arch/syscall.h>
 #include <arch/irq.h>
 
-CVSID("$Id: syscall.c,v 1.1 2002/11/03 03:40:55 bardtx Exp $");
-
 /* The actual syscall handler */
 extern void syscall_entry(irq_t source, irq_context_t *cxt);
 /* T0 will contain the address to which we should jump. When that

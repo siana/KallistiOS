@@ -3,7 +3,6 @@
 # ipload.py
 # Quick and dirty Python-based ip uploader for use with Marcus' IPLOAD
 # (c)2001 Dan Potter
-# $Id: ipload.py,v 1.1.1.1 2001/09/26 07:05:01 bardtx Exp $
 #
 # Note: works ok with Python 2.0, untested with Python 1.x
 #

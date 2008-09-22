@@ -3,8 +3,6 @@
    kos/iovec.h
    Copyright (C)2001 Dan Potter
 
-   $Id: iovec.h,v 1.1 2002/02/09 06:15:42 bardtx Exp $
-
 */
 
 #ifndef __KOS_IOVEC_H

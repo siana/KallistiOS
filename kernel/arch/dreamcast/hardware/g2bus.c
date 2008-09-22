@@ -23,8 +23,6 @@
 #include <dc/g2bus.h>
 #include <arch/spinlock.h>
 
-CVSID("$Id: g2bus.c,v 1.5 2003/02/14 06:33:47 bardtx Exp $");
-
 /* These two macros are based on NetBSD's DC port */
 
 /*

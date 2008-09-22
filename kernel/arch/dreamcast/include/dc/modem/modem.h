@@ -5,7 +5,6 @@
 
    Distributed under the terms of the KOS license.
 
-   $Id: modem.h,v 1.1 2003/05/23 02:05:02 bardtx Exp $
 */
 
 #ifndef __DC_MODEM_MODEM_H

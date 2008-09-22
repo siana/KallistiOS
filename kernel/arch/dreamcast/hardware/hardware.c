@@ -14,8 +14,6 @@
 #include <dc/net/lan_adapter.h>
 #include <dc/vblank.h>
 
-CVSID("$Id: hardware.c,v 1.9 2003/04/24 03:25:56 bardtx Exp $");
-
 static int initted = 0;
 
 int hardware_sys_init() {

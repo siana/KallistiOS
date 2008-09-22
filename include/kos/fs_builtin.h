@@ -3,7 +3,6 @@
    kos/fs_builtin.h
    (c)2000-2001 Dan Potter
 
-   $Id: fs_builtin.h,v 1.3 2002/08/12 18:43:53 bardtx Exp $
 */
 
 #ifndef __KOS_FS_BUILTIN_H

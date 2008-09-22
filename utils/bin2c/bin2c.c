@@ -3,7 +3,6 @@
 
    (c)2000 Dan Potter
 
-   $Id: bin2c.c,v 1.2 2002/12/17 15:55:00 gilm Exp $
 */
 
 #include <stdio.h>

@@ -10,8 +10,6 @@
 #include <string.h>
 #include <dc/vmu_pkg.h>
 
-CVSID("$Id: vmu_pkg.c,v 1.3 2003/01/17 02:56:45 bardtx Exp $");
-
 /*
 
 VMU data files can be stored raw, but if you want to interact with the

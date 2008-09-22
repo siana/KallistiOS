@@ -14,8 +14,6 @@
 #include <dc/maple/vmu.h>
 #include <arch/timer.h>
 
-CVSID("$Id: vmu.c,v 1.9 2003/04/25 04:13:12 bardtx Exp $");
-
 /*
    This module deals with the VMU.  It provides functionality for
    memorycard access, and for access to the lcd screen.

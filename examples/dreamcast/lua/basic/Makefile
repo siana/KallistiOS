@@ -2,8 +2,7 @@
 #
 # lua/basic/Makefile
 # (c)2002 Dan Potter
-#   
-# $Id: Makefile,v 1.2 2002/06/30 06:33:38 bardtx Exp $
+#
 
 all: rm-elf lua.elf
 

@@ -11,8 +11,6 @@
 #include <string.h>
 #include <assert.h>
 
-CVSID("$Id: controller.c,v 1.5 2002/05/24 06:47:26 bardtx Exp $");
-
 static cont_btn_callback_t btn_callback = NULL;
 static uint8 btn_callback_addr = 0;
 static uint32 btn_callback_btns = 0;

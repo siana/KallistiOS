@@ -32,8 +32,6 @@ instead. ^_^;
    every time a block is allocated or freed) */
 /* #define KM_DBG_VERBOSE */
 
-CVSID("$Id: pvr_mem.c,v 1.7 2003/04/24 03:10:08 bardtx Exp $");
-
 /* Bring in some prototypes from pvr_mem_core.c */
 /* We can't directly include its header because of name clashes with
    the real malloc header */

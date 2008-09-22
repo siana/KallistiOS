@@ -105,7 +105,3 @@ Hardware Control Layer
   - Ethernet
   - Bitmaster bus device?
 * TCP/IP stack
-
-
-KOS Version Id: $Id: goals.txt,v 1.1.1.1 2001/09/26 07:05:00 bardtx Exp $
-

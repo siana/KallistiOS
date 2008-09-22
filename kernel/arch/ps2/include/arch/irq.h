@@ -2,8 +2,6 @@
 
    arch/ps2/include/irq.h
    (c)2000-2002 Dan Potter
-
-   $Id: irq.h,v 1.3 2002/11/03 03:40:55 bardtx Exp $
   
 */
 

@@ -2,8 +2,7 @@
 #
 # conio/basic/Makefile
 # (c)2002 Dan Potter
-#   
-# $Id: Makefile,v 1.1 2002/04/20 19:21:49 bardtx Exp $
+#
 
 all: rm-elf basic.elf
 

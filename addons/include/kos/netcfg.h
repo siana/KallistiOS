@@ -3,8 +3,6 @@
    kos/netcfg.h
    Copyright (C)2003 Dan Potter
 
-   $Id: netcfg.h,v 1.1 2003/07/15 07:58:28 bardtx Exp $
-
 */
 
 #ifndef __KOS_NETCFG_H

@@ -39,8 +39,6 @@ cache data from disk rather than as a general purpose file system.
 #include <stdlib.h>
 #include <assert.h>
 
-CVSID("$Id: fs_ramdisk.c,v 1.4 2003/07/15 07:55:02 bardtx Exp $");
-
 /* File definition */
 typedef struct rd_file {
 	char	* name;		/* File name -- allocated */

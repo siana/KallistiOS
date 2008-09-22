@@ -3,8 +3,6 @@
    kos/dbglog.h
    Copyright (C)2004 Dan Potter
 
-   $Id: stdio.h,v 1.3 2003/06/23 05:21:31 bardtx Exp $
-
 */
 
 #ifndef __KOS_DBGLOG_H

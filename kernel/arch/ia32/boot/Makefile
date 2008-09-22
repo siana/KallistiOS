@@ -2,7 +2,6 @@
 #
 # arch/ia32/loader/Makefile
 #
-# $Id: Makefile,v 1.2 2003/08/02 09:14:11 bardtx Exp $
 
 all:
 	nasm loader.asm -o loader.bin

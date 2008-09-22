@@ -2,7 +2,6 @@
  * This module was ported from the BSD 4.5 libc by Dan Potter. Please   
  * see "README.BSD" in "docs" for more information.   
  *   
- * $Id: endian.h,v 1.2 2003/04/24 03:18:08 bardtx Exp $
  */
 
 /*

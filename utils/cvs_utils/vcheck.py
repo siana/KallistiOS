@@ -5,7 +5,6 @@
 #
 # (c)2002 Dan Potter
 #
-# $Id: vcheck.py,v 1.3 2002/10/26 08:03:18 bardtx Exp $
 #
 
 import sys, string, os, re

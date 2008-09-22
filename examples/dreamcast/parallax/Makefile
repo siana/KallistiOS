@@ -2,8 +2,7 @@
 #
 # examples/dreamcast/parallax/Makefile
 # (c)2002 Dan Potter
-#   
-# $Id: Makefile,v 1.2 2002/09/10 04:40:10 bardtx Exp $
+#
 
 TARGETS = font bubbles raster_melt sinus delay_cube rotocube
 

@@ -3,7 +3,6 @@
    dc/fs/iso9660.h
    (c)2000-2001 Dan Potter
 
-   $Id: fs_iso9660.h,v 1.5 2003/04/24 03:14:20 bardtx Exp $
 */
 
 #ifndef __DC_FS_ISO9660_H

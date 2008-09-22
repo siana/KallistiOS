@@ -4,8 +4,6 @@
    (c)2000-2001 Dan Potter
 */
 
-static char id[] = "KOS $Id: dbgio.c,v 1.2 2002/12/12 21:50:43 gilm Exp $";
-
 #include <string.h>
 #include <stdio.h>
 #include <stdarg.h>

@@ -2,8 +2,7 @@
 #
 # Makefile.rules
 # (c)2000-2001 Dan Potter
-#   
-# $Id: Makefile.rules,v 1.9 2003/02/27 04:49:53 bardtx Exp $
+#
 
 # Global KallistiOS Makefile include
 

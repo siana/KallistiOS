@@ -3,8 +3,6 @@
    include/kos/genwait.h
    Copyright (c)2003 Dan Potter
 
-   $Id: genwait.h,v 1.2 2003/02/16 04:55:24 bardtx Exp $
-
 */
 
 #ifndef __KOS_GENWAIT_H

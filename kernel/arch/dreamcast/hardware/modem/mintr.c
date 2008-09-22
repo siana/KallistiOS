@@ -15,8 +15,6 @@
 #include "dc/modem/modem.h"
 #include "mintern.h"
 
-CVSID("$Id: mintr.c,v 1.1 2003/05/23 02:04:42 bardtx Exp $");
-
 /* This controls the code that's executed during a modem generated interrupt */
 void (*modemCallbackCode)(void) = NULL;
 

@@ -4,8 +4,6 @@
    (c)2001 Dan Potter
 */
 
-static char id[] = "KOS $Id: panic.c,v 1.1.1.1 2001/09/26 07:05:11 bardtx Exp $";
-
 /* Setup basic kernel services (printf, etc) */
 #include <stdio.h>
 #include <malloc.h>

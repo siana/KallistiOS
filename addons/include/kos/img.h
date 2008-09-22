@@ -3,8 +3,6 @@
    kos/img.h
    (c)2002 Dan Potter
 
-   $Id: img.h,v 1.4 2003/04/24 03:00:44 bardtx Exp $
-
 */
 
 #ifndef __KOS_IMG_H

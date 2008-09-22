@@ -2,8 +2,7 @@
 #
 # arch/dreamcast/hardware/pvr/Makefile
 # (c)2002 Dan Potter
-#   
-# $Id: Makefile,v 1.6 2002/09/27 22:39:25 bardtx Exp $
+#
 
 # Memory management
 OBJS := pvr_mem_core.o pvr_mem.o

@@ -3,7 +3,6 @@
    kos.h
    (c)2001 Dan Potter
 
-   $Id: kos.h,v 1.25 2003/05/23 02:18:45 bardtx Exp $
 */
 
 #ifndef __KOS_H

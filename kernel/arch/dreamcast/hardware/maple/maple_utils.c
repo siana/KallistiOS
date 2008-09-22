@@ -9,8 +9,6 @@
 #include <string.h>
 #include <dc/maple.h>
 
-CVSID("$Id: maple_utils.c,v 1.1 2002/02/22 07:34:20 bardtx Exp $");
-
 /* Enable / Disable the bus */
 void maple_bus_enable() {
 	maple_write(MAPLE_ENABLE, MAPLE_ENABLE_ENABLED);

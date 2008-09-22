@@ -8,8 +8,6 @@
 #include <lwip/lwip.h>
 #include <lwip/sockets.h>
 #include <sys/queue.h>
-
-CVSID("$Id: httpd.c,v 1.3 2003/07/22 03:57:57 bardtx Exp $");
       
 struct http_state;
 typedef TAILQ_HEAD(http_state_list, http_state) http_state_list_t;

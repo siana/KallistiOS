@@ -3,7 +3,6 @@
  *  dc/video.h
  *  (c)2001 Anders Clerwall (scav)
  *
- *  $Id: video.h,v 1.6.2.1 2003/07/10 02:20:23 bardtx Exp $
  */
 
 #ifndef __DC_VIDEO_H

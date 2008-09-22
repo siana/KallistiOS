@@ -25,10 +25,7 @@ says is that you have to give credit where credit is due (both in
 derived source files and binary compilations; a credit in the
 documentation is ok) and there is no warranty.
 
-							Dan Potter
-
-KOS Version Id: $Id: README.KOS,v 1.2 2002/04/20 03:23:57 bardtx Exp $
-							
+							Dan Potter							
 
 All of the documentation and software included in the KallistiOS Releases
 is copyrighted (c)2000-2002 by Dan Potter and others (as noted in each file).

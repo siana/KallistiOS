@@ -21,8 +21,6 @@
  
 */
 
-CVSID("$Id: pvr_scene.c,v 1.9 2003/03/09 01:19:31 bardtx Exp $");
-
 void * pvr_set_vertbuf(pvr_list_t list, void * buffer, int len) {
 	void * oldbuf;
 

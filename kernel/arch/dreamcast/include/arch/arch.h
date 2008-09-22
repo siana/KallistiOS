@@ -3,7 +3,6 @@
    arch/dreamcast/include/arch.h
    (c)2001 Dan Potter
    
-   $Id: arch.h,v 1.19 2003/02/25 07:39:37 bardtx Exp $
 */
 
 #ifndef __ARCH_ARCH_H

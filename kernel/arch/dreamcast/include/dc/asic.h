@@ -2,8 +2,6 @@
 
    dc/asic.h
    (c)2001-2002 Dan Potter
-
-   $Id: asic.h,v 1.4 2003/02/25 07:39:37 bardtx Exp $
   
 */
 

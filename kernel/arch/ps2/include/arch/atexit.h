@@ -2,8 +2,7 @@
 
    arch/ps2/include/arch/atexit.h
    (c)2002 Florian Schulze
-   
-   $Id: atexit.h,v 1.1 2002/10/26 08:04:00 bardtx Exp $
+
 */
 
 #ifndef __ARCH_ATEXIT_H

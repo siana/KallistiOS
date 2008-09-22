@@ -3,8 +3,6 @@
    include/kos/mutex.h
    Copyright (C)2001,2003 Dan Potter
 
-   $Id: mutex.h,v 1.2 2003/07/31 00:38:00 bardtx Exp $
-
 */
 
 #ifndef __KOS_MUTEX_H

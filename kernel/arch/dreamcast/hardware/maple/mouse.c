@@ -9,8 +9,6 @@
 #include <string.h>
 #include <assert.h>
 
-CVSID("$Id: mouse.c,v 1.3 2002/05/24 06:47:26 bardtx Exp $");
-
 static void mouse_reply(maple_frame_t *frm) {
 	maple_response_t	*resp;
 	uint32			*respbuf;

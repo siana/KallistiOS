@@ -2,8 +2,7 @@
 #
 # arch/dreamcast/kernel/Makefile
 # (c)2000 Dan Potter
-#   
-# $Id: Makefile,v 1.14 2003/02/14 06:41:00 bardtx Exp $
+#
 
 # Generic kernel abstraction layer: this provides a set of routines
 # that the portable part of the kernel expects to find on every

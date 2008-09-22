@@ -2,8 +2,7 @@
 #
 # examples/dreamcast/sound/Makefile
 # (c)2002 Dan Potter
-#   
-# $Id: Makefile,v 1.2.2.1 2003/06/20 06:31:15 bardtx Exp $
+#
 
 all:
 	$(KOS_MAKE) -C ghettoplay-vorbis

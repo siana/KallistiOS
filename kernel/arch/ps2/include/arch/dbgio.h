@@ -2,8 +2,6 @@
 
    arch/ps2/include/dbgio.h
    (c)2000 Dan Potter
-
-   $Id: dbgio.h,v 1.1 2002/10/26 08:04:00 bardtx Exp $
   
 */
 

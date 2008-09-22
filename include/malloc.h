@@ -3,8 +3,6 @@
    malloc.h
    Copyright (C)2003 Dan Potter
 
-   $Id: malloc.h,v 1.6 2003/06/19 04:31:26 bardtx Exp $
-
 */
 
 #ifndef __MALLOC_H

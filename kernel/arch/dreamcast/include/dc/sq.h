@@ -3,7 +3,6 @@
    kernel/arch/dreamcast/include/dc/sq.h
    (C)2000-2001 Andrew Kieschnick
 
-   $Id: sq.h,v 1.2 2002/01/05 07:33:51 bardtx Exp $
 */
 
 

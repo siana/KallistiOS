@@ -3,7 +3,6 @@
 # bin2o (heh)
 # script to convert a binary data to an elf object file
 # (c)2000 Dan Potter
-# $Id: bin2o,v 1.3 2002/11/03 04:57:39 bardtx Exp $
 
 if [ $# != 3 ]; then
 	echo usage: $0 \<input file\> \<symbol\> \<output file\>

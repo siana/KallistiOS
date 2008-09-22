@@ -2,8 +2,7 @@
 #
 # libmp3/Makefile
 # (c)2001 Dan Potter
-#   
-# $Id: Makefile,v 1.3 2002/07/06 07:57:18 bardtx Exp $
+#
 
 OBJS = snd_iface.o snd_sfxmgr.o snd_stream.o snd_stream_drv.o snd_mem.o
 

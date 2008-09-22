@@ -3,8 +3,6 @@
    kos/nmmgr.h
    Copyright (C)2003 Dan Potter
 
-   $Id: nmmgr.h,v 1.1 2003/06/19 04:30:23 bardtx Exp $
-
 */
 
 #ifndef __KOS_NMMGR_H

@@ -10,8 +10,6 @@
 
 #include <sys/cdefs.h>
 
-CVSID("$Id: crtend.c,v 1.1 2002/10/26 08:04:00 bardtx Exp $");
-
 /* Here we gain access to the ctor and dtor sections of the program by
    defining new data in them. */
 typedef void (*fptr)(void);

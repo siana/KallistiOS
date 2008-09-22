@@ -11,8 +11,6 @@
 #include <dcplib/fnt.h>
 #include "plprint.h"
 
-CVSID("$Id: plprint.cpp,v 1.2 2002/04/12 01:05:12 axlen Exp $");
-
 extern uint8 romdisk[];
 
 static fntRenderer *text;

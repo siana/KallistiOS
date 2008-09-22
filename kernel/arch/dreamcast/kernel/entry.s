@@ -407,8 +407,3 @@ _irq_restore:
 _irq_get_sr:
 	rts
 	stc	sr,r0
-
-
-	.ident	"KOS $Id: entry.s,v 1.7 2003/07/31 00:43:53 bardtx Exp $"
-
-

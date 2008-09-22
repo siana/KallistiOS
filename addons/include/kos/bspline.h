@@ -3,7 +3,6 @@
    bspline.h
    (c)2000 Dan Potter
 
-   $Id: bspline.h,v 1.1 2002/09/05 07:31:55 bardtx Exp $
 */
 
 #ifndef __KOS_BSPLINE_H

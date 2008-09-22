@@ -128,8 +128,3 @@ _irq_hnd:
 	ldr	r0,=_irq_handler_sym
 	ldr	r0,[r0]
 	bx	r0
-
-	.section .rodata	
-	.ascii  "KOS $Id: startup.s,v 1.2 2002/09/23 23:03:33 gilm Exp $"
-
-

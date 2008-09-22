@@ -3,7 +3,6 @@
    arch/dreamcast/include/arch/exec.h
    (c)2002 Dan Potter
    
-   $Id: exec.h,v 1.1 2003/08/01 03:18:37 bardtx Exp $
 */
 
 #ifndef __ARCH_EXEC_H

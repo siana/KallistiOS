@@ -7,8 +7,6 @@
 #include <arch/types.h>
 #include <arch/arch.h>
 
-CVSID("$Id: mm.c,v 1.2 2002/11/03 03:40:55 bardtx Exp $");
-
 /* The end of the program is always marked by the '_end' symbol. So we'll
    longword-align that and add a little for safety. sbrk() calls will
    move up from there. */

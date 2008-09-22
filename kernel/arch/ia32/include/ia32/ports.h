@@ -3,7 +3,6 @@
    ports.h
    Copyright (C)2003 Dan Potter
    
-   $Id: ports.h,v 1.1 2003/08/01 03:18:37 bardtx Exp $
 */
 
 #ifndef __IA32_PORTS_H

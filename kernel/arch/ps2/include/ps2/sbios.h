@@ -3,7 +3,6 @@
    arch/ps2/include/sbios.h
    (c)2002 Dan Potter
    
-   $Id: sbios.h,v 1.1 2002/10/27 23:39:23 bardtx Exp $
 */
 
 #ifndef __PS2_SBIOS_H

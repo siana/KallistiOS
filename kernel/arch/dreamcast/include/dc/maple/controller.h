@@ -3,8 +3,6 @@
    dc/maple/controller.h
    (C)2000-2002 Jordan DeLong, Dan Potter
 
-   $Id: controller.h,v 1.4 2002/05/24 06:47:26 bardtx Exp $
-
    Thanks to Marcus Comstedt for information on the controller.
 */
 

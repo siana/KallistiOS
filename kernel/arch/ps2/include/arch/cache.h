@@ -3,7 +3,6 @@
    arch/ps2/include/cache.h
    (c)2001 Dan Potter
    
-   $Id: cache.h,v 1.3 2002/11/03 03:40:55 bardtx Exp $
 */
 
 #ifndef __ARCH_CACHE_H

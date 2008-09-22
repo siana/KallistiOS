@@ -5,7 +5,6 @@
 
    Distributed under the terms of the KOS license.
 
-   $Id: mintern.h,v 1.1 2003/05/23 02:04:42 bardtx Exp $
 */
 
 #ifndef __MINTERN_H

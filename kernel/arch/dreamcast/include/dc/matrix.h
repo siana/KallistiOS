@@ -3,7 +3,6 @@
    matrix.h
    (c)2000 Dan Potter
 
-   $Id: matrix.h,v 1.2 2002/09/06 06:29:08 bardtx Exp $
 */
 
 #ifndef __DC_MATRIX_H

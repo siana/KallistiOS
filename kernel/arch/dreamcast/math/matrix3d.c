@@ -12,8 +12,6 @@
 #include <dc/matrix.h>
 #include <dc/matrix3d.h>
 
-CVSID("$Id: matrix3d.c,v 1.1 2002/09/05 07:32:13 bardtx Exp $");
-
 static matrix_t tr_m __attribute__((aligned(32))) = {
 	{ 1.0f, 0.0f, 0.0f, 0.0f },
 	{ 0.0f, 1.0f, 0.0f, 0.0f },

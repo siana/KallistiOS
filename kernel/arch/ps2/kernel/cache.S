@@ -92,6 +92,3 @@ cache_flush_all:
 // Step 9: Profit!
 	jr	ra
 	nop
-
-	.ident	"KOS $Id: cache.S,v 1.2 2002/11/03 03:40:55 bardtx Exp $"
-

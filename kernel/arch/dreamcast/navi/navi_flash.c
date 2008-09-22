@@ -10,8 +10,6 @@
 #include <stdio.h>
 #include <navi/flash.h>
 
-CVSID("$Id: navi_flash.c,v 1.1 2002/05/05 22:16:49 bardtx Exp $");
-
 /*
 
   A simple MTD driver for the STMicro M29W800B (the flash chip I'm using). Should

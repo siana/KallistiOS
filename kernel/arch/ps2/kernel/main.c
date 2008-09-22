@@ -15,8 +15,6 @@
 
 #include "initall_hdrs.h"
 
-CVSID("$Id: main.c,v 1.4 2002/11/06 08:36:00 bardtx Exp $");
-
 /* This really ought to be prototyped in a header */
 int	mm_init();
 

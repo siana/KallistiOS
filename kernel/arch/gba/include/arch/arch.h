@@ -3,7 +3,6 @@
    arch/gba/arch.h
    (c)2001 Dan Potter
    
-   $Id: arch.h,v 1.4 2003/02/17 00:47:38 bardtx Exp $
 */
 
 #ifndef __ARCH_ARCH_H

@@ -3,7 +3,6 @@
    arch/dreamcast/include/arch/mmu.h
    (c)2001 Dan Potter
    
-   $Id: mmu.h,v 1.1 2003/08/01 03:18:37 bardtx Exp $
 */
 
 #ifndef __ARCH_MMU_H

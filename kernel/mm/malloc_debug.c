@@ -4,8 +4,6 @@
    (c)2001-2002 Dan Potter
 */
 
-static char id[] = "KOS $Id: malloc_debug.c,v 1.6 2002/09/04 03:51:38 bardtx Exp $";
-
 #include <malloc.h>
 #include <arch/types.h>
 #include <kos/thread.h>

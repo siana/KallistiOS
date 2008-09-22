@@ -3,8 +3,6 @@
 ! dcload-syscall.s
 ! (c)2000-2001 Andrew Kieschnick
 !
-! $Id: dcload-syscall.s,v 1.1.1.1 2001/09/26 07:05:11 bardtx Exp $
-!
 
 	.section .text
 	.global	_dcloadsyscall

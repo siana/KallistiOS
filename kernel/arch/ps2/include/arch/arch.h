@@ -3,7 +3,6 @@
    arch/ps2/include/arch.h
    (c)2001-2002 Dan Potter
    
-   $Id: arch.h,v 1.2 2002/10/27 23:39:23 bardtx Exp $
 */
 
 #ifndef __ARCH_ARCH_H

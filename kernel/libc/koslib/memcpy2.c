@@ -3,7 +3,6 @@
    memcpy2.c
    (c)2001 Dan Potter
 
-   $Id: memcpy2.c,v 1.1 2002/02/09 06:15:43 bardtx Exp $
 */
 
 #include <string.h>

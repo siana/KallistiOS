@@ -3,7 +3,6 @@
    kos/fs_romdisk.h
    (c)2001 Dan Potter
 
-   $Id: fs_romdisk.h,v 1.4 2002/08/13 04:54:22 bardtx Exp $
 */
 
 #ifndef __KOS_FS_ROMDISK_H

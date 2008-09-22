@@ -12,8 +12,6 @@
 #include <string.h>
 #include <stdio.h>
 
-CVSID("$Id: exec.c,v 1.1 2003/08/01 03:18:37 bardtx Exp $");
-
 /* Pull the shutdown function in from main.c */
 void arch_shutdown();
 

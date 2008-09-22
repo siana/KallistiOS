@@ -33,8 +33,6 @@
 
 #include "pvr_mem_core.h"
 
-CVSID("$Id: pvr_mem_core.c,v 1.2 2002/01/27 06:12:49 bardtx Exp $");
-
 /* Defined in pvr_mem.c */
 extern void * pvr_int_sbrk(size_t amt);
 

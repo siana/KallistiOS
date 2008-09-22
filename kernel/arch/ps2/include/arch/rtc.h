@@ -3,8 +3,6 @@
    arch/ps2/include/rtc.h
    (c)2000-2002 Dan Potter
 
-   $Id: rtc.h,v 1.1 2002/10/26 08:04:00 bardtx Exp $
-
  */
 
 #ifndef __ARCH_RTC_H

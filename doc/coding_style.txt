@@ -258,7 +258,6 @@ which goes something like this:
    foobar.h
    (c)2002 Joe Sixpack Developer
 
-   $Id: coding_style.txt,v 1.1 2002/02/11 06:05:52 bardtx Exp $
 */
 
 
@@ -341,15 +340,6 @@ by arch-specific headers:
 #include <kos/net.h>
 #include <dc/net/broadband_adapter.h>
 #include <arch/types.h>
-
-After that, you'll want a CVSID line. If you have included no other headers
-then you'll need to manually include sys/cdefs.h, and then put a line much
-like this:
-
-CVSID("$Id: coding_style.txt,v 1.1 2002/02/11 06:05:52 bardtx Exp $");
-
-Later when this is checked in, it will expand to useful version info which
-is placed in the object files.
 
 After that, feel free to put a block comment explaining what's in the file
 and describing any notes about the module, if neccessary / warranted,

@@ -6,14 +6,10 @@
    PCX image loader
 */
 
-/* XXX This needs to go elsewhere... */
-
 #include <stdio.h>
 #include <arch/types.h>
 #include <kos/fs.h>
 #include <kos/pcx.h>
-
-CVSID("$Id: pcx_small.c,v 1.2 2002/01/06 01:14:48 bardtx Exp $");
 
 /* PCX header structure */
 typedef struct {

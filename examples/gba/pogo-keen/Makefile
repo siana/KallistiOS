@@ -2,8 +2,7 @@
 #
 # pogo-keen/Makefile
 # (c)2002 Gil Megidish
-#   
-# $Id: Makefile,v 1.1 2002/09/23 19:30:27 gilm Exp $
+#
 
 all: pogo-keen.gba
 

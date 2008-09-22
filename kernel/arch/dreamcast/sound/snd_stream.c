@@ -22,8 +22,6 @@
 
 #include "arm/aica_cmd_iface.h"
 
-CVSID("$Id: snd_stream.c,v 1.13 2003/03/09 01:26:37 bardtx Exp $");
-
 /*
 
 This module uses a nice circularly queued data stream in SPU RAM, which is

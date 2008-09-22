@@ -22,8 +22,6 @@
    get an entry proc address ("sbios_call"). This will be used
    for all interactions with the SBIOS. */
 
-CVSID("$Id: sbios_init_shutdown.c,v 1.2 2002/11/06 08:40:08 bardtx Exp $");
-
 int sbios_init() {
 	return -1;
 }

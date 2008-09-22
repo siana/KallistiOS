@@ -8,8 +8,6 @@
 #include <dc/maple.h>
 #include <kos/thread.h>
 
-CVSID("$Id: maple_enum.c,v 1.2 2002/05/18 07:11:24 bardtx Exp $");
-
 /* Return the number of connected devices */
 int maple_enum_count() {
 	int p, u, cnt;

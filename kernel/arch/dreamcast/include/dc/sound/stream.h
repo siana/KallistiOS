@@ -3,8 +3,6 @@
    dc/sound/stream.h
    Copyright (C)2002,2004 Dan Potter
 
-   $Id: stream.h,v 1.6 2003/03/09 01:26:36 bardtx Exp $
-
 */
 
 #ifndef __DC_SOUND_STREAM_H

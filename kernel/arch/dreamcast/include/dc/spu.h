@@ -3,8 +3,6 @@
    dc/spu.h
    (c)2000-2001 Dan Potter
 
-   $Id: spu.h,v 1.7 2002/10/17 06:10:39 bardtx Exp $
-
 */
 
 #ifndef __DC_SPU_H

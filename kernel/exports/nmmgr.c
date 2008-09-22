@@ -21,8 +21,6 @@ interface at the front of their struct.
 #include <kos/nmmgr.h>
 #include <kos/mutex.h>
 
-CVSID("$Id: nmmgr.c,v 1.1 2003/06/19 04:29:00 bardtx Exp $");
-
 /* Thread mutex for our name handler list */
 static mutex_t * mutex;
 

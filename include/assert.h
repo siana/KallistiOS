@@ -3,7 +3,6 @@
    assert.h
    Copyright (C)2002,2004 Dan Potter
 
-   $Id: assert.h,v 1.2 2002/09/13 04:41:57 bardtx Exp $
 */
 
 #ifndef __ASSERT_H

@@ -3,8 +3,7 @@
    byteorder.c
    (c)2001 Dan Potter
 
-   $Id: byteorder.c,v 1.1 2002/02/09 06:15:43 bardtx Exp $
- */
+*/
 
 /* Byte-order translation functions */
 #include <arch/types.h>

@@ -3,8 +3,6 @@
    kernel/arch/dreamcast/include/dc/pvr.h
    (C)2002 Dan Potter
 
-   $Id: pvr.h,v 1.28 2003/04/24 03:13:45 bardtx Exp $
-
    Low-level PVR 3D interface for the DC
    Note: this API does _not_ handle any sort of transformations
     (including perspective!) so for that, you should look to KGL.

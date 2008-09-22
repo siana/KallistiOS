@@ -23,8 +23,6 @@
 #include <kos/genwait.h>
 #include <kos/sem.h>
 
-CVSID("$Id: genwait.c,v 1.4 2003/02/16 04:55:24 bardtx Exp $");
-
 /* Our sleep queues table. This is also modeled after the BSD numbers. I
    figure if they've been using it as long as they have, they must be
    on to something. :) */

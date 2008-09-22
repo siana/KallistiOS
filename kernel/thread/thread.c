@@ -20,8 +20,6 @@
 #include <arch/timer.h>
 #include <arch/arch.h>
 
-CVSID("$Id: thread.c,v 1.22 2003/04/08 05:29:46 bardtx Exp $");
-
 /*
 
 This module supports thread scheduling in KOS. The timer interrupt is used

@@ -18,8 +18,6 @@
  
 */
 
-CVSID("$Id: pvr_fog.c,v 1.4 2002/09/29 18:19:51 bardtx Exp $");
-
 /* note: this is my interpetation of stuffing the fog table 
  *       in an attempt to satisfy the GL specs for GL_FOG_EXP
  *       GL_FOG_EXP2, and GL_LINEAR.

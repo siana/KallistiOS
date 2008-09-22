@@ -17,8 +17,6 @@
 
 /* Modified for inclusion into KOS by Dan Potter */
 
-CVSID("$Id: pvr_dma.c,v 1.5 2003/02/25 07:39:37 bardtx Exp $");
-
 /* Signaling semaphore */
 static semaphore_t * dma_done;
 static int dma_blocking;

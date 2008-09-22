@@ -11,8 +11,6 @@
 #include <arch/dbgio.h>
 #include <arch/spinlock.h>
 
-CVSID("$Id: dbgio.c,v 1.2 2002/11/03 03:40:55 bardtx Exp $");
-
 /*
 
 This module assumes the existance of ps2-load-ip. If ps2-load-ip

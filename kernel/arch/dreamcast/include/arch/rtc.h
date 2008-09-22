@@ -3,9 +3,7 @@
    arch/dreamcast/include/rtc.h
    (c)2000-2001 Dan Potter
 
-   $Id: rtc.h,v 1.4 2002/11/16 02:11:58 bardtx Exp $
-
- */
+*/
 
 #ifndef __ARCH_RTC_H
 #define __ARCH_RTC_H

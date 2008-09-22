@@ -4,9 +4,6 @@
    (c)2000-2001 Dan Potter
 */
 
-static char id[] = "KOS $Id: mm.c,v 1.1.1.1 2001/09/26 07:05:11 bardtx Exp $";
-
-
 /* Defines a simple UNIX-style memory pool system. */
 
 #include <arch/types.h>

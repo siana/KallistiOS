@@ -2,8 +2,7 @@
 #
 # arch/ps2/kernel/Makefile
 # (c)2002 Dan Potter
-#   
-# $Id: Makefile,v 1.3 2002/11/03 03:40:55 bardtx Exp $
+#
 
 # Generic kernel abstraction layer: this provides a set of routines
 # that the portable part of the kernel expects to find on every

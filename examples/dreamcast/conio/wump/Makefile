@@ -2,8 +2,7 @@
 #
 # conio/wump/Makefile
 # (c)2002 Dan Potter
-#   
-# $Id: Makefile,v 1.1 2002/04/20 19:49:40 bardtx Exp $
+#
 
 all: rm-elf wump.elf
 

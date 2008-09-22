@@ -3,7 +3,6 @@
    readpng.c
    Copyright (C)2002 Jeffrey McBeth
 
-   $Id: readpng.c,v 1.1 2003/04/24 03:19:42 bardtx Exp $
 */
 
 /* Modified for vqenc by Dan Potter */

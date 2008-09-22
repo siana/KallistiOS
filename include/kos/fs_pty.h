@@ -3,7 +3,6 @@
    kos/fs_pty.h
    Copyright (C)2003 Dan Potter
 
-   $Id: fs_pty.h,v 1.1 2003/06/19 04:30:23 bardtx Exp $
 */
 
 #ifndef __KOS_FS_PTY_H

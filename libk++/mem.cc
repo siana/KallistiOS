@@ -10,8 +10,6 @@
 #include <stdio.h>
 #include <sys/types.h>
 
-CVSID("$Id: mem.cc,v 1.2 2002/09/23 23:03:34 gilm Exp $");
-
 /* This file contains definitions for the basic malloc/free operations
    in C++. You can use this tiny replacement for libstdc++ when you
    don't need the whole thing. */

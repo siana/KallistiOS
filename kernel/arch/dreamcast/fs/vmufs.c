@@ -14,8 +14,6 @@
 #include <dc/maple.h>
 #include <dc/maple/vmu.h>
 
-CVSID("$Id: vmufs.c,v 1.6 2003/04/25 03:12:59 bardtx Exp $");
-
 /*
 
 This is a whole new module that sits between the fs_vmu module and the maple

@@ -4,8 +4,6 @@
    Copyright (C)2000-2002 Jordan DeLong and Dan Potter
    Copyright (C)2008 Donald Haase
 
-   $Id: vmu.h,v 1.3 2002/09/04 03:38:42 bardtx Exp $
-
 */
 
 #ifndef __DC_MAPLE_VMU_H

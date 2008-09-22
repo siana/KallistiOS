@@ -3,8 +3,6 @@
    include/kos/net.h
    (c)2002 Dan Potter
 
-   $Id: net.h,v 1.8 2003/06/19 04:30:23 bardtx Exp $
-
 */
 
 #ifndef __KOS_NET_H

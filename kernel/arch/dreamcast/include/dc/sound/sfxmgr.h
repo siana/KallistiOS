@@ -3,8 +3,6 @@
    dc/sound/sfxmgr.h
    (c)2002 Dan Potter
 
-   $Id: sfxmgr.h,v 1.6 2003/04/24 03:15:09 bardtx Exp $
-
 */
 
 #ifndef __DC_SOUND_SFXMGR_H

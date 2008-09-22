@@ -3,7 +3,6 @@
    navi/ide.h
    (c)2002 Dan Potter
    
-   $Id: ide.h,v 1.1 2002/05/05 22:17:51 bardtx Exp $
 */
 
 #ifndef __NAVI_IDE_H

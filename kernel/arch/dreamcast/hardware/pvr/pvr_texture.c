@@ -19,9 +19,6 @@
  
 */
 
-CVSID("$Id: pvr_texture.c,v 1.8 2003/04/24 03:13:06 bardtx Exp $");
-
-
 /* Load raw texture data from an SH-4 buffer into PVR RAM */
 void pvr_txr_load(void * src, pvr_ptr_t dst, uint32 count) {
 	if (count % 4)

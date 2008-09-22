@@ -17,8 +17,6 @@
    rendering process.
 */
 
-CVSID("$Id: pvr_misc.c,v 1.12 2003/04/24 03:12:26 bardtx Exp $");
-
 /* Set the background plane color (the area of the screen not covered by
    any other polygons) */
 void pvr_set_bg_color(float r, float g, float b) {

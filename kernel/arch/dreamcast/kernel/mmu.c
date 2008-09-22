@@ -17,8 +17,6 @@
 #include <kos/dbgio.h>
 #include <arch/cache.h>
 
-CVSID("$Id: mmu.c,v 1.5 2003/07/31 00:43:53 bardtx Exp $");
-
 /********************************************************************************/
 /* Register definitions */
 

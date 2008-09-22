@@ -15,8 +15,6 @@
 #include <arch/dbgio.h>
 #include <arch/cache.h>
 
-CVSID("$Id: mmu.c,v 1.1 2003/08/01 03:18:37 bardtx Exp $");
-
 void mmu_reset_itlb() {
 }
 

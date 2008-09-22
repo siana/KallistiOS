@@ -2,8 +2,7 @@
 #
 # arch/ia32/kernel/Makefile
 # Copyright (C)2003 Dan Potter
-#   
-# $Id: Makefile,v 1.1 2003/08/01 03:18:37 bardtx Exp $
+#
 
 # Generic kernel abstraction layer: this provides a set of routines
 # that the portable part of the kernel expects to find on every

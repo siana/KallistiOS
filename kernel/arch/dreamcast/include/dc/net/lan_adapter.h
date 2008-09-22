@@ -4,7 +4,6 @@
  *
  * (c)2002 Dan Potter
  *
- * $Id: lan_adapter.h,v 1.2 2003/02/25 07:39:37 bardtx Exp $
  */
 
 #ifndef __DC_NET_LAN_ADAPTER_H

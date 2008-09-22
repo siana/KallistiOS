@@ -39,8 +39,6 @@ I figure we don't need that sort of complexity in this code.
  
 */
 
-CVSID("$Id: snd_mem.c,v 1.4 2003/04/24 03:16:13 bardtx Exp $");
-
 #define SNDMEMDEBUG 0
 
 /* A single block of SPU RAM */

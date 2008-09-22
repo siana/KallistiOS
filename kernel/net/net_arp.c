@@ -13,8 +13,6 @@
 #include <kos/thread.h>
 #include "net_ipv4.h"
 
-CVSID("$Id: net_arp.c,v 1.1 2002/01/30 06:54:27 bardtx Exp $");
-
 /*
 
   ARP handling system

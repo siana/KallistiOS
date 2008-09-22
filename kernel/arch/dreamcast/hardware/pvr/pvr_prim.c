@@ -19,8 +19,6 @@
 
 */
 
-CVSID("$Id: pvr_prim.c,v 1.8 2002/09/13 04:38:41 bardtx Exp $");
-
 /* Compile a polygon context into a polygon header */
 void pvr_poly_compile(pvr_poly_hdr_t *dst, pvr_poly_cxt_t *src) {
 	int	u, v;

@@ -19,8 +19,6 @@
 
 #include "initall_hdrs.h"
 
-CVSID("$Id: main.c,v 1.28 2003/04/24 03:04:24 bardtx Exp $");
-
 extern int _bss_start, end;
 
 void _atexit_call_all();

@@ -9,8 +9,6 @@
 #include <malloc.h>
 #include <stdio.h>
 
-CVSID("$Id: atexit.c,v 1.1 2002/10/26 08:04:00 bardtx Exp $");
-
 /* atexit() handling
 
    Note: we may eventually move this into libc */

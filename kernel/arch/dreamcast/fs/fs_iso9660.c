@@ -41,8 +41,6 @@ ISO9660 systems, as these were used as references as well.
 #include <string.h>
 #include <malloc.h>
 
-CVSID("$Id: fs_iso9660.c,v 1.2 2003/07/15 07:55:01 bardtx Exp $");
-
 static int init_percd();
 static int percd_done;
 

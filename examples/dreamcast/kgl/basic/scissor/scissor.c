@@ -22,8 +22,6 @@
 #include <GL/glu.h>
 #include <pcx/pcx.h>
 
-CVSID("$Id: scissor.c,v 1.4 2002/06/30 16:28:34 axlen Exp $");
-
 #define NUM_DEMOS 5
 enum { USERCLIP_INSIDE = 0, USERCLIP_OUTSIDE, USERCLIP_DISABLED,
 	QUAD_SCREEN_UNCLIPPED, QUAD_SCREEN_CLIPPED };

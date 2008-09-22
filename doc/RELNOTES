@@ -276,7 +276,3 @@ please comment out the line in environ for KOS_CCPLUS. This will disable
 building any C++ targets. Conversely, if you have a working G++, make sure
 you have a KOS_CCPLUS line so that all of the libraries and examples will
 get built.
-
-
-KOS Version Id: $Id: RELNOTES,v 1.20 2003/05/23 03:08:00 bardtx Exp $
-

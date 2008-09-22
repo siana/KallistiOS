@@ -21,8 +21,6 @@
 
 */
 
-CVSID("$Id: pvr_init_shutdown.c,v 1.13 2003/04/24 03:12:25 bardtx Exp $");
-
 /* Simpler function which initializes the PVR using 16/16 for the opaque
    and translucent lists, and 0's for everything else; 512k of vertex
    buffer. This is equivalent to the old ta_init_defaults() for now. */

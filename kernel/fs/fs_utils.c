@@ -17,8 +17,6 @@ XXX This probably belongs in something like libc...
 #include <malloc.h>
 #include <assert.h>
 
-CVSID("$Id: fs_utils.c,v 1.2 2002/08/19 08:10:07 bardtx Exp $");
-
 /* Copies a file from 'src' to 'dst'. The amount of the file
    actually copied without error is returned. */
 ssize_t fs_copy(const char * src, const char * dst) {

@@ -3,8 +3,6 @@
    dc/fs_vmu.h
    (c)2000-2001 Jordan DeLong
 
-   $Id: fs_vmu.h,v 1.3 2002/08/12 07:25:58 bardtx Exp $
-
 */
 
 #ifndef __DC_FS_VMU_H

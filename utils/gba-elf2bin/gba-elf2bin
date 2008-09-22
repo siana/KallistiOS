@@ -9,7 +9,6 @@
 #
 # usage: gba-elf2bin <elf> <bin>
 # 
-# $Id: gba-elf2bin,v 1.1.1.1 2001/09/26 07:05:00 bardtx Exp $
 
 rm -f /tmp/tmp.{text,rodata,data,bss}
 

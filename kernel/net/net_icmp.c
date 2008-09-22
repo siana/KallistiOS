@@ -18,8 +18,6 @@
 #include "net_icmp.h"
 #include "net_ipv4.h"
 
-CVSID("$Id: net_icmp.c,v 1.2 2002/03/24 00:27:05 bardtx Exp $");
-
 /*
 This file implements RFC 792, the Internet Control Message Protocol.
 Currently implemented message types are:

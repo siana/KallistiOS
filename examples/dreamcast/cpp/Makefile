@@ -2,8 +2,7 @@
 #
 # examples/dreamcast/cpp/Makefile
 # (c)2001-2002 Dan Potter
-#   
-# $Id: Makefile,v 1.3 2002/02/24 02:13:07 bardtx Exp $
+#
 
 all:
 	$(KOS_MAKE) -C gltest

@@ -3,8 +3,6 @@
    arch/gba/include/syscall.h
    (c)2000-2001 Dan Potter
 
-   $Id: syscall.h,v 1.3 2002/12/09 06:29:19 bardtx Exp $
-
 */
 
 #ifndef __ARCH_SYSCALL_H

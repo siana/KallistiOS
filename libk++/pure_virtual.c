@@ -9,8 +9,6 @@
 
 #include <arch/arch.h>
 
-CVSID("$Id: pure_virtual.c,v 1.1 2003/05/23 02:26:50 bardtx Exp $");
-
 void __cxa_pure_virtual() {
 	panic("Pure virtual method called");
 }

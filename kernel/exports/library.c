@@ -13,8 +13,6 @@
 #include <arch/irq.h>
 #include <kos/library.h>
 
-CVSID("$Id: process.c,v 1.4 2003/08/01 03:20:26 bardtx Exp $");
-
 /*
 
 With KOS 1.3.x, we introduce the idea of a loadable library. It's a little

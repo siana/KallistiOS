@@ -12,8 +12,6 @@
 #include <arch/spinlock.h>
 #include <ia32/ports.h>
 
-CVSID("$Id: dbgio.c,v 1.3 2003/08/02 23:11:43 bardtx Exp $");
-
 /*
 
 */

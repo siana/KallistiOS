@@ -2,8 +2,6 @@
 
    arch/gba/include/irq.h
    (c)2000-2001 Dan Potter
-
-   $Id: irq.h,v 1.2 2003/02/17 00:47:38 bardtx Exp $
   
 */
 

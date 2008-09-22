@@ -14,8 +14,6 @@
 #include <kos/thread.h>
 #include <kos/library.h>
 
-CVSID("$Id: elf.c,v 1.6 2003/08/02 23:12:18 bardtx Exp $");
-
 /* What's our architecture code we're expecting? */
 #if defined(_arch_dreamcast)
 #	define ARCH_CODE EM_SH

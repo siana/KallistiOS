@@ -3,8 +3,6 @@
    matrix3d.h
    (c)2000 Dan Potter and Jordan DeLong
 
-   $Id: matrix3d.h,v 1.1 2002/09/05 07:32:57 bardtx Exp $
-
 */
 
 #ifndef __KOS_MATRIX3D_H

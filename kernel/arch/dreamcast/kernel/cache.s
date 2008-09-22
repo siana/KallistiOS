@@ -163,9 +163,3 @@ dflush_loop:
 	.align	2
 l1align:
 	.long	~31		! ~(L1_CACHE_BYTES-1)
-	
-
-
-	.ident	"KOS $Id: cache.s,v 1.3 2002/01/06 01:14:48 bardtx Exp $"
-
-	

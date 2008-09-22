@@ -2,8 +2,6 @@
 
    arch/dreamcast/include/irq.h
    (c)2000-2001 Dan Potter
-
-   $Id: irq.h,v 1.9 2003/02/14 06:33:47 bardtx Exp $
   
 */
 

@@ -3,7 +3,6 @@
    arch/dreamcast/include/spinlock.h
    (c)2001 Dan Potter
    
-   $Id: spinlock.h,v 1.6 2002/11/13 02:05:15 bardtx Exp $
 */
 
 #ifndef __ARCH_SPINLOCK_H

@@ -3,8 +3,6 @@
    kos/pcx.h
    (c)2000-2001 Dan Potter
 
-   $Id: pcx.h,v 1.2 2002/01/05 07:23:32 bardtx Exp $
-
 */
 
 #ifndef __KOS_PCX_H

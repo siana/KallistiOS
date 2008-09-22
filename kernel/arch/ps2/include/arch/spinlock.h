@@ -2,8 +2,7 @@
 
    arch/ps2/include/spinlock.h
    (c)2001-2002 Dan Potter
-   
-   $Id: spinlock.h,v 1.3 2002/11/06 08:41:03 bardtx Exp $
+
 */
 
 #ifndef __ARCH_SPINLOCK_H

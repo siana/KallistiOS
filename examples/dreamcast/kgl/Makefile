@@ -2,8 +2,7 @@
 #
 # examples/dreamcast/kgl/Makefile
 # (c)2002 Dan Potter 
-#   
-# $Id: Makefile,v 1.3 2002/04/20 03:48:55 axlen Exp $
+#
 
 all:
 	$(KOS_MAKE) -C basic

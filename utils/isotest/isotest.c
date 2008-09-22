@@ -8,8 +8,6 @@
 
 */
 
-static char id[] = "KOS $Id: isotest.c,v 1.1.1.1 2001/09/26 07:05:01 bardtx Exp $";
-
 /*
 Various notes
 

@@ -2,8 +2,7 @@
 #
 # 2ndmix/Makefile
 # Copyright (C)2003 Dan Potter
-#   
-# $Id: Makefile,v 1.4 2002/04/20 04:24:19 axlen Exp $
+#
 
 all: rm-elf 2ndmix.elf
 

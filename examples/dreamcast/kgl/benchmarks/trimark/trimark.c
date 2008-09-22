@@ -8,8 +8,6 @@
 #include <GL/gl.h>
 #include <time.h>
 
-CVSID("$Id: trimark.c,v 1.3 2003/03/09 01:20:06 bardtx Exp $");
-
 pvr_init_params_t pvr_params = {
 	{ PVR_BINSIZE_16, PVR_BINSIZE_0, PVR_BINSIZE_0, PVR_BINSIZE_0, PVR_BINSIZE_0 },
 	512 * 1024

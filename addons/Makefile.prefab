@@ -2,9 +2,7 @@
 #
 # Addons Makefile.prefab
 # Copyright (C)2003 Dan Potter
-#   
-# $Id: Makefile.prefab,v 1.2 2002/02/09 06:16:00 bardtx Exp $
-
+#
 
 # KallistiOS addons Makefile include
 #

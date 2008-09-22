@@ -10,8 +10,6 @@
 #ifndef __ARM_AICA_CMD_IFACE_H
 #define __ARM_AICA_CMD_IFACE_H
 
-/* $Id: aica_cmd_iface.h,v 1.3 2002/06/13 05:52:35 bardtx Exp $ */
-
 #ifndef __ARCH_TYPES_H
 typedef unsigned long uint8;
 typedef unsigned long uint32;

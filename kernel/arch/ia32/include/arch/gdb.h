@@ -3,7 +3,6 @@
    arch/dreamcast/include/arch/gdb.h
    (c)2002 Dan Potter
    
-   $Id: gdb.h,v 1.1 2003/08/01 03:18:37 bardtx Exp $
 */
 
 #ifndef __ARCH_GDB_H

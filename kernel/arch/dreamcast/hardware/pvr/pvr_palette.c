@@ -16,8 +16,6 @@
    special effects, like the old cheap "worm hole".
 */
 
-CVSID("$Id: pvr_palette.c,v 1.2 2002/07/17 02:31:44 bardtx Exp $");
-
 /* Set the palette format */
 void pvr_set_pal_format(int fmt) {
 	PVR_SET(PVR_PALETTE_CFG, fmt);

@@ -8,8 +8,6 @@
 
 #include <malloc.h>
 
-CVSID("$Id: cplusplus.c,v 1.2 2002/01/06 01:14:48 bardtx Exp $");
-
 void *__builtin_new(int size) {
 	return malloc(size);
 }

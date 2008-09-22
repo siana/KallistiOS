@@ -3,8 +3,6 @@
    kos/fs.h
    Copyright (C)2000,2001,2002,2003 Dan Potter
 
-   $Id: fs.h,v 1.11 2003/07/31 00:38:00 bardtx Exp $
-
 */
 
 #ifndef __KOS_FS_H

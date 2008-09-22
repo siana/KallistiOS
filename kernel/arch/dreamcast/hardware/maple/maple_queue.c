@@ -10,9 +10,6 @@
 #include <dc/maple.h>
 #include <arch/irq.h>
 
-CVSID("$Id: maple_queue.c,v 1.2 2003/01/17 02:56:45 bardtx Exp $");
-
-
 /* Send all queued frames */
 void maple_queue_flush() {
 	int		cnt, amt;

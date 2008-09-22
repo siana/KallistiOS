@@ -11,8 +11,6 @@
 #include <navi/ide.h>
 #include <dc/g2bus.h>
 
-CVSID("$Id: navi_ide.c,v 1.1 2002/05/05 22:16:49 bardtx Exp $");
-
 /*
    A *very* simple port-level ATA-IDE device driver. This was ported up
    from the _original_ KallistiOS =) (PC based)

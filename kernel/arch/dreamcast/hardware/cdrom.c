@@ -10,8 +10,6 @@
 #include <kos/thread.h>
 #include <kos/mutex.h>
 
-CVSID("$Id: cdrom.c,v 1.8 2003/04/24 03:25:27 bardtx Exp $");
-
 /*
 
 This module contains low-level primitives for accessing the CD-Rom (I

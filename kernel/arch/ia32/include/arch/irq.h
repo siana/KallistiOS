@@ -2,8 +2,6 @@
 
    ia32/irq.h
    Copyright (C)2000,2001,2003 Dan Potter
-
-   $Id: irq.h,v 1.2 2003/08/02 09:14:46 bardtx Exp $
   
 */
 

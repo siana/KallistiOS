@@ -3,8 +3,6 @@
    include/kos/thread.h
    Copyright (C)2000,2001,2002,2003 Dan Potter
 
-   $Id: thread.h,v 1.13 2003/06/23 05:19:50 bardtx Exp $
-
 */
 
 #ifndef __KOS_THREAD_H

@@ -3,7 +3,6 @@
    kernel/arch/dreamcast/include/dc/ubc.h
    (C)2002 Dan Potter
 
-   $Id: ubc.h,v 1.1 2002/03/16 19:22:03 bardtx Exp $
 */
 
 

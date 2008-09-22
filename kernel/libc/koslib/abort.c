@@ -3,7 +3,6 @@
    abort.c
    (c)2001 Dan Potter
 
-   $Id: abort.c,v 1.2 2002/09/23 23:03:33 gilm Exp $
 */
 
 #include <stdlib.h>

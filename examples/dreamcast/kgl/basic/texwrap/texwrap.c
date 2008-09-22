@@ -9,8 +9,6 @@
 #include <GL/glu.h>
 #include <pcx/pcx.h>
 
-CVSID("$Id: texwrap.c,v 1.2 2002/04/07 02:54:04 bardtx Exp $");
-
 /* Really simple KGL example to demonstrate the glTexParameter
    texture wrapping modes. 
 

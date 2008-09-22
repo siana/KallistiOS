@@ -16,8 +16,6 @@
 #include <kos/thread.h>
 #include <kos/library.h>
 
-CVSID("$Id: irq.c,v 1.12 2003/02/14 06:33:47 bardtx Exp $");
-
 /* Exception table -- this table matches (EXPEVT>>4) to a function pointer.
    If the pointer is null, then nothing happens. Otherwise, the function will
    handle the exception. */

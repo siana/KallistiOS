@@ -11,8 +11,6 @@
 #include <dc/maple/controller.h>
 #include <dc/maple/mouse.h>
 
-CVSID("$Id: maple_compat.c,v 1.3 2002/05/24 06:47:26 bardtx Exp $");
-
 /* Utility function used by other compat functions */
 int maple_compat_resolve(uint8 addr, maple_device_t **dev, uint32 funcs) {
 	int	p, u;

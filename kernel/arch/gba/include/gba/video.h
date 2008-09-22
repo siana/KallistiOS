@@ -3,7 +3,6 @@
    gba/video.h
    (c)2001 Dan Potter
    
-   $Id: video.h,v 1.2 2002/12/12 21:48:14 gilm Exp $
 */
 
 /* Thanks to Dovoto's tutorial for these numbers */

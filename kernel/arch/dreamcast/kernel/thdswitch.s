@@ -124,8 +124,3 @@ ifraddr:
 	.long	_irq_force_return
 tcnaddr:
 	.long	_thd_choose_new
-
-
-	.ident	"KOS $Id: thdswitch.s,v 1.1 2003/02/14 06:41:00 bardtx Exp $"
-
-

@@ -2,8 +2,7 @@
 #
 # Makefile_dll.prefab
 # Copyright (C)2000,2003 Dan Potter
-#   
-# $Id: Makefile.prefab,v 1.5 2003/08/02 23:13:53 bardtx Exp $
+#
 
 all: $(TARGET)
 

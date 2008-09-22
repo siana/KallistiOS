@@ -2,8 +2,7 @@
 
    arch/gba/include/spinlock.h
    (c)2001 Dan Potter
-   
-   $Id: spinlock.h,v 1.2 2002/11/06 08:34:54 bardtx Exp $
+
 */
 
 #ifndef __ARCH_SPINLOCK_H

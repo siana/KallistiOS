@@ -2,8 +2,7 @@
 #
 # mm/Makefile
 # (c)2000-2001 Dan Potter
-#   
-# $Id: Makefile,v 1.3 2002/02/23 07:00:57 bardtx Exp $
+#
 
 # Uncomment this line if you want normal operation
 OBJS = malloc.o cplusplus.o

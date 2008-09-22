@@ -66,8 +66,3 @@ mmu_reset_real:
 itlb1:	.long	0xf2000000 
 itlb2:	.long	0xf3000000
 itlb3:	.long	0xf3800000
-	
-
-	.ident	"KOS $Id: itlb.s,v 1.2 2002/01/06 01:14:48 bardtx Exp $"
-
-	

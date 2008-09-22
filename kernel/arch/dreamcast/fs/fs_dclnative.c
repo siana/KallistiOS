@@ -29,8 +29,6 @@
 #include "dcload-packet.h"
 #include "dcload-syscalls.h"
 
-CVSID("$Id: fs_dclnative.c,v 1.1 2003/04/24 03:03:33 bardtx Exp $");
-
 /*****************************************************************/
 /* Administrative details */
 

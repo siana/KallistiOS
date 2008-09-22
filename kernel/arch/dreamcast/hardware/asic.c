@@ -97,8 +97,6 @@
 #include <dc/asic.h>
 #include <arch/spinlock.h>
 
-CVSID("$Id: asic.c,v 1.3 2003/02/25 07:39:36 bardtx Exp $");
-
 /* Exception table -- this table matches each potential G2 event to a function
    pointer. If the pointer is null, then nothing happens. Otherwise, the
    function will handle the exception. */

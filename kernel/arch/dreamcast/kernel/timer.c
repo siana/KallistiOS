@@ -11,8 +11,6 @@
 #include <arch/timer.h>
 #include <arch/irq.h>
 
-CVSID("$Id: timer.c,v 1.7 2003/02/16 04:53:36 bardtx Exp $");
-
 /* Quick access macros */
 #define TIMER8(o) ( *((volatile uint8*)(0xffd80000 + (o))) )
 #define TIMER16(o) ( *((volatile uint16*)(0xffd80000 + (o))) )

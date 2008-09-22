@@ -12,8 +12,6 @@
 #include <kos/thread.h>
 #include <kos/sem.h>
 
-CVSID("$Id: ser_console.c,v 1.2 2002/01/06 01:14:48 bardtx Exp $");
-
 /* This is a little thing I ported over from KOS-MMU which turned out
    to be extremely useful during debugging. It basically sets up a 
    simple serial console on the DC serial port which you can use

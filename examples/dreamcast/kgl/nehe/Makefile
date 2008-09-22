@@ -3,8 +3,6 @@
 # examples/dreamcast/kgl/nehe/Makefile
 # (c)2002 Paul Boese
 # 
-# $Id: Makefile,v 1.1 2002/02/23 05:31:52 axlen Exp $
-# 
 # This will make all the examples, leaving only the elf files.
 # If you want to clean everything, use 'clean'.
 

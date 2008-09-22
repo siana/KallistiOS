@@ -15,7 +15,6 @@
  *  OR WARRANTY OF ANY KIND CONCERNING THE MERCHANTABILITY OF THIS
  *  SOFTWARE OR ITS FITNESS FOR ANY PARTICULAR PURPOSE.
  *
- *  $Id: pthread.h,v 1.3 2002/10/08 13:03:07 joel Exp $
  */
 
 // Need a local copy of this because the default one is buggy.

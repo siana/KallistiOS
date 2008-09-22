@@ -3,7 +3,6 @@
    kos/fs_ramdisk.h
    (c)2002 Dan Potter
 
-   $Id: fs_ramdisk.h,v 1.2 2003/04/24 03:00:02 bardtx Exp $
 */
 
 #ifndef __KOS_FS_RAMDISK_H

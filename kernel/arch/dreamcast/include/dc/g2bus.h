@@ -2,8 +2,7 @@
 
    g2bus.h
    (c)2002 Dan Potter
-   
-   $Id: g2bus.h,v 1.5 2002/09/13 06:44:41 bardtx Exp $
+
 */
 
 #ifndef __DC_G2BUS_H

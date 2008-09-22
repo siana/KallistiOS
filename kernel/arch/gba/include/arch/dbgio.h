@@ -2,8 +2,6 @@
 
    arch/gba/include/dbgio.h
    (c)2000 Dan Potter
-
-   $Id: dbgio.h,v 1.1.1.1 2001/09/26 07:05:11 bardtx Exp $
   
 */
 

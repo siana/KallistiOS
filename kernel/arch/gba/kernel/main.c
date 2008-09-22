@@ -4,8 +4,6 @@
    (c)2001 Dan Potter
 */
 
-static char id[] = "KOS $Id: main.c,v 1.2 2002/09/23 23:03:33 gilm Exp $";
-
 #include <string.h>
 #include <kos.h>
 #include <kos/fs.h>

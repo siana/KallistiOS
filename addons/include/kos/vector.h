@@ -3,8 +3,6 @@
    kos/vector.h
    (c)2002 Dan Potter
 
-   $Id: vector.h,v 1.1 2002/09/05 07:31:55 bardtx Exp $
-
 */
 
 #ifndef __KOS_VECTOR_H

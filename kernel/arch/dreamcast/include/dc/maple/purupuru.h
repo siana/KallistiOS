@@ -4,8 +4,6 @@
    Copyright (C) 2003 Dan Potter
    Copyright (C) 2005 Lawrence Sebald
 
-   $Id: purupuru.h,v 1.1 2003/03/15 00:47:24 bardtx Exp $
-
 */
 
 #ifndef __DC_MAPLE_PURUPURU_H

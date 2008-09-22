@@ -155,5 +155,3 @@ __old_vectors:
 	.align	2
 __old_cop0:
 	.space	4*3
-
-	.ident	"KOS $Id: startup.S,v 1.2 2002/11/03 03:40:55 bardtx Exp $"

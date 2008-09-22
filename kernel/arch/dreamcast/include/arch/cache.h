@@ -3,7 +3,6 @@
    arch/dreamcast/include/cache.h
    (c)2001 Dan Potter
    
-   $Id: cache.h,v 1.2 2002/01/05 07:33:50 bardtx Exp $
 */
 
 #ifndef __ARCH_CACHE_H

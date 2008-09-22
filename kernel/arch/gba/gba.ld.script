@@ -3,8 +3,6 @@
    so whatever license originally applied to it probably applies now
    (GPL?)
 
-   $Id: gba.ld.script,v 1.1.1.1 2001/09/26 07:05:11 bardtx Exp $
-
    */
 
 OUTPUT_FORMAT("elf32-littlearm", "elf32-bigarm",

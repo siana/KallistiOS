@@ -3,7 +3,6 @@
    assert.c
    Copyright (C)2002 Dan Potter
 
-   $Id: assert.c,v 1.5 2002/09/23 23:16:24 bardtx Exp $
 */
 
 // In both the newlib and KOS libc cases, we use our own assert. The

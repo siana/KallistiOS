@@ -11,8 +11,6 @@
 #include <arch/irq.h>
 #include <ps2/ioports.h>
 
-CVSID("$Id: timer.c,v 1.1 2002/11/03 03:40:55 bardtx Exp $");
-
 /* Pre-initialize a timer; set values but don't start it */
 int timer_prime(int which, uint32 speed, int interrupts) {
 	/* Note: speed must be at least 100 here! Otherwise,

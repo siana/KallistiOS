@@ -2,8 +2,7 @@
 #
 # examples/dreamcast/tsunami/Makefile
 # (c)2002 Dan Potter
-#   
-# $Id: Makefile,v 1.1.2.1 2003/06/20 06:10:25 bardtx Exp $
+#
 
 all:
 	$(KOS_MAKE) -C font

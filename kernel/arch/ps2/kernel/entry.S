@@ -274,5 +274,3 @@ irq_restore:
 	.bss
 	.align 2
 irq_srt_addr:	.space	4
-
-	.ident "KOS $Id: entry.S,v 1.2 2002/11/03 03:40:55 bardtx Exp $"

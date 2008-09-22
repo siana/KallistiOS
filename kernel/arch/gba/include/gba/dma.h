@@ -3,7 +3,6 @@
    gba/dma.h
    (c)2002 Gil Megidish
    
-   $Id: dma.h,v 1.1 2002/12/12 21:48:14 gilm Exp $
 */
 
 #ifndef __GBA_DMA_H

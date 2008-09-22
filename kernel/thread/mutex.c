@@ -11,8 +11,6 @@
 
 #include <kos/mutex.h>
 
-CVSID("$Id: mutex.c,v 1.2 2003/02/17 04:20:30 bardtx Exp $");
-
 /**************************************/
 
 /* Create a mutex */

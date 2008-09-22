@@ -13,8 +13,6 @@
 #include "plprint.h"
 #include "menu.h"
 
-CVSID("$Id: menu.cpp,v 1.1 2002/03/04 02:57:32 axlen Exp $");
-
 void Menu::add(int min, int max, int amt, int* pval, char *pformat) {
 	Menuitem_t* madd;	
 	if (mlist == NULL) {

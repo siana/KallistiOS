@@ -3,8 +3,6 @@
    arch/ps2/include/syscall.h
    (c)2000-2002 Dan Potter
 
-   $Id: syscall.h,v 1.3 2002/11/14 06:50:06 bardtx Exp $
-
 */
 
 #ifndef __ARCH_SYSCALL_H

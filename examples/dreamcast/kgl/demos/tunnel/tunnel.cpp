@@ -12,8 +12,6 @@
 #include "plprint.h"
 #include "menu.h"
 
-CVSID("$Id: tunnel.cpp,v 1.7 2003/03/09 01:20:06 bardtx Exp $");
-
 #define DPAD_REPEAT_INTERVAL 7  /* frames */
 
 /* tunnel */

@@ -3,8 +3,6 @@
    include/kos/library.h
    Copyright (C)2003 Dan Potter
 
-   $Id$
-
 */
 
 #ifndef __KOS_LIBRARY_H

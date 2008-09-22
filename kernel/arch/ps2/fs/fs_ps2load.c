@@ -29,8 +29,6 @@ Modified for ps2-load-ip by Dan Potter.
 #include <string.h>
 #include <malloc.h>
 
-CVSID("$Id: fs_ps2load.c,v 1.1 2002/11/06 08:36:40 bardtx Exp $");
-
 static spinlock_t mutex = SPINLOCK_INITIALIZER;
 
 static uint32 * ps2lip_block = NULL;

@@ -2,8 +2,6 @@
 
    kos/include/dbgio.h
    Copyright (C)2000,2004 Dan Potter
-
-   $Id: dbgio.h,v 1.4 2002/04/06 23:40:32 bardtx Exp $
   
 */
 

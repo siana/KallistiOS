@@ -19,8 +19,6 @@
 
 #include "arm/aica_cmd_iface.h"
 
-CVSID("$Id: snd_iface.c,v 1.5 2002/09/13 05:03:10 bardtx Exp $");
-
 /* the address of the sound ram from the SH4 side */
 #define SPU_RAM_BASE		0xa0800000
 

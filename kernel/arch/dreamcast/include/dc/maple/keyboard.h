@@ -3,7 +3,6 @@
    dc/maple/keyboard.h
    (C)2000-2002 Jordan DeLong and Dan Potter
 
-   $Id: keyboard.h,v 1.3 2002/05/18 07:11:44 bardtx Exp $
 */
 
 #ifndef __DC_MAPLE_KEYBOARD_H

@@ -195,6 +195,3 @@ ccr_data:
 	.word	0x090d
 ccr_data_ocram:
 	.word	0x092d
-
-	.ident  "KOS $Id: startup.s,v 1.9 2002/09/13 04:40:52 bardtx Exp $"
-

@@ -3,8 +3,6 @@
    dc/fmath.h
    (C)2001 Andrew Kieschnick
 
-   $Id: fmath.h,v 1.3 2002/01/05 07:33:51 bardtx Exp $
-
 */
 
 #ifndef __DC_FMATH_H

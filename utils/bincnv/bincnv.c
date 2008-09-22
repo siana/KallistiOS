@@ -9,8 +9,6 @@
 
 */
 
-static char id[] = "KOS $Id: bincnv.c,v 1.1.1.1 2001/09/26 07:05:01 bardtx Exp $";
-
 #include <stdio.h>
 #include <malloc.h>
 

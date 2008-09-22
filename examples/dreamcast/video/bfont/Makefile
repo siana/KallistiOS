@@ -2,8 +2,7 @@
 #
 # basic/bfont/Makefile
 # (c)2002 Dan Potter
-#   
-# $Id: Makefile,v 1.1 2002/06/27 23:23:09 bardtx Exp $
+#
 
 all: rm-elf bfont.elf
 

@@ -5,7 +5,6 @@
    
    Calculate the header checksum (complement check)
 
-   $id:   
 */
 
 #include <stdio.h>

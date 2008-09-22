@@ -3,8 +3,6 @@
    arch/dreamcast/include/timer.h
    (c)2000-2001 Dan Potter
 
-   $Id: timer.h,v 1.5 2003/02/15 02:45:52 bardtx Exp $
-
 */
 
 #ifndef __ARCH_TIMER_H

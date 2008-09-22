@@ -13,8 +13,6 @@
 #include "dc/modem/modem.h"
 #include "mintern.h"
 
-CVSID("$Id: modem.c,v 1.1 2003/05/23 02:04:42 bardtx Exp $");
-
 /* These timeout values are not exact! */
 #define MODEM_215MS_TIMEOUT 8
 

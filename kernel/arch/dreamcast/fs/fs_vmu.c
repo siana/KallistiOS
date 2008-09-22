@@ -18,8 +18,6 @@
 #include <dc/maple/vmu.h>
 #include <sys/queue.h>
 
-CVSID("$Id: fs_vmu.c,v 1.4 2003/07/31 00:48:42 bardtx Exp $");
-
 /*
 
 This is the vmu filesystem module.  Because there are no directories on vmu's

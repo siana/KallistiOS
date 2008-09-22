@@ -3,7 +3,6 @@
    arch/ps2/include/ioports.h
    (c)2002 Dan Potter
    
-   $Id: ioports.h,v 1.1 2002/11/03 03:40:55 bardtx Exp $
 */
 
 #ifndef __PS2_IOPORTS_H

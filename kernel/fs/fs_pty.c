@@ -34,8 +34,6 @@ or space present.
 #include <assert.h>
 #include <errno.h>
 
-CVSID("$Id: fs_pty.c,v 1.5 2003/07/15 07:39:13 bardtx Exp $");
-
 /* pty buffer size */
 #define PTY_BUFFER_SIZE 1024
 

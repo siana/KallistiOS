@@ -4,7 +4,6 @@
  *
  * (c)2001-2002 Dan Potter
  *
- * $Id: broadband_adapter.h,v 1.1 2003/07/31 00:54:04 bardtx Exp $
  */
 
 #ifndef __DC_NET_BROADBAND_ADAPTER_H

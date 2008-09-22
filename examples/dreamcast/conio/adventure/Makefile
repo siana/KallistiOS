@@ -2,8 +2,7 @@
 #
 # conio/adventure/Makefile
 # (c)2002 Dan Potter
-#   
-# $Id: Makefile,v 1.3 2002/06/11 06:55:17 bardtx Exp $
+#
 
 all: rm-elf adventure.elf
 

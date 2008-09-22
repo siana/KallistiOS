@@ -5,7 +5,6 @@
 
    Distributed under the terms of the KOS license.
 
-   $Id: mconst.h,v 1.1 2003/05/23 02:05:02 bardtx Exp $
 */
 
 /* Modem constants are defined here. Automatically included by modem.h */

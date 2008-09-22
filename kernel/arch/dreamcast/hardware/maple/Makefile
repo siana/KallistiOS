@@ -3,7 +3,6 @@
 # arch/dreamcast/hardware/maple/Makefile
 # (c)2000-2001 Dan Potter
 #
-# $Id: Makefile,v 1.2 2003/03/15 00:47:24 bardtx Exp $
 
 # Core maple handling stuff
 OBJS := maple_driver.o maple_enum.o maple_globals.o

@@ -2,8 +2,7 @@
 #
 # examples/dreamcast/conio/Makefile
 # (c)2002 Dan Potter
-#   
-# $Id: Makefile,v 1.4 2002/07/27 01:23:49 bardtx Exp $
+#
 
 all:
 	$(KOS_MAKE) -C basic

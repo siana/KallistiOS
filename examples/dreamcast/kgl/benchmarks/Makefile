@@ -2,8 +2,7 @@
 #
 # examples/dreamcast/kgl/benchmarks/Makefile
 # (c)2001-2002 Dan Potter
-#   
-# $Id: Makefile,v 1.1 2002/04/20 03:51:45 axlen Exp $
+#
 
 all:
 	$(KOS_MAKE) -C quadmark

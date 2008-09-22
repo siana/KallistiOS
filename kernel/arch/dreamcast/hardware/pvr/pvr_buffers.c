@@ -19,9 +19,6 @@
 
 */
 
-CVSID("$Id: pvr_buffers.c,v 1.6 2003/04/24 03:10:54 bardtx Exp $");
-
-
 /* Fill Tile Matrix buffers. This function takes a base address and sets up
    the rendering structures there. Each tile of the screen (32x32) receives
    a small buffer space. */

@@ -2,8 +2,7 @@
 #
 # kernel Makefile
 # (c)2001 Dan Potter
-#   
-# $Id: Makefile,v 1.5 2002/02/27 05:43:11 bardtx Exp $
+#
 
 OBJS =
 SUBDIRS = arch debug fs thread net libc exports

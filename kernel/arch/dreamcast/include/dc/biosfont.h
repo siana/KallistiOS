@@ -4,8 +4,6 @@
    (c)2000-2001 Dan Potter
    Japanese Functions (c)2002 Kazuaki Matsumoto
 
-   $Id: biosfont.h,v 1.3 2002/06/27 23:24:43 bardtx Exp $
-
 */
 
 

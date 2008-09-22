@@ -14,8 +14,6 @@
 #define true (1 == 1)
 #define false (1 == 0)
 
-CVSID("$Id");
-
 /*
     A demonstration of Trilinear's NEAR-Z-Clipper that has been
     incorporated into KGL. Use the joystick to rotate the view, the D-Pad

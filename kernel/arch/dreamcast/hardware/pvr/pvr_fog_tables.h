@@ -5,8 +5,6 @@
    (C)2002 Paul Boese
    Portions (C)1999-2001, Brian Paul
 
-   $Id: pvr_fog_tables.h,v 1.2 2002/02/17 03:43:16 axlen Exp $
-
  */
 
 #ifndef __PVR_FOG_TABLES_H

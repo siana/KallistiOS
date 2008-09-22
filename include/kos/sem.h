@@ -3,8 +3,6 @@
    include/kos/sem.h
    Copyright (C)2001,2003 Dan Potter
 
-   $Id: sem.h,v 1.7 2003/07/31 00:38:00 bardtx Exp $
-
 */
 
 #ifndef __KOS_SEM_H

@@ -3,8 +3,6 @@
    dc/sound/sound.h
    (c)2002 Dan Potter
 
-   $Id: sound.h,v 1.2 2002/07/06 07:57:32 bardtx Exp $
-
 */
 
 #ifndef __DC_SOUND_SOUND_H

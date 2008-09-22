@@ -52,8 +52,3 @@ __arch_exec_template_values:
 .ccrdata:
 	.long		0x00000808
 __arch_exec_template_end:
-	
-
-	.ident	"KOS $Id: execasm.s,v 1.2 2002/04/20 03:00:34 bardtx Exp $"
-
-

@@ -21,8 +21,6 @@
 #include <sys/queue.h>
 #include <arch/spinlock.h>
 
-CVSID("$Id: sem.c,v 1.13 2003/02/15 02:47:04 bardtx Exp $");
-
 /**************************************/
 
 /* Semaphore list spinlock */

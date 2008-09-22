@@ -12,8 +12,6 @@
 #include <dc/asic.h>
 #include <kos/thread.h>
 
-CVSID("$Id: maple_irq.c,v 1.2 2002/10/10 06:39:47 bardtx Exp $");
-
 /*********************************************************************/
 /* VBlank IRQ handler */
 

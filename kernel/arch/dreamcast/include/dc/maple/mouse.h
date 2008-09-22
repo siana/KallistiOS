@@ -3,8 +3,6 @@
    dc/maple/mouse.h
    (C)2000-2002 Jordan DeLong and Dan Potter
 
-   $Id: mouse.h,v 1.3 2002/05/24 06:47:26 bardtx Exp $
-
 */
 
 #ifndef __DC_MAPLE_MOUSE_H

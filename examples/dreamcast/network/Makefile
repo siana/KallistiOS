@@ -2,8 +2,7 @@
 #
 # examples/dreamcast/network/Makefile
 # (c)2002 Dan Potter
-#   
-# $Id: Makefile,v 1.5 2002/06/11 06:14:39 bardtx Exp $
+#
 
 all:
 	$(KOS_MAKE) -C basic

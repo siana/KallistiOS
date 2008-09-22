@@ -3,7 +3,6 @@
    arch/gba/include/types.h
    (c)2000-2001 Dan Potter
    
-   $Id: types.h,v 1.1.1.1 2001/09/26 07:05:11 bardtx Exp $
 */
 
 #ifndef __ARCH_TYPES_H

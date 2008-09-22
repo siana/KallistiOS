@@ -2,8 +2,7 @@
 #
 # utils/Makefile
 # (c)2001 Dan Potter
-#   
-# $Id: Makefile,v 1.5 2002/12/12 20:35:48 gilm Exp $
+#
 
 DIRS = genromfs wav2adpcm vqenc gba-crcfix
 

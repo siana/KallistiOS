@@ -28,8 +28,6 @@ printf goes to the dc-tool console
 #include <string.h>
 #include <malloc.h>
 
-CVSID("$Id: fs_dcload.c,v 1.14 2003/04/24 03:05:49 bardtx Exp $");
-
 static spinlock_t mutex = SPINLOCK_INITIALIZER;
 
 #define plain_dclsc(...) ({ \

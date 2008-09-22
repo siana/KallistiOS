@@ -38,8 +38,6 @@ something like this:
 #include <kos/mutex.h>
 #include <kos/nmmgr.h>
 
-CVSID("$Id: fs.c,v 1.10 2003/07/31 00:39:08 bardtx Exp $");
-
 /* File handle structure; this is an entirely internal structure so it does
    not go in a header file. */
 typedef struct fs_hnd {

@@ -3,8 +3,6 @@
    arch/ps2/include/timer.h
    (c)2000-2002 Dan Potter
 
-   $Id: timer.h,v 1.2 2002/11/03 03:40:55 bardtx Exp $
-
 */
 
 #ifndef __ARCH_TIMER_H

@@ -17,8 +17,6 @@
 
 #include <arch/rtc.h>
 
-CVSID("$Id: rtc.c,v 1.1 2003/08/01 03:18:37 bardtx Exp $");
-
 /* The boot time; we'll save this in rtc_init() */
 static time_t boot_time = 0;
 

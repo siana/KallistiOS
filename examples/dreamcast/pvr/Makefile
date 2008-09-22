@@ -2,8 +2,7 @@
 #
 # examples/dreamcast/pvr/Makefile
 # (c)2002 Dan Potter
-#   
-# $Id: Makefile,v 1.2 2002/09/28 04:18:55 bardtx Exp $
+#
 
 all:
 	$(KOS_MAKE) -C plasma

@@ -3,8 +3,6 @@
    dc/cdrom.h
    (c)2000-2001 Dan Potter
 
-   $Id: cdrom.h,v 1.4 2002/09/13 05:11:43 bardtx Exp $
-
 */
 
 #ifndef __DC_CDROM_H
