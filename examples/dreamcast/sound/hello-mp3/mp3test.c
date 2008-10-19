@@ -14,7 +14,7 @@
 /* Modified to be an MP3 sample by Dan Potter */
 
 #include <kos.h>
-#include <mp3/sndmp3.h>
+#include <mp3/sndserver.h>
 #include "display.c"
 
 extern uint8 romdisk[];
@@ -23,7 +23,7 @@ long bitrateold,bitratenew;
 KOS_INIT_FLAGS(INIT_DEFAULT | INIT_MALLOCSTATS);
 KOS_INIT_ROMDISK(romdisk);
 
-int main(int argc, char **argv) 
+int main(int argc, char **argv)
 {
 	cont_cond_t cond;
 
@@ -32,14 +32,14 @@ int main(int argc, char **argv)
 	snd_stream_init();
 	mp3_init();
 	print_d("sndmp3_init();  called...\n");
-	
+
 	mp3_start("/rd/test.mp3",0);
 	print_d("mp3_start(\"/rd/test.mp3\",0);  called...\n\n");
-	
+
 	/* printf("main: Vorbisfile artist=%s\r\n",sndoggvorbis_getartist());
 	printf("main: Vorbisfile title=%s\r\n",sndoggvorbis_gettitle()); */
 
-	
+
 	print_d("The MP3 File now plays within a thread !\n\n");
 	print_d("Press START to exit and (Y) to re-start playing...");
 
@@ -63,7 +63,7 @@ int main(int argc, char **argv)
 			printf("main: Vorbisfile current bitrate %ld\r\n",bitratenew);
 			bitrateold = bitratenew;
 		} */
-		
+
 	}
 	mp3_stop();
 	mp3_shutdown();
