@@ -10,7 +10,7 @@
 /* Draws one file entry, along with its "description" in the
    boot rom file manager. */
 int y1 = 20+36;
-void draw_one(uint8 addr, char *fn, uint16 hdrblock) {
+void draw_one(maple_device_t *addr, char *fn, uint16 hdrblock) {
 	bfont_draw_str(vram_s+y1*640+10, 640, 0, "File ");
 	bfont_draw_str(vram_s+y1*640+10+5*12, 640, 0, fn);
 
@@ -31,7 +31,7 @@ void draw_one(uint8 addr, char *fn, uint16 hdrblock) {
 
 /* We only do the monochrome one here to avoid having to
    parse through the FAT. */
-void draw_icondata(uint8 addr, uint16 block) {
+void draw_icondata(maple_device_t *addr, uint16 block) {
 	uint8 buf[512], *icon;
 	uint16 *buf16 = (uint16*)buf, *vr = vram_s + 20*640+20;
 	uint16 monoicon;
@@ -62,7 +62,8 @@ void draw_icondata(uint8 addr, uint16 block) {
 /* The full read test */
 void vmu_read_test() {
 	int i, n, drawn = 0;
-	uint8 addr = maple_first_vmu(), *ent;
+	maple_device_t *addr = maple_enum_type(0, MAPLE_FUNC_MEMCARD);
+	uint8 *ent;
 	uint8 buf[512];
 
 	uint16 *buf16 = (uint16*)buf, dirblock, dirlength, *ent16;
@@ -128,7 +129,7 @@ int main(int argc, char **argv) {
 	/* Do VMU read test */
 	vmu_read_test();
 
-	usleep(5 * 1000 * 1000);
+	thd_sleep(5 * 1000);
 
 	return 0;
 }

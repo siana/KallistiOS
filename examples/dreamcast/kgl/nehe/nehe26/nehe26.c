@@ -9,6 +9,7 @@
 
 #include <kos.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <math.h>
 #include <GL/gl.h>
 #include <GL/glu.h>
@@ -298,14 +299,14 @@ pvr_init_params_t params = {
         /* Vertex buffer size 512K */
         512*1024
 };
-#define NOT_LAST (cond.buttons & last)
+#define NOT_LAST !(state->buttons & last)
 
 extern uint8 romdisk[];
 KOS_INIT_ROMDISK(romdisk);
 
 int main(int argc, char **argv) {
-	cont_cond_t cond;
-	uint8	c;
+	maple_device_t *cont;
+	cont_state_t *state;
 	uint16	last = CONT_A;
 
 	xrot = yrot = zrot = 0.0f;
@@ -320,50 +321,50 @@ int main(int argc, char **argv) {
 	glKosInit();
 	initGL();
 
-	c = maple_first_controller();
-
 	printf("Entering main loop\n");
 	while(1) {
+		cont = maple_enum_type(0, MAPLE_FUNC_CONTROLLER);
+
 		/* Check key status */
-		if (cont_get_cond(c, &cond) < 0) {
+		state = (cont_state_t *)maple_dev_status(cont);
+		if (!state) {
 			printf("Error reading controller\n");
 			break;
 		}
-		if (!(cond.buttons & CONT_START))
+		if (state->buttons & CONT_START)
 			break;
-                if (!(cond.buttons & CONT_A) && !morph && NOT_LAST) {
-                        morph = TRUE;
+		if ((state->buttons & CONT_A) && !morph && NOT_LAST) {
+			morph = TRUE;
 			dest = &morph1;
 			last = CONT_A;
 		}
-                if (!(cond.buttons & CONT_X) && !morph && NOT_LAST) {
-                        morph = TRUE;
+		if ((state->buttons & CONT_X) && !morph && NOT_LAST) {
+			morph = TRUE;
 			dest = &morph2;
 			last = CONT_X;
 		}
-                if (!(cond.buttons & CONT_Y) && !morph && NOT_LAST) {
-                        morph = TRUE;
+		if ((state->buttons & CONT_Y) && !morph && NOT_LAST) {
+			morph = TRUE;
 			dest = &morph3;
 			last = CONT_Y;
 		}
-                if (!(cond.buttons & CONT_B) && !morph && NOT_LAST) {
-                        morph = TRUE;
+		if ((state->buttons & CONT_B) && !morph && NOT_LAST) {
+			morph = TRUE;
 			dest = &morph4;
 			last = CONT_B;
 		}
-                if (!(cond.buttons & CONT_DPAD_UP))
-                        xspeed -= 0.01f;
-                if (!(cond.buttons & CONT_DPAD_DOWN))
-                        xspeed += 0.01f;
-                if (!(cond.buttons & CONT_DPAD_LEFT))
-                        yspeed -= 0.01f;
-                if (!(cond.buttons & CONT_DPAD_RIGHT))
-                        yspeed += 0.01f;
-		if (cond.rtrig > 0x7f)
+		if (state->buttons & CONT_DPAD_UP)
+			xspeed -= 0.01f;
+		if (state->buttons & CONT_DPAD_DOWN)
+			xspeed += 0.01f;
+		if (state->buttons & CONT_DPAD_LEFT)
+			yspeed -= 0.01f;
+		if (state->buttons & CONT_DPAD_RIGHT)
+			yspeed += 0.01f;
+		if (state->rtrig > 0x7f)
 			zspeed += 0.01f;
-		if (cond.ltrig > 0x7f)
+		if (state->ltrig > 0x7f)
 			zspeed -= 0.01f;
-
 
 		/* Begin frame */
 		glKosBeginFrame();

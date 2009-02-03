@@ -7,6 +7,7 @@
 */
 
 #include <kos.h>
+#include <stdlib.h>
 #include <GL/gl.h>
 #include <GL/glu.h>
 #include <pcx/pcx.h>
@@ -113,12 +114,12 @@ extern uint8 romdisk[];
 KOS_INIT_ROMDISK(romdisk);
 
 int main(int argc, char **argv) {
-	cont_cond_t cond;
-	uint8	c;
+	maple_device_t *cont;
+	cont_state_t *state;
 	GLboolean yp = GL_FALSE;
 
 	/* Initialize KOS */
-        pvr_init(&params);
+	pvr_init(&params);
 
 	printf("nehe09 beginning\n");
 
@@ -150,28 +151,30 @@ int main(int argc, char **argv) {
 	/* Set up the texture */
 	loadtxr("/rd/Star.pcx", &texture[0]);
 
-	c = maple_first_controller();
 	while(1) {
+		cont = maple_enum_type(0, MAPLE_FUNC_CONTROLLER);
+
 		/* Check key status */
-		if (cont_get_cond(c, &cond) < 0) {
+		state = (cont_state_t *)maple_dev_status(cont);
+		if (!state) {
 			printf("Error reading controller\n");
 			break;
 		}
-		if (!(cond.buttons & CONT_START))
+		if (state->buttons & CONT_START)
 			break;
-		if (!(cond.buttons & CONT_DPAD_UP))
+		if (state->buttons & CONT_DPAD_UP)
 			tilt -= 0.5f;
-		if (!(cond.buttons & CONT_DPAD_DOWN))
+		if (state->buttons & CONT_DPAD_DOWN)
 			tilt += 0.5f;
-		if (!(cond.buttons & CONT_A))
+		if (state->buttons & CONT_A)
 			zoom -= 0.2f;
-		if (!(cond.buttons & CONT_B))
+		if (state->buttons & CONT_B)
 			zoom += 0.2f;
-		if (!(cond.buttons & CONT_Y) && !yp) {
+		if ((state->buttons & CONT_Y) && !yp) {
 			yp = GL_TRUE;
 			twinkle = !twinkle;
 		}
-		if (cond.buttons & CONT_Y)
+		if (!(state->buttons & CONT_Y))
 			yp = GL_FALSE;
 
 		/* Begin frame */

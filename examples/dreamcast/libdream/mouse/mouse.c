@@ -1,45 +1,47 @@
 #include <kos.h>
 
 void mouse_test() {
-	mouse_cond_t mcond;
-	cont_cond_t cond;
-	uint8 mcont, mmouse;
+	maple_device_t *cont, *mouse;
+	cont_state_t *cstate;
+	mouse_state_t *mstate;
 	int c = 'M', x = 20, y = 20;
 
 	printf("Now doing mouse test\n");	
 	while (1) {
-		mcont = maple_first_controller();
-		if (!mcont) continue;
-		mmouse = maple_first_mouse();
-		if (!mmouse) continue;
+		cont = maple_enum_type(0, MAPLE_FUNC_CONTROLLER);
+		if (!cont) continue;
+		mouse = maple_enum_type(0, MAPLE_FUNC_MOUSE);
+		if (!mouse) continue;
 		
 		/* Check for start on the controller */
-		if (cont_get_cond(mcont, &cond) < 0) {
+		cstate = (cont_state_t *)maple_dev_status(cont);
+		if (!cstate) {
 			printf("Error getting controller status\n");
 			return;
 		}
 		
-		if (!(cond.buttons & CONT_START)) {
+		if (cstate->buttons & CONT_START) {
 			printf("Pressed start\n");
 			return;
 		}
 		
-		usleep(10 * 1000);
+		thd_sleep(10);
 		
 		/* Check for mouse input */
-		if (mouse_get_cond(mmouse, &mcond) < 0)
+		mstate = (mouse_state_t *)maple_dev_status(mouse);
+		if (!mstate)
 			continue;
 
 		/* Move the cursor if applicable */
-		if (mcond.dx || mcond.dy || mcond.dz) {
+		if (mstate->dx || mstate->dy || mstate->dz) {
 			vid_clear(0,0,0);
-			x += mcond.dx;
-			y += mcond.dy;
-			c += mcond.dz;
+			x += mstate->dx;
+			y += mstate->dy;
+			c += mstate->dz;
 			bfont_draw(vram_s + (y*640+x), 640, 0, c);
 		}
 
-		usleep(10 * 1000);
+		thd_sleep(10);
 	}
 }
 

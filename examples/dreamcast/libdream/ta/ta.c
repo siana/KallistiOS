@@ -6,25 +6,26 @@
 /* This is really more complicated than it needs to be in this particular
    case, but it's nice and verbose. */
 int check_start() {
-	uint8 mcont = 0;
-	cont_cond_t cond;
+	maple_device_t *cont;
+	cont_state_t *state;
 
-	mcont = maple_first_controller();
-	if (!mcont)
+	cont = maple_enum_type(0, MAPLE_FUNC_CONTROLLER);
+	if (!cont)
 		return 0;
 
 	/* Check for start on the controller */
-	if (cont_get_cond(mcont, &cond) < 0)
+	state = (cont_state_t *)maple_dev_status(cont);
+	if (!state) {
 		return 0;
-		
-	if (!(cond.buttons & CONT_START)) {
+	}
+
+	if (state->buttons & CONT_START) {
 		printf("Pressed start\n");
 		return 1;
 	}
 
 	return 0;
 }
-
 
 
 /* A little test program -- creates twelve rainbow polygons and

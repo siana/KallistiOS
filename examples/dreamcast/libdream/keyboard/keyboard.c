@@ -1,29 +1,30 @@
 #include <kos.h>
 
 void kb_test() {
-	uint8 mcont, mkb;
-	cont_cond_t cond;
+	maple_device_t *cont, *kbd;
+	cont_state_t *state;
 	int k, x = 20, y = 20+24;
 
 	printf("Now doing keyboard test\n");	
 
 	while (1) {
-		mcont = maple_first_controller();
-		if (!mcont) continue;
-		mkb = maple_first_kb();
-		if (!mkb) continue;
+		cont = maple_enum_type(0, MAPLE_FUNC_CONTROLLER);
+		if (!cont) continue;
+		kbd = maple_enum_type(0, MAPLE_FUNC_KEYBOARD);
+		if (!kbd) continue;
 		
 		/* Check for start on the controller */
-		if (cont_get_cond(mcont, &cond) < 0) {
+		state = (cont_state_t *)maple_dev_status(cont);
+		if (!state) {
 			return;
 		}
 		
-		if (!(cond.buttons & CONT_START)) {
+		if (state->buttons & CONT_START) {
 			printf("Pressed start\n");
 			return;
 		}
 		
-		usleep(10 * 1000);
+		thd_sleep(10);
 		
 		/* Check for keyboard input */
 		/* if (kbd_poll(mkb)) {
@@ -33,6 +34,11 @@ void kb_test() {
 
 		/* Get queued keys */
 		while ( (k = kbd_get_key()) != -1) {
+			if (k == 27) {
+				printf("ESC pressed\n");
+				return;
+			}
+
 			if (k > 0xff)
 				printf("Special key %04x\n", k);
 			
@@ -44,13 +50,8 @@ void kb_test() {
 				y += 24;
 			}
 		}
-		
-		if (k == 27) {
-			printf("ESC pressed\n");
-			break;
-		}
 
-		usleep(10 * 1000);
+		thd_sleep(10);
 	}
 }
 

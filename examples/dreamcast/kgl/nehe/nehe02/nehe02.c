@@ -47,8 +47,8 @@ pvr_init_params_t params = {
 };
 
 int main(int argc, char **argv) {
-	cont_cond_t cond;
-	uint8	c;
+	maple_device_t *cont;
+	cont_state_t *state;
 
 	/* Get basic stuff initialized */
         pvr_init(&params);
@@ -62,14 +62,16 @@ int main(int argc, char **argv) {
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
 
-	c = maple_first_controller();
 	while(1) {
+		cont = maple_enum_type(0, MAPLE_FUNC_CONTROLLER);
+
 		/* Check key status */
-		if (cont_get_cond(c, &cond) < 0) {
+		state = (cont_state_t *)maple_dev_status(cont);
+		if (!state) {
 			printf("Error reading controller\n");
 			break;
 		}
-		if (!(cond.buttons & CONT_START))
+		if (state->buttons & CONT_START)
 			break;
 
 		/* Begin frame */

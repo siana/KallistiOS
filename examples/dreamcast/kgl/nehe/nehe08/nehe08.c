@@ -116,16 +116,16 @@ extern uint8 romdisk[];
 KOS_INIT_ROMDISK(romdisk);
 
 int main(int argc, char **argv) {
-	cont_cond_t cond;
-	uint8	c;
+	maple_device_t *cont;
+	cont_state_t *state;
 	GLboolean xp = GL_FALSE;
 	GLboolean yp = GL_FALSE;
 	GLboolean blend = GL_FALSE;
 
 	/* Initialize KOS */
-        pvr_init(&params);
+	pvr_init(&params);
 
-	printf("nehe06 beginning\n");
+	printf("nehe08 beginning\n");
 
 	/* Get basic stuff initialized */
 	glKosInit();
@@ -152,40 +152,42 @@ int main(int argc, char **argv) {
 	loadtxr("/rd/glass.pcx", &texture[1]);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_FILTER, GL_FILTER_BILINEAR);
 
-	c = maple_first_controller();
 	while(1) {
+		cont = maple_enum_type(0, MAPLE_FUNC_CONTROLLER);
+
 		/* Check key status */
-		if (cont_get_cond(c, &cond) < 0) {
+		state = (cont_state_t *)maple_dev_status(cont);
+		if (!state) {
 			printf("Error reading controller\n");
 			break;
 		}
-		if (!(cond.buttons & CONT_START))
+		if (state->buttons & CONT_START)
 			break;
-		if (!(cond.buttons & CONT_A))
+		if (state->buttons & CONT_A)
 			z -= 0.02f;
-		if (!(cond.buttons & CONT_B))
+		if (state->buttons & CONT_B)
 			z += 0.02f;
-		if (!(cond.buttons & CONT_X) && !xp) {
+		if ((state->buttons & CONT_X) && !xp) {
 			xp = GL_TRUE;
 			filter += 1;
 			if (filter > 1)
 				filter = 0;
 		}
-		if (cond.buttons & CONT_X)
+		if (!(state->buttons & CONT_X))
 			xp = GL_FALSE;
-		if (!(cond.buttons & CONT_Y) && !yp) {
+		if ((state->buttons & CONT_Y) && !yp) {
 			yp = GL_TRUE;
 			blend = !blend;
 		}
-		if (cond.buttons & CONT_Y)
+		if (!(state->buttons & CONT_Y))
 			yp = GL_FALSE;
-		if (!(cond.buttons & CONT_DPAD_UP))
+		if (state->buttons & CONT_DPAD_UP)
 			xspeed -= 0.01f;
-		if (!(cond.buttons & CONT_DPAD_DOWN))
+		if (state->buttons & CONT_DPAD_DOWN)
 			xspeed += 0.01f;
-		if (!(cond.buttons & CONT_DPAD_LEFT))
+		if (state->buttons & CONT_DPAD_LEFT)
 			yspeed -= 0.01f;
-		if (!(cond.buttons & CONT_DPAD_RIGHT))
+		if (state->buttons & CONT_DPAD_RIGHT)
 			yspeed += 0.01f;
 
 		/* Begin frame */

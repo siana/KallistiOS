@@ -32,23 +32,24 @@ void copy_s3m(char *song, int len) {
 }
 
 void wait_start() {
-	uint8 mcont;
-	cont_cond_t cond;
+	maple_device_t *cont;
+	cont_state_t *state;
 
 	while (1) {
-		mcont = maple_first_controller();
-		if (!mcont) continue;
+		cont = maple_enum_type(0, MAPLE_FUNC_CONTROLLER);
+		if (!cont) continue;
 		
 		/* Check for start on the controller */
-		if (cont_get_cond(mcont, &cond) < 0)
+		state = (cont_state_t *)maple_dev_status(cont);
+		if (!state)
 			continue;
 		
-		if (!(cond.buttons & CONT_START)) {
+		if (state->buttons & CONT_START) {
 			printf("Pressed start\n");
 			return;
 		}
 		
-		usleep(10 * 1000);
+		thd_sleep(10);
 	}
 }
 
