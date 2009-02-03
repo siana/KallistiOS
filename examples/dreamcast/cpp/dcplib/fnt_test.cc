@@ -161,63 +161,61 @@ void drawFrame ()
   pvr_scene_finish ();
 }
 
-
 /* This is really more complicated than it needs to be in this particular
    case, but it's nice and verbose. */
 int read_input ()
 {
-  uint8 mcont = 0;
+  maple_device_t *cont;
+  cont_state_t *state;
   static bool aHeldDown = false;
   static bool bHeldDown = false;
-  cont_cond_t cond;
-
-  if (!mcont)
-	{
-	  mcont = maple_first_controller();
-	  if (!mcont)
-		{
-		  printf("No controllers attached\n");
-		  return 1;
-		}
-	}
-
+  
+  cont = maple_enum_type(0, MAPLE_FUNC_CONTROLLER);
+  if(!cont)
+  {
+    return 0;
+  }
+  
   /* Check for start on the controller */
-  if (cont_get_cond(mcont, &cond))
-	{
-	  printf("Error getting controller status\n");
-	  return 1;
-	}
+  state = (cont_state_t *)maple_dev_status(cont);
+  if(!state)
+  {
+    printf("Error getting controller status\n");
+    return 1;
+  }
+  
+  if(state->buttons & CONT_START)
+  {
+    printf("Pressed start\n");
+    return 1;
+  }
 
-  if (!(cond.buttons & CONT_START))
-	{
-	  printf("Pressed start\n");
-	  return 1;
-	}
+  if(state->buttons & CONT_A)
+  {
+    if(!aHeldDown)
+    {
+      aHeldDown = true;
+      switchFont ();
+    }
+  }
+  else
+  {
+    aHeldDown = false;
+  }
 
-  if (!(cond.buttons & CONT_A))
-	{
-	  if (!aHeldDown)
-		{
-		  aHeldDown = true;
-		  switchFont ();
-		}
-	}
+  if(state->buttons & CONT_B)
+  {
+    if(!bHeldDown)
+    {
+	  bHeldDown = true;
+	  switchFilterMode ();
+    }
+  }
   else
-	{
-	  aHeldDown = false;
-	}
-  if (!(cond.buttons & CONT_B))
-	{
-	  if (!bHeldDown)
-		{
-		  bHeldDown = true;
-		  switchFilterMode ();
-		}
-	}
-  else
-	{
-	  bHeldDown = false;
-	}
+  {
+    bHeldDown = false;
+  }
+  
   return 0;
 }
 

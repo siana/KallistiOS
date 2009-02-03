@@ -207,8 +207,8 @@ static void sphere_frame_trans() {
 }
 
 void do_sphere_test() {
-	uint8		addr;
-	cont_cond_t	cond;
+	maple_device_t *cont;
+	cont_state_t *state;
 	int		mode = 0;
 	int		a_was_down = 0;
 
@@ -225,15 +225,16 @@ void do_sphere_test() {
 		else
 			sphere_frame_trans();
 	
-		addr = maple_first_controller();
-		if (addr == 0)
+		cont = maple_enum_type(0, MAPLE_FUNC_CONTROLLER);
+		if (!cont)
 			continue;
-		if (cont_get_cond(addr, &cond) < 0)
+		state = (cont_state_t *)maple_dev_status(cont);
+		if (!state)
 			continue;
-		if (!(cond.buttons & CONT_START)) {
+		if (state->buttons & CONT_START) {
 			return;
 		}
-		if (!(cond.buttons & CONT_A)) {
+		if (state->buttons & CONT_A) {
 			if (a_was_down) continue;
 			a_was_down = 1;
 			mode ^= 1;

@@ -780,7 +780,8 @@ KOS_INIT_ROMDISK(romdisk);
 
 /* Main program: init and loop drawing polygons */
 int main() {
-	cont_cond_t cond;
+	maple_device_t *cont;
+	cont_state_t *state;
 
 	printf("2ndMix/KallistiOS starting\n");
 
@@ -797,10 +798,14 @@ int main() {
 
 	printf("Starting display\n");
 	while(1) {
-		if (cont_get_cond(maple_first_controller(), &cond) < 0)
-			break;
-		if (!(cond.buttons & CONT_START))
-			break;
+		if((cont = maple_enum_type(0, MAPLE_FUNC_CONTROLLER)) != NULL) {
+			state = (cont_state_t *)maple_dev_status(cont);
+
+			if(state == NULL)
+				break;
+			if(state->buttons & CONT_START)
+				break;
+		}
 		draw_one_frame();
 	}
 

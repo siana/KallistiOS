@@ -25,8 +25,8 @@ extern uint8 romdisk[];
 KOS_INIT_ROMDISK(romdisk);
 
 int main(int argc, char **argv) {
-	cont_cond_t cond;
-	uint8	c;
+	maple_device_t *cont;
+	cont_state_t *state;
 	uint8 *mod_buffer;
 	uint32 hnd;
 	char filename[]="/rd/test.s3m";
@@ -83,9 +83,10 @@ int main(int argc, char **argv) {
 
 	while(1) {
 		/* Check key status */
-		c = maple_first_controller();
-		if (cont_get_cond(c, &cond) >= 0) {
-			if (!(cond.buttons & CONT_START))
+		cont = maple_enum_type(0, MAPLE_FUNC_CONTROLLER);
+		if(cont) {
+			state = (cont_state_t *)maple_dev_status(cont);
+			if(state && state->buttons & CONT_START)
 				break;
 		}
 

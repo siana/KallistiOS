@@ -150,8 +150,8 @@ extern uint8 romdisk[];
 KOS_INIT_ROMDISK(romdisk);
 
 int main(int argc, char **argv) {
-	cont_cond_t cond;
-	uint8	c;
+	maple_device_t *cont;
+	cont_state_t *state;
 	float	r = 0.0f;
 	float	dr = 2.0f;
 	float	z = -14.0f;
@@ -193,20 +193,21 @@ int main(int argc, char **argv) {
 		new Cube(0.0f, 5.0f, 0.0f),
 		new Cube(0.0f, -5.0f, 0.0f)
 	};
-	c = maple_first_controller();
+	cont = maple_enum_type(0, MAPLE_FUNC_CONTROLLER);
 	while(1) {
 		/* Check key status */
-		if (cont_get_cond(c, &cond) < 0) {
+		state = (cont_state_t *)maple_dev_status(cont);
+		if (!state) {
 			printf("Error reading controller\n");
 			break;
 		}
-		if (!(cond.buttons & CONT_START))
+		if (state->buttons & CONT_START)
 			break;
-		if (!(cond.buttons & CONT_DPAD_UP))
+		if (state->buttons & CONT_DPAD_UP)
 			z -= 0.1f;
-		if (!(cond.buttons & CONT_DPAD_DOWN))
+		if (state->buttons & CONT_DPAD_DOWN)
 			z += 0.1f;
-		if (!(cond.buttons & CONT_DPAD_LEFT)) {
+		if (state->buttons & CONT_DPAD_LEFT) {
 			/* If manual rotation is requested, then stop
 			   the automated rotation */
 			dr = 0.0f;
@@ -214,13 +215,13 @@ int main(int argc, char **argv) {
 				cubes[i]->rotate(- 2.0f);
 			r -= 2.0f;
 		}
-		if (!(cond.buttons & CONT_DPAD_RIGHT)) {
+		if (state->buttons & CONT_DPAD_RIGHT) {
 			dr = 0.0f;
 			for (int i=0; i<4; i++)
 				cubes[i]->rotate(+ 2.0f);
 			r += 2.0f;
 		}
-		if (!(cond.buttons & CONT_A)) {
+		if (state->buttons & CONT_A) {
 			/* This weird logic is to avoid bouncing back
 			   and forth before the user lets go of the
 			   button. */

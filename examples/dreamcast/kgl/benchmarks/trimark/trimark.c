@@ -1,6 +1,6 @@
 /* KallistiGL ##version##
 
-   pvrmark.c
+   quadmark.c
    (c)2002 Dan Potter, Paul Boese
 */
 
@@ -38,14 +38,18 @@ void stats() {
 
 
 int check_start() {
-	uint8 addr;
-	cont_cond_t cond;
+	maple_device_t *cont;
+	cont_state_t *state;
 
-	addr = maple_first_controller();
-	if (cont_get_cond(addr, &cond) < 0)
-		return 0;
+	cont = maple_enum_type(0, MAPLE_FUNC_CONTROLLER);
 
-	return !(cond.buttons & CONT_START);
+	if (cont) {
+		state = (cont_state_t *)maple_dev_status(cont);
+		if (state)
+			return state->buttons & CONT_START;
+	}
+
+	return 0;
 }
 
 pvr_poly_hdr_t hdr;
@@ -74,12 +78,12 @@ void do_frame() {
 		x = rand() % 640;
 		y = rand() % 480;
 		z = rand() % 100 + 1;
-		size = rand() % 50;
-		col = (rand () % 255) * 0.00391f;
+		size = rand() % 50 + 1;
+		col = (rand () % 255)*0.00391f;
 	
 		glColor3f(col, col, col);
-		glVertex3f(x-size, y+size, z);
 		glVertex3f(x-size, y-size, z);
+		glVertex3f(x+size, y-size, z);
 		glVertex3f(x+size, y+size, z);
 	}
 	glEnd();
@@ -92,7 +96,7 @@ void do_frame() {
 time_t start;
 void switch_tests(int ppf) {
 	printf("Beginning new test: %d polys per frame (%d per second at 60fps)\n",
-		ppf, ppf * 60);
+		ppf*2, ppf*2*60);
 	avgfps = -1;
 	polycnt = ppf;
 }
@@ -103,7 +107,7 @@ void check_switch() {
 	now = time(NULL);
 	if (now >= (start + 5)) {
 		start = time(NULL);
-		printf("  Average Frame Rate: ~%f fps (%d pps)\n", avgfps, (int)(polycnt * avgfps));
+		printf("  Average Frame Rate: ~%f fps (%d pps)\n", avgfps, (int)(polycnt * avgfps * 2));
 		switch(phase) {
 		case PHASE_HALVE:
 			if (avgfps < 55) {
@@ -123,7 +127,7 @@ void check_switch() {
 			break;
 		case PHASE_DECR:
 			if (avgfps < 55) {
-				switch_tests(polycnt - 20);
+				switch_tests(polycnt - 30);
 			} else { 
 				printf("  Entering PHASE_FINAL\n");
 				phase = PHASE_FINAL;
@@ -156,5 +160,6 @@ int main(int argc, char **argv) {
 
 	return 0;
 }
+
 
 

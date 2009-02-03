@@ -38,14 +38,18 @@ void stats() {
 
 
 int check_start() {
-	uint8 addr;
-	cont_cond_t cond;
+	maple_device_t *cont;
+	cont_state_t *state;
 
-	addr = maple_first_controller();
-	if (cont_get_cond(addr, &cond) < 0)
-		return 0;
+	cont = maple_enum_type(0, MAPLE_FUNC_CONTROLLER);
 
-	return !(cond.buttons & CONT_START);
+	if (cont) {
+		state = (cont_state_t *)maple_dev_status(cont);
+		if (state)
+			return state->buttons & CONT_START;
+	}
+
+	return 0;
 }
 
 pvr_poly_hdr_t hdr;

@@ -84,8 +84,8 @@ extern uint8 romdisk[];
 KOS_INIT_ROMDISK(romdisk);
 
 int main(int argc, char **argv) {
-	cont_cond_t cond;
-	uint8	c;
+	maple_device_t *cont;
+	cont_state_t *state;
 	GLuint	texture;
 
 	/* Initialize KOS */
@@ -109,14 +109,15 @@ int main(int argc, char **argv) {
 
 	glClearColor(0.4f, 0.4f, 0.8f, 1.0f);
 
-	c = maple_first_controller();
+	cont = maple_enum_type(0, MAPLE_FUNC_CONTROLLER);
 	while(1) {
 		/* Check key status */
-		if (cont_get_cond(c, &cond) < 0) {
+		state = (cont_state_t *)maple_dev_status(cont);
+		if (!state) {
 			printf("Error reading controller\n");
 			break;
 		}
-		if (!(cond.buttons & CONT_START))
+		if (state->buttons & CONT_START)
 			break;
 
 		/* Begin frame */

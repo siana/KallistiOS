@@ -231,8 +231,8 @@ extern uint8 romdisk[];
 KOS_INIT_ROMDISK(romdisk);
 
 int main(int argc, char **argv) {
-	cont_cond_t cond;
-	uint8	c;
+	maple_device_t *cont;
+	cont_state_t *state;
 	static GLboolean ap = GL_FALSE;
 
 	/* Initialize KOS */
@@ -251,33 +251,34 @@ int main(int argc, char **argv) {
 	printf("A button selects demo.\n");
 	printf("  %s\n", demo[selected]);
 
-	c = maple_first_controller();
+	cont = maple_enum_type(0, MAPLE_FUNC_CONTROLLER);
 	while(1) {
 		/* Check key status */
-		if (cont_get_cond(c, &cond) < 0) {
+		state = (cont_state_t *)maple_dev_status(cont);
+		if (!state) {
 			printf("Error reading controller\n");
 			break;
 		}
-		if (!(cond.buttons & CONT_START))
+		if (state->buttons & CONT_START)
 			break;
 
-		if (cond.buttons & CONT_DPAD_UP)
+		if (!(state->buttons & CONT_DPAD_UP))
 			y-=8; if (y < -224) y = -224;
-		if (cond.buttons & CONT_DPAD_DOWN)
+		if (!(state->buttons & CONT_DPAD_DOWN))
 			y+=8; if (y > 448) y = 448;
-		if (cond.buttons & CONT_DPAD_LEFT)
+		if (!(state->buttons & CONT_DPAD_LEFT))
 			x+=8; if (x > 632) x = 632; 
-		if (cond.buttons & CONT_DPAD_RIGHT)
+		if (!(state->buttons & CONT_DPAD_RIGHT))
 			x-=8; if (x < -288) x = -288;
 		
 		/* Demo select button */
-		if (!(cond.buttons & CONT_A) && !ap) {
+		if ((state->buttons & CONT_A) && !ap) {
 			ap = GL_TRUE;
 			selected++;
 			selected %= NUM_DEMOS;
 			printf("  %s\n", demo[selected]);
 		}
-		if (cond.buttons & CONT_A)
+		if (!(state->buttons & CONT_A))
 			ap = GL_FALSE;
 
 

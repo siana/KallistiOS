@@ -81,8 +81,8 @@ extern uint8 romdisk[];
 KOS_INIT_ROMDISK(romdisk);
 
 int main(int argc, char **argv) {
-	cont_cond_t cond;
-	uint8	c;
+	maple_device_t *cont;
+	cont_state_t *state;
 	int     trans = 0;
 	GLuint	texture1, texture2, texture3;
 
@@ -108,16 +108,17 @@ int main(int argc, char **argv) {
 	loadtxr("/rd/crate.pcx", &texture2);
 	loadtxr_tga("/rd/kgl.tga", &texture3);
 
-	c = maple_first_controller();
+	cont = maple_enum_type(0, MAPLE_FUNC_CONTROLLER);
 	while(1) {
 		/* Check key status */
-		if (cont_get_cond(c, &cond) < 0) {
+		state = (cont_state_t *)maple_dev_status(cont);
+		if (!state) {
 			printf("Error reading controller\n");
 			break;
 		}
-		if (!(cond.buttons & CONT_START))
+		if (state->buttons & CONT_START)
 			break;
-		if (!(cond.buttons & CONT_A)) {
+		if (state->buttons & CONT_A) {
 			/* This weird logic is to avoid bouncing back
 			   and forth before the user lets go of the
 			   button. */

@@ -309,7 +309,7 @@ typedef struct JOYINFO {
 
 static float max[2] = { 0.0, 0.0 };
 static float min[2] = { 255.0, 255.0 }, center[2];
-static void do_joy(cont_cond_t *cond) {
+static void do_joy(cont_state_t *cond) {
 	
 	JOYINFO joy;
 
@@ -352,19 +352,20 @@ static void do_joy(cont_cond_t *cond) {
 }
 
 static GLboolean yp = GL_FALSE;
-int do_controller(uint8 c) {
+int do_controller(maple_device_t *cont) {
 	static int dpad = 0;
 	static int dpadrep = DPAD_REPEAT_INTERVAL;
-	static cont_cond_t cond;
+	cont_state_t *state;
 
 	/* Check key status */
-	if (cont_get_cond(c, &cond) < 0)
+	state = (cont_state_t *)maple_dev_status(cont);
+	if (!state)
 		return 0;
-	if (!(cond.buttons & CONT_START))
+	if (state->buttons & CONT_START)
 		return 0;
 
 	/* DPAD Menu controls */
-	if (!(cond.buttons & CONT_DPAD_UP)) {
+	if (state->buttons & CONT_DPAD_UP) {
 		if (dpad == 0) {
 			dpad |= 0x1000;
 			if (help) {
@@ -375,7 +376,7 @@ int do_controller(uint8 c) {
 	} else
 		dpad &= ~0x1000;
 
-	if (!(cond.buttons & CONT_DPAD_DOWN)) {
+	if (state->buttons & CONT_DPAD_DOWN) {
 		if (dpad == 0) {
 			dpad |= 0x0100;
 			if (help) {
@@ -386,7 +387,7 @@ int do_controller(uint8 c) {
 	} else
 		dpad &= ~0x0100;
 	
-	if (!(cond.buttons & CONT_DPAD_LEFT)) {
+	if (state->buttons & CONT_DPAD_LEFT) {
 		if (dpad == 0) {
 			dpad |= 0x0001;
 			if (help) {
@@ -397,7 +398,7 @@ int do_controller(uint8 c) {
 	} else
 		dpad &= ~0x0001;
 
-	if (!(cond.buttons & CONT_DPAD_RIGHT)) {
+	if (state->buttons & CONT_DPAD_RIGHT) {
 		if (dpad == 0) {
 			dpad |= 0x0010;
 			if (help) {
@@ -419,18 +420,18 @@ int do_controller(uint8 c) {
 		dpadrep = DPAD_REPEAT_INTERVAL;
 	
 	/* Help toggle */
-	if (!(cond.buttons & CONT_Y) && !yp) {
+	if ((state->buttons & CONT_Y) && !yp) {
 		yp = GL_TRUE;
 		help = !help;
 	}
-	if (cond.buttons & CONT_Y)
+	if (!(state->buttons & CONT_Y))
 		yp = GL_FALSE;
 
 	/* Reset view */
-	if (!(cond.buttons & CONT_A))
+	if (state->buttons & CONT_A)
 		reset_view();
 	
-	do_joy(&cond);
+	do_joy(state);
 	
 	v = (float)(velocity/100.0f);
 		
@@ -443,16 +444,15 @@ int do_controller(uint8 c) {
 
 extern uint8 romdisk[];
 int main(void) {
-	uint8 c;
 	pvr_stats_t stats;
+	maple_device_t *cont;
 
 	do_init();
-
-	c = maple_first_controller();
 	
 	printf("[DCTunnel] Entering Main Loop\n");
 	while(1) {
-		if (!do_controller(c))
+		cont = maple_enum_type(0, MAPLE_FUNC_CONTROLLER);
+		if (cont && !do_controller(cont))
 			break;
 
 		/* Begin frame */
