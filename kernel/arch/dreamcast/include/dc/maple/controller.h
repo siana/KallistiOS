@@ -67,7 +67,7 @@ int	cont_init();
 void	cont_shutdown();
 
 /* Compat function */
-int	cont_get_cond(uint8 addr, cont_cond_t *cond);
+int	cont_get_cond(uint8 addr, cont_cond_t *cond) __attribute__((deprecated));
 
 /* Set a controller callback for a button combo; set addr=0 for any controller */
 typedef void (*cont_btn_callback_t)(uint8 addr, uint32 btns);

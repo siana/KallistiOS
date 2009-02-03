@@ -47,7 +47,7 @@ typedef struct {
 } mouse_state_t;
 
 /* Old maple interface */
-int mouse_get_cond(uint8 addr, mouse_cond_t *cond);
+int mouse_get_cond(uint8 addr, mouse_cond_t *cond) __attribute__((deprecated));
 
 /* Init / Shutdown */
 int	mouse_init();
