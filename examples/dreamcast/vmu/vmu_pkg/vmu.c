@@ -9,6 +9,7 @@
    any other VMU file from the BIOS menus. */
 
 #include <kos.h>
+#include <kos/string.h>
 
 extern uint8 romdisk[];
 KOS_INIT_ROMDISK(romdisk);
@@ -53,19 +54,20 @@ void new_vmu() {
 }
 
 int wait_start() {
-	uint8 cont;
-	cont_cond_t cond;
+	maple_device_t *cont;
+	cont_state_t *state;
 
 	for(;;) {
 		new_vmu();
-		
-		cont = maple_first_controller();
-		if (cont == 0) continue;
 
-		if (cont_get_cond(cont, &cond) < 0)
+		cont = maple_enum_type(0, MAPLE_FUNC_CONTROLLER);
+		if (!cont) continue;
+
+		state = (cont_state_t *)maple_dev_status(cont);
+		if (!state)
 			continue;
 
-		if (!(cond.buttons & CONT_START))
+		if (state->buttons & CONT_START)
 			return 0;
 	}
 }

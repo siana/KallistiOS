@@ -229,10 +229,10 @@ static void stop() {
 }
 
 /* Handle controller input */
-static uint8 mcont = 0;
 void check_controller() {
 	static int up_moved = 0, down_moved = 0, a_pressed = 0, y_pressed = 0;
-	cont_cond_t cond;
+	maple_device_t *cont;
+	cont_state_t *state;
 
 	if ((!(sndoggvorbis_isplaying())) && (lst_playing != -1))
 	{
@@ -249,14 +249,14 @@ void check_controller() {
 			start(lst_entries[lst_playing].fn);
 		}
 	}
-				
-	if (!mcont) {
-		mcont = maple_first_controller();
-		if (!mcont) { return; }
-	}
-	if (cont_get_cond(mcont, &cond)) { return; }
 
-	if (!(cond.buttons & CONT_DPAD_UP)) {
+	cont = maple_enum_type(0, MAPLE_FUNC_CONTROLLER);
+	if (!cont) { return; }
+
+	state = (cont_state_t *)maple_dev_status(cont);
+	if (!state) { return; }
+
+	if (state->buttons & CONT_DPAD_UP) {
 		if ((framecnt - up_moved) > 10) {
 			if (selected > 0) {
 				selected--;
@@ -267,7 +267,7 @@ void check_controller() {
 			up_moved = framecnt;
 		}
 	}
-	if (!(cond.buttons & CONT_DPAD_DOWN)) {
+	if (state->buttons & CONT_DPAD_DOWN) {
 		if ((framecnt - down_moved) > 10) {
 			if (selected < (num_entries - 1)) {
 				selected++;
@@ -279,7 +279,7 @@ void check_controller() {
 			down_moved = framecnt;
 		}
 	}
-	if (cond.ltrig > 0) {
+	if (state->ltrig > 0) {
 		if ((framecnt - up_moved) > 10) {
 //			selected -= 14;
 			selected -= 10;
@@ -289,7 +289,7 @@ void check_controller() {
 			up_moved = framecnt;
 		}
 	}
-	if (cond.rtrig > 0) {
+	if (state->rtrig > 0) {
 		if ((framecnt - down_moved) > 10) {
 //			selected += 14;
 			selected += 10;
@@ -301,11 +301,11 @@ void check_controller() {
 			down_moved = framecnt;
 		}
 	}
-	if (!(cond.buttons & CONT_B) && sndoggvorbis_isplaying()) {
+	if ((state->buttons & CONT_B) && sndoggvorbis_isplaying()) {
 		stop();
 	}
 
-	if (!(cond.buttons & CONT_Y)) {
+	if (state->buttons & CONT_Y) {
 		if ((framecnt - y_pressed) > 10)
 		{
 		strcat(workstring,curdir);
@@ -323,7 +323,7 @@ void check_controller() {
 		y_pressed=framecnt;
 	}
 
-	if (!(cond.buttons & CONT_A) && !load_queued) {
+	if ((state->buttons & CONT_A) && !load_queued) {
 		if ((framecnt - a_pressed) > 10)
 		{
 			if (!strcmp(entries[selected].fn, "Error!"))

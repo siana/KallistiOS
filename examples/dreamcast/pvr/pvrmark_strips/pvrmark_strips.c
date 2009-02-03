@@ -5,6 +5,7 @@
 */
 
 #include <kos.h>
+#include <stdlib.h>
 #include <time.h>
 
 pvr_init_params_t pvr_params = {
@@ -37,15 +38,16 @@ void stats() {
 
 
 int check_start() {
-	uint8 addr;
-	cont_cond_t cond;
+	maple_device_t *cont;
+	cont_state_t *state;
 
-	addr = maple_first_controller();
-	if (addr) {
-		if (cont_get_cond(addr, &cond) < 0)
+	cont = maple_enum_type(0, MAPLE_FUNC_CONTROLLER);
+	if (cont) {
+		state = (cont_state_t *)maple_dev_status(cont);
+		if (!state)
 			return 0;
 
-		return !(cond.buttons & CONT_START);
+		return (state->buttons & CONT_START);
 	} else
 		return 0;
 }

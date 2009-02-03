@@ -14,11 +14,21 @@
 
 int buttonPressed(int button)
 {
-    cont_cond_t controller;
+    maple_device_t *cont;
+    cont_state_t *state;
 
-    cont_get_cond(maple_addr(0, 0), &controller);
+    cont = maple_enum_type(0, MAPLE_FUNC_CONTROLLER);
 
-    return !(controller.buttons & button);
+    if (cont)
+    {
+        state = (cont_state_t *)maple_dev_status(cont);
+        if (state)
+        {
+            return state->buttons & button;
+        }
+    }
+
+    return 0;
 }
 
 int main()
