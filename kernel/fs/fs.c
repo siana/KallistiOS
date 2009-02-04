@@ -37,6 +37,7 @@ something like this:
 #include <kos/thread.h>
 #include <kos/mutex.h>
 #include <kos/nmmgr.h>
+#include <kos/dbgio.h>
 
 /* File handle structure; this is an entirely internal structure so it does
    not go in a header file. */
@@ -48,6 +49,9 @@ typedef struct fs_hnd {
 
 /* The global file descriptor table */
 fs_hnd_t * fd_table[FD_SETSIZE] = { NULL };
+
+/* For some reason, Newlib doesn't seem to define this function in stdlib.h. */
+extern char *realpath(const char *, const char *);
 
 
 /* Internal file commands for root dir reading */

@@ -1,6 +1,6 @@
 
-CFLAGS = -O2 -g -Wall -DINLINE=inline #-g#
-LDFLAGS = -s -g #-g
+CFLAGS = -O2 -Wall -DINLINE=inline #-g#
+#LDFLAGS = -s -g
 
 TARGET=gba-crcfix
 OBJS=gba-crcfix.o

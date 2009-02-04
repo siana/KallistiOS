@@ -431,7 +431,7 @@ int fs_romdisk_shutdown() {
 		if (c->own_buffer)
 			dbglog(DBG_DEBUG, "   (and also freeing its image buffer)\n");
 
-		assert( &c->vfsh->nmmgr == c->vfsh );
+		assert( (void *)&c->vfsh->nmmgr == (void *)c->vfsh );
 		if (c->own_buffer)
 			free((void *)c->image);
 		nmmgr_handler_remove(&c->vfsh->nmmgr);
@@ -489,7 +489,7 @@ int fs_romdisk_mount(const char * mountpoint, const uint8 *img, int own_buffer) 
 	vfsh->privdata = (void *)mnt;
 	mnt->vfsh = vfsh;
 
-	assert( &mnt->vfsh->nmmgr == mnt->vfsh );
+	assert( (void *)&mnt->vfsh->nmmgr == (void *)mnt->vfsh );
 
 	/* Add it to our mount list */
 	mutex_lock(fh_mutex);
@@ -525,7 +525,7 @@ int fs_romdisk_unmount(const char * mountpoint) {
 			dbglog(DBG_DEBUG, "   (and also freeing its image buffer)\n");
 
 		/* Unmount it */
-		assert( &n->vfsh->nmmgr == n->vfsh );
+		assert( (void *)&n->vfsh->nmmgr == (void *)n->vfsh );
 		nmmgr_handler_remove(&n->vfsh->nmmgr);
 
 		/* If we own the buffer, free it */

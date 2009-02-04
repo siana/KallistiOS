@@ -12,6 +12,7 @@
 #include <arch/types.h>
 #include <arch/irq.h>
 #include <arch/timer.h>
+#include <arch/stack.h>
 #include <kos/dbgio.h>
 #include <kos/thread.h>
 #include <kos/library.h>

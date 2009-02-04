@@ -60,7 +60,7 @@ uint32 readpng_init(FILE *infile)
     return 0;
 }
 
-uint8 *readpng_get_image(uint32 *pChannels, uint32 *pRowbytes, uint32 *pWidth, uint32 *pHeight)
+uint8 *readpng_get_image(uint32 *pChannels, uint32 *pRowbytes, int *pWidth, int *pHeight)
 {
   png_uint_32  width, height;
   int  bit_depth, color_type;
@@ -76,8 +76,8 @@ uint8 *readpng_get_image(uint32 *pChannels, uint32 *pRowbytes, uint32 *pWidth, u
   png_get_IHDR(png_ptr, info_ptr, &width, &height, &bit_depth, &color_type,
                NULL, NULL, NULL);
 
-  *pWidth = width;
-  *pHeight = height;
+  *pWidth = (int)width;
+  *pHeight = (int)height;
 
     /* expand palette images to RGB, low-bit-depth grayscale images to 8 bits,
      * transparency chunks to full alpha channel; strip 16-bit-per-sample

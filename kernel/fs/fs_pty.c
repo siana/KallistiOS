@@ -30,6 +30,7 @@ or space present.
 #include <sys/queue.h>
 #include <malloc.h>
 #include <string.h>
+#include <stdlib.h>
 #include <stdio.h>
 #include <assert.h>
 #include <errno.h>
@@ -553,8 +554,7 @@ done:
 }
 
 /* Get total size. For this we return the number of bytes available for reading. */
-static ssize_t pty_total(void * h) {
-	int		avail;
+static size_t pty_total(void * h) {
 	pipefd_t	* fdobj;
 	ptyhalf_t	* ph;
 

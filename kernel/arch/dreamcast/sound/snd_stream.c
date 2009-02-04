@@ -11,6 +11,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <malloc.h>
 #include <sys/queue.h>
 
 #include <arch/timer.h>

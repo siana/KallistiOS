@@ -59,11 +59,15 @@ static int gdc_get_drv_stat(void *param) { MAKE_SYSCALL(return, param, 0, 4); }
 /* Set disc access mode */
 static int gdc_change_data_type(void *param) { MAKE_SYSCALL(return, param, 0, 10); }
 
+/* These two functions are never actually used in here. They're only really here
+   for reference at this point. */
+#if 0
 /* Reset the GD-ROM */
 static void gdc_reset() {   MAKE_SYSCALL(/**/, 0, 0, 9); }
 
 /* Abort the current command */
 static void gdc_abort_cmd(int cmd) { MAKE_SYSCALL(/**/,cmd, 0, 8); }
+#endif
 
 /* The CD access mutex */
 static mutex_t * mutex = NULL;

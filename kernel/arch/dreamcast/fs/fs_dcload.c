@@ -91,13 +91,13 @@ size_t dcload_gdbpacket(const char* in_buf, size_t in_size, char* out_buf, size_
 }
 
 static char *dcload_path = NULL;
-uint32 dcload_open(vfs_handler_t * vfs, const char *fn, int mode) {
+void *dcload_open(vfs_handler_t * vfs, const char *fn, int mode) {
     int hnd = 0;
     uint32 h;
     int dcload_mode = 0;
     
     if (lwip_dclsc && irq_inside_int())
-	return 0;
+        return (void *)0;
 
     spinlock_lock(&mutex);
     
@@ -136,10 +136,12 @@ uint32 dcload_open(vfs_handler_t * vfs, const char *fn, int mode) {
     h = hnd;
 
     spinlock_unlock(&mutex);
-    return h;
+    return (void *)h;
 }
 
-void dcload_close(uint32 hnd) {
+void dcload_close(void * h) {
+    uint32 hnd = (uint32)h;
+
     if (lwip_dclsc && irq_inside_int())
 	return;
 
@@ -156,8 +158,9 @@ void dcload_close(uint32 hnd) {
     spinlock_unlock(&mutex);
 }
 
-ssize_t dcload_read(uint32 hnd, void *buf, size_t cnt) {
+ssize_t dcload_read(void * h, void *buf, size_t cnt) {
     ssize_t ret = -1;
+    uint32 hnd = (uint32)h;
     
     if (lwip_dclsc && irq_inside_int())
 	return 0;
@@ -173,8 +176,9 @@ ssize_t dcload_read(uint32 hnd, void *buf, size_t cnt) {
     return ret;
 }
 
-ssize_t dcload_write(uint32 hnd, const void *buf, size_t cnt) {
+ssize_t dcload_write(void * h, const void *buf, size_t cnt) {
     ssize_t ret = -1;
+    uint32 hnd = (uint32)h;
     	
     if (lwip_dclsc && irq_inside_int())
 	return 0;
@@ -190,8 +194,9 @@ ssize_t dcload_write(uint32 hnd, const void *buf, size_t cnt) {
     return ret;
 }
 
-off_t dcload_seek(uint32 hnd, off_t offset, int whence) {
+off_t dcload_seek(void * h, off_t offset, int whence) {
     off_t ret = -1;
+    uint32 hnd = (uint32)h;
 
     if (lwip_dclsc && irq_inside_int())
 	return 0;
@@ -207,8 +212,9 @@ off_t dcload_seek(uint32 hnd, off_t offset, int whence) {
     return ret;
 }
 
-off_t dcload_tell(uint32 hnd) {
+off_t dcload_tell(void * h) {
     off_t ret = -1;
+    uint32 hnd = (uint32)h;
     
     if (lwip_dclsc && irq_inside_int())
 	return 0;
@@ -224,9 +230,10 @@ off_t dcload_tell(uint32 hnd) {
     return ret;
 }
 
-size_t dcload_total(uint32 hnd) {
+size_t dcload_total(void * h) {
     size_t ret = -1;
     size_t cur;
+    uint32 hnd = (uint32)h;
 	
     if (lwip_dclsc && irq_inside_int())
 	return 0;
@@ -246,11 +253,12 @@ size_t dcload_total(uint32 hnd) {
 
 /* Not thread-safe, but that's ok because neither is the FS */
 static dirent_t dirent;
-dirent_t *dcload_readdir(uint32 hnd) {
+dirent_t *dcload_readdir(void * h) {
     dirent_t *rv = NULL;
     dcload_dirent_t *dcld;
     dcload_stat_t filestat;
     char *fn;
+    uint32 hnd = (uint32)h;
 
     if (lwip_dclsc && irq_inside_int())
 	return 0;

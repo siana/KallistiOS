@@ -20,6 +20,7 @@ interface at the front of their struct.
 #include <string.h>
 #include <kos/nmmgr.h>
 #include <kos/mutex.h>
+#include <kos/exports.h>
 
 /* Thread mutex for our name handler list */
 static mutex_t * mutex;

@@ -202,6 +202,12 @@ int thd_set_mode(int mode);
 /* Wait for a thread to exit */
 int thd_wait(kthread_t * thd);
 
+/* Print a list of all threads using the given print function. */
+int thd_pslist(int (*pf)(const char *fmt, ...));
+
+/* Print a list of all queued threads using the given print function. */
+int thd_pslist_queue(int (*pf)(const char *fmt, ...));
+
 
 /* Init */
 int thd_init(int mode);

@@ -33,6 +33,6 @@ uint32 readpng_init(FILE *infile);
  * The caller is responsible for freeing the memory
  */
 uint8 *readpng_get_image(uint32 *pNumChannels,
-                       uint32 *pRowBytes, uint32 *pWidth, uint32 *pHeight);
+                       uint32 *pRowBytes, int *pWidth, int *pHeight);
 
 void readpng_cleanup(void);

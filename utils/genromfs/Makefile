@@ -2,7 +2,7 @@
 # Makefile for the genromfs program.
 
 CFLAGS = -O2 -Wall #-g#
-LDFLAGS = -s#-g
+#LDFLAGS = -s -g
 
 all: genromfs
 

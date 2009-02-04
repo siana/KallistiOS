@@ -101,13 +101,13 @@ void dcload_printk(const char *str);
 size_t dcload_gdbpacket(const char* in_buf, size_t in_size, char* out_buf, size_t out_size);
 
 /* File functions */
-uint32	dcload_open(vfs_handler_t * vfs, const char *fn, int mode);
-void	dcload_close(uint32 hnd);
-ssize_t	dcload_read(uint32 hnd, void *buf, size_t cnt);
-off_t	dcload_seek(uint32 hnd, off_t offset, int whence);
-off_t	dcload_tell(uint32 hnd);
-size_t	dcload_total(uint32 hnd);
-dirent_t* dcload_readdir(uint32 hnd);
+void*	dcload_open(vfs_handler_t * vfs, const char *fn, int mode);
+void	dcload_close(void * hnd);
+ssize_t	dcload_read(void * hnd, void *buf, size_t cnt);
+off_t	dcload_seek(void * hnd, off_t offset, int whence);
+off_t	dcload_tell(void * hnd);
+size_t	dcload_total(void * hnd);
+dirent_t* dcload_readdir(void * hnd);
 int     dcload_rename(vfs_handler_t * vfs, const char *fn1, const char *fn2);
 int     dcload_unlink(vfs_handler_t * vfs, const char *fn);
 

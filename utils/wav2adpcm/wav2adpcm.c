@@ -17,6 +17,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 static int diff_lookup[16] = {
 	1,3,5,7,9,11,13,15,

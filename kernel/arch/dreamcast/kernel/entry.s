@@ -272,9 +272,11 @@ tmh_doit:
 	mov.l	tmh_shortcut_addr,r0
 	mov.l	@r0,r0
 	cmp/pz	r0
-	bf/s	_irq_save_regs
+	bt	tmh_clear
+	bra	_irq_save_regs
 	mov	#2,r4
 
+tmh_clear:
 	! Coast is clear -- setup the args and call the C function. Regs R0-R7
 	! are volatile on SH-4 anyway, and R8-R14 will be saved if needed
 	! onto our temp stack. So all we need to worry about here, at least
