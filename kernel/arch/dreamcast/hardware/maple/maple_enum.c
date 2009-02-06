@@ -7,6 +7,7 @@
 
 #include <dc/maple.h>
 #include <kos/thread.h>
+#include <kos/dbglog.h>
 
 /* Return the number of connected devices */
 int maple_enum_count() {
@@ -81,6 +82,8 @@ maple_device_t * maple_enum_type_ex(int n, uint32 func, uint32 cap) {
 
 				/* Check if the function data for the function type checks out
 				   with what it should be. */
+				cap = ((cap >> 24) & 0xFF) | ((cap >> 8) & 0xFF00) |
+				      ((cap & 0xFF00) << 8) | ((cap & 0xFF) << 24);
 				if((dev->info.function_data[d] & cap) == cap) {
 					if(!n)
 						return dev;
