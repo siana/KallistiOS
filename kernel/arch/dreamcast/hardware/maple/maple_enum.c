@@ -7,7 +7,6 @@
 
 #include <dc/maple.h>
 #include <kos/thread.h>
-#include <kos/dbglog.h>
 
 /* Return the number of connected devices */
 int maple_enum_count() {

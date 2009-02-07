@@ -323,6 +323,7 @@ static int sip_poll(maple_device_t *dev) {
 
     /* Test to make sure that the particular mic is enabled */
     if(!sip->is_sampling) {
+        dev->status_valid = 1;
         return 0;
     }
 
