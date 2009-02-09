@@ -357,19 +357,17 @@ static int sip_attach(maple_driver_t *drv, maple_device_t *dev) {
     /* Allocate the sample buffer for 10 seconds worth of samples (11.025kHz,
        16-bit signed samples). */
     sip = (sip_state_t *)dev->status;
-    sip->is_sampling = 0;
-    sip->amp_gain = SIP_DEFAULT_GAIN;
-    sip->buf_pos = 0;
     sip->samples_buf = (uint8 *)malloc(11025 * 2 * 10);
 
-    if(sip->samples_buf == NULL) {
-        dev->status_valid = 0;
-        sip->buf_len = 0;
+    if(sip->samples_buf == NULL) {        
         return -1;
     }
-    else {
-        dev->status_valid = 1;
+    else {        
+        sip->is_sampling = 0;
+        sip->amp_gain = SIP_DEFAULT_GAIN;
+        sip->buf_pos = 0;
         sip->buf_len = 11025 * 2 * 10;
+        dev->status_valid = 1;
         return 0;
     }
 }

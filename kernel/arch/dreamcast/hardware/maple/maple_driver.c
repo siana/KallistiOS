@@ -38,14 +38,15 @@ int maple_driver_attach(maple_frame_t *det) {
 	memcpy(&dev->info, devinfo, sizeof(maple_devinfo_t));
 	dev->info.product_name[29] = 0;
 	dev->info.product_license[59] = 0;
+	memset(dev->status, 0, sizeof(dev->status));	
 	dev->drv = NULL;
 
 	/* Go through the list and look for a matching driver */
 	LIST_FOREACH(i, &maple_state.driver_list, drv_list) {
 		/* For now we just pick the first matching driver */
 		if (i->functions & devinfo->functions) {
-			/* Driver matches, try an attach */
-			if (i->attach(i, dev) >= 0) {
+			/* Driver matches, try an attach if we need to */
+			if (!(i->attach) || (i->attach(i, dev) >= 0)) {
 				/* Success: make it permanent */
 				attached = 1;
 				break;
@@ -75,6 +76,7 @@ int maple_driver_detach(int p, int u) {
 	if (dev->drv && dev->drv->detach)
 		dev->drv->detach(dev->drv, dev);
 	dev->valid = 0;
+	dev->status_valid = 0;
 
 	return 0;
 }

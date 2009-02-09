@@ -94,24 +94,13 @@ static void cont_periodic(maple_driver_t *drv) {
 	maple_driver_foreach(drv, cont_poll);
 }
 
-static int cont_attach(maple_driver_t *drv, maple_device_t *dev) {
-	memset(dev->status, 0, sizeof(dev->status));
-	dev->status_valid = 0;
-	return 0;
-}
-
-static void cont_detach(maple_driver_t *drv, maple_device_t *dev) {
-	memset(dev->status, 0, sizeof(dev->status));
-	dev->status_valid = 0;
-}
-
 /* Device Driver Struct */
 static maple_driver_t controller_drv = {
 	functions:	MAPLE_FUNC_CONTROLLER,
 	name:		"Controller Driver",
 	periodic:	cont_periodic,
-	attach:		cont_attach,
-	detach:		cont_detach
+	attach:		NULL,
+	detach:		NULL
 };
 
 /* Add the controller to the driver chain */

@@ -66,23 +66,13 @@ static void mouse_periodic(maple_driver_t *drv) {
 	maple_driver_foreach(drv, mouse_poll);
 }
 
-static int mouse_attach(maple_driver_t *drv, maple_device_t *dev) {
-	memset(dev->status, 0, sizeof(dev->status));
-	dev->status_valid = 0;
-	return 0;
-}
-
-static void mouse_detach(maple_driver_t *drv, maple_device_t *dev) {
-	dev->status_valid = 0;
-}
-
 /* Device Driver Struct */
 static maple_driver_t mouse_drv = {
 	functions:	MAPLE_FUNC_MOUSE,
 	name:		"Mouse Driver",
 	periodic:	mouse_periodic,
-	attach:		mouse_attach,
-	detach:		mouse_detach
+	attach:		NULL,
+	detach:		NULL
 };
 
 /* Add the mouse to the driver chain */

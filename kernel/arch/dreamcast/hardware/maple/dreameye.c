@@ -320,16 +320,13 @@ static int dreameye_attach(maple_driver_t *drv, maple_device_t *dev) {
     return 0;
 }
 
-static void dreameye_detach(maple_driver_t *drv, maple_device_t *dev) {
-}
-
 /* Device Driver Struct */
 static maple_driver_t dreameye_drv = {
     functions:  MAPLE_FUNC_CAMERA,
     name:       "Dreameye (Camera)",
     periodic:   dreameye_periodic,
     attach:     dreameye_attach,
-    detach:     dreameye_detach
+    detach:     NULL
 };
 
 /* Add the Dreameye to the driver chain */

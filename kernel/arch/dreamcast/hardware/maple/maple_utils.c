@@ -94,7 +94,7 @@ static const char *maple_cap_names[] = {
 /* Print the capabilities of a given driver to dbglog; NOT THREAD SAFE */
 static char caps_buffer[1024];
 const char * maple_pcaps(uint32 functions) {
-	int i, o;
+	unsigned int i, o;
 
 	for (o=0, i=0; i<32; i++) {
 		if (functions & (0x80000000 >> i)) {

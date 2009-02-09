@@ -190,24 +190,13 @@ static void kbd_periodic(maple_driver_t *drv) {
 	maple_driver_foreach(drv, kbd_poll_intern);
 }
 
-static int kbd_attach(maple_driver_t *drv, maple_device_t *dev) {
-	memset(dev->status, 0, sizeof(dev->status));
-	dev->status_valid = 0;
-	return 0;
-}
-
-static void kbd_detach(maple_driver_t *drv, maple_device_t *dev) {
-	memset(dev->status, 0, sizeof(dev->status));
-	dev->status_valid = 0;
-}
-
 /* Device driver struct */
 static maple_driver_t kbd_drv = {
 	functions:	MAPLE_FUNC_KEYBOARD,
 	name:		"Keyboard Driver",
 	periodic:	kbd_periodic,
-	attach:		kbd_attach,
-	detach:		kbd_detach
+	attach:		NULL,
+	detach:		NULL
 };
 
 /* Add the keyboard to the driver chain */

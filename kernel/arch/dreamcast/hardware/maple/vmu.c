@@ -26,16 +26,13 @@ static int vmu_attach(maple_driver_t *drv, maple_device_t *dev) {
 	return 0;
 }
 
-static void vmu_detach(maple_driver_t *drv, maple_device_t *dev) {
-}
-
 /* Device Driver Struct */
 static maple_driver_t vmu_drv = {
 	functions:	MAPLE_FUNC_MEMCARD | MAPLE_FUNC_LCD | MAPLE_FUNC_CLOCK,
 	name:		"VMU Driver",
 	periodic:	NULL,
 	attach:		vmu_attach,
-	detach:		vmu_detach
+	detach:		NULL
 };
 
 /* Add the VMU to the driver chain */
@@ -319,8 +316,8 @@ static int vmu_block_write_internal(maple_device_t * dev, uint16 blocknum, uint8
 	return rv;
 }
 
-// Sometimes a flaky or stubborn card can be recovered by trying a couple
-// of times...
+/* Sometimes a flaky or stubborn card can be recovered by trying a couple
+   of times... */
 int vmu_block_write(maple_device_t * dev, uint16 blocknum, uint8 *buffer) {
 	int i, rv;
 	for (i=0; i<4; i++) {
@@ -329,11 +326,12 @@ int vmu_block_write(maple_device_t * dev, uint16 blocknum, uint8 *buffer) {
 		if (rv == MAPLE_EOK)
 			return rv;
 
-		// It failed -- wait a bit and try again.
+		/* It failed -- wait a bit and try again. */
 		thd_sleep(100);
 	}
 
-	// Well, looks like it's really toasty... return the most recent error.
+	/* Well, looks like it's really toasty... return the most recent
+	   error. */
 	return rv;
 }
 
