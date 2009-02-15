@@ -19,15 +19,16 @@ __BEGIN_DECLS
 typedef struct dreameye_state {
     int             image_count;
     int             image_count_valid;
+    int             transfer_count;
     int             img_transferring;
     uint8          *img_buf;
     int             img_size;
     uint8           img_number;
-    uint8           img_counter;
 } dreameye_state_t;
 
 /* Attributes that can be obtained with the Get Condition command. */
 #define DREAMEYE_GETCOND_NUM_IMAGES     0x81
+#define DREAMEYE_GETCOND_TRANSFER_COUNT 0x83
 
 /* Subcommands that are used with Camera Control command. */
 #define DREAMEYE_SUBCOMMAND_IMAGEREQ    0x04
@@ -46,8 +47,8 @@ typedef struct dreameye_state {
 int dreameye_get_image_count(maple_device_t *dev, int block);
 
 /* Grab a specified image from the Dreameye. This command can take some time,
-   and (for the time being, anyway) will block. You can send this command to any
-   of the sub-devices. You are responsible for freeing the buffer after the
+   and (for the time being, anyway) will block. You must send this command to
+   the first sub-device. You are responsible for freeing the buffer after the
    command has completed if you recieve a MAPLE_EOK response. */
 int dreameye_get_image(maple_device_t *dev, uint8 image, uint8 **data,
                        int *img_sz);
