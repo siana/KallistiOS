@@ -10,6 +10,7 @@
 #include <malloc.h>
 #include <stdio.h>
 #include <reent.h>
+#include <errno.h>
 #include <kos/thread.h>
 #include <kos/sem.h>
 #include <kos/rwsem.h>
@@ -194,6 +195,22 @@ void thd_birth(void (*routine)(void *param), void *param) {
 
 /* Terminate the current thread */
 void thd_exit() {
+	kthread_tls_kv_t *i, *i2;
+
+	/* Clean up any thread-local data. */
+	LIST_FOREACH(i, &thd_current->tls_list, kv_list) {
+		if(i->destructor) {
+			i->destructor(i->data);
+		}
+	}
+
+	i = LIST_FIRST(&thd_current->tls_list);
+	while(i != NULL) {
+		i2 = LIST_NEXT(i, kv_list);
+		free(i);
+		i = i2;
+	}
+
 	/* Call Dr. Kevorkian; after this executes we could be killed
 	   at any time. */
 	thd_current->state = STATE_ZOMBIE;
@@ -305,6 +322,9 @@ kthread_t *thd_create(void (*routine)(void *param), void *param) {
 				strcpy(nt->pwd, "/");
 
 			_REENT_INIT_PTR((&(nt->thd_reent)));
+
+			/* Initialize thread-local storage. */
+			LIST_INIT(&nt->tls_list);
 
 			/* Insert it into the thread list */
 			LIST_INSERT_HEAD(&thd_list, nt, t_list);
@@ -719,6 +739,47 @@ int thd_set_mode(int mode) {
 	return old;
 }
 
+/* Delete a TLS key. Note that currently this doesn't prevent you from reusing
+   the key after deletion. This seems ok, as the pthreads standard states that
+   using the key after deletion results in "undefined behavior".
+   XXXX: This should really be in tls.c, but we need the list of threads to go
+   through, so it ends up here instead. */
+int kthread_key_delete(kthread_key_t key) {
+    int old = irq_disable();
+    kthread_t *cur;
+    kthread_tls_kv_t *i;
+
+    /* Make sure the key is valid. */
+    if(key >= kthread_key_next() || key < 1) {
+        irq_restore(old);
+        errno = EINVAL;
+        return -1;
+    }
+
+    /* Make sure we can actually use free below. */
+    if(!malloc_irq_safe())  {
+        irq_restore(old);
+        errno = EPERM;
+        return -1;
+    }
+
+    /* Go through each thread searching for (and removing) the data. */
+    LIST_FOREACH(cur, &thd_list, t_list) {
+        LIST_FOREACH(i, &cur->tls_list, kv_list) {
+            if(i->key == key) {
+                LIST_REMOVE(i, kv_list);
+                free(i);
+                break;
+            }
+        }
+    }
+
+    kthread_key_delete_destructor(key);
+
+    irq_restore(old);
+    return 0;
+}
+
 /*****************************************************************************/
 /* Init/shutdown */
 
@@ -744,6 +805,9 @@ int thd_init(int mode) {
 
 	/* Start off with no "current" thread */
 	thd_current = NULL;
+
+	/* Init thread-local storage. */
+	kthread_tls_init();
 
 	/* Setup a kernel task for the currently running "main" thread */
 	kern = thd_create(NULL, NULL);
@@ -816,6 +880,8 @@ void thd_shutdown() {
 	sem_shutdown();
 	cond_shutdown();
 	genwait_shutdown();
+
+	kthread_tls_shutdown();
 
 	/* Not running */
 	thd_mode = THD_MODE_NONE;

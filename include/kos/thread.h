@@ -2,6 +2,7 @@
 
    include/kos/thread.h
    Copyright (C)2000,2001,2002,2003 Dan Potter
+   Copyright (C) 2009 Lawrence Sebald
 
 */
 
@@ -11,6 +12,7 @@
 #include <sys/cdefs.h>
 __BEGIN_DECLS
 
+#include <kos/tls.h>
 #include <arch/types.h>
 #include <arch/irq.h>
 #include <arch/arch.h>
@@ -20,6 +22,23 @@ __BEGIN_DECLS
 /* Priority values */
 #define PRIO_MAX 4096
 #define PRIO_DEFAULT 10
+
+/* Thread-local storage key-value pair. */
+typedef struct kthread_tls_kv {
+	/* List handle. */
+	LIST_ENTRY(kthread_tls_kv) kv_list;
+
+	/* The key associated with this data. */
+	kthread_key_t key;
+
+	/* The value of the data. */
+	void *data;
+
+	/* Optional destructor for the key. */
+	void (*destructor)(void *);
+} kthread_tls_kv_t;
+
+LIST_HEAD(kthread_tls_kv_list, kthread_tls_kv);
 
 /* Pre-define list/queue types */
 struct kthread;
@@ -87,6 +106,9 @@ typedef struct kthread {
 
 	/* Our re-ent struct for newlib */
 	struct _reent thd_reent;
+
+	/* Thread-local storage */
+	struct kthread_tls_kv_list tls_list;
 } kthread_t;
 
 /* Thread flag values */

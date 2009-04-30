@@ -31,6 +31,7 @@ __BEGIN_DECLS
 #include <kos/rwsem.h>
 #include <kos/recursive_lock.h>
 #include <kos/once.h>
+#include <kos/tls.h>
 #include <kos/mutex.h>
 #include <kos/cond.h>
 #include <kos/genwait.h>
