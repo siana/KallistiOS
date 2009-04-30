@@ -23,4 +23,6 @@ typedef int kthread_once_t;
     EINTR - was interrupted */
 int kthread_once(kthread_once_t *once_control, void (*init_routine)(void));
 
+__END_DECLS
+
 #endif /* !__KOS_ONCE_H */
