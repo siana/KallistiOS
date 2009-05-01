@@ -128,12 +128,6 @@ extern int thd_mode;
 #define THD_MODE_COOP		0
 #define THD_MODE_PREEMPT	1
 
-/* Thread list; note: do not manipulate directly */
-extern struct ktlist thd_list;
-
-/* Run queue; note: do not manipulate directly */
-extern struct ktqueue run_queue;
-
 /* The currently executing thread */
 extern kthread_t *thd_current;
 
