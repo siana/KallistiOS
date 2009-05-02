@@ -11,36 +11,36 @@
 /* These structs are from AndrewK's dcload-ip. */
 #define packed __attribute__((packed))
 typedef struct {
-	uint8	dest[6]		packed;
-	uint8	src[6]		packed;
-	uint8	type[2]		packed;
-} eth_hdr_t;
+	uint8	dest[6];
+	uint8	src[6];
+	uint8	type[2];
+} packed eth_hdr_t;
 
 typedef struct {
-	uint8	version_ihl	packed;
-	uint8	tos		packed;
-	uint16	length		packed;
-	uint16	packet_id	packed;
-	uint16	flags_frag_offs	packed;
-	uint8	ttl		packed;
-	uint8	protocol	packed;
-	uint16	checksum	packed;
-	uint32	src		packed;
-	uint32	dest		packed;
-} ip_hdr_t;
+	uint8	version_ihl;
+	uint8	tos;
+	uint16	length;
+	uint16	packet_id;
+	uint16	flags_frag_offs;
+	uint8	ttl;
+	uint8	protocol;
+	uint16	checksum;
+	uint32	src;
+	uint32	dest;
+} packed ip_hdr_t;
 
 typedef struct {
-	uint32 src_addr    packed;
-	uint32 dst_addr    packed;
-	uint8 zero         packed;
-	uint8 proto        packed;
-	uint16 length      packed;
-	uint16 src_port    packed;
-	uint16 dst_port    packed;
-	uint16 hdrlength   packed;
-	uint16 checksum    packed;
-	uint8 data[1]      packed;
-} ip_pseudo_hdr_t;
+	uint32 src_addr;
+	uint32 dst_addr;
+	uint8 zero;
+	uint8 proto;
+	uint16 length;
+	uint16 src_port;
+	uint16 dst_port;
+	uint16 hdrlength;
+	uint16 checksum;
+	uint8 data[1];
+} packed ip_pseudo_hdr_t;
 #undef packed
 
 uint16 net_ipv4_checksum(const uint8 *data, int bytes);

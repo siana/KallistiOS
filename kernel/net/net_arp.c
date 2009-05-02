@@ -22,16 +22,16 @@
 /* ARP Packet Structre */
 #define packed __attribute__((packed))
 typedef struct {
-	uint8 hw_type[2]    packed;
-	uint8 pr_type[2]    packed;
-	uint8 hw_size       packed;
-	uint8 pr_size       packed;
-	uint8 opcode[2]     packed;
-	uint8 hw_send[6]    packed;
-	uint8 pr_send[4]    packed;
-	uint8 hw_recv[6]    packed;
-	uint8 pr_recv[6]    packed;
-} arp_pkt_t;
+	uint8 hw_type[2];
+	uint8 pr_type[2];
+	uint8 hw_size;
+	uint8 pr_size;
+	uint8 opcode[2];
+	uint8 hw_send[6];
+	uint8 pr_send[4];
+	uint8 hw_recv[6];
+	uint8 pr_recv[6];
+} packed arp_pkt_t;
 #undef packed
 
 /**************************************************************************/

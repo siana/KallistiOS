@@ -644,7 +644,7 @@ int flashrom_get_pw_ispcfg(flashrom_ispcfg_t *out) {
 	/* Grab block 0x83 */
 	if(flashrom_get_block(FLASHROM_PT_BLOCK_1, FLASHROM_B1_PW_SETTINGS_4, buffer) >= 0) {
 		/* The modem init string continues at the start of this block. */
-		strncpy(out->modem_init + 30, isp->b83.modem_str2, 2);
+		strncpy(out->modem_init + 30, (char *)isp->b83.modem_str2, 2);
 		out->modem_init[32] = '\0';
 
 		/* Copy out the area code next. */

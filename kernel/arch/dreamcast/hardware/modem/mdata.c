@@ -381,7 +381,7 @@ int modem_dial(const char *digits)
               if (w < 0)
                  dbglog(DBG_ERROR, "modem_dial: unknown DTMF symbol '%c'\n", digits[i]);
                  else
-                 writeToChainBuffer(txBuffer, &w, 1);
+                 writeToChainBuffer(txBuffer, (unsigned char *)&w, 1);
           }
 
           primeBuffer = 1;

@@ -41,23 +41,23 @@
 
 #define PACKED __attribute__((packed))
 typedef struct {
-    unsigned char id[4]   PACKED;
-    unsigned int address  PACKED;
-    unsigned int size     PACKED;
-    unsigned char data[0] PACKED;
-} command_t;
+    unsigned char id[4];
+    unsigned int address;
+    unsigned int size;
+    unsigned char data[0];
+} PACKED command_t;
 
 typedef struct {
-    unsigned char id[4] PACKED;
-    unsigned int value0 PACKED;
-} command_int_t;
+    unsigned char id[4];
+    unsigned int value0;
+} PACKED command_int_t;
 
 typedef struct {
-    unsigned char id[4] PACKED;
-    unsigned int value0 PACKED;
-    unsigned int value1 PACKED;
-    unsigned int value2 PACKED;
-} command_3int_t;
+    unsigned char id[4];
+    unsigned int value0;
+    unsigned int value1;
+    unsigned int value2;
+} PACKED command_3int_t;
 #undef PACKED
 
 static struct {
@@ -158,7 +158,7 @@ static void dcls_handle_vers(command_t *cmd) {
     int size = strlen(NAME) + 1 + sizeof(command_t);
 
     memcpy(resp, cmd, sizeof(command_t));
-    strcpy(resp->data, NAME);
+    strcpy((char *)resp->data, NAME);
 
     send(dcls_socket, pktbuf, size, 0);
 }
@@ -230,7 +230,7 @@ static void *dcls_open(struct vfs_handler *vfs, const char *fn, int mode) {
         }
 
         memcpy(pktbuf, "DC16", 4);
-        strcpy(pktbuf + 4, fn);
+        strcpy((char *)(pktbuf + 4), fn);
 
         send(dcls_socket, pktbuf, 5 + strlen(realfn), 0);
 
@@ -268,7 +268,7 @@ static void *dcls_open(struct vfs_handler *vfs, const char *fn, int mode) {
         memcpy(cmd->id, "DC04", 4);
         cmd->address = htonl(dcload_mode); /* Open flags */
         cmd->size = htonl(0644);           /* umask */
-        strcpy(cmd->data, fn);
+        strcpy((char *)cmd->data, fn);
 
         send(dcls_socket, pktbuf, sizeof(command_t) + strlen(fn) + 1, 0);
         dcls_recv_loop();
@@ -472,7 +472,7 @@ static dirent_t *dcls_readdir(void *hnd) {
         memcpy(cmd2->id, "DC13", 4);
         cmd2->address = htonl((uint32) &filestat);
         cmd2->size = htonl(sizeof(dcload_stat_t));
-        strcpy(cmd2->data, fn);
+        strcpy((char *)cmd2->data, fn);
 
         send(dcls_socket, cmd2, sizeof(command_t) + strlen(fn) + 1, 0);
 
@@ -511,8 +511,8 @@ static int dcls_rename(vfs_handler_t *vfs, const char *fn1, const char *fn2) {
     }
 
     memcpy(pktbuf, "DC07", 4);
-    strcpy(pktbuf + 4, fn1);
-    strcpy(pktbuf + 5 + len1, fn2);
+    strcpy((char *)(pktbuf + 4), fn1);
+    strcpy((char *)(pktbuf + 5 + len1), fn2);
 
     send(dcls_socket, pktbuf, 6 + len1 + len2, 0);
 
@@ -520,7 +520,7 @@ static int dcls_rename(vfs_handler_t *vfs, const char *fn1, const char *fn2) {
 
     if(retval == 0) {
         memcpy(pktbuf, "DC08", 4);
-        strcpy(pktbuf + 4, fn1);
+        strcpy((char *)(pktbuf + 4), fn1);
 
         send(dcls_socket, pktbuf, len1 + 5, 0);
 
@@ -546,7 +546,7 @@ static int dcls_unlink(vfs_handler_t *vfs, const char *fn) {
     }
 
     memcpy(pktbuf, "DC08", 4);
-    strcpy(pktbuf + 4, fn);
+    strcpy((char *)(pktbuf + 4), fn);
 
     send(dcls_socket, pktbuf, len, 0);
 
@@ -579,7 +579,7 @@ static int dcls_stat(vfs_handler_t *vfs, const char *fn, stat_t *rv) {
     memcpy(cmd->id, "DC13", 4);
     cmd->address = htonl((uint32) &filestat);
     cmd->size = htonl(sizeof(struct stat));
-    strcpy(cmd->data, fn);
+    strcpy((char *)(cmd->data), fn);
 
     send(dcls_socket, cmd, sizeof(command_t) + strlen(fn) + 1, 0);
 

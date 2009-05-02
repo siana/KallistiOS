@@ -23,6 +23,12 @@ extern int _bss_start, end;
 
 void _atexit_call_all();
 
+#if __GNUC__ >= 4
+void init(void);
+void fini(void);
+void __verify_newlib_patch();
+#endif
+
 /* Ditto */
 int	main(int argc, char **argv);
 
@@ -173,7 +179,9 @@ int arch_main() {
 	int rv;
 
 	/* Ensure that we pull in crtend.c in the linking process */
+#if __GNUC__ < 4
 	__crtend_pullin();
+#endif
 
 	/* Ensure that UBC is not enabled from a previous session */
 	ubc_disable_all();
@@ -185,7 +193,12 @@ int arch_main() {
 	arch_auto_init();
 
 	/* Run ctors */
+#if __GNUC__ < 4
 	arch_ctors();
+#else
+	__verify_newlib_patch();
+	init();
+#endif
 
 	/* Call the user's main function */
 	rv = main(0, NULL);
@@ -207,7 +220,12 @@ void arch_set_exit_path(int path) {
 void arch_shutdown() {
 	/* Run dtors */
 	_atexit_call_all();
+
+#if __GNUC__ < 4
 	arch_dtors();
+#else
+	fini();
+#endif
 
 	dbglog(DBG_CRITICAL, "arch: shutting down kernel\n");
 

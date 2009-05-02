@@ -404,7 +404,7 @@ static iso_dirent_t *find_object(const char *fn, int dir,
 
 	/* If this is a Joliet CD, then UCSify the name */
 	if (joliet)
-		utf2ucs(ucsname, fn);
+		utf2ucs(ucsname, (uint8 *)fn);
 	
 	while (size_left > 0) {
 		c = biread(dir_extent);
@@ -417,7 +417,7 @@ static iso_dirent_t *find_object(const char *fn, int dir,
 
 			/* Try the Joliet filename if the CD is a Joliet disc */
 			if (joliet) {
-				if (!ucscompare(de->name, ucsname, de->name_len)) {
+				if (!ucscompare((uint8 *)de->name, ucsname, de->name_len)) {
 					if (!((dir << 1) ^ de->flags))
 						return de;
 				}
@@ -434,9 +434,9 @@ static iso_dirent_t *find_object(const char *fn, int dir,
 					pnt++; len--;
 				}
 				while ((len >= 4) && ((pnt[3] == 1) || (pnt[3] == 2))) {
-					if (strncmp(pnt, "NM", 2) == 0) {
+					if (strncmp((char *)pnt, "NM", 2) == 0) {
 						rrnamelen = pnt[2] - 5;
-						strncpy(rrname, pnt+5, rrnamelen);
+						strncpy(rrname, (char *)(pnt+5), rrnamelen);
 						rrname[rrnamelen] = 0;
 					}
 					len -= pnt[2];
@@ -768,7 +768,7 @@ static dirent_t *iso_readdir(void * h) {
 	}
 
 	if (joliet) {
-		ucs2utfn(fh[fd].dirent.name, de->name, de->name_len);
+		ucs2utfn((uint8 *)fh[fd].dirent.name, (uint8 *)de->name, de->name_len);
 	} else {
 		/* Fill out the VFS dirent */
 		strncpy(fh[fd].dirent.name, de->name, de->name_len);
@@ -782,8 +782,8 @@ static dirent_t *iso_readdir(void * h) {
 			pnt++; len--;
 		}
 		while ((len >= 4) && ((pnt[3] == 1) || (pnt[3] == 2))) {
-			if (strncmp(pnt, "NM", 2) == 0) {
-				strncpy(fh[fd].dirent.name, pnt+5, pnt[2] - 5);
+			if (strncmp((char *)pnt, "NM", 2) == 0) {
+				strncpy(fh[fd].dirent.name, (char *)(pnt+5), pnt[2] - 5);
 				fh[fd].dirent.name[pnt[2] - 5] = 0;
 			}
 			len -= pnt[2];

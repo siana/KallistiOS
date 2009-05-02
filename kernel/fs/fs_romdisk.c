@@ -467,7 +467,7 @@ int fs_romdisk_mount(const char * mountpoint, const uint8 *img, int own_buffer) 
 
 	/* Check the image and print some info about it */
 	hdr = (const romdisk_hdr_t *)img;
-	if (strncmp(img, "-rom1fs-", 8)) {
+	if (strncmp((char *)img, "-rom1fs-", 8)) {
 		dbglog(DBG_ERROR, "Rom disk image at %p is not a ROMFS image\n", img);
 		return -1;
 	} else {

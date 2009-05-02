@@ -17,11 +17,11 @@ __BEGIN_DECLS
 
 #define packed __attribute__((packed))
 typedef struct {
-	uint8	type		packed;
-	uint8	code		packed;
-	uint16	checksum	packed;
-	uint8	misc[4]		packed;
-} icmp_hdr_t;
+	uint8	type;
+	uint8	code;
+	uint16	checksum;
+	uint8	misc[4];
+} packed icmp_hdr_t;
 #undef packed
 
 int net_icmp_input(netif_t *src, ip_hdr_t *ih, const uint8 *data, int size);

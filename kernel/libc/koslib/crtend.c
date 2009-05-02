@@ -8,6 +8,8 @@
    FreeBSD crtend.c code. Note that the default linker scripts for
    GCC will automatically put our ctors at the end of the list. */
 
+#if __GNUC__ < 4
+
 #include <sys/cdefs.h>
 
 /* Here we gain access to the ctor and dtor sections of the program by
@@ -23,3 +25,4 @@ void __crtend_pullin() {
 	(void)dtor_list;
 }
 
+#endif /* __GNUC__ < 4 */

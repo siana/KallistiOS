@@ -16,46 +16,46 @@ __BEGIN_DECLS
 #define __packed__ __attribute__((packed))
 /** BCD timestamp, used several places below */
 typedef struct {
-	uint8	cent		__packed__;
-	uint8	year		__packed__;
-	uint8	month		__packed__;
-	uint8	day		__packed__;
-	uint8	hour		__packed__;
-	uint8	min		__packed__;
-	uint8	sec		__packed__;
-	uint8	dow		__packed__;	/* Day of week (0 = monday, etc) */
-} vmu_timestamp_t;
+	uint8	cent;
+	uint8	year;
+	uint8	month;
+	uint8	day;
+	uint8	hour;
+	uint8	min;
+	uint8	sec;
+	uint8	dow;	/* Day of week (0 = monday, etc) */
+} __packed__ vmu_timestamp_t;
 
 /** Root block layout */
 typedef struct {
-	uint8		magic[16]	__packed__;	/*< All should contain 0x55 */
-	uint8		use_custom	__packed__;	/*< 0 = standard, 1 = custom */
-	uint8		custom_color[4] __packed__;	/*< blue, green, red, alpha */
-	uint8		pad1[27]	__packed__;	/*< All zeros */
-	vmu_timestamp_t	timestamp	__packed__;	/*< BCD timestamp */
-	uint8		pad2[8]		__packed__;	/*< All zeros */
-	uint8		unk1[6]		__packed__;	/*< ??? */
-	uint16		fat_loc		__packed__;	/*< FAT location */
-	uint16		fat_size	__packed__;	/*< FAT size in blocks */
-	uint16		dir_loc		__packed__;	/*< Directory location */
-	uint16		dir_size	__packed__;	/*< Directory size in blocks */
-	uint16		icon_shape	__packed__;	/*< Icon shape for this VMS */
-	uint16		blk_cnt		__packed__;	/*< Number of user blocks */
-	uint8		unk2[430]	__packed__;	/*< ??? */
-} vmu_root_t;
+	uint8		magic[16];	/*< All should contain 0x55 */
+	uint8		use_custom;	/*< 0 = standard, 1 = custom */
+	uint8		custom_color[4];	/*< blue, green, red, alpha */
+	uint8		pad1[27];	/*< All zeros */
+	vmu_timestamp_t	timestamp;	/*< BCD timestamp */
+	uint8		pad2[8];	/*< All zeros */
+	uint8		unk1[6];	/*< ??? */
+	uint16		fat_loc	;	/*< FAT location */
+	uint16		fat_size;	/*< FAT size in blocks */
+	uint16		dir_loc;	/*< Directory location */
+	uint16		dir_size;	/*< Directory size in blocks */
+	uint16		icon_shape;	/*< Icon shape for this VMS */
+	uint16		blk_cnt;	/*< Number of user blocks */
+	uint8		unk2[430];	/*< ??? */
+} __packed__ vmu_root_t;
 
 /** Directory entries, 32 bytes each */
 typedef struct {
-	uint8		filetype	__packed__;	/*< 0x00 = no file; 0x33 = data; 0xcc = a game */
-	uint8		copyprotect	__packed__;	/*< 0x00 = copyable; 0xff = copy protected */
-	uint16		firstblk	__packed__;	/*< Location of the first block in the file */
-	char		filename[12]	__packed__;	/*< Note: there is no null terminator */
-	vmu_timestamp_t	timestamp	__packed__;	/*< File time */
-	uint16		filesize	__packed__;	/*< Size of the file in blocks */
-	uint16		hdroff		__packed__;	/*< Offset of header, in blocks from start of file */
-	uint8		dirty		__packed__;	/*< See header notes */
-	uint8		pad1[3]		__packed__;	/*< All zeros */
-} vmu_dir_t;
+	uint8		filetype;	/*< 0x00 = no file; 0x33 = data; 0xcc = a game */
+	uint8		copyprotect;	/*< 0x00 = copyable; 0xff = copy protected */
+	uint16		firstblk;	/*< Location of the first block in the file */
+	char		filename[12];	/*< Note: there is no null terminator */
+	vmu_timestamp_t	timestamp;	/*< File time */
+	uint16		filesize;	/*< Size of the file in blocks */
+	uint16		hdroff;	/*< Offset of header, in blocks from start of file */
+	uint8		dirty;	/*< See header notes */
+	uint8		pad1[3];	/*< All zeros */
+} __packed__ vmu_dir_t;
 #undef __packed__
 
 /* Notes about the "dirty" field on vmu_dir_t :)

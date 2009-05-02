@@ -389,7 +389,7 @@ hexToInt (char **ptr, int *intValue)
 static unsigned char *
 getpacket (void)
 {
-  unsigned char *buffer = &remcomInBuffer[0];
+  unsigned char *buffer = (unsigned char *)(&remcomInBuffer[0]);
   unsigned char checksum;
   unsigned char xmitcsum;
   int count;
@@ -766,7 +766,7 @@ gdb_handle_exception (int exceptionVector)
   while (1)
     {
       remcomOutBuffer[0] = 0;
-      ptr = getpacket ();
+      ptr = (char *)getpacket ();
 
       switch (*ptr++)
 	{

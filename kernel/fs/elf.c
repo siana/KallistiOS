@@ -83,7 +83,7 @@ int elf_load(const char * fn, klibrary_t * shell, elf_prog_t * out) {
 
 	/* Header is at the front */
 	hdr = (struct elf_hdr_t *)(img+0);
-	if (hdr->ident[0] != 0x7f || strncmp(hdr->ident+1, "ELF", 3)) {
+	if (hdr->ident[0] != 0x7f || strncmp((char *)hdr->ident+1, "ELF", 3)) {
 		dbglog(DBG_ERROR, "elf_load: file is not a valid ELF file\n");
 		hdr->ident[4] = 0;
 		dbglog(DBG_ERROR, "   hdr->ident is %d/%s\n", hdr->ident[0], hdr->ident+1);

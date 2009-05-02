@@ -8,6 +8,8 @@
    FreeBSD crtbegin.c code. Note that the default linker scripts for
    GCC will automatically put our ctors at the front of the list. */
 
+#if __GNUC__ < 4
+
 #include <arch/types.h>
 
 /* Here we gain access to the ctor and dtor sections of the program by
@@ -42,4 +44,6 @@ void arch_dtors() {
 	for (fpp=dtor_list + 1; *fpp != 0; ++fpp )
 		(**fpp)();
 }
+
+#endif /* __GNUC__ < 4 */
 

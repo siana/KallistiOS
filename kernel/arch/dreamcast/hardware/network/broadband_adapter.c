@@ -86,7 +86,7 @@ This driver has basically been rewritten since KOS 1.0.x.
 static int gaps_detect() {
 	char str[16];
 
-	g2_read_block_8(str, 0xa1001400, 16);
+	g2_read_block_8((uint8 *)str, 0xa1001400, 16);
 	if (!strncmp(str, "GAPSPCI_BRIDGE_2", 16))
 		return 0;
 	else
