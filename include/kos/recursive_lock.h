@@ -38,6 +38,12 @@ void rlock_destroy(recursive_lock_t *l);
     EINTR - was interrupted */
 int rlock_lock(recursive_lock_t *l);
 
+/* Lock a recursive lock, with timeout (in milliseconds). Returns -1 on error.
+    EPERM - called inside an interrupt
+    EINTR - was interrupted
+    EAGIN - timed out*/
+int rlock_lock_timed(recursive_lock_t *l, int timeout);
+
 /* Unlock a recursive lock. Returns -1 on error.
     EPERM - the lock is not held by the current thread */
 int rlock_unlock(recursive_lock_t *l);

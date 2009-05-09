@@ -1,7 +1,7 @@
 /* KallistiOS ##version##
  
    recursive_lock.c
-   Copyright (C) 2008 Lawrence Sebald
+   Copyright (C) 2008, 2009 Lawrence Sebald
 */
 
 /* This file defines recursive locks. */
@@ -42,10 +42,15 @@ void rlock_destroy(recursive_lock_t *l) {
 
 /* Lock a recursive lock */
 int rlock_lock(recursive_lock_t *l) {
+    return rlock_lock_timed(l, 0);
+}
+
+/* Lock a recursive lock, with timeout (in milliseconds) */
+int rlock_lock_timed(recursive_lock_t *l, int timeout) {
     int old, rv = 0;
 
     if(irq_inside_int()) {
-        dbglog(DBG_WARNING, "rlock_lock: called inside interrupt\n");
+        dbglog(DBG_WARNING, "rlock_lock_timed: called inside interrupt\n");
         errno = EPERM;
         return -1;
     }
@@ -64,7 +69,7 @@ int rlock_lock(recursive_lock_t *l) {
     }
     else {
         /* Block until the lock isn't held any more */
-        rv = genwait_wait(l, "rlock_lock", 0, NULL);
+        rv = genwait_wait(l, "rlock_lock_timed", timeout, NULL);
 
         if(rv < 0) {
             assert(errno == EINTR);
