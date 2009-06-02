@@ -181,6 +181,8 @@ KallistiOS version 1.3.0 -----------------------------------------------
       device. [LS]
 - *** Added kthread_once function (think pthread_once) [LS]
 - *** Added pthreads-like thread-local storage [LS]
+- DC  Added in support for untextured PVR sprites and added support for the more
+      correct polygon header to be sent for sprites [LS] 
 
 KallistiOS version 1.2.0 -----------------------------------------------
 - DC  Fix to use DCARM7_CFLAGS when compiling ARM driver [Christian Groessler == CG]

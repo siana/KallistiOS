@@ -99,6 +99,7 @@ typedef struct {
 		int		write;
 	} depth;
 	struct {
+		int		enable;
 		int		filter;
 		int		mipmap;
 		int		mipmap_bias;
@@ -265,12 +266,21 @@ typedef struct {
 } pvr_poly_hdr_t;
 
 /* Polygon header with intensity color. This is the equivalent of
-   pvr_poly_hdr_t, but for use with intensity color (sprites). */
+   pvr_poly_hdr_t, but for use with intensity color. */
 typedef struct {
 	uint32		cmd;					/* TA command */
 	uint32		mode1, mode2, mode3;	/* mode parameters */
 	float		a, r, g, b;				/* color */
 } pvr_poly_ic_hdr_t;
+
+/* Polygon header specifically for sprites. */
+typedef struct {
+	uint32		cmd;					/* TA command */
+	uint32		mode1, mode2, mode3;	/* mode parameters */
+	uint32		argb;					/* sprite color */
+	uint32		oargb;					/* offset color */
+	uint32		d1, d2;					/* dummies */
+} pvr_sprite_hdr_t;
 
 /* Generic vertex type; the PVR chip itself supports many more vertex
    types, but this is the main one that can be used with both textured
@@ -314,6 +324,18 @@ typedef struct {
 	uint32 buv;
 	uint32 cuv;
 } pvr_sprite_txr_t;
+
+/* Untextured sprite. This vertex type is to be used with the sprite
+   polygon header and the sprite related commands to draw untextured
+   sprites (aka, quads). */
+typedef struct {
+	uint32 flags;
+	float ax, ay, az;
+	float bx, by, bz;
+	float cx, cy, cz;
+	float dx, dy;
+	uint32 d1, d2, d3, d4;
+} pvr_sprite_col_t;
 
 /* This vertex is only for modifer volumes */
 typedef struct {
@@ -866,8 +888,11 @@ void pvr_poly_cxt_txr(pvr_poly_cxt_t *dst, pvr_list_t list,
 	int filtering);
 
 /* Compile a sprite context into a colored polygon header */
-void pvr_sprite_compile(pvr_poly_ic_hdr_t *dst,
+void pvr_sprite_compile(pvr_sprite_hdr_t *dst,
 	pvr_sprite_cxt_t *src);
+
+/* Create an untextured sprite context */
+void pvr_sprite_cxt_col(pvr_sprite_cxt_t *dst, pvr_list_t list);
 
 /* Create a textured sprite context */
 void pvr_sprite_cxt_txr(pvr_sprite_cxt_t *dst, pvr_list_t list,
