@@ -252,8 +252,8 @@ typedef struct {
 #define PVR_MODIFIER_NORMAL		1
 
 #define PVR_MODIFIER_OTHER_POLY		0	/* PM1 modifer instruction */
-#define PVR_MODIFIER_FIRST_POLY		1	/* ...in inclusion vol */
-#define PVR_MODIFIER_LAST_POLY		2	/* ...in exclusion vol */
+#define PVR_MODIFIER_INCLUDE_LAST_POLY		1	/* ...in inclusion vol */
+#define PVR_MODIFIER_EXCLUDE_LAST_POLY		2	/* ...in exclusion vol */
 
 
 /* "Polygon header" -- this is the hardware equivalent of a rendering
@@ -273,6 +273,17 @@ typedef struct {
 	float		a, r, g, b;				/* color */
 } pvr_poly_ic_hdr_t;
 
+/* Polygon header to be used with modifier volumes. This is the
+   equivalent of a pvr_poly_hdr_t for use when a polygon is to
+   be used with modifier volumes. */
+typedef struct {
+	uint32		cmd;			/* TA command */
+	uint32		mode1;			/* mode parameters */
+	uint32		mode2_1, mode3_1;
+	uint32		mode2_2, mode3_2;
+	uint32		d1, d2;			/* dummies */
+} pvr_poly_mod_hdr_t;
+
 /* Polygon header specifically for sprites. */
 typedef struct {
 	uint32		cmd;					/* TA command */
@@ -281,6 +292,13 @@ typedef struct {
 	uint32		oargb;					/* offset color */
 	uint32		d1, d2;					/* dummies */
 } pvr_sprite_hdr_t;
+
+/* Modifier volume header. */
+typedef struct {
+	uint32		cmd;					/* TA command */
+	uint32		mode1;					/* mode parameter */
+	uint32		d1, d2, d3, d4, d5, d6;	/* dummies */
+} pvr_mod_hdr_t;
 
 /* Generic vertex type; the PVR chip itself supports many more vertex
    types, but this is the main one that can be used with both textured
@@ -293,6 +311,17 @@ typedef struct {
 	uint32		argb;			/* vertex color */
 	uint32		oargb;			/* offset color */
 } pvr_vertex_t;
+
+/* Non-textured, packed color, affected by modifier volume. This
+   vertex type has two copies of colors. The second color is used when
+   enclosed within a modifier volume. */
+typedef struct {
+	uint32		flags;
+	float		x, y, z;
+	uint32		argb0;
+	uint32		argb1;
+	uint32		d1, d2;
+} pvr_vertex_pcm_t;
 
 /* Textured, packed color, affected by modifer volume. Note that this
    vertex type has two copies of colors, offset colors and texture 
@@ -310,9 +339,9 @@ typedef struct {
 	uint32 d1, d2, d3, d4;			/* dummies */
 } pvr_vertex_tpcm_t;
 
-/* Textured sprite. This vertex type is to be used with the intensity
-   colored polygon header and the sprite related commands to draw
-   hardware accelerated, textured sprites. */
+/* Textured sprite. This vertex type is to be used with the sprite
+   polygon header and the sprite related commands to draw textured
+   sprites. */
 typedef struct {
 	uint32 flags;
 	float ax, ay, az;
@@ -367,7 +396,7 @@ static inline uint32 PVR_PACK_16BIT_UV(float u, float v) {
 #define PVR_CMD_VERTEX		0xe0000000
 #define PVR_CMD_VERTEX_EOL	0xf0000000
 #define PVR_CMD_USERCLIP	0x20000000
-#define PVR_CMD_MODIFIER	0x80040000
+#define PVR_CMD_MODIFIER	0x80000000
 #define PVR_CMD_SPRITE		0xA0000000
 
 /* Constants and bitmasks for handling polygon headers; note that thanks
@@ -407,7 +436,7 @@ static inline uint32 PVR_PACK_16BIT_UV(float u, float v) {
 #define PVR_TA_PM1_TXRENABLE_MASK	(1 << PVR_TA_PM1_TXRENABLE_SHIFT)
 
 #define PVR_TA_PM1_MODIFIERINST_SHIFT	29 
-#define PVR_TA_PM1_MODIFIERINST_MASK	(2 <<  PVR_TA_PM1_MODIFIERINST_SHIFT)
+#define PVR_TA_PM1_MODIFIERINST_MASK	(3 <<  PVR_TA_PM1_MODIFIERINST_SHIFT)
 
 #define PVR_TA_PM2_SRCBLEND_SHIFT	29
 #define PVR_TA_PM2_SRCBLEND_MASK	(7 << PVR_TA_PM2_SRCBLEND_SHIFT)
@@ -898,6 +927,10 @@ void pvr_sprite_cxt_col(pvr_sprite_cxt_t *dst, pvr_list_t list);
 void pvr_sprite_cxt_txr(pvr_sprite_cxt_t *dst, pvr_list_t list,
 	int textureformat, int tw, int th, pvr_ptr_t textureaddr,
 	int filtering);
+
+/* Create a modifier volume context */
+void pvr_mod_compile(pvr_mod_hdr_t *dst, pvr_list_t list, uint32 mode,
+                     uint32 cull);
 
 /* Texture handling **************************************************/
 

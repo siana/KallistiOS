@@ -103,8 +103,17 @@ void pvr_poly_compile(pvr_poly_hdr_t *dst, pvr_poly_cxt_t *src) {
 		dst->mode3 |= txr_base;
 	}
 
-	/* Dummy values */
-	dst->d1 = dst->d2 = dst->d3 = dst->d4 = 0xffffffff;
+	if(src->fmt.modifier) {
+		/* If we're affected by a modifier volume, silently promote the header
+		   to the one that is affected by a modifier volume. */
+		dst->d1 = dst->mode2;
+		dst->d2 = dst->mode3;
+	}
+	else {
+		dst->d1 = dst->d2 = 0xffffffff;
+	}
+
+	dst->d3 = dst->d4 = 0xffffffff;
 }
 
 /* Create a colored polygon context with parameters similar to
@@ -338,4 +347,15 @@ void pvr_sprite_compile(pvr_sprite_hdr_t *dst, pvr_sprite_cxt_t *src) {
 
 	dst->argb = 0xFFFFFFFF;
 	dst->oargb = 0x00000000;
+}
+
+void pvr_mod_compile(pvr_mod_hdr_t *dst, pvr_list_t list, uint32 mode,
+                     uint32 cull) {
+	dst->cmd = PVR_CMD_MODIFIER;
+	dst->cmd |= (list << PVR_TA_CMD_TYPE_SHIFT) & PVR_TA_CMD_TYPE_MASK;
+
+	dst->mode1 = (mode << PVR_TA_PM1_MODIFIERINST_SHIFT) & PVR_TA_PM1_MODIFIERINST_MASK;
+	dst->mode1 |= (cull << PVR_TA_PM1_CULLING_SHIFT) & PVR_TA_PM1_CULLING_MASK;
+
+	dst->d1 = dst->d2 = dst->d3 = dst->d4 = dst->d5 = dst->d6 = 0;
 }
