@@ -48,10 +48,15 @@ typedef struct {
 		int		color_clamp;
 		int		clip_mode;
 		int		modifier_mode;
+		int		alpha2;
+		int		fog_type2;
+		int		color_clamp2;
 	} gen;
 	struct {
 		int		src, dst;
 		int		src_enable, dst_enable;
+		int		src2, dst2;
+		int		src_enable2, dst_enable2;
 	} blend;
 	struct {
 		int		color;
@@ -76,6 +81,20 @@ typedef struct {
 		int		format;		/* bit format, vq, twiddle, stride */
 		pvr_ptr_t	base;		/* texture location */
 	} txr;
+    struct {
+		int		enable;
+		int		filter;		/* none, bi-linear, tri-linear, etc */
+		int		mipmap;
+		int		mipmap_bias;
+		int		uv_flip;
+		int		uv_clamp;
+		int		alpha;
+		int		env;
+		int		width;
+		int		height;
+		int		format;		/* bit format, vq, twiddle, stride */
+		pvr_ptr_t	base;		/* texture location */
+	} txr2;
 } pvr_poly_cxt_t;
 
 /* Sprite context; use this somewhat readable format to specify your
@@ -279,8 +298,8 @@ typedef struct {
 typedef struct {
 	uint32		cmd;			/* TA command */
 	uint32		mode1;			/* mode parameters */
+	uint32		mode2_0, mode3_0;
 	uint32		mode2_1, mode3_1;
-	uint32		mode2_2, mode3_2;
 	uint32		d1, d2;			/* dummies */
 } pvr_poly_mod_hdr_t;
 
@@ -931,6 +950,22 @@ void pvr_sprite_cxt_txr(pvr_sprite_cxt_t *dst, pvr_list_t list,
 /* Create a modifier volume context */
 void pvr_mod_compile(pvr_mod_hdr_t *dst, pvr_list_t list, uint32 mode,
                      uint32 cull);
+
+/* Compile a polygon context into a polygon header that is affected by
+   modifier volumes */
+void pvr_poly_mod_compile(pvr_poly_mod_hdr_t *dst, pvr_poly_cxt_t *src);
+
+/* Create a colored polygon context for polygons affected by
+   modifier volumes */
+void pvr_poly_cxt_col_mod(pvr_poly_cxt_t *dst, pvr_list_t list);
+
+/* Create a textured polygon context for polygons affected by
+   modifier volumes */
+void pvr_poly_cxt_txr_mod(pvr_poly_cxt_t *dst, pvr_list_t list,
+                          int textureformat, int tw, int th,
+                          pvr_ptr_t textureaddr, int filtering,
+                          int textureformat2, int tw2, int th2,
+                          pvr_ptr_t textureaddr2, int filtering2);
 
 /* Texture handling **************************************************/
 

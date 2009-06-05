@@ -3,7 +3,7 @@
    examples/dreamcast/pvr/modifier_volume/modifier.c
    Copyright (C) 2009 Lawrence Sebald
 
-   This example shows off how to do a basic modifier volume.
+   This example shows off how to do a basic modifier volume (with textures).
 */
 
 #include <stdio.h>
@@ -14,22 +14,55 @@
 #include <dc/maple.h>
 #include <dc/maple/controller.h>
 
+#include <pcx/pcx.h>
+#include <kmg/kmg.h>
+
 #define NUM_POLYS 10
 
-static pvr_vertex_pcm_t verts[NUM_POLYS * 4];
+static pvr_vertex_tpcm_t verts[NUM_POLYS * 4];
 
 static pvr_poly_mod_hdr_t phdr;
 static pvr_mod_hdr_t mhdr, mhdr2;
 static float mx = 320.0f, my = 240.0f;
 static pvr_list_t list = PVR_LIST_OP_POLY;
+static pvr_ptr_t txr1, txr2;
 
 void setup() {
     pvr_poly_cxt_t cxt;
     int i;
     float x, y, z;
-    uint32 argb = list == PVR_LIST_OP_POLY ? 0xFF0000FF : 0x80FF00FF;
+    int w1, h1, w2, h2;
+    uint32 fmt1, fmt2;
+    kos_img_t img;
 
-    pvr_poly_cxt_col_mod(&cxt, list);
+    if(pcx_to_img("/rd/crate.pcx", &img)) {
+        printf("Failed to load /rd/crate.pcx\n");
+        exit(1);
+    }
+
+    w1 = img.w;
+    h1 = img.h;
+    fmt1 = PVR_TXRFMT_RGB565 | PVR_TXRFMT_TWIDDLED;
+    txr1 = pvr_mem_malloc(img.byte_count);
+    pvr_txr_load_kimg(&img, txr1, 0);
+    kos_img_free(&img, 0);
+
+    if(kmg_to_img("/rd/fruit.kmg", &img)) {
+        printf("Failed to load /rd/fruit.kmg\n");
+        exit(1);
+    }
+
+    w2 = img.w;
+    h2 = img.h;
+    fmt2 = PVR_TXRFMT_RGB565 | PVR_TXRFMT_VQ_ENABLE | PVR_TXRFMT_TWIDDLED;
+    txr2 = pvr_mem_malloc(img.byte_count);
+    pvr_txr_load_kimg(&img, txr2, 0);
+    kos_img_free(&img, 0);
+
+    printf("Loaded textures\n");
+
+    pvr_poly_cxt_txr_mod(&cxt, list, fmt1, w1, h1, txr1, PVR_FILTER_BILINEAR,
+                         fmt2, w2, h2, txr2, PVR_FILTER_NONE);
     pvr_poly_mod_compile(&phdr, &cxt);
 
     pvr_mod_compile(&mhdr, list + 1, PVR_MODIFIER_OTHER_POLY, PVR_CULLING_NONE);
@@ -45,40 +78,67 @@ void setup() {
         verts[i * 4].x = x - 50;
         verts[i * 4].y = y + 50;
         verts[i * 4].z = z;
-        verts[i * 4].argb0 = argb;
-        verts[i * 4].argb1 = 0xFF00FF00;
-        verts[i * 4].d1 = verts[i * 4].d2 = 0;
+        verts[i * 4].u0 = 0.0f;
+        verts[i * 4].v0 = 1.0f;
+        verts[i * 4].argb0 = 0xFFFFFFFF;
+        verts[i * 4].oargb0 = 0xFF000000;
+        verts[i * 4].u1 = 0.0f;
+        verts[i * 4].v1 = 1.0f;
+        verts[i * 4].argb1 = 0xFFFFFFFF;
+        verts[i * 4].oargb1 = 0xFF000000;
+        verts[i * 4].d1 = verts[i * 4].d2 = verts[i * 4].d3 =
+            verts[i * 4].d4 = 0;
 
         verts[i * 4 + 1].flags = PVR_CMD_VERTEX;
         verts[i * 4 + 1].x = x - 50;
         verts[i * 4 + 1].y = y - 50;
         verts[i * 4 + 1].z = z;
-        verts[i * 4 + 1].argb0 = argb;
-        verts[i * 4 + 1].argb1 = 0xFF00FF00;
-        verts[i * 4 + 1].d1 = verts[i * 4 + 1].d2 = 0;
+        verts[i * 4 + 1].u0 = 0.0f;
+        verts[i * 4 + 1].v0 = 0.0f;
+        verts[i * 4 + 1].argb0 = 0xFFFFFFFF;
+        verts[i * 4 + 1].oargb0 = 0xFF000000;
+        verts[i * 4 + 1].u1 = 0.0f;
+        verts[i * 4 + 1].v1 = 0.0f;
+        verts[i * 4 + 1].argb1 = 0xFFFFFFFF;
+        verts[i * 4 + 1].oargb1 = 0xFF000000;
+        verts[i * 4 + 1].d1 = verts[i * 4 + 1].d2 = verts[i * 4 + 1].d3 =
+            verts[i * 4 + 1].d4 = 0;
 
         verts[i * 4 + 2].flags = PVR_CMD_VERTEX;
         verts[i * 4 + 2].x = x + 50;
         verts[i * 4 + 2].y = y + 50;
         verts[i * 4 + 2].z = z;
-        verts[i * 4 + 2].argb0 = argb;
-        verts[i * 4 + 2].argb1 = 0xFF00FF00;
-        verts[i * 4 + 2].d1 = verts[i * 4 + 2].d2 = 0;
+        verts[i * 4 + 2].u0 = 1.0f;
+        verts[i * 4 + 2].v0 = 1.0f;
+        verts[i * 4 + 2].argb0 = 0xFFFFFFFF;
+        verts[i * 4 + 2].oargb0 = 0xFF000000;
+        verts[i * 4 + 2].u1 = 1.0f;
+        verts[i * 4 + 2].v1 = 1.0f;
+        verts[i * 4 + 2].argb1 = 0xFFFFFFFF;
+        verts[i * 4 + 2].oargb1 = 0xFF000000;
+        verts[i * 4 + 2].d1 = verts[i * 4 + 2].d2 = verts[i * 4 + 2].d3 =
+            verts[i * 4 + 2].d4 = 0;
 
         verts[i * 4 + 3].flags = PVR_CMD_VERTEX_EOL;
         verts[i * 4 + 3].x = x + 50;
         verts[i * 4 + 3].y = y - 50;
         verts[i * 4 + 3].z = z;
-        verts[i * 4 + 3].argb0 = argb;
-        verts[i * 4 + 3].argb1 = 0xFF00FF00;
-        verts[i * 4 + 3].d1 = verts[i * 4 + 3].d2 = 0;
+        verts[i * 4 + 3].u0 = 1.0f;
+        verts[i * 4 + 3].v0 = 0.0f;
+        verts[i * 4 + 3].argb0 = 0xFFFFFFFF;
+        verts[i * 4 + 3].oargb0 = 0xFF000000;
+        verts[i * 4 + 3].u1 = 1.0f;
+        verts[i * 4 + 3].v1 = 0.0f;
+        verts[i * 4 + 3].argb1 = 0xFFFFFFFF;
+        verts[i * 4 + 3].oargb1 = 0xFF000000;
+        verts[i * 4 + 3].d1 = verts[i * 4 + 3].d2 = verts[i * 4 + 3].d3 =
+            verts[i * 4 + 3].d4 = 0;
     }
 }
 
 int check_start() {
     maple_device_t *cont;
     cont_state_t *state;
-    static int taken = 0;
 
     cont = maple_enum_type(0, MAPLE_FUNC_CONTROLLER);
 
@@ -98,16 +158,6 @@ int check_start() {
             mx -= 1.0f;
         if(state->buttons & CONT_DPAD_RIGHT)
             mx += 1.0f;
-
-        if((state->buttons & CONT_A) && !taken) {
-            list = list == PVR_LIST_OP_POLY ? PVR_LIST_TR_POLY :
-                PVR_LIST_OP_POLY;
-            setup();
-            taken = 1;
-        }
-        else if(!(state->buttons & CONT_A)) {
-            taken = 0;
-        }
     }
 
     return 0;
@@ -169,16 +219,17 @@ void do_frame() {
 }
 
 static pvr_init_params_t pvr_params = {
-    /* Enable Opaque, Opaque modifiers, Translucent, and Translucent
-    modifiers. */
-    { PVR_BINSIZE_16, PVR_BINSIZE_16, PVR_BINSIZE_16, PVR_BINSIZE_16,
+    /* Enable Opaque and Opaque modifiers. */
+    { PVR_BINSIZE_16, PVR_BINSIZE_16, PVR_BINSIZE_0, PVR_BINSIZE_0,
       PVR_BINSIZE_0 },
 	512 * 1024
 };
 
+extern uint8 romdisk[];
+KOS_INIT_ROMDISK(romdisk);
+
 int main(int argc, char *argv[]) {
-    printf("---KallistiOS PVR Modifier Example---\n");
-    printf("Press A to toggle between translucent and opaque polygons.\n");
+    printf("---KallistiOS PVR Modifier Example (with textures)---\n");
     printf("Use the DPAD to move the modifier square around (it starts at ");
     printf("(320, 240))\n");
     printf("Press Start to exit.\n");
@@ -193,6 +244,9 @@ int main(int argc, char *argv[]) {
     while(!check_start())   {
         do_frame();
     }
+
+    pvr_mem_free(txr1);
+    pvr_mem_free(txr2);
 
     return 0;
 }
