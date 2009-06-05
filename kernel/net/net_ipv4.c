@@ -2,7 +2,7 @@
 
    kernel/net/net_ipv4.c
 
-   Copyright (C) 2005, 2006, 2007, 2008 Lawrence Sebald
+   Copyright (C) 2005, 2006, 2007, 2008, 2009 Lawrence Sebald
 
    Portions adapted from KOS' old net_icmp.c file:
    Copyright (c) 2002 Dan Potter
@@ -17,6 +17,8 @@
 #include "net_ipv4.h"
 #include "net_icmp.h"
 #include "net_udp.h"
+
+static net_ipv4_stats_t ipv4_stats = { 0 };
 
 /* Perform an IP-style checksum on a block of data */
 uint16 net_ipv4_checksum(const uint8 *data, int bytes) {
@@ -105,6 +107,8 @@ int net_ipv4_send_packet(netif_t *net, ip_hdr_t *hdr, const uint8 *data,
         /* Put the IP header / data into our packet */
         memcpy(pkt, hdr, 4 * (hdr->version_ihl & 0x0f));
         memcpy(pkt + 4 * (hdr->version_ihl & 0x0f), data, size);
+
+        ++ipv4_stats.pkt_sent;
         
         /* Send it "away" */
         net_ipv4_input(NULL, pkt, 4 * (hdr->version_ihl & 0x0f) + size);
@@ -129,9 +133,11 @@ int net_ipv4_send_packet(netif_t *net, ip_hdr_t *hdr, const uint8 *data,
         err = net_arp_lookup(net, dest_ip, dest_mac);
         if(err == -1) {
             errno = ENETUNREACH;
+            ++ipv4_stats.pkt_send_failed;
             return -1;
         }
         else if(err == -2) {
+            ++ipv4_stats.pkt_send_failed;
             return -2;
         }
     }
@@ -147,6 +153,8 @@ int net_ipv4_send_packet(netif_t *net, ip_hdr_t *hdr, const uint8 *data,
     memcpy(pkt + sizeof(eth_hdr_t), hdr, 4 * (hdr->version_ihl & 0x0f));
     memcpy(pkt + sizeof(eth_hdr_t) + 4 * (hdr->version_ihl & 0x0f), data,
            size);
+
+    ++ipv4_stats.pkt_sent;
 
     /* Send it away */
     net->if_tx(net, pkt, sizeof(ip_hdr_t) + size + sizeof(eth_hdr_t),
@@ -182,16 +190,20 @@ int net_ipv4_input(netif_t *src, const uint8 *pkt, int pktsize) {
     uint8 *data;
     int hdrlen;
 
-    if(pktsize < sizeof(ip_hdr_t))
+    if(pktsize < sizeof(ip_hdr_t)) {
         /* This is obviously a bad packet, drop it */
+        ++ipv4_stats.pkt_recv_bad_size;
         return -1;
+    }
 
     ip = (ip_hdr_t*) pkt;
     hdrlen = (ip->version_ihl & 0x0F) << 2;
 
-    if(pktsize < hdrlen)
+    if(pktsize < hdrlen) {
         /* The packet is smaller than the listed header length, bail */
+        ++ipv4_stats.pkt_recv_bad_size;
         return -1;
+    }
 
     data = (uint8 *) (pkt + hdrlen);
 
@@ -202,18 +214,22 @@ int net_ipv4_input(netif_t *src, const uint8 *pkt, int pktsize) {
 
     if(i != ip->checksum) {
         /* The checksums don't match, bail */
+        ++ipv4_stats.pkt_recv_bad_chksum;
         return -1;
     }
 
     switch(ip->protocol) {
         case IPPROTO_ICMP:
+            ++ipv4_stats.pkt_recv;
             return net_icmp_input(src, ip, data, ntohs(ip->length) - hdrlen);           
 
         case IPPROTO_UDP:
+            ++ipv4_stats.pkt_recv;
             return net_udp_input(src, ip, data, ntohs(ip->length) - hdrlen);
     }
 
     /* There's no handler for this packet type, bail out */
+    ++ipv4_stats.pkt_recv_bad_proto;
     return -1;
 }
 
@@ -226,4 +242,8 @@ void net_ipv4_parse_address(uint32 addr, uint8 out[4]) {
     out[1] = (uint8) ((addr >> 16) & 0xFF);
     out[2] = (uint8) ((addr >> 8) & 0xFF);
     out[3] = (uint8) (addr & 0xFF);
+}
+
+net_ipv4_stats_t net_ipv4_get_stats() {
+    return ipv4_stats;
 }

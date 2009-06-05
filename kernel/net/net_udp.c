@@ -1,7 +1,7 @@
 /* KallistiOS ##version##
 
    kernel/net/net_udp.c
-   Copyright (C) 2005, 2006, 2007, 2008 Lawrence Sebald
+   Copyright (C) 2005, 2006, 2007, 2008, 2009 Lawrence Sebald
 
 */
 
@@ -44,6 +44,7 @@ LIST_HEAD(udp_sock_list, udp_sock);
 
 static struct udp_sock_list net_udp_sockets = LIST_HEAD_INITIALIZER(0);
 static mutex_t *udp_mutex = NULL;
+static net_udp_stats_t udp_stats = { 0 };
 
 int net_udp_accept(net_socket_t *hnd, struct sockaddr *addr,
                    socklen_t *addr_len) {
@@ -616,6 +617,7 @@ int net_udp_input(netif_t *src, ip_hdr_t *ip, const uint8 *data, int size) {
 
     if(size <= sizeof(udp_hdr_t))   {
         /* Discard the packet, since it is too short to be of any interest. */
+        ++udp_stats.pkt_recv_bad_size;
         return -1;
     }
 
@@ -632,6 +634,7 @@ int net_udp_input(netif_t *src, ip_hdr_t *ip, const uint8 *data, int size) {
 
     if(checksum != ps->checksum) {
         /* The checksums don't match, bail out */
+        ++udp_stats.pkt_recv_bad_chksum;
         return -1;
     }
 
@@ -665,11 +668,15 @@ int net_udp_input(netif_t *src, ip_hdr_t *ip, const uint8 *data, int size) {
 
             mutex_unlock(udp_mutex);
 
+            ++udp_stats.pkt_recv;
+
             return 0;
         }
     }
 
     mutex_unlock(udp_mutex);
+
+    ++udp_stats.pkt_recv_no_sock;
 
     return -1;
 }
@@ -683,6 +690,7 @@ int net_udp_send_raw(netif_t *net, uint32 src_ip, uint16 src_port,
 
     if(net == NULL && net_default_dev == NULL) {
         errno = ENETDOWN;
+        ++udp_stats.pkt_send_failed;
         return -1;
     }
 
@@ -725,14 +733,21 @@ retry_send:
     }
     else if(err == -2) {
         errno = ENETUNREACH;
+        ++udp_stats.pkt_send_failed;
         return -1;
     }
     else if(err < 0) {
+        ++udp_stats.pkt_send_failed;
         return -1;
     }
     else {
+        ++udp_stats.pkt_sent;
         return size - sizeof(udp_hdr_t);
     }
+}
+
+net_udp_stats_t net_udp_get_stats() {
+    return udp_stats;
 }
 
 int net_udp_init() {

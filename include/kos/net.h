@@ -1,7 +1,8 @@
 /* KallistiOS ##version##
 
    include/kos/net.h
-   (c)2002 Dan Potter
+   Copyright (C) 2002 Dan Potter
+   Copyright (C) 2005, 2006, 2007, 2008, 2009 Lawrence Sebald
 
 */
 
@@ -195,6 +196,20 @@ extern net_echo_cb net_icmp_echo_cb;
 
 /***** net_ipv4.c *********************************************************/
 
+/* IPv4 statistics structure. This structure holds some basic statistics about
+   the IPv4 layer of the stack, and can be retrieved with the function below. */
+typedef struct net_ipv4_stats {
+	uint32	pkt_sent;				/* Packets sent out successfully */
+	uint32	pkt_send_failed;		/* Packets that failed to send */
+	uint32	pkt_recv;				/* Packets received successfully */
+	uint32	pkt_recv_bad_size;		/* Packets of a bad size */
+	uint32	pkt_recv_bad_chksum;	/* Packets with a bad checksum */
+	uint32	pkt_recv_bad_proto;		/* Packets with an unknown protocol */
+} net_ipv4_stats_t;
+
+/* Retrieve statistics from the IPv4 layer. */
+net_ipv4_stats_t net_ipv4_get_stats();
+
 /* Create a 32-bit IP address, based on the individual numbers contained
    within the ip. */
 uint32 net_ipv4_address(const uint8 addr[4]);
@@ -204,6 +219,20 @@ uint32 net_ipv4_address(const uint8 addr[4]);
 void net_ipv4_parse_address(uint32 addr, uint8 out[4]);
 
 /***** net_udp.c **********************************************************/
+
+/* UDP statistics structure. This structure holds some basic statistics about
+   the UDP layer of the stack, and can be retrieved with the function below. */
+typedef struct net_udp_stats {
+	uint32	pkt_sent;				/* Packets sent out successfully */
+	uint32	pkt_send_failed;		/* Packets that failed to send */
+	uint32	pkt_recv;				/* Packets received successfully */
+	uint32	pkt_recv_bad_size;		/* Packets of a bad size */
+	uint32	pkt_recv_bad_chksum;	/* Packets with a bad checksum */
+	uint32	pkt_recv_no_sock;		/* Packets with to an unopened socket */
+} net_udp_stats_t;
+
+/* Retrieve statistics from the UDP layer. */
+net_udp_stats_t net_udp_get_stats();
 
 /* Init */
 int net_udp_init();

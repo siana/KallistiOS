@@ -1,6 +1,6 @@
 /* KallistiOS ##version##
 
-   examples/dreamcast/pvr/modifier_volume/modifier.c
+   examples/dreamcast/pvr/modifier_volume_tex/modifier.c
    Copyright (C) 2009 Lawrence Sebald
 
    This example shows off how to do a basic modifier volume (with textures).
