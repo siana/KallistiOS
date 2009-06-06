@@ -188,6 +188,10 @@ KallistiOS version 1.3.0 -----------------------------------------------
 - DC  Added a modifier volume example using textures [LS]
 - DC  Added a simple statistics system to the IPv4 and UDP layers of the
       network stack [LS]
+- DC  Added a MTU value to the netif structure for maintaining the maximum
+      transfer size of the adapter [LS]
+- DC  Added the ability to fragment IP packets, and made fragmenting respect
+      the MTU [LS]
 
 KallistiOS version 1.2.0 -----------------------------------------------
 - DC  Fix to use DCARM7_CFLAGS when compiling ARM driver [Christian Groessler == CG]

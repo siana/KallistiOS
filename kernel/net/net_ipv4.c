@@ -164,7 +164,7 @@ int net_ipv4_send_packet(netif_t *net, ip_hdr_t *hdr, const uint8 *data,
 }
 
 int net_ipv4_send(netif_t *net, const uint8 *data, int size, int id, int ttl,
-                  int proto, uint32 src, uint32 dst)    {
+                  int proto, uint32 src, uint32 dst) {
     ip_hdr_t hdr;
 
     /* Fill in the IPv4 Header */
@@ -172,7 +172,7 @@ int net_ipv4_send(netif_t *net, const uint8 *data, int size, int id, int ttl,
     hdr.tos = 0;
     hdr.length = htons(size + 20);
     hdr.packet_id = id;
-    hdr.flags_frag_offs = htons(0x4000);
+    hdr.flags_frag_offs = 0;
     hdr.ttl = ttl;
     hdr.protocol = proto;
     hdr.checksum = 0;
@@ -181,7 +181,7 @@ int net_ipv4_send(netif_t *net, const uint8 *data, int size, int id, int ttl,
 
     hdr.checksum = net_ipv4_checksum((uint8 *)&hdr, sizeof(ip_hdr_t));
 
-    return net_ipv4_send_packet(net, &hdr, data, size);
+    return net_ipv4_frag_send(net, &hdr, data, size);
 }
 
 int net_ipv4_input(netif_t *src, const uint8 *pkt, int pktsize) {
