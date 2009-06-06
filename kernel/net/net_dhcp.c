@@ -1,7 +1,7 @@
 /* KallistiOS ##version##
 
    kernel/net/net_dhcp.c
-   Copyright (C) 2008 Lawrence Sebald
+   Copyright (C) 2008, 2009 Lawrence Sebald
 
 */
 
@@ -60,44 +60,39 @@ static int net_dhcp_fill_options(netif_t *net, dhcp_pkt_t *req, uint8 msgtype,
     req->options[pos++] = 0x82;
     req->options[pos++] = 0x53;
     req->options[pos++] = 0x63;
-    
+
     /* Message Type: DHCPDISCOVER */
     req->options[pos++] = DHCP_OPTION_MESSAGE_TYPE;
     req->options[pos++] = 1; /* Length = 1 */
     req->options[pos++] = msgtype;
-    
-    req->options[pos++] = DHCP_OPTION_PAD; /* Pad for alignment */
-    
-    /* Max Message Length: 1024 octets */
+
+    /* Max Message Length: 1500 octets */
     req->options[pos++] = DHCP_OPTION_MAX_MESSAGE;
     req->options[pos++] = 2; /* Length = 2 */
-    *((uint16 *)(req->options + pos)) = htons(1024);
-    pos += 2;
-    
+    req->options[pos++] = (net->mtu >> 8) & 0xFF;
+    req->options[pos++] = (net->mtu >> 0) & 0xFF;
+
     /* Host Name: Dreamcast */
     req->options[pos++] = DHCP_OPTION_HOST_NAME;
     req->options[pos++] = 10; /* Length = 10 */
     strcpy((char *)req->options + pos, "KallistiOS");
     pos += 10;
-    
+
     /* Client Identifier: The network adapter's MAC address */
     req->options[pos++] = DHCP_OPTION_CLIENT_ID;
     req->options[pos++] = 1 + DHCP_HLEN_ETHERNET; /* Length = 7 */
     req->options[pos++] = DHCP_HTYPE_10MB_ETHERNET;
     memcpy(req->options + pos, net->mac_addr, DHCP_HLEN_ETHERNET);
     pos += DHCP_HLEN_ETHERNET;
-    
-    req->options[pos++] = DHCP_OPTION_PAD; /* Pad for alignment */
-    req->options[pos++] = DHCP_OPTION_PAD;
-    req->options[pos++] = DHCP_OPTION_PAD;
-    
-    /* Parameters requested: Subnet, Router, DNS, Broadcast */
+
+    /* Parameters requested: Subnet, Router, DNS, Broadcast, MTU */
     req->options[pos++] = DHCP_OPTION_PARAMETER_REQUEST;
-    req->options[pos++] = 4; /* Length = 4 */
+    req->options[pos++] = 5; /* Length = 5 */
     req->options[pos++] = DHCP_OPTION_SUBNET_MASK;
     req->options[pos++] = DHCP_OPTION_ROUTER;
     req->options[pos++] = DHCP_OPTION_DOMAIN_NAME_SERVER;
     req->options[pos++] = DHCP_OPTION_BROADCAST_ADDR;
+    req->options[pos++] = DHCP_OPTION_INTERFACE_MTU;
 
     if(serverid) {
         /* Add the Server identifier option */
@@ -118,9 +113,6 @@ static int net_dhcp_fill_options(netif_t *net, dhcp_pkt_t *req, uint8 msgtype,
         req->options[pos++] = (reqip >>  8) & 0xFF;
         req->options[pos++] = (reqip >>  0) & 0xFF;
     }
-
-    /* Pad so that we have an even number of octets */
-    req->options[pos++] = DHCP_OPTION_PAD;
 
     /* The End */
     req->options[pos++] = DHCP_OPTION_END;
@@ -144,7 +136,7 @@ static int net_dhcp_get_message_type(dhcp_pkt_t *pkt, int len) {
             ++i;
         }
         else {
-            i += pkt->options[i + 1];
+            i += pkt->options[i + 1] + 2;
         }
     }
 
@@ -163,12 +155,39 @@ static uint32 net_dhcp_get_32bit(dhcp_pkt_t *pkt, uint8 opt, int len) {
             return (pkt->options[i + 2] << 24) | (pkt->options[i + 3] << 16) |
                 (pkt->options[i + 4] << 8) | (pkt->options[i + 5]);
         }
-        else if(pkt->options[i] == DHCP_OPTION_PAD ||
-                pkt->options[i] == DHCP_OPTION_END) {
+        else if(pkt->options[i] == DHCP_OPTION_PAD) {
             ++i;
         }
+        else if(pkt->options[i] == DHCP_OPTION_END) {
+            break;
+        }
         else {
-            i += pkt->options[i + 1];
+            i += pkt->options[i + 1] + 2;
+        }
+    }
+
+    return 0;
+}
+
+static uint16 net_dhcp_get_16bit(dhcp_pkt_t *pkt, uint8 opt, int len) {
+    int i;
+
+    len -= sizeof(dhcp_pkt_t);
+
+    /* Read each byte of the options field looking for the specified option,
+       return it when found. */
+    for(i = 4; i < len;) {
+        if(pkt->options[i] == opt) {
+            return (pkt->options[i + 2] << 8) | (pkt->options[i + 3]);
+        }
+        else if(pkt->options[i] == DHCP_OPTION_PAD) {
+            ++i;
+        }
+        else if(pkt->options[i] == DHCP_OPTION_END) {
+            break;
+        }
+        else {
+            i += pkt->options[i + 1] + 2;
         }
     }
 
@@ -176,11 +195,10 @@ static uint32 net_dhcp_get_32bit(dhcp_pkt_t *pkt, uint8 opt, int len) {
 }
 
 int net_dhcp_request() {
-    uint8 pkt[1024];
+    uint8 pkt[1500];
     dhcp_pkt_t *req = (dhcp_pkt_t *)pkt;
     int optlen;
     struct dhcp_pkt_out *qpkt;
-    uint32 old;
     int rv = 0;
 
     if(dhcp_sock == -1) {
@@ -243,25 +261,20 @@ int net_dhcp_request() {
     STAILQ_INSERT_TAIL(&dhcp_pkts, qpkt, pkt_queue);
 
     state = DHCP_STATE_SELECTING;
-
-    old = irq_disable();
     rlock_unlock(dhcp_lock);
 
     /* We need to wait til we're either bound to an IP address, or until we give
        up all hope of doing so (give us 60 seconds). */
-
     if(thd_current != dhcp_thd) {
         rv = genwait_wait(qpkt, "net_dhcp_request", 60 * 1000, NULL);
     }
-
-    irq_restore(old);
 
     return rv;
 }
 
 static void net_dhcp_send_request(dhcp_pkt_t *pkt, int pktlen, dhcp_pkt_t *pkt2,
                                   int pkt2len) {
-    uint8 buf[1024];
+    uint8 buf[1500];
     dhcp_pkt_t *req = (dhcp_pkt_t *)buf;
     int optlen;
     struct dhcp_pkt_out *qpkt;
@@ -318,7 +331,7 @@ static void net_dhcp_send_request(dhcp_pkt_t *pkt, int pktlen, dhcp_pkt_t *pkt2,
 }
 
 static void net_dhcp_renew() {
-    uint8 buf[1024];
+    uint8 buf[1500];
     dhcp_pkt_t *req = (dhcp_pkt_t *)buf;
     int optlen;
     struct dhcp_pkt_out *qpkt;
@@ -399,13 +412,13 @@ static void net_dhcp_bind(dhcp_pkt_t *pkt, int len) {
     }
 
     /* Grab the DNS address if it was returned to us */
-    tmp = net_dhcp_get_32bit(pkt, DHCP_OPTION_NAME_SERVER, len);
+    tmp = net_dhcp_get_32bit(pkt, DHCP_OPTION_DOMAIN_NAME_SERVER, len);
 
     if(tmp != 0) {
-        net_default_dev->gateway[0] = (tmp >> 24) & 0xFF;
-        net_default_dev->gateway[1] = (tmp >> 16) & 0xFF;
-        net_default_dev->gateway[2] = (tmp >>  8) & 0xFF;
-        net_default_dev->gateway[3] = (tmp >>  0) & 0xFF;
+        net_default_dev->dns[0] = (tmp >> 24) & 0xFF;
+        net_default_dev->dns[1] = (tmp >> 16) & 0xFF;
+        net_default_dev->dns[2] = (tmp >>  8) & 0xFF;
+        net_default_dev->dns[3] = (tmp >>  0) & 0xFF;
     }
 
     /* Grab the broadcast address if it was sent to us, otherwise infer it from
@@ -446,6 +459,13 @@ static void net_dhcp_bind(dhcp_pkt_t *pkt, int len) {
         renew_time = rebind_time = lease_expires = 0xFFFFFFFFFFFFFFFFULL;
     }
 
+    /* Grab the interface MTU, if we got it */
+    tmp = net_dhcp_get_16bit(pkt, DHCP_OPTION_INTERFACE_MTU, len);
+
+    if(tmp != 0) {
+        net_default_dev->mtu = (int)((uint16)tmp);
+    }
+
     state = DHCP_STATE_BOUND;
 
     irq_restore(old);
@@ -455,7 +475,7 @@ static void net_dhcp_thd(void *obj __attribute__((unused))) {
     struct dhcp_pkt_out *qpkt;
     uint64 now;
     struct sockaddr_in addr;
-    uint8 buf[1024];
+    uint8 buf[1500];
     ssize_t len = 0;
     socklen_t addr_len = sizeof(struct sockaddr_in);
     dhcp_pkt_t *pkt = (dhcp_pkt_t *)buf, *pkt2;

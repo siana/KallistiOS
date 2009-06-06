@@ -661,12 +661,14 @@ int la_init() {
 	la_if.name = "la";
 	la_if.descr = "Lan Adapter (HIT-0300)";
 	la_if.index = 0;
-	la_if.dev_id =0 ;
+	la_if.dev_id = 0 ;
 	la_if.flags = NETIF_NO_FLAGS;
 	memset(la_if.ip_addr, 0, sizeof(la_if.ip_addr));
 	memset(la_if.netmask, 0, sizeof(la_if.netmask));
 	memset(la_if.gateway, 0, sizeof(la_if.gateway));
 	memset(la_if.broadcast, 0, sizeof(la_if.broadcast));
+	memset(la_if.dns, 0, sizeof(la_if.dns));
+	la_if.mtu = 1500; /* The Ethernet v2 MTU */
 	la_if.if_detect = la_if_detect;
 	la_if.if_init = la_if_init;
 	la_if.if_shutdown = la_if_shutdown;

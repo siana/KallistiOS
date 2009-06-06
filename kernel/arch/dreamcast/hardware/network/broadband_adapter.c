@@ -1047,6 +1047,8 @@ int bba_init() {
 	memset(bba_if.netmask, 0, sizeof(bba_if.netmask));
 	memset(bba_if.gateway, 0, sizeof(bba_if.gateway));
 	memset(bba_if.broadcast, 0, sizeof(bba_if.broadcast));
+	memset(bba_if.dns, 0, sizeof(bba_if.dns));
+	bba_if.mtu = 1500; /* The Ethernet v2 MTU */
 	bba_if.if_detect = bba_if_detect;
 	bba_if.if_init = bba_if_init;
 	bba_if.if_shutdown = bba_if_shutdown;

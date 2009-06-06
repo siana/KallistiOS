@@ -48,14 +48,20 @@ typedef struct knetif {
 	/* The device's IP address (if any) */
 	uint8				ip_addr[4];
 
-    /* The device's netmask */
-    uint8               netmask[4];
+	/* The device's netmask */
+	uint8				netmask[4];
 
-    /* The device's gateway's IP address */
-    uint8               gateway[4];
+	/* The device's gateway's IP address */
+	uint8				gateway[4];
 
-    /* The device's broadcast address */
-    uint8               broadcast[4];
+	/* The device's broadcast address */
+	uint8				broadcast[4];
+
+	/* The device's DNS server address */
+	uint8				dns[4];
+
+	/* The interface's MTU */
+	int					mtu;
 
 	/* All of the following callback functions should return a negative
 	   value on failure, and a zero or positive value on success. Some
