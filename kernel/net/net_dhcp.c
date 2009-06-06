@@ -266,7 +266,7 @@ int net_dhcp_request() {
     /* We need to wait til we're either bound to an IP address, or until we give
        up all hope of doing so (give us 60 seconds). */
     if(thd_current != dhcp_thd) {
-        rv = genwait_wait(qpkt, "net_dhcp_request", 60 * 1000, NULL);
+        rv = genwait_wait(&dhcp_sock, "net_dhcp_request", 60 * 1000, NULL);
     }
 
     return rv;
@@ -575,7 +575,7 @@ static void net_dhcp_thd(void *obj __attribute__((unused))) {
 
                             /* Bind to the specified IP address */
                             net_dhcp_bind(pkt, len);
-                            genwait_wake_all(qpkt);
+                            genwait_wake_all(&dhcp_sock);
                         }
                         else if(found == DHCP_MSG_DHCPNAK) {
                             /* We got a NAK, try to discover again. */
