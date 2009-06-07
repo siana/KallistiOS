@@ -17,7 +17,6 @@
 #include <time.h>
 
 #include <kos/net.h>
-#include <kos/thread.h>
 #include <kos/genwait.h>
 #include <kos/recursive_lock.h>
 #include <kos/fs_socket.h>
@@ -25,6 +24,7 @@
 #include <arch/timer.h>
 
 #include "net_dhcp.h"
+#include "net_thd.h"
 
 #define DHCP_SERVER_PORT 67
 #define DHCP_CLIENT_PORT 68
@@ -45,7 +45,7 @@ STAILQ_HEAD(dhcp_pkt_queue, dhcp_pkt_out);
 
 static struct dhcp_pkt_queue dhcp_pkts = STAILQ_HEAD_INITIALIZER(dhcp_pkts);
 static recursive_lock_t *dhcp_lock = NULL;
-static kthread_t *dhcp_thd = NULL;
+static int dhcp_cbid = -1;
 static uint64 renew_time = 0xFFFFFFFFFFFFFFFFULL;
 static uint64 rebind_time = 0xFFFFFFFFFFFFFFFFULL;
 static uint64 lease_expires = 0xFFFFFFFFFFFFFFFFULL;
@@ -265,7 +265,7 @@ int net_dhcp_request() {
 
     /* We need to wait til we're either bound to an IP address, or until we give
        up all hope of doing so (give us 60 seconds). */
-    if(thd_current != dhcp_thd) {
+    if(!net_thd_is_current()) {
         rv = genwait_wait(&dhcp_sock, "net_dhcp_request", 60 * 1000, NULL);
     }
 
@@ -481,137 +481,132 @@ static void net_dhcp_thd(void *obj __attribute__((unused))) {
     dhcp_pkt_t *pkt = (dhcp_pkt_t *)buf, *pkt2;
     int found;
 
-    for(;;) {
-        now = timer_ms_gettime64();
-        len = 0;
+    now = timer_ms_gettime64();
+    len = 0;
 
-        rlock_lock(dhcp_lock);
+    rlock_lock(dhcp_lock);
 
-        /* Make sure we don't need to renew our lease */
-        if(lease_expires <= now && (state == DHCP_STATE_BOUND ||
-           state == DHCP_STATE_RENEWING || state == DHCP_STATE_REBINDING)) {
-            STAILQ_FOREACH(qpkt, &dhcp_pkts, pkt_queue) {
-                STAILQ_REMOVE(&dhcp_pkts, qpkt, dhcp_pkt_out, pkt_queue);
-                free(qpkt->buf);
-                free(qpkt);
-            }
-
-            state = DHCP_STATE_INIT;
-            srv_addr.sin_addr.s_addr = INADDR_BROADCAST;
-            memset(net_default_dev->ip_addr, 0, 4);
-            net_dhcp_request();
-        }
-        else if(rebind_time <= now &&
-           (state == DHCP_STATE_BOUND || state == DHCP_STATE_RENEWING)) {
-            /* Clear out any existing packets. */
-            STAILQ_FOREACH(qpkt, &dhcp_pkts, pkt_queue) {
-                STAILQ_REMOVE(&dhcp_pkts, qpkt, dhcp_pkt_out, pkt_queue);
-                free(qpkt->buf);
-                free(qpkt);
-            }
-
-            state = DHCP_STATE_REBINDING;
-            srv_addr.sin_addr.s_addr = INADDR_BROADCAST;
-            net_dhcp_renew();
-        }
-        else if(renew_time <= now && state == DHCP_STATE_BOUND) {
-            state = DHCP_STATE_RENEWING;
-            net_dhcp_renew();
-        }
-
-        /* Check if we have any packets waiting to come in. */
-        while((len = recvfrom(dhcp_sock, buf, 1024, 0,
-                              (struct sockaddr *)&addr, &addr_len)) != -1) {
-            /* Ignore any boot request packets -- they shouldn't be sent to
-               the port we're monitoring anyway. */
-            if(pkt->op != DHCP_OP_BOOTREPLY) {
-                continue;
-            }
-
-            /* Check the magic cookie to make sure we've actually got a DHCP
-               packet coming in. */
-            if(pkt->options[0] != 0x63 || pkt->options[1] != 0x82 ||
-               pkt->options[2] != 0x53 || pkt->options[3] != 0x63) {
-                continue;
-            }
-
-            found = 0;
-
-            /* Check the xid field of the new packet versus what we're still
-               waiting on responses for. */
-            STAILQ_FOREACH(qpkt, &dhcp_pkts, pkt_queue) {
-                pkt2 = (dhcp_pkt_t *)qpkt->buf;
-
-                if(pkt2->xid == pkt->xid) {
-                    found = 1;
-                    break;
-                }
-            }
-
-            /* If we've found a pending request, act on the message received. */
-            if(found) {
-                switch(net_dhcp_get_message_type(pkt2, qpkt->size)) {
-                    case DHCP_MSG_DHCPDISCOVER:
-                        if(net_dhcp_get_message_type(pkt, len) !=
-                           DHCP_MSG_DHCPOFFER) {
-                            break;
-                        }
-
-                        /* Send our DHCPREQUEST packet */
-                        net_dhcp_send_request(pkt, len, pkt2, qpkt->size);
-
-                        /* Remove the old packet from our queue */
-                        STAILQ_REMOVE(&dhcp_pkts, qpkt, dhcp_pkt_out,
-                                      pkt_queue);
-                        free(qpkt->buf);
-                        free(qpkt);
-                        break;
-
-                    case DHCP_MSG_DHCPREQUEST:
-                        found = net_dhcp_get_message_type(pkt, len);
-
-                        if(found == DHCP_MSG_DHCPACK) {
-                            srv_addr.sin_addr.s_addr = addr.sin_addr.s_addr;
-
-                            /* Bind to the specified IP address */
-                            net_dhcp_bind(pkt, len);
-                            genwait_wake_all(&dhcp_sock);
-                        }
-                        else if(found == DHCP_MSG_DHCPNAK) {
-                            /* We got a NAK, try to discover again. */
-                            state = DHCP_STATE_INIT;
-                            net_dhcp_request();
-                        }
-
-                        /* Remove the old packet from our queue */
-                        STAILQ_REMOVE(&dhcp_pkts, qpkt, dhcp_pkt_out,
-                                      pkt_queue);
-                        free(qpkt->buf);
-                        free(qpkt);
-                        break;
-
-                    /* Currently, these are the only two DHCP packets the code
-                       here sends out, so other packet types are omitted for
-                       the time being. */
-                }
-            }
-        }
-                
-        /* Send any packets that need to be sent. */
+    /* Make sure we don't need to renew our lease */
+    if(lease_expires <= now && (state == DHCP_STATE_BOUND ||
+       state == DHCP_STATE_RENEWING || state == DHCP_STATE_REBINDING)) {
         STAILQ_FOREACH(qpkt, &dhcp_pkts, pkt_queue) {
-            if(qpkt->next_send <= now) {
-                sendto(dhcp_sock, qpkt->buf, qpkt->size, 0,
-                       (struct sockaddr *)&srv_addr, sizeof(srv_addr));
-                qpkt->next_send = now + qpkt->next_delay;
-                qpkt->next_delay <<= 1;
+            STAILQ_REMOVE(&dhcp_pkts, qpkt, dhcp_pkt_out, pkt_queue);
+            free(qpkt->buf);
+            free(qpkt);
+        }
+
+        state = DHCP_STATE_INIT;
+        srv_addr.sin_addr.s_addr = INADDR_BROADCAST;
+        memset(net_default_dev->ip_addr, 0, 4);
+        net_dhcp_request();
+    }
+    else if(rebind_time <= now &&
+       (state == DHCP_STATE_BOUND || state == DHCP_STATE_RENEWING)) {
+        /* Clear out any existing packets. */
+        STAILQ_FOREACH(qpkt, &dhcp_pkts, pkt_queue) {
+            STAILQ_REMOVE(&dhcp_pkts, qpkt, dhcp_pkt_out, pkt_queue);
+            free(qpkt->buf);
+            free(qpkt);
+        }
+
+        state = DHCP_STATE_REBINDING;
+        srv_addr.sin_addr.s_addr = INADDR_BROADCAST;
+        net_dhcp_renew();
+    }
+    else if(renew_time <= now && state == DHCP_STATE_BOUND) {
+        state = DHCP_STATE_RENEWING;
+        net_dhcp_renew();
+    }
+
+    /* Check if we have any packets waiting to come in. */
+    while((len = recvfrom(dhcp_sock, buf, 1024, 0,
+                          (struct sockaddr *)&addr, &addr_len)) != -1) {
+        /* Ignore any boot request packets -- they shouldn't be sent to
+           the port we're monitoring anyway. */
+        if(pkt->op != DHCP_OP_BOOTREPLY) {
+            continue;
+        }
+
+        /* Check the magic cookie to make sure we've actually got a DHCP
+           packet coming in. */
+        if(pkt->options[0] != 0x63 || pkt->options[1] != 0x82 ||
+           pkt->options[2] != 0x53 || pkt->options[3] != 0x63) {
+            continue;
+        }
+
+        found = 0;
+
+        /* Check the xid field of the new packet versus what we're still
+           waiting on responses for. */
+        STAILQ_FOREACH(qpkt, &dhcp_pkts, pkt_queue) {
+            pkt2 = (dhcp_pkt_t *)qpkt->buf;
+
+            if(pkt2->xid == pkt->xid) {
+                found = 1;
+                break;
             }
         }
 
-        rlock_unlock(dhcp_lock);
+        /* If we've found a pending request, act on the message received. */
+        if(found) {
+            switch(net_dhcp_get_message_type(pkt2, qpkt->size)) {
+                case DHCP_MSG_DHCPDISCOVER:
+                    if(net_dhcp_get_message_type(pkt, len) !=
+                       DHCP_MSG_DHCPOFFER) {
+                        break;
+                    }
 
-        /* Sleep for a while. */
-        thd_sleep(25);
+                    /* Send our DHCPREQUEST packet */
+                    net_dhcp_send_request(pkt, len, pkt2, qpkt->size);
+
+                    /* Remove the old packet from our queue */
+                    STAILQ_REMOVE(&dhcp_pkts, qpkt, dhcp_pkt_out,
+                                  pkt_queue);
+                    free(qpkt->buf);
+                    free(qpkt);
+                    break;
+
+                case DHCP_MSG_DHCPREQUEST:
+                    found = net_dhcp_get_message_type(pkt, len);
+
+                    if(found == DHCP_MSG_DHCPACK) {
+                        srv_addr.sin_addr.s_addr = addr.sin_addr.s_addr;
+
+                        /* Bind to the specified IP address */
+                        net_dhcp_bind(pkt, len);
+                        genwait_wake_all(&dhcp_sock);
+                    }
+                    else if(found == DHCP_MSG_DHCPNAK) {
+                        /* We got a NAK, try to discover again. */
+                        state = DHCP_STATE_INIT;
+                        net_dhcp_request();
+                    }
+
+                    /* Remove the old packet from our queue */
+                    STAILQ_REMOVE(&dhcp_pkts, qpkt, dhcp_pkt_out,
+                                  pkt_queue);
+                    free(qpkt->buf);
+                    free(qpkt);
+                    break;
+
+                /* Currently, these are the only two DHCP packets the code
+                   here sends out, so other packet types are omitted for
+                   the time being. */
+            }
+        }
     }
+            
+    /* Send any packets that need to be sent. */
+    STAILQ_FOREACH(qpkt, &dhcp_pkts, pkt_queue) {
+        if(qpkt->next_send <= now) {
+            sendto(dhcp_sock, qpkt->buf, qpkt->size, 0,
+                   (struct sockaddr *)&srv_addr, sizeof(srv_addr));
+            qpkt->next_send = now + qpkt->next_delay;
+            qpkt->next_delay <<= 1;
+        }
+    }
+
+    rlock_unlock(dhcp_lock);
 }
 
 int net_dhcp_init() {
@@ -650,8 +645,8 @@ int net_dhcp_init() {
     /* Make the socket non-blocking */
     fs_socket_setflags(dhcp_sock, O_NONBLOCK);
 
-    /* Create the thread for processing DHCP packets */
-    dhcp_thd = thd_create(&net_dhcp_thd, NULL);
+    /* Create the callback for processing DHCP packets */
+    dhcp_cbid = net_thd_add_callback(&net_dhcp_thd, NULL, 50);
 
     return 0;
 }
@@ -668,5 +663,9 @@ void net_dhcp_shutdown() {
 
     if(dhcp_sock != -1) {
         close(dhcp_sock);
+    }
+
+    if(dhcp_cbid != -1) {
+        net_thd_del_callback(dhcp_cbid);
     }
 }

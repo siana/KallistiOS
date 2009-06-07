@@ -185,8 +185,8 @@ int net_ipv4_send(netif_t *net, const uint8 *data, int size, int id, int ttl,
 }
 
 int net_ipv4_input(netif_t *src, const uint8 *pkt, int pktsize) {
-    ip_hdr_t	*ip;
-    int		i;
+    ip_hdr_t *ip;
+    int i;
     uint8 *data;
     int hdrlen;
 
@@ -205,8 +205,6 @@ int net_ipv4_input(netif_t *src, const uint8 *pkt, int pktsize) {
         return -1;
     }
 
-    data = (uint8 *) (pkt + hdrlen);
-
     /* Check ip header checksum */
     i = ip->checksum;
     ip->checksum = 0;
@@ -218,6 +216,16 @@ int net_ipv4_input(netif_t *src, const uint8 *pkt, int pktsize) {
         return -1;
     }
 
+    data = (uint8 *)(pkt + hdrlen);
+
+    /* Submit the packet for possible reassembly. */
+    return net_ipv4_reassemble(src, ip, data, ntohs(ip->length) - hdrlen);
+}
+
+int net_ipv4_input_proto(netif_t *src, ip_hdr_t *ip, const uint8 *data) {
+    int hdrlen = (ip->version_ihl & 0x0F) << 2;
+
+    /* Send the packet along to the appropriate protocol. */
     switch(ip->protocol) {
         case IPPROTO_ICMP:
             ++ipv4_stats.pkt_recv;

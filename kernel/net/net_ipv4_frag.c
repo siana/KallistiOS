@@ -59,3 +59,16 @@ int net_ipv4_frag_send(netif_t *net, ip_hdr_t *hdr, const uint8 *data,
 
     return net_ipv4_frag_send(net, hdr, data + ds, size - ds);
 }
+
+int net_ipv4_reassemble(netif_t *src, ip_hdr_t *hdr, const uint8 *data,
+                        int size) {
+    uint16 flags = ntohs(hdr->flags_frag_offs);
+
+    /* If the fragment offset is zero and the MF flag is 0, this is the whole
+       packet. Treat it as such. */
+    if(!(flags & 0x2000) && (flags & 0x1FFF) == 0) {
+        return net_ipv4_input_proto(src, hdr, data);
+    }
+
+    return -1;
+}

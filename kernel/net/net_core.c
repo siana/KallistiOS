@@ -13,6 +13,7 @@
 #include <kos/fs_socket.h>
 
 #include "net_dhcp.h"
+#include "net_thd.h"
 
 /*
 
@@ -141,7 +142,10 @@ int net_init() {
 	/* Detect and potentially initialize devices */
 	if (net_dev_init() < 0)
 		return -1;
-	
+
+	/* Initialize the network thread. */
+	net_thd_init();
+
 	/* Initialize the ARP cache */
 	net_arp_init();
 
@@ -176,6 +180,9 @@ void net_shutdown() {
 
 	/* Shut down the ARP cache */
 	net_arp_shutdown();
+
+	/* Shut down the network thread */
+	net_thd_shutdown();
 
 	/* Shut down all activated network devices */
 	LIST_FOREACH(cur, &net_if_list, if_list) {
