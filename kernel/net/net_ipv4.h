@@ -56,4 +56,7 @@ int net_ipv4_frag_send(netif_t *net, ip_hdr_t *hdr, const uint8 *data,
                        int size);
 int net_ipv4_reassemble(netif_t *net, ip_hdr_t *hdr, const uint8 *data,
                         int size);
+int net_ipv4_frag_init();
+void net_ipv4_frag_shutdown();
+
 #endif /* __LOCAL_NET_IPV4_H */

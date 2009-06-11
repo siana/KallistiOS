@@ -195,6 +195,7 @@ KallistiOS version 1.3.0 -----------------------------------------------
 - *** Added a primary network thread that can be used for timer-based,
       repetitive network tasks (like DHCP renewals), and made the DHCP code
       utilize it [LS]
+- *** Added rudimentary IP reassembly support [LS]
 
 KallistiOS version 1.2.0 -----------------------------------------------
 - DC  Fix to use DCARM7_CFLAGS when compiling ARM driver [Christian Groessler == CG]

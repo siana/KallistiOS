@@ -6,13 +6,138 @@
 */
 
 #include <string.h>
+#include <stdlib.h>
 #include <errno.h>
 #include <arpa/inet.h>
 
 #include <kos/net.h>
+#include <kos/mutex.h>
+#include <arch/timer.h>
 
 #include "net_ipv4.h"
+#include "net_thd.h"
 
+#define MAX(a, b) a > b ? a : b;
+
+struct ip_frag {
+    TAILQ_ENTRY(ip_frag) listhnd;
+
+    uint32 src;
+    uint32 dst;
+    uint16 ident;
+    uint8 proto;
+
+    ip_hdr_t hdr;
+    uint8 *data;
+    uint8 bitfield[8192];
+    int cur_length;
+    int total_length;
+    uint64 death_time;
+};
+
+TAILQ_HEAD(ip_frag_list, ip_frag);
+
+static struct ip_frag_list frags;
+static mutex_t *frag_mutex = NULL;
+static int cbid = -1;
+
+/* Set the bits in the bitfield for the given set of fragment blocks.
+   XXXX: This is horribly inefficient. */
+static inline void set_bits(uint8 *bitfield, int start, int end) {
+    --end;
+    while(end >= start) {
+        bitfield[end >> 3] |= (1 << (end & 0x07));
+        --end;
+    }
+}
+
+/* Check if all bits in the bitfield that should be set are set. */
+static inline int all_bits_set(const uint8 *bitfield, int end) {
+    int i;
+
+    /* Make sure each of the beginning bytes are fully set. */
+    for(i = 0; i < (end >> 3); ++i) {
+        if(bitfield[i] != 0xFF) {
+            return 0;
+        }
+    }
+
+    /* Check the last byte to make sure it has the right number of bits set. */
+    if(bitfield[(end >> 3)] != ((1 << (end & 0x07)) - 1)) {
+        return 0;
+    }
+
+    return 1;
+}
+
+/* Import the data for a fragment, potentially passing it onward in processing,
+   if the whole datagram has arrived. */
+static int frag_import(netif_t *src, ip_hdr_t *hdr, const uint8 *data,
+                       int size, uint16 flags, struct ip_frag *frag) {
+    void *tmp;
+    int fo = flags & 0x1FFF;
+    int tl = ntohs(hdr->length);
+    int start = (fo << 3);
+    int ihl = (hdr->version_ihl & 0x0F) << 2;
+    int end = start + tl - ihl;
+    int rv = 0;
+    uint64 now = timer_ms_gettime64();
+
+    /* Reallocate space for the data buffer, if needed. */
+    if(end > frag->cur_length) {
+        tmp = realloc(frag->data, end);
+
+        if(!tmp) {
+            errno = ENOMEM;
+            rv = -1;
+            goto out;
+        }
+
+        frag->data = tmp;
+    }
+
+    memcpy(frag->data + start, data, end - start);
+    set_bits(frag->bitfield, fo, fo + (((tl - ihl) + 7) >> 3));
+
+    /* If the MF flag is not set, set the data length. */
+    if(!(flags & 0x2000)) {
+        frag->total_length = end;
+    }
+
+    /* If the fragment offset is zero, store the header. */
+    if(!fo) {
+        frag->hdr = *hdr;
+    }
+
+    /* If the total length is not zero, and all the bits in the bitfield are
+       set, we continue on. */
+    if(frag->total_length &&
+       all_bits_set(frag->bitfield, frag->total_length >> 3)) {
+        /* Set the right length. Don't worry about updating the checksum, since
+           net_ipv4_input_proto doesn't check it anyway. */
+        frag->hdr.length = htons(frag->total_length +
+                                 ((frag->hdr.version_ihl & 0x0F) << 2));
+
+        rv = net_ipv4_input_proto(src, &frag->hdr, frag->data);
+
+        /* Remove the fragment from our buffer. */
+        TAILQ_REMOVE(&frags, frag, listhnd);
+        free(frag->data);
+        free(frag);
+
+        goto out;
+    }
+
+    /* Update the timer. */
+    frag->death_time = MAX(frag->death_time, (now + hdr->ttl * 1000));
+
+out:
+    mutex_unlock(frag_mutex);
+    return rv;
+}
+
+/* IPv4 fragmentation procedure. This is basically a direct implementation of
+   the example IP fragmentation procedure on pages 26-27 of RFC 791. */
 int net_ipv4_frag_send(netif_t *net, ip_hdr_t *hdr, const uint8 *data,
                        int size) {
     int ihl = (hdr->version_ihl & 0x0f) << 2;
@@ -39,7 +164,7 @@ int net_ipv4_frag_send(netif_t *net, ip_hdr_t *hdr, const uint8 *data,
     nfb = ((net->mtu - ihl) >> 3);
     ds = nfb << 3;
     newhdr.flags_frag_offs = htons(flags | 0x2000);
-    newhdr.length = htons(ihl + (nfb << 3));
+    newhdr.length = htons(ihl + ds);
 
     /* Recompute the checksum. */
     newhdr.checksum = 0;
@@ -52,7 +177,7 @@ int net_ipv4_frag_send(netif_t *net, ip_hdr_t *hdr, const uint8 *data,
     /* We don't deal with options right now, so dealing with the rest of the
        fragments is pretty easy. Fix the header, and recursively call this
        function to finish things off. */
-    hdr->length = htons(ihl + size);
+    hdr->length = htons(ihl + size - ds);
     hdr->flags_frag_offs = htons((flags & 0xE000) | ((flags & 0x1FFF) + nfb));
     hdr->checksum = 0;
     hdr->checksum = net_ipv4_checksum((uint8 *)hdr, sizeof(ip_hdr_t));
@@ -60,9 +185,13 @@ int net_ipv4_frag_send(netif_t *net, ip_hdr_t *hdr, const uint8 *data,
     return net_ipv4_frag_send(net, hdr, data + ds, size - ds);
 }
 
+/* IPv4 fragment reassembly procedure. This (along with the frag_import function
+   above are basically a direct implementation of the example IP reassembly
+   routine on pages 27-29 of RFC 791. */
 int net_ipv4_reassemble(netif_t *src, ip_hdr_t *hdr, const uint8 *data,
                         int size) {
     uint16 flags = ntohs(hdr->flags_frag_offs);
+    struct ip_frag *f;
 
     /* If the fragment offset is zero and the MF flag is 0, this is the whole
        packet. Treat it as such. */
@@ -70,5 +199,72 @@ int net_ipv4_reassemble(netif_t *src, ip_hdr_t *hdr, const uint8 *data,
         return net_ipv4_input_proto(src, hdr, data);
     }
 
-    return -1;
+    /* Find the packet if we already have this one in our data buffer. */
+    mutex_lock(frag_mutex);
+
+    TAILQ_FOREACH(f, &frags, listhnd) {
+        if(f->src == hdr->src && f->dst == hdr->dest &&
+           f->ident == hdr->packet_id && f->proto == hdr->protocol) {
+            /* We've got it, import the data (this function handles unlocking
+               the mutex when its done). */
+            return frag_import(src, hdr, data, size, flags, f);
+        }
+    }
+
+    /* We don't have a fragment with that identifier, so make one. */
+    f = (struct ip_frag *)malloc(sizeof(struct ip_frag));
+
+    if(!f) {
+        errno = ENOMEM;
+        return -1;
+    }
+
+    f->src = hdr->src;
+    f->dst = hdr->dest;
+    f->ident = hdr->packet_id;
+    f->proto = hdr->protocol;
+    f->data = NULL;
+    f->cur_length = 0;
+    f->total_length = 0;
+    memset(f->bitfield, 0, sizeof(f->bitfield));
+
+    TAILQ_INSERT_TAIL(&frags, f, listhnd);
+
+    return frag_import(src, hdr, data, size, flags, f);
+}
+
+int net_ipv4_frag_init() {
+    if(!frag_mutex) {
+        frag_mutex = mutex_create();
+        TAILQ_INIT(&frags);
+    }
+
+    return frag_mutex != NULL;
+}
+
+void net_ipv4_frag_shutdown() {
+    struct ip_frag *c, *n;
+
+    if(frag_mutex) {
+        mutex_lock(frag_mutex);
+
+        c = TAILQ_FIRST(&frags);
+        while(c) {
+            n = TAILQ_NEXT(c, listhnd);
+            free(c->data);
+            free(c->bitfield);
+            c = n;
+        }
+
+        if(cbid != -1) {
+            net_thd_del_callback(cbid);
+        }
+
+        mutex_unlock(frag_mutex);
+        mutex_destroy(frag_mutex);
+    }
+
+    cbid = -1;
+    frag_mutex = NULL;
+    TAILQ_INIT(&frags);
 }

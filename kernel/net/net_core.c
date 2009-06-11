@@ -14,6 +14,7 @@
 
 #include "net_dhcp.h"
 #include "net_thd.h"
+#include "net_ipv4.h"
 
 /*
 
@@ -149,6 +150,9 @@ int net_init() {
 	/* Initialize the ARP cache */
 	net_arp_init();
 
+	/* Initialize IP fragmentation support */
+	net_ipv4_frag_init();
+
 	/* Initialize the UDP system */
 	net_udp_init();
 
@@ -177,6 +181,9 @@ void net_shutdown() {
 
 	/* Shut down the UDP system */
 	net_udp_shutdown();
+
+	/* Shut down IP fragmentation support */
+	net_ipv4_frag_shutdown();
 
 	/* Shut down the ARP cache */
 	net_arp_shutdown();

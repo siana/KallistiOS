@@ -200,6 +200,10 @@ typedef void (*net_echo_cb)(const uint8 *, uint16, uint64, uint8, const uint8 *,
 /* Where will we handle possibly notifying the user of ping replies? */
 extern net_echo_cb net_icmp_echo_cb;
 
+/* Send an ICMP Echo packet to the specified IP. */
+int net_icmp_send_echo(netif_t *net, const uint8 ipaddr[4], const uint8 *data,
+                       int size);
+
 /***** net_ipv4.c *********************************************************/
 
 /* IPv4 statistics structure. This structure holds some basic statistics about
