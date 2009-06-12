@@ -7,12 +7,14 @@
 
 #include <string.h>
 #include <stdlib.h>
+#include <string.h>
 #include <errno.h>
 #include <arpa/inet.h>
 
 #include <kos/net.h>
 #include <kos/mutex.h>
 #include <arch/timer.h>
+#include <arch/irq.h>
 
 #include "net_ipv4.h"
 #include "net_thd.h"
@@ -41,13 +43,59 @@ static struct ip_frag_list frags;
 static mutex_t *frag_mutex = NULL;
 static int cbid = -1;
 
-/* Set the bits in the bitfield for the given set of fragment blocks.
-   XXXX: This is horribly inefficient. */
+/* IP fragment "thread" -- this thread is set up to delete fragments for which
+   the "death_time" has passed. This is run approximately once every two
+   seconds (since death_time is always on the order of seconds). */
+static void frag_thd_cb(void *data __attribute__((unused))) {
+    struct ip_frag *f, *n;
+    uint64 now = timer_ms_gettime64();
+
+    mutex_lock(frag_mutex);
+
+    /* Look at each fragment item, and see if the timer has expired. If so,
+       remvoe it. */
+    TAILQ_FOREACH(f, &frags, listhnd) {
+        n = TAILQ_NEXT(f, listhnd);
+
+        if(f->death_time < now) {
+            TAILQ_REMOVE(&frags, f, listhnd);
+            free(f->data);
+            free(f);
+            f = n;
+        }
+    }
+
+    mutex_unlock(frag_mutex);
+}
+
+/* Set the bits in the bitfield for the given set of fragment blocks. */
 static inline void set_bits(uint8 *bitfield, int start, int end) {
-    --end;
-    while(end >= start) {
-        bitfield[end >> 3] |= (1 << (end & 0x07));
+    /* Use a slightly more efficient method when dealing with an end that is not
+       in the same byte as the start. */
+    if((end >> 3) > (start >> 3)) {
+        int bits = start & 0x07;
+
+        /* Finish off anything in the start byte... */
+        while(bits && bits < 8) {
+            bitfield[start >> 3] |= (1 << bits);
+            ++bits;
+        }
+
+        /* ...and the start of the end byte. */
+        bits = end & 0x07;
+        bitfield[end >> 3] |= (1 << bits) - 1;
+
+        /* Now, fill anything in in the middle. */
+        bits = (end >> 3) - ((start + 1) >> 3);
+        memset(bitfield + ((start + 1) >> 3), 0xFF, bits);
+    }
+    /* Fall back to brute-forcing it for when the two are in the same byte. */
+    else {
         --end;
+        while(end >= start) {
+            bitfield[end >> 3] |= (1 << (end & 0x07));
+            --end;
+        }
     }
 }
 
@@ -199,9 +247,19 @@ int net_ipv4_reassemble(netif_t *src, ip_hdr_t *hdr, const uint8 *data,
         return net_ipv4_input_proto(src, hdr, data);
     }
 
-    /* Find the packet if we already have this one in our data buffer. */
-    mutex_lock(frag_mutex);
+    /* This is usually called inside an interrupt, so try to safely lock the
+       mutex, and bail if we can't. */
+    if(irq_inside_int()) {
+        if(mutex_trylock(frag_mutex) == -1) {
+            errno = EWOULDBLOCK;
+            return -1;
+        }
+    }
+    else {
+        mutex_lock(frag_mutex);
+    }
 
+    /* Find the packet if we already have this one in our data buffer. */
     TAILQ_FOREACH(f, &frags, listhnd) {
         if(f->src == hdr->src && f->dst == hdr->dest &&
            f->ident == hdr->packet_id && f->proto == hdr->protocol) {
@@ -236,6 +294,7 @@ int net_ipv4_reassemble(netif_t *src, ip_hdr_t *hdr, const uint8 *data,
 int net_ipv4_frag_init() {
     if(!frag_mutex) {
         frag_mutex = mutex_create();
+        cbid = net_thd_add_callback(&frag_thd_cb, NULL, 2000);
         TAILQ_INIT(&frags);
     }
 
