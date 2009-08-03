@@ -38,6 +38,9 @@ enum {
 	DM_GENERIC_LAST = DM_768x576
 };
 
+// OR this with the generic mode to get 4 framebuffers instead of one
+#define DM_MULTIBUFFER	0x2000
+
 //-----------------------------------------------------------------------------
 // More specific modes (and actual indeces into the mode table)
 
@@ -55,6 +58,17 @@ enum {
 	DM_768x576_PAL_IL,
 	DM_768x480_PAL_IL,
 	DM_320x240_PAL,
+	DM_320x240_VGA_MB,
+	DM_320x240_NTSC_MB,
+	DM_640x480_VGA_MB,
+	DM_640x480_NTSC_IL_MB,
+	DM_800x608_VGA_MB,
+	DM_640x480_PAL_IL_MB,
+	DM_256x256_PAL_IL_MB,
+	DM_768x480_NTSC_IL_MB,
+	DM_768x576_PAL_IL_MB,
+	DM_768x480_PAL_IL_MB,
+	DM_320x240_PAL_MB,
 	// The below is only for counting..
 	DM_SENTINEL,
 	DM_MODE_COUNT
@@ -95,6 +109,12 @@ extern vid_mode_t vid_builtin[DM_MODE_COUNT];
 extern vid_mode_t *vid_mode;
 
 //-----------------------------------------------------------------------------
+// These point to the current drawing area. If you're not using a multi-buffered
+// mode, that means they do what KOS always used to do (they'll point at the
+// start of VRAM). If you're using a multi-buffered mode, they'll point at the
+// next framebuffer to be displayed. You must use vid_flip for this to work
+// though (if you use vid_set_start, they'll point at the display base, for
+// compatibility's sake).
 extern uint16 *vram_s;
 extern uint32 *vram_l;
 
