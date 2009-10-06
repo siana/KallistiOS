@@ -37,6 +37,9 @@ struct netif_list net_if_list = LIST_HEAD_INITIALIZER(0);
 /* ARP cache */        
 struct netarp_list net_arp_cache = LIST_HEAD_INITIALIZER(0);
 
+/* Are we already initialized? */
+static int net_initted = 0;
+
 /* Default net device */
 netif_t *net_default_dev = NULL;
 
@@ -99,7 +102,7 @@ struct netif_list * net_get_if_list() {
 
 /* Set default */
 netif_t *net_set_default(netif_t *n)	{
-    netif_t *olddev = net_default_dev;
+	netif_t *olddev = net_default_dev;
 
 	net_default_dev = n;
 
@@ -126,9 +129,9 @@ int net_dev_init() {
 			continue;
 		}
 
-        /* Set the first detected device to be the default */
-        if(net_default_dev == NULL)
-            net_set_default(cur);
+		/* Set the first detected device to be the default */
+		if(net_default_dev == NULL)
+			net_set_default(cur);
 
 		detected++;
 	}
@@ -140,6 +143,10 @@ int net_dev_init() {
 
 /* Init */
 int net_init() {
+	/* Make sure we haven't already done this */
+	if(net_initted)
+		return 0;
+
 	/* Detect and potentially initialize devices */
 	if (net_dev_init() < 0)
 		return -1;
@@ -153,18 +160,20 @@ int net_init() {
 	/* Initialize IP fragmentation support */
 	net_ipv4_frag_init();
 
-	/* Initialize the UDP system */
-	net_udp_init();
-
 	/* Initialize the sockets-like interface */
 	fs_socket_init();
 
-    /* Initialize the DHCP system */
-    net_dhcp_init();
+	/* Initialize the UDP system */
+	net_udp_init();
 
-    if(net_default_dev && !net_default_dev->ip_addr[0]) {
-        return net_dhcp_request();
-    }
+	/* Initialize the DHCP system */
+	net_dhcp_init();
+
+	if(net_default_dev && !net_default_dev->ip_addr[0]) {
+		return net_dhcp_request();
+	}
+
+	net_initted = 1;
 
 	return 0;
 }
@@ -173,14 +182,18 @@ int net_init() {
 void net_shutdown() {
 	netif_t *cur;
 
-    /* Shut down DHCP */
-    net_dhcp_shutdown();
+	/* Make sure we actually initialized the net stuff to begin with */
+	if(!net_initted)
+		return;
 
-	/* Shut down the sockets-like interface */
-	fs_socket_shutdown();
+	/* Shut down DHCP */
+	net_dhcp_shutdown();
 
 	/* Shut down the UDP system */
 	net_udp_shutdown();
+
+	/* Shut down the sockets-like interface */
+	fs_socket_shutdown();
 
 	/* Shut down IP fragmentation support */
 	net_ipv4_frag_shutdown();
@@ -202,4 +215,6 @@ void net_shutdown() {
 
 	/* Blank out the list */
 	LIST_INIT(&net_if_list);
+
+	net_initted = 0;
 }
