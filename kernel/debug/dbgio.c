@@ -29,6 +29,12 @@ int dbgio_dev_select(const char * name) {
 
 	for (i=0; i<dbgio_handler_cnt; i++) {
 		if (!strcmp(dbgio_handlers[i]->name, name)) {
+			/* Try to initialize the device, and if we can't then bail. */
+			if(dbgio_handlers[i]->init()) {
+				errno = ENODEV;
+				return -1;
+			}
+
 			dbgio = dbgio_handlers[i];
 			return 0;
 		}
