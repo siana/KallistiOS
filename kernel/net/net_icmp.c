@@ -36,8 +36,8 @@ Message types that are not implemented yet (if ever):
    16 - Information Reply
 */
 
-struct __ping_pkt {
-    LIST_ENTRY(__ping_pkt) pkt_list;
+struct ping_pkt {
+    LIST_ENTRY(ping_pkt) pkt_list;
     uint8 ip[4];
     uint8 *data;
     int data_sz;
@@ -45,9 +45,9 @@ struct __ping_pkt {
     uint64 usec;
 };
 
-LIST_HEAD(__ping_pkt_list, __ping_pkt);
+LIST_HEAD(ping_pkt_list, ping_pkt);
 
-static struct __ping_pkt_list pings = LIST_HEAD_INITIALIZER(0);
+static struct ping_pkt_list pings = LIST_HEAD_INITIALIZER(0);
 static uint16 icmp_echo_seq = 1;
 
 static void icmp_default_echo_cb(const uint8 *ip, uint16 seq, uint64 delta_us,
@@ -64,7 +64,7 @@ net_echo_cb net_icmp_echo_cb = icmp_default_echo_cb;
 static void net_icmp_input_0(netif_t *src, ip_hdr_t *ip, icmp_hdr_t *icmp,
                              const uint8 *d, int s) {
     uint64 tmr;
-    struct __ping_pkt *ping;
+    struct ping_pkt *ping;
     uint16 seq;
 
     tmr = timer_us_gettime64();
@@ -142,7 +142,7 @@ int net_icmp_input(netif_t *src, ip_hdr_t *ip, const uint8 *d, int s) {
 int net_icmp_send_echo(netif_t *net, const uint8 ipaddr[4], const uint8 *data,
                        int size) {
     icmp_hdr_t *icmp;
-    struct __ping_pkt *newping;
+    struct ping_pkt *newping;
     int r = -1;
     uint8 databuf[sizeof(icmp_hdr_t) + size];
     uint16 seq = icmp_echo_seq++;
@@ -171,7 +171,7 @@ int net_icmp_send_echo(netif_t *net, const uint8 ipaddr[4], const uint8 *data,
         src = net_ipv4_address(net->ip_addr);
     }
 
-    newping = (struct __ping_pkt*) malloc(sizeof(struct __ping_pkt));
+    newping = (struct ping_pkt*) malloc(sizeof(struct ping_pkt));
     newping->data = (uint8 *)malloc(size);
     newping->data_sz = size;
     newping->icmp_seq = seq;
