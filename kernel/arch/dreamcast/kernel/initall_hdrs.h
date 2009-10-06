@@ -19,3 +19,4 @@
 #include <dc/scif.h>
 #include <arch/irq.h>
 #include <arch/timer.h>
+#include <dc/fb_console.h>

@@ -38,8 +38,9 @@ extern const char banner[];
 /* We have to put this here so we can include plat-specific devices */
 dbgio_handler_t * dbgio_handlers[] = {
 	&dbgio_dcload,
-    &dbgio_dcls,
+	&dbgio_dcls,
 	&dbgio_scif,
+	&dbgio_fb,
 	&dbgio_null
 };
 int dbgio_handler_cnt = sizeof(dbgio_handlers) / sizeof(dbgio_handler_t *);
