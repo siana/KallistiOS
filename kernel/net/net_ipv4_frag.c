@@ -54,15 +54,17 @@ static void frag_thd_cb(void *data __attribute__((unused))) {
 
     /* Look at each fragment item, and see if the timer has expired. If so,
        remvoe it. */
-    TAILQ_FOREACH(f, &frags, listhnd) {
+    f = TAILQ_FIRST(&frags);
+    while(f) {
         n = TAILQ_NEXT(f, listhnd);
 
         if(f->death_time < now) {
             TAILQ_REMOVE(&frags, f, listhnd);
             free(f->data);
             free(f);
-            f = n;
         }
+
+        f = n;
     }
 
     mutex_unlock(frag_mutex);
