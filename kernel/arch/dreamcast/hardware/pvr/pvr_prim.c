@@ -201,7 +201,7 @@ void pvr_sprite_cxt_col(pvr_sprite_cxt_t *dst, pvr_list_t list) {
 	int alpha;
 
 	/* Start off blank */
-	memset(dst, 0, sizeof(pvr_poly_cxt_t));
+	memset(dst, 0, sizeof(pvr_sprite_cxt_t));
 
 	/* Fill in a few values */
 	dst->list_type = list;
