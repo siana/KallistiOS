@@ -35,6 +35,8 @@ __BEGIN_DECLS
 /* Event codes for the GD controller */
 #define ASIC_EVT_GD_COMMAND		0x0100		/* GD-Rom Command Status */
 #define ASIC_EVT_GD_DMA			0x000e		/* GD-Rom DMA complete */
+#define ASIC_EVT_GD_DMA_OVERRUN		0x020d		/* GD-Rom DMA overrun */
+#define ASIC_EVT_GD_DMA_ILLADDR		0x020c		/* GD-Rom DMA illegal address */
 
 /* Event codes for the Maple controller */
 #define ASIC_EVT_MAPLE_DMA		0x000c		/* Maple DMA complete */

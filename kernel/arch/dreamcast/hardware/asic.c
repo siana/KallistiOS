@@ -87,7 +87,9 @@
 
   69x8
     bit 2	out of primitive memory
-    bit 3	out of matrix memory
+        3	out of matrix memory
+        12	gd-rom dma illegal address
+        13	gd-rom dma overrun
 
  */
 
