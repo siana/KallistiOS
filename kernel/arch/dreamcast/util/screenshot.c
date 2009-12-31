@@ -54,8 +54,8 @@ int vid_screen_shot(const char *destfn) {
 			for (i = 0; i < numpix; i++) {
 				pixel = vram_s[i];
 				r = (((pixel >> 10) & 0x1f) << 3);
-				b = (((pixel >>  5) & 0x1f) << 3);
-				g = (((pixel >>  0) & 0x1f) << 3);
+				g = (((pixel >>  5) & 0x1f) << 3);
+				b = (((pixel >>  0) & 0x1f) << 3);
 				buffer[i * 3 + 0] = r;
 				buffer[i * 3 + 1] = g;
 				buffer[i * 3 + 2] = b;
@@ -67,8 +67,8 @@ int vid_screen_shot(const char *destfn) {
 			for (i = 0; i < numpix; i++) {
 				pixel = vram_s[i];
 				r = (((pixel >> 11) & 0x1f) << 3);
-				b = (((pixel >>  5) & 0x3f) << 2);
-				g = (((pixel >>  0) & 0x1f) << 3);
+				g = (((pixel >>  5) & 0x3f) << 2);
+				b = (((pixel >>  0) & 0x1f) << 3);
 				buffer[i * 3 + 0] = r;
 				buffer[i * 3 + 1] = g;
 				buffer[i * 3 + 2] = b;
@@ -80,8 +80,8 @@ int vid_screen_shot(const char *destfn) {
 			for (i = 0; i < numpix; i++) {
 				pixel = vram_l[i];
 				r = (((pixel >> 16) & 0xff));
-				b = (((pixel >>  8) & 0xff));
-				g = (((pixel >>  0) & 0xff));
+				g = (((pixel >>  8) & 0xff));
+				b = (((pixel >>  0) & 0xff));
 				buffer[i * 3 + 0] = r;
 				buffer[i * 3 + 1] = g;
 				buffer[i * 3 + 2] = b;
