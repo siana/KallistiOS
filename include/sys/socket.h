@@ -9,16 +9,13 @@
 #define __SYS_SOCKET_H
 
 #include <sys/cdefs.h>
-#include <arch/types.h>
+#include <sys/types.h>
 
 __BEGIN_DECLS
 
-typedef uint32 socklen_t;
+typedef __uint32_t socklen_t;
 
-#ifndef __SA_FAMILY_T_DEFINED
-#define __SA_FAMILY_T_DEFINED
-typedef uint32 sa_family_t;
-#endif
+typedef __uint8_t sa_family_t;
 
 struct sockaddr {
     sa_family_t sa_family;

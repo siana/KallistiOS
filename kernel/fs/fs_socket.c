@@ -1,13 +1,11 @@
 /* KallistiOS ##version##
 
    fs_socket.c
-   Copyright (C) 2006 Lawrence Sebald
+   Copyright (C) 2006, 2009 Lawrence Sebald
 
 */
 
-#include <kos/mutex.h>
-#include <arch/spinlock.h>
-#include <kos/dbgio.h>
+#include <kos/recursive_lock.h>
 #include <kos/fs.h>
 #include <kos/fs_socket.h>
 #include <kos/net.h>
@@ -23,20 +21,27 @@
 #include "../net/net_ipv4.h"
 #include "../net/net_udp.h"
 
+/* Define the protocol list type */
+TAILQ_HEAD(proto_list, fs_socket_proto);
+
 /* Define the socket list type */
 LIST_HEAD(socket_list, net_socket);
 
+static struct proto_list protocols;
 static struct socket_list sockets;
-static mutex_t *list_mutex;
+static recursive_lock_t *proto_rlock = NULL;
+static recursive_lock_t *list_rlock = NULL;
 
 static void fs_socket_close(void *hnd) {
     net_socket_t *sock = (net_socket_t *) hnd;
 
-    mutex_lock(list_mutex);
+    rlock_lock(list_rlock);
     LIST_REMOVE(sock, sock_list);
-    mutex_unlock(list_mutex);
+    rlock_unlock(list_rlock);
 
-    net_udp_close(hnd);
+    /* Protect against botched socket() calls */
+    if(sock->protocol)
+        sock->protocol->close(sock);
 
     free(sock);
 }
@@ -44,7 +49,7 @@ static void fs_socket_close(void *hnd) {
 static ssize_t fs_socket_read(void *hnd, void *buffer, size_t cnt) {
     net_socket_t *sock = (net_socket_t *)hnd;
 
-    return net_udp_recv(sock, buffer, cnt, 0);
+    return sock->protocol->recvfrom(sock, buffer, cnt, 0, NULL, NULL);
 }
 
 static off_t fs_socket_seek(void *hnd, off_t offset, int whence) {
@@ -60,7 +65,7 @@ static off_t fs_socket_tell(void *hnd) {
 static ssize_t fs_socket_write(void *hnd, const void *buffer, size_t cnt) {
     net_socket_t *sock = (net_socket_t *)hnd;
 
-    return net_udp_send(sock, buffer, cnt, 0);
+    return sock->protocol->sendto(sock, buffer, cnt, 0, NULL, 0);
 }
 
 /* VFS handler */
@@ -102,12 +107,18 @@ int fs_socket_init() {
     if(initted == 1)
         return 0;
 
+    TAILQ_INIT(&protocols);
     LIST_INIT(&sockets);
+
+    list_rlock = rlock_create();
+    proto_rlock = rlock_create();
+
+    if(!list_rlock || !proto_rlock)
+        return -1;
 
     if(nmmgr_handler_add(&vh.nmmgr) < 0)
         return -1;
 
-    list_mutex = mutex_create();
     initted = 1;
 
     return 0;
@@ -115,16 +126,17 @@ int fs_socket_init() {
 
 int fs_socket_shutdown() {
     net_socket_t *c, *n;
+    fs_socket_proto_t *i, *j;
 
     if(initted == 0)
         return 0;
 
-    mutex_lock(list_mutex);
+    rlock_lock(list_rlock);
     c = LIST_FIRST(&sockets);
     while(c != NULL) {
         n = LIST_NEXT(c, sock_list);
 
-        vh.close(c);
+        fs_close(c->fd);
 
         free(c);
         c = n;
@@ -133,8 +145,24 @@ int fs_socket_shutdown() {
     if(nmmgr_handler_remove(&vh.nmmgr) < 0)
         return -1;
 
-    mutex_destroy(list_mutex);
+    rlock_unlock(list_rlock);
+    rlock_destroy(list_rlock);
 
+    rlock_lock(proto_rlock);
+    i = TAILQ_FIRST(&protocols);
+    while(i != NULL) {
+        j = TAILQ_NEXT(i, entry);        
+        free(i);
+        i = j;
+    }
+
+    rlock_unlock(proto_rlock);
+    rlock_destroy(proto_rlock);
+
+    list_rlock = NULL;
+    proto_rlock = NULL;
+    TAILQ_INIT(&protocols);
+    LIST_INIT(&sockets);
     initted = 0;
 
     return 0;
@@ -149,25 +177,65 @@ int fs_socket_setflags(int sock, int flags) {
         return -1;
     }
 
-    return net_udp_setflags(hnd, flags);
+    /* Make sure this is actually a socket. */
+    if(fs_get_handler(sock) != &vh) {
+        errno = ENOTSOCK;
+        return -1;
+    }
+
+    return hnd->protocol->setflags(hnd, flags);
+}
+
+int fs_socket_proto_add(fs_socket_proto_t *proto) {
+    rlock_lock(proto_rlock);
+    TAILQ_INSERT_TAIL(&protocols, proto, entry);
+    rlock_unlock(proto_rlock);
+
+    return 0;
+}
+
+int fs_socket_proto_remove(fs_socket_proto_t *proto) {
+    fs_socket_proto_t *i;
+    int rv = -1;
+
+    /* Make sure its registered. */
+    rlock_lock(proto_rlock);
+    TAILQ_FOREACH(i, &protocols, entry) {
+        if(i == proto) {
+            /* We've got it, remove it. */
+            TAILQ_REMOVE(&protocols, proto, entry);
+            rv = 0;
+            break;
+        }
+    }
+    rlock_unlock(proto_rlock);
+
+    return rv;
 }
 
 int socket(int domain, int type, int protocol) {
     net_socket_t *sock;
-    file_t hnd;
+    fs_socket_proto_t *i;
 
-    /* First, check the arguments for validity */
-    if(domain != AF_INET) {
+    /* We only support IPv4 sockets for now. */
+    if(domain != PF_INET) {
         errno = EAFNOSUPPORT;
         return -1;
     }
 
-    if(type != SOCK_DGRAM) {
-        errno = EPROTONOSUPPORT;
-        return -1;
+    rlock_lock(proto_rlock);
+
+    /* Look for a matching protocol entry. */
+    TAILQ_FOREACH(i, &protocols, entry) {
+        if(type == i->type && (protocol == i->protocol || protocol == 0)) {
+            break;
+        }
     }
 
-    if(protocol != 0 && protocol != IPPROTO_UDP) {
+    rlock_unlock(proto_rlock);
+
+    /* If i is NULL, we got through the whole list without finding anything. */
+    if(!i) {
         errno = EPROTONOSUPPORT;
         return -1;
     }
@@ -180,27 +248,27 @@ int socket(int domain, int type, int protocol) {
     }
 
     /* Attempt to get a handle for this socket */
-    hnd = fs_open_handle(&vh, sock);
-    if(hnd < 0) {
+    sock->fd = fs_open_handle(&vh, sock);
+    if(sock->fd < 0) {
         free(sock);
         return -1;
     }
 
-    /* We only support UDP right now, so this is ok... */
-    sock->protocol = IPPROTO_UDP;
-
     /* Initialize protocol-specific data */
-    if(net_udp_socket(sock, domain, type, protocol) == -1) {
-        fs_close(hnd);
+    if(i->socket(sock, domain, type, protocol) == -1) {
+        fs_close(sock->fd);
         return -1;
     }
 
-    /* Add this socket into the list of sockets, and return */
-    mutex_lock(list_mutex);
-    LIST_INSERT_HEAD(&sockets, sock, sock_list);
-    mutex_unlock(list_mutex);
+    /* Finish initialization */
+    sock->protocol = i;
 
-    return hnd;
+    /* Add this socket into the list of sockets, and return */
+    rlock_lock(list_rlock);
+    LIST_INSERT_HEAD(&sockets, sock, sock_list);
+    rlock_unlock(list_rlock);
+
+    return sock->fd;
 }
 
 int accept(int sock, struct sockaddr *address, socklen_t *address_len) {
@@ -212,7 +280,13 @@ int accept(int sock, struct sockaddr *address, socklen_t *address_len) {
         return -1;
     }
 
-    return net_udp_accept(hnd, address, address_len);
+    /* Make sure this is actually a socket. */
+    if(fs_get_handler(sock) != &vh) {
+        errno = ENOTSOCK;
+        return -1;
+    }
+
+    return hnd->protocol->accept(hnd, address, address_len);
 }
 
 int bind(int sock, const struct sockaddr *address, socklen_t address_len) {
@@ -224,7 +298,13 @@ int bind(int sock, const struct sockaddr *address, socklen_t address_len) {
         return -1;
     }
 
-    return net_udp_bind(hnd, address, address_len);
+    /* Make sure this is actually a socket. */
+    if(fs_get_handler(sock) != &vh) {
+        errno = ENOTSOCK;
+        return -1;
+    }
+
+    return hnd->protocol->bind(hnd, address, address_len);
 }
 
 int connect(int sock, const struct sockaddr *address, socklen_t address_len) {
@@ -236,7 +316,13 @@ int connect(int sock, const struct sockaddr *address, socklen_t address_len) {
         return -1;
     }
 
-    return net_udp_connect(hnd, address, address_len);
+    /* Make sure this is actually a socket. */
+    if(fs_get_handler(sock) != &vh) {
+        errno = ENOTSOCK;
+        return -1;
+    }
+
+    return hnd->protocol->connect(hnd, address, address_len);
 }
 
 int listen(int sock, int backlog) {
@@ -248,7 +334,13 @@ int listen(int sock, int backlog) {
         return -1;
     }
 
-    return net_udp_listen(hnd, backlog);
+    /* Make sure this is actually a socket. */
+    if(fs_get_handler(sock) != &vh) {
+        errno = ENOTSOCK;
+        return -1;
+    }
+
+    return hnd->protocol->listen(hnd, backlog);
 }
 
 ssize_t recv(int sock, void *buffer, size_t length, int flags) {
@@ -260,7 +352,13 @@ ssize_t recv(int sock, void *buffer, size_t length, int flags) {
         return -1;
     }
 
-    return net_udp_recv(hnd, buffer, length, flags);
+    /* Make sure this is actually a socket. */
+    if(fs_get_handler(sock) != &vh) {
+        errno = ENOTSOCK;
+        return -1;
+    }
+
+    return hnd->protocol->recvfrom(hnd, buffer, length, flags, NULL, NULL);
 }
 
 ssize_t recvfrom(int sock, void *buffer, size_t length, int flags,
@@ -273,8 +371,14 @@ ssize_t recvfrom(int sock, void *buffer, size_t length, int flags,
         return -1;
     }
 
-    return net_udp_recvfrom(hnd, buffer, length, flags, address,
-                            address_len);
+    /* Make sure this is actually a socket. */
+    if(fs_get_handler(sock) != &vh) {
+        errno = ENOTSOCK;
+        return -1;
+    }
+
+    return hnd->protocol->recvfrom(hnd, buffer, length, flags, address,
+                                   address_len);
 }
 
 ssize_t send(int sock, const void *message, size_t length, int flags) {
@@ -286,7 +390,13 @@ ssize_t send(int sock, const void *message, size_t length, int flags) {
         return -1;
     }
 
-    return net_udp_send(hnd, message, length, flags);
+    /* Make sure this is actually a socket. */
+    if(fs_get_handler(sock) != &vh) {
+        errno = ENOTSOCK;
+        return -1;
+    }
+
+    return hnd->protocol->sendto(hnd, message, length, flags, NULL, 0);
 }
 
 ssize_t sendto(int sock, const void *message, size_t length, int flags,
@@ -299,7 +409,14 @@ ssize_t sendto(int sock, const void *message, size_t length, int flags,
         return -1;
     }
 
-    return net_udp_sendto(hnd, message, length, flags, dest_addr, dest_len);
+    /* Make sure this is actually a socket. */
+    if(fs_get_handler(sock) != &vh) {
+        errno = ENOTSOCK;
+        return -1;
+    }
+
+    return hnd->protocol->sendto(hnd, message, length, flags, dest_addr,
+                                 dest_len);
 }
 
 int shutdown(int sock, int how) {
@@ -311,5 +428,11 @@ int shutdown(int sock, int how) {
         return -1;
     }
 
-    return net_udp_shutdownsock(hnd, how);
+    /* Make sure this is actually a socket. */
+    if(fs_get_handler(sock) != &vh) {
+        errno = ENOTSOCK;
+        return -1;
+    }
+
+    return hnd->protocol->shutdownsock(hnd, how);
 }

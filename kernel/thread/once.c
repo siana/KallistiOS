@@ -11,15 +11,19 @@
 
 #include <kos/once.h>
 #include <kos/recursive_lock.h>
+#include <arch/irq.h>
 
 /* The lock used to make sure multiple threads don't try to run the same routine
    at the same time. */
 static recursive_lock_t *lock = NULL;
 
 int kthread_once(kthread_once_t *once_control, void (*init_routine)(void)) {
+    uint32 old;
     assert(once_control);
 
     /* Create the lock if needed. */
+    old = irq_disable();
+
     if(!lock)   {
         lock = rlock_create();
 
@@ -27,6 +31,8 @@ int kthread_once(kthread_once_t *once_control, void (*init_routine)(void)) {
             return -1;
         }
     }
+
+    irq_restore(old);
 
     /* Lock the lock. */
     if(rlock_lock(lock) == -1)  {

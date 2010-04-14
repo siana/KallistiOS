@@ -6,18 +6,18 @@
 */
 
 /* Byte-order translation functions */
-#include <arch/types.h>
+#include <inttypes.h>
 
 /* XXX needs to be in arch */
 
 /* Network to Host short */
-uint16 ntohs(uint16 value) {
+uint16_t ntohs(uint16_t value) {
 	return ((value >> 8) & 0xff)
 		| ((value << 8) & 0xff00);
 }
 
 /* Network to Host long */
-uint32 ntohl(uint32 value) {
+uint32_t ntohl(uint32_t value) {
 	return ((value >> 24) & 0xff)
 		| (( (value >> 16) & 0xff ) << 8)
 		| (( (value >> 8) & 0xff) << 16)
@@ -25,7 +25,7 @@ uint32 ntohl(uint32 value) {
 }
 
 /* Host to Network short */
-uint32 htons(uint32 value) { return ntohs(value); }
+uint32_t htons(uint32_t value) { return ntohs(value); }
 
 /* Host to Network long */
-uint32 htonl(uint32 value) { return ntohl(value); }
+uint32_t htonl(uint32_t value) { return ntohl(value); }
