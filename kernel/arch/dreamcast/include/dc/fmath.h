@@ -13,12 +13,16 @@ __BEGIN_DECLS
 
 #include <arch/types.h>
 
-/* Inline functions for the DC's special math instructions */
+/**
+	\file dc/fmath.h
+	\brief	Inline functions for the DC's special math instructions
+	\author Andrew Kieschnick
+*/
 
-/* PI constant (if you don't want full math.h) */
+/** PI constant (if you don't want full math.h) */
 #define F_PI 3.1415926f
 
-
+/** \cond */
 #define __fsin(x) \
 ({ float __value, __arg = (x), __scale = 10430.37835; \
 	asm(	"fmul	%2,%1\n\t" \
@@ -131,53 +135,87 @@ __BEGIN_DECLS
 		); \
 		__w; })
 
-/* Returns v1 dot v2 (inner product) */
+/** \endcond */
+
+/** \return v1 dot v2 (inner product) */
 extern inline float fipr(float x, float y, float z, float w,
 		float a, float b, float c, float d) {
 	return __fipr(x, y, z, w, a, b, c, d);
 }
 
-/* Returns v1 dot v1 (square of magnitude) */
+/**
+	\brief Floating point inner product w/self (square of vector magnitude)
+	\return v1 dot v1 (square of magnitude)
+*/
 extern inline float fipr_magnitude_sqr(float x, float y, float z, float w) {
 	return __fipr_magnitude_sqr(x, y, z, w);
 }
 
-/* Returns sin(r), where r is [0..2*PI] */
+/**
+	\brief Floating point sine
+	\param r a floating point number between 0 and 2*PI
+	\return sin(r), where r is [0..2*PI]
+*/
 extern inline float fsin(float r) {
 	return __fsin(r);
 }
 
-/* Returns cos(r), where r is [0..2*PI] */
+/**
+	\brief Floating point cosine
+	\param r a floating point number between 0 and 2*PI
+	\return cos(r), where r is [0..2*PI]
+*/
 extern inline float fcos(float r) {
 	return __fcos(r);
 }
 
-/* Returns tan(r), where r is [0..2*PI] */
+/**
+	\brief Floating point tangent
+	\param r a floating point number between 0 and 2*PI
+	\return tan(r), where r is [0..2*PI]
+*/
 extern inline float ftan(float r) {
 	return __ftan(r);
 }
 
-/* Returns sin(d), where d is [0..65535] */
+/**
+	\brief Integer sine
+	\param d an integer between 0 and 65535
+	\return sin(d), where d is [0..65535]
+*/
 extern inline float fisin(int d) {
 	return __fisin(d);
 }
 
-/* Returns cos(d), where d is [0..65535] */
+/**
+	\brief Integer cosine
+	\param d an integer between 0 and 65535
+	\return cos(d), where d is [0..65535]
+*/
 extern inline float ficos(int d) {
 	return __ficos(d);
 }
 
-/* Returns tan(d), where d is [0..65535] */
+/**
+	\brief Integer tangent
+	\param d an integer between 0 and 65535
+	\return tan(d), where d is [0..65535]
+*/
 extern inline float fitan(int d) {
 	return __fitan(d);
 }
 
-/* Returns sqrt(f) */
+/**
+	\brief Floating point square root
+	\return sqrt(f)
+*/
 extern inline float fsqrt(float f) {
 	return __fsqrt(f);
 }
 
-/* Returns 1.0f / sqrt(f) */
+/**
+	\return 1.0f / sqrt(f)
+*/
 extern inline float frsqrt(float f) {
 	return __frsqrt(f);
 }

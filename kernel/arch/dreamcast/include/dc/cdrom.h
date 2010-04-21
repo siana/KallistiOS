@@ -13,6 +13,12 @@ __BEGIN_DECLS
 
 #include <arch/types.h>
 
+/**
+	\file dc/cdrom.h
+	\brief cdrom access
+	\author Dan Potter
+*/
+
 /** \defgroup cmd_codes Command codes (thanks maiwe)
 	@{
 */
