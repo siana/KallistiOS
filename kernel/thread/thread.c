@@ -479,13 +479,17 @@ void thd_schedule(int front_of_line, uint64 now) {
    interrupt return to jump back to the new thread instead of the one that
    was executing (unless it was already executing). */
 void thd_schedule_next(kthread_t *thd) {
+	/* Make sure we're actually inside an interrupt */
+	if (!irq_inside_int())
+		return;
+
 	/* Can't boost a blocked thread */
-	if (thd_current->state != STATE_READY)
+	if (thd->state != STATE_READY)
 		return;
 
 	/* Unfortunately we have to take care of this here */
 	if (thd_current->state == STATE_ZOMBIE) {
-		thd_destroy(thd);
+		thd_destroy(thd_current);
 	} else if (thd_current->state == STATE_RUNNING) {
 		thd_current->state = STATE_READY;
 		thd_add_to_runnable(thd_current, 0);
