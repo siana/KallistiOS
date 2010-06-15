@@ -15,6 +15,7 @@ __BEGIN_DECLS
 #include <sys/queue.h>
 #include <kos/thread.h>
 #include <kos/mutex.h>
+#include <kos/recursive_lock.h>
 
 /* Condition structure */
 typedef struct condvar {
@@ -36,6 +37,13 @@ void cond_destroy(condvar_t *cv);
      EINTR - wait was interrupted */
 int cond_wait(condvar_t *cv, mutex_t * m);
 
+/* Same as above, but uses a recursive lock instead of a mutex.
+   Note that using this is a really bad idea, since if the lock hasn't
+   been completely unlocked by the single unlock that happens in this
+   function, you will likely end up with a deadlock. This was only
+   added for support for GCC's C++0x threading support. */
+int cond_wait_recursive(condvar_t *cv, recursive_lock_t *l);
+
 /* Wait on a condvar; if there is an associated mutex to unlock
    while waiting, then pass that as well. If more than 'timeout'
    milliseconds passes and we still haven't been signaled, return
@@ -46,6 +54,11 @@ int cond_wait(condvar_t *cv, mutex_t * m);
      EAGAIN  - timed out
      EINTR   - was interrupted */
 int cond_wait_timed(condvar_t *cv, mutex_t * m, int timeout);
+
+/* Save as above, but uses a recursive lock instead of a mutex.
+   The note about deadlocks with cond_wait_recursive above still
+   applies here. */
+int cond_wait_timed_recursive(condvar_t *cv, recursive_lock_t *l, int timeout);
 
 /* Signal a single thread waiting on the condvar; you should be
    holding any associated mutex before doing this! */

@@ -91,8 +91,45 @@ int cond_wait_timed(condvar_t *cv, mutex_t *m, int timeout) {
 	return rv;
 }
 
+int cond_wait_timed_recursive(condvar_t *cv, recursive_lock_t *l, int timeout) {
+	int old, rv;
+
+	if (irq_inside_int()) {
+		dbglog(DBG_WARNING, "cond_wait_recursive: called inside interrupt\n");
+		errno = EPERM;
+		return -1;
+	}
+
+	old = irq_disable();
+
+	/* First of all, release the associated recursive lock */
+	assert( rlock_is_locked(l) );
+	if (rlock_unlock(l) < 0) {
+		dbglog(DBG_WARNING, "cond_wait_recursive: lock held by other thread\n");
+		return -1;
+	}
+
+	/* Now block us until we're signaled */
+	rv = genwait_wait(cv, timeout ? "cond_wait_timed_recursive" :
+	                  "cond_wait_recursive", timeout, NULL);
+
+	/* Re-lock our recursive lock */
+	if (rv >= 0 || errno == EAGAIN) {
+		rlock_lock(l);
+	}
+
+	/* Ok, ready to return */
+	irq_restore(old);
+
+	return rv;
+}
+
 int cond_wait(condvar_t *cv, mutex_t *m) {
 	return cond_wait_timed(cv, m, 0);
+}
+
+int cond_wait_recursive(condvar_t *cv, recursive_lock_t *l) {
+	return cond_wait_timed_recursive(cv, l, 0);
 }
 
 void cond_signal(condvar_t *cv) {

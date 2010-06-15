@@ -8,18 +8,16 @@
 #ifndef __NEWLIB_LOCK_COMMON_H
 #define __NEWLIB_LOCK_COMMON_H
 
-#include <arch/spinlock.h>
-
 typedef struct {
 	void	* owner;
 	int	nest;
-	spinlock_t lock;
+	volatile int lock;
 } __newlib_recursive_lock_t;
 
-#define __NEWLIB_RECURSIVE_LOCK_INIT { NULL, 0, SPINLOCK_INITIALIZER }
+#define __NEWLIB_RECURSIVE_LOCK_INIT { (void *)0, 0, 0 }
 
-typedef spinlock_t __newlib_lock_t;
-#define __NEWLIB_LOCK_INIT SPINLOCK_INITIALIZER
+typedef volatile int __newlib_lock_t;
+#define __NEWLIB_LOCK_INIT 0
 
 void __newlib_lock_init(__newlib_lock_t *);
 void __newlib_lock_close(__newlib_lock_t *);
