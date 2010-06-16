@@ -7,7 +7,7 @@
 
 // These calls can be nested.
 #include <sys/reent.h>
-#include "lock_common.h"
+#include <sys/lock.h>
 
 static __newlib_recursive_lock_t lock = __NEWLIB_RECURSIVE_LOCK_INIT;
 

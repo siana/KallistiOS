@@ -6,10 +6,10 @@
 */
 
 #include <assert.h>
-#include "lock_common.h"
 #include <arch/irq.h>
 #include <arch/spinlock.h>
 #include <kos/thread.h>
+#include <sys/lock.h>
 
 void __newlib_lock_init(__newlib_lock_t * lock) {
 	spinlock_init(lock);
