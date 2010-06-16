@@ -110,7 +110,6 @@ sfxhnd_t snd_sfx_load(const char *fn) {
 		return 0;
 	}
 	
-	
 	/* Read WAV header info */
 	fs_seek(fd, 0x14, SEEK_SET);
 	fs_read(fd, &fmt, 2);
@@ -123,8 +122,8 @@ sfxhnd_t snd_sfx_load(const char *fn) {
 	fs_seek(fd, 0x28, SEEK_SET);
 	fs_read(fd, &len, 4);
 
-	printf("WAVE file is %s, %dHZ, %d bits/sample, %d bytes total, format %d\n",
-		chn==1 ? "mono" : "stereo", hz, bitsize, len, fmt);
+	dbglog(DBG_DEBUG, "WAVE file is %s, %luHZ, %d bits/sample, %lu bytes total,"
+	       " format %d\n", chn==1 ? "mono" : "stereo", hz, bitsize, len, fmt);
 
 	/* Try to mmap it and if that works, no need to copy it again */
 	ownmem = 0;
@@ -228,8 +227,6 @@ int snd_sfx_play_chn(int chn, sfxhnd_t idx, int vol, int pan) {
 	size = t->len;
 	if (size >= 65535) size = 65534;
 
-	/* printf("sndstream: playing effect %p on chan %d, loc %x/%x, rate %d, size %d, vol %d, pan %d\r\n",
-		idx, sfx_lastchan, t->locl, t->locr, t->rate, size, vol, pan); */
 	if (!t->stereo) {
 		cmd->cmd = AICA_CMD_CHAN;
 		cmd->timestamp = 0;

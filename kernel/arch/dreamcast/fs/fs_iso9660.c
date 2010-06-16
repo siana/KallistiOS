@@ -362,7 +362,7 @@ static int fncompare(const char *isofn, int isosize, const char *normalfn) {
 			break;
 
 		/* Otherwise, compare the chars normally */
-		if (tolower(isofn[i]) != tolower(normalfn[i]))
+		if (tolower((int)isofn[i]) != tolower((int)normalfn[i]))
 			return -1;
 	}
 
@@ -717,7 +717,7 @@ static void fn_postprocess(char *fnin) {
 	char	* fn = fnin;
 
 	while (*fn && *fn != ';') {
-		*fn = tolower(*fn);
+		*fn = tolower((int)*fn);
 		fn++;
 	}
 	*fn = 0;

@@ -54,7 +54,7 @@ static void icmp_default_echo_cb(const uint8 *ip, uint16 seq, uint64 delta_us,
                                  uint8 ttl, const uint8* data, int data_sz) {
     printf("%d bytes from %d.%d.%d.%d: icmp_seq=%d ttl=%d time=%.3f ms\n",
            data_sz, ip[0], ip[1], ip[2], ip[3], seq, ttl,
-           delta_us / 1000.0f);
+           delta_us / 1000.0);
 }
 
 /* The default echo (ping) callback */

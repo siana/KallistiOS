@@ -1575,9 +1575,15 @@ static Void_t*  mALLOc(size_t);
 static void     fREe(Void_t*);
 static Void_t*  rEALLOc(Void_t*, size_t);
 static Void_t*  mEMALIGn(size_t, size_t);
+#if 0
 static Void_t*  vALLOc(size_t);
+#endif
+#ifndef KM_DBG
 static Void_t*  cALLOc(size_t, size_t);
+#endif
+#if 0
 static int      mTRIm(size_t);
+#endif
 static size_t   mUSABLe(Void_t*);
 static void     mSTATs();
 static int      mALLOPt(int, int);
@@ -1763,7 +1769,7 @@ void public_fREe(Void_t* m) {
 				printf("Thread %d/%08lx freeing block @ %08lx\n",
 					thd_current->tid, rv, (uint32)m);
 #endif
-				printf("  pre-magic is wrong at index %d (%08lx)\n",
+				printf("  pre-magic is wrong at index %lu (%08lx)\n",
 					i, nt[i]);
 				dmg = 1;
 			}
@@ -1776,7 +1782,7 @@ void public_fREe(Void_t* m) {
 				printf("Thread %d/%08lx freeing block @ %08lx\n",
 					thd_current->tid, rv, (uint32)m);
 #endif
-				printf("  post-magic is wrong at index %d (%08lx)\n",
+				printf("  post-magic is wrong at index %lu (%08lx)\n",
 					i, nt[i]);
 				dmg = 1;
 			}
@@ -1798,7 +1804,7 @@ void public_fREe(Void_t* m) {
 
 int mem_check_block(Void_t* m) {
 #ifdef KM_DBG
-	uint32 rv = arch_get_ret_addr(), rs, *nt, i;
+	uint32 rv = arch_get_ret_addr(), *nt, i;
 	memctl_t * ctl;
 	int dmg = 0;
 	int retv = 0;
@@ -1815,7 +1821,7 @@ int mem_check_block(Void_t* m) {
 			if (nt[i] != PRE_MAGIC) {
 				printf("Thread %d/%08lx checking block @ %08lx\n",
 					thd_current->tid, rv, (uint32)m);
-				printf("  pre-magic is wrong at index %d (%08lx)\n",
+				printf("  pre-magic is wrong at index %lu (%08lx)\n",
 					i, nt[i]);
 				dmg = 1;
 				retv = -2;
@@ -1827,7 +1833,7 @@ int mem_check_block(Void_t* m) {
 			if (nt[i] != POST_MAGIC) {
 				printf("Thread %d/%08lx checking block @ %08lx\n",
 					thd_current->tid, rv, (uint32)m);
-				printf("  post-magic is wrong at index %d (%08lx)\n",
+				printf("  post-magic is wrong at index %lu (%08lx)\n",
 					i, nt[i]);
 				dmg = 1;
 				retv = -3;
@@ -1848,7 +1854,9 @@ int mem_check_block(Void_t* m) {
 int mem_check_all() {
 #ifdef KM_DBG
 	int retv = 0, rvp;
+#ifdef KM_DBG_VERBOSE
 	uint32 rv = arch_get_ret_addr();
+#endif
 	memctl_t * ctl;
 
 	if (MALLOC_PREACTION != 0) {
@@ -1912,7 +1920,7 @@ Void_t* public_rEALLOc(Void_t* m, size_t bytes) {
 					printf("Thread %d/%08lx reallocing block @ %08lx to %d bytes\n",
 						thd_current->tid, rv, (uint32)m, bytes);
 #endif
-					printf("  pre-magic is wrong at index %d (%08lx)\n",
+					printf("  pre-magic is wrong at index %lu (%08lx)\n",
 						i, nt[i]);
 					dmg = 1;
 				}
@@ -1925,7 +1933,7 @@ Void_t* public_rEALLOc(Void_t* m, size_t bytes) {
 					printf("Thread %d/%08lx reallocing block @ %08lx to %d bytes\n",
 						thd_current->tid, rv, (uint32)m, bytes);
 #endif
-					printf("  post-magic is wrong at index %d (%08lx)\n",
+					printf("  post-magic is wrong at index %lu (%08lx)\n",
 						i, nt[i]);
 					dmg = 1;
 				}
@@ -2172,14 +2180,14 @@ void public_mSTATs() {
 	if (!LIST_EMPTY(&block_list)) {
 		printf("KM_DBG: Still-allocated memory blocks:\n");
 		LIST_FOREACH(c, &block_list, list) {
-			printf("  INUSE %08lx: size %d, thread %d, addr %08lx, type %s\n",
+			printf("  INUSE %08lx: size %lu, thread %d, addr %08lx, type %s\n",
 				(uint32)c + BUFFER_SIZE, c->size, c->thread,
 				c->addr, c->type);
 
 			nt = (uint32 *)c;
 			for (i=sizeof(memctl_t)/4; i<BUFFER_SIZE/4; i++) {
 				if (nt[i] != PRE_MAGIC) {
-					printf("     pre-magic is wrong at index %d (%08lx)\n",
+					printf("     pre-magic is wrong at index %lu (%08lx)\n",
 						i, nt[i]);
 				}
 			}
@@ -2187,7 +2195,7 @@ void public_mSTATs() {
 			nt = c->post;
 			for (i=0; i<BUFFER_SIZE/4; i++) {
 				if (nt[i] != POST_MAGIC) {
-					printf("     post-magic is wrong at index %d (%08lx)\n",
+					printf("     post-magic is wrong at index %lu (%08lx)\n",
 						i, nt[i]);
 				}
 			}
@@ -2200,14 +2208,6 @@ void public_mSTATs() {
   if (MALLOC_POSTACTION != 0) {
   }
 }
-
-#ifndef KM_DBG
-/* Shut up, GCC */
-void foo() {
-	vALLOc(0);
-	mTRIm(0);
-}
-#endif
 
 /*** End KOS Code ***/
 /******************************************************************************************************/
@@ -4916,6 +4916,7 @@ Void_t* mEMALIGn(alignment, bytes) size_t alignment; size_t bytes;
   ------------------------------ calloc ------------------------------
 */
 
+#ifndef KM_DBG
 #if __STD_C
 Void_t* cALLOc(size_t n_elements, size_t elem_size)
 #else
@@ -4980,8 +4981,11 @@ Void_t* cALLOc(n_elements, elem_size) size_t n_elements; size_t elem_size;
   }
   return mem;
 }
+#endif
 
 
+/*** Begin Code Removed for KOS ***/
+#if 0
 /*
   ------------------------------ valloc ------------------------------
 */
@@ -5018,6 +5022,8 @@ int mTRIm(pad) size_t pad;
   return 0;
 #endif
 }
+#endif
+/*** End Code Removed for KOS ***/
 
 
 /*
