@@ -359,10 +359,10 @@ static int sip_attach(maple_driver_t *drv, maple_device_t *dev) {
     sip = (sip_state_t *)dev->status;
     sip->samples_buf = (uint8 *)malloc(11025 * 2 * 10);
 
-    if(sip->samples_buf == NULL) {        
+    if(sip->samples_buf == NULL) {
         return -1;
     }
-    else {        
+    else {
         sip->is_sampling = 0;
         sip->amp_gain = SIP_DEFAULT_GAIN;
         sip->buf_pos = 0;
