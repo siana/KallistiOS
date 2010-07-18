@@ -6,7 +6,7 @@
 */
 
 /** \file   dc/maple/sip.h
-    \brief  Definitions using the Sound Input Peripheral.
+    \brief  Definitions for using the Sound Input Peripheral.
 
     This file contains the definitions needed to access the Maple microphone
     type device (the Seaman mic). Many thanks go out to ZeZu who pointed me

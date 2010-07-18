@@ -5,6 +5,17 @@
 
 */
 
+/** \file   dc/maple/keyboard.h
+    \brief  Definitions for using the keyboard device.
+
+    This file contains the definitions needed to access the Maple keyboard
+    device. Obviously, this corresponds to the MAPLE_FUNC_KEYBOARD function
+    code.
+
+    \author Jordan DeLong
+    \author Dan Potter
+*/
+
 #ifndef __DC_MAPLE_KEYBOARD_H
 #define __DC_MAPLE_KEYBOARD_H
 
@@ -13,7 +24,12 @@ __BEGIN_DECLS
 
 #include <arch/types.h>
 
-/* modifier keys */
+/** \defgroup   kbd_mods    Keyboard modifier keys
+
+    These are the various modifiers that can be pressed on the keyboard, and are
+    reflected in the modifiers field of kbd_cond_t.
+    @{
+*/
 #define KBD_MOD_LCTRL 		(1<<0)
 #define KBD_MOD_LSHIFT		(1<<1)
 #define KBD_MOD_LALT		(1<<2)
@@ -22,13 +38,28 @@ __BEGIN_DECLS
 #define KBD_MOD_RSHIFT		(1<<5)
 #define KBD_MOD_RALT		(1<<6)
 #define KBD_MOD_S2		(1<<7)
+/** @} */
 
-/* bits for leds : this is not comprensive (need for japanese kbds also) */
+/** \defgroup   kbd_leds    Keyboard LEDs
+
+    This is the LEDs that can be turned on and off on the keyboard. This list
+    may not be exhaustive. Think of these sorta like an extension of the
+    modifiers list.
+
+    @{
+*/
 #define KBD_LED_NUMLOCK		(1<<0)
 #define KBD_LED_CAPSLOCK	(1<<1)
 #define KBD_LED_SCRLOCK		(1<<2)
+/** @} */
 
-/* defines for the keys (argh...) */
+/** \defgroup   kbd_keys    Keyboard keys
+
+    This is the list of keys that are on the keyboard that may be pressed. The
+    keyboard returns keys in this format.
+
+    @{
+*/
 #define KBD_KEY_NONE		0x00
 #define KBD_KEY_ERROR		0x01
 #define KBD_KEY_A		0x04
@@ -127,44 +158,78 @@ __BEGIN_DECLS
 #define KBD_KEY_PAD_0		0x62
 #define KBD_KEY_PAD_PERIOD	0x63
 #define KBD_KEY_S3		0x65
+/** @} */
 
 /* Raw condition structure */
+/** \brief  Keyboard raw condition structure.
+
+    This structure is what the keyboard responds with as its current status.
+
+    \headerfile dc/maple/keyboard.h
+*/
 typedef struct {
-	uint8 modifiers;	/* bitmask of shift keys/etc */
-	uint8 leds;		/* bitmask of leds that are lit */
-	uint8 keys[6];		/* codes for up to 6 currently pressed keys */
+    uint8 modifiers;    /**< \brief Bitmask of set modifiers. */
+    uint8 leds;         /**< \brief Bitmask of set LEDs */
+    uint8 keys[6];      /**< \brief Key codes for currently pressed keys. */
 } kbd_cond_t;
 
 /* This is the structure of the 'state' space. This is what you will
    get back if you call maple_dev_state(). */
-typedef struct kbd_state {
-	/* The latest raw keyboard condition */
-	kbd_cond_t cond;
-	
-	/* The key matrix array -- this is an array that lists the status of all
-	   keys on the keyboard. This is mainly used for key repeat and debouncing. */
-	uint8	matrix[256];
+/** \brief  Keyboard status structure.
 
-	/* Shift key status */
-	int	shift_keys;
+    This structure holds information about the current status of the keyboard
+    device. This is what maple_dev_status() will return.
+
+    \headerfile dc/maple/keyboard.h
+*/
+typedef struct kbd_state {
+    /** \brief  The lastest raw condition of the keyboard. */
+    kbd_cond_t cond;
+
+    /** \brief  Key array.
+
+        This array lists the state of all possible keys on the keyboard. It can
+        be used for key repeat and debouncing.
+    */
+    uint8 matrix[256];
+
+    /** \brief  Modifier key status. */
+    int	shift_keys;
 } kbd_state_t;
 
-/* Turn keyboard queueing on or off. This is mainly useful if you want
-   to use the keys for a game where individual keypresses don't mean
-   as much as having the keys up or down. Setting this state to
-   a new value will clear the queue. */
+/** \brief  Activate or deactivate key queueing.
+
+    This function will turn the internal keyboard queueing on or off. Note that
+    there is only one queue for the whole system, no matter how many keyboards
+    are attached, and the queue is of fairly limited length. Turning queueing
+    off is useful (for instance) in a game where individual keypresses don't
+    mean as much as having the keys up or down does.
+
+    You can clear the queue (without popping all the keys off) by setting the
+    active value to a different value than it was.
+
+    The queue is by default on, unless you turn it off.
+
+    \param  active          Set to non-zero to activate the queue.
+*/
 void kbd_set_queue(int active);
 
-/* Take a key scancode, encode it appropriate, and place it on the
-   keyboard queue. At the moment we assume no key overflows. */
-/* int kbd_enqueue(uint8 keycode); */
+/** \brief  Pop a key off the keyboard queue.
 
-/* Take a key off the key queue, or return -1 if there is none waiting */
+    This function pops the front off of the keyboard queue, and returns the
+    value to the caller. The value returned will be the ASCII value of the key
+    pressed (accounting for the shift keys being pressed).
+
+    \return                 The value at the front of the queue, or -1 if there
+                            are no keys in the queue or queueing is off.
+*/
 int kbd_get_key();
 
+/* \cond */
 /* Init / Shutdown */
 int	kbd_init();
 void	kbd_shutdown();
+/* \endcond */
 
 __END_DECLS
 

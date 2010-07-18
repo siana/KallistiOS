@@ -5,6 +5,16 @@
 
 */
 
+/** \file   dc/maple/mouse.h
+    \brief  Definitions for using the mouse device.
+
+    This file contains the definitions needed to access the Maple mouse type
+    device.
+
+    \author Jordan DeLong
+    \author Dan Potter
+*/
+
 #ifndef __DC_MAPLE_MOUSE_H
 #define __DC_MAPLE_MOUSE_H
 
@@ -13,11 +23,18 @@ __BEGIN_DECLS
 
 #include <arch/types.h>
 
-/* mouse defines */
-#define MOUSE_RIGHTBUTTON	(1<<1)
-#define MOUSE_LEFTBUTTON	(1<<2)
-#define MOUSE_SIDEBUTTON	(1<<3)
+/** \defgroup   mouse_buttons   Mouse button codes
 
+    These are the possible buttons to press on a maple bus mouse.
+
+    @{
+*/
+#define MOUSE_RIGHTBUTTON	(1<<1)  /**< \brief Right mouse button */
+#define MOUSE_LEFTBUTTON	(1<<2)  /**< \brief Left mouse button */
+#define MOUSE_SIDEBUTTON	(1<<3)  /**< \brief Side mouse button */
+/** @} */
+
+/** \brief  Mouse center value in the raw condition structure. */
 #define MOUSE_DELTA_CENTER      0x200
 
 /* Raw mouse condition structure */
@@ -41,17 +58,38 @@ typedef struct {
 
    Note that this is what maple_dev_status() will return.
  */
+
+/** \brief  Mouse status structure.
+
+    This structure contains information about the status of the mouse device,
+    and can be fetched with maple_dev_status().
+
+    \headerfile dc/maple/mouse.h
+*/
 typedef struct {
-	uint32	buttons;
-	int	dx, dy, dz;
+    /** \brief  Buttons pressed bitmask.
+        \see    mouse_buttons
+    */
+    uint32	buttons;
+
+    /** \brief  X movement value */
+    int dx;
+
+    /** \brief  Y movement value */
+    int dy;
+
+    /** \brief  Z movement value */
+    int dz;
 } mouse_state_t;
 
 /* Old maple interface */
 int mouse_get_cond(uint8 addr, mouse_cond_t *cond) __attribute__((deprecated));
 
+/* \cond */
 /* Init / Shutdown */
 int	mouse_init();
 void	mouse_shutdown();
+/* \endcond */
 
 __END_DECLS
 
