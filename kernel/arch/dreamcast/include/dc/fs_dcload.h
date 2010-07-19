@@ -5,6 +5,17 @@
 
 */
 
+/** \file   dc/fs_dcload.h
+    \brief  Implementation of dcload "filesystem".
+
+    This file contains declarations related to using dcload, both in its -ip and
+    -serial forms. This is only used for dcload-ip support if the internal
+    network stack is not initialized at start via KOS_INIT_FLAGS().
+
+    \author Andrew Kieschnick
+    \see    dc/fs_dclsocket.h
+*/
+
 #ifndef __DC_FS_DCLOAD_H
 #define __DC_FS_DCLOAD_H
 
@@ -18,18 +29,26 @@ __BEGIN_DECLS
 #include <kos/fs.h>
 #include <kos/dbgio.h>
 
+/* \cond */
 extern dbgio_handler_t dbgio_dcload;
+/* \endcond */
 
 /* dcload magic value */
+/** \brief  The dcload magic value! */
 #define DCLOADMAGICVALUE 0xdeadbeef
+
+/** \brief  The address of the dcload magic value */
 #define DCLOADMAGICADDR (unsigned int *)0x8c004004
 
 /* Are we using dc-load-serial or dc-load-ip? */
-#define DCLOAD_TYPE_NONE	-1
-#define DCLOAD_TYPE_SER		0
-#define DCLOAD_TYPE_IP		1
+#define DCLOAD_TYPE_NONE    -1      /**< \brief No dcload connection */
+#define DCLOAD_TYPE_SER     0       /**< \brief dcload-serial connection */
+#define DCLOAD_TYPE_IP      1       /**< \brief dcload-ip connection */
+
+/** \brief  What type of dcload connection do we have? */
 extern int dcload_type;
 
+/* \cond */
 /* Available dcload console commands */
 
 #define DCLOAD_READ 0
@@ -118,6 +137,8 @@ int fs_dcload_shutdown();
 
 /* Init func for dcload-ip + lwIP */
 int fs_dcload_init_lwip(void *p);
+
+/* \endcond */
 
 __END_DECLS
 

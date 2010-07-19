@@ -5,6 +5,17 @@
 
 */
 
+/** \file   dc/matrix.h
+    \brief  Basic matrix operations.
+
+    This file contains various basic matrix math functionality for using the
+    SH4's matrix transformation unit. Higher level functionality, like the 3D
+    functionality is built off of these operations.
+
+    \author Dan Potter
+    \see    dc/matrix3d.h
+*/
+
 #ifndef __DC_MATRIX_H
 #define __DC_MATRIX_H
 
@@ -13,35 +24,77 @@ __BEGIN_DECLS
 
 #include <kos/vector.h>
 
-/* Copy the internal matrix out to a memory one */
+/** \brief  Copy the internal matrix to a memory one.
+
+    This function stores the current internal matrix to one in memory.
+
+    \param  out             A pointer to where to store the matrix (must be at
+                            least 8-byte aligned, should be 32-byte aligned).
+*/
 void mat_store(matrix_t *out);
 
-/* Copy a memory matrix into the internal one */
+/** \brief  Copy a memory matrix into the internal one.
+
+    This function loads the internal matrix with the values of one in memory.
+
+    \param  out             A pointer to where to load the matrix from (must be
+                            at least 8-byte aligned, should be 32-byte aligned).
+*/
 void mat_load(matrix_t *out);
 
-/* Clear internal to an identity matrix */
+/** \brief  Clear the internal matrix to identity.
+
+    This function clears the internal matrix to a standard identity matrix.
+*/
 void mat_identity();
 
-/* "Apply" a matrix: multiply a matrix onto the "internal" one */
+/** \brief  Apply a matrix.
+
+    This function multiplies a matrix in memory onto the internal matrix.
+
+    \param  src             A poitner to the matrix to multiply.
+*/
 void mat_apply(matrix_t *src);
 
-/* Transform zero or more sets of vectors using the current internal
-   matrix. Each vector is three floats long. */
+/** \brief  Transform vectors by the internal matrix.
+
+    This function transforms zero or more sets of vectors by the current
+    internal matrix. Each vector is 3 single-precision floats long.
+
+    \param  invecs          The list of input vectors.
+    \param  outvecs         The list of output vectors.
+    \param  veccnt          How many vectors are in the list.
+    \param  vecskip         Number of empty bytes between vectors.
+*/
 void mat_transform(vector_t *invecs, vector_t *outvecs, int veccnt, int vecskip);
 
-/* Transform zero or more sets of vertices using the current internal
-   matrix, directly to the store queues. Each vertex is 32 bytes long.
-   All non-xyz data will be copied over along with the transformed
-   coordinates. Minimum number of vertices: 1.
+/** \brief  Transform vectors by the internal matrix into the store queues.
 
-   Note taht the QACRx registers must have already been set.
+    This function transforms one or more sets of vertices using the current
+    internal matrix directly into the store queues. Each vertex is exactly
+    32-bytes long, and the non-xyz data that is with it will be copied over with
+    the transformed coordinates. This is perfect, for instance, for transforming
+    pvr_vertex_t vertices.
 
-   This was contributed by Jim Ursetto. */
+    \param  input           The list of input vertices.
+    \param  output          The output pointer.
+    \param  veccnt          The number of vertices to transform.
+    \note                   The \ref QACR0 and \ref QACR1 registers must be set
+                            appropriately BEFORE calling this function.
+    \author Jim Ursetto
+*/
 void mat_transform_sq(void * input, void * output, int veccnt);
 
-/* Inline mat_transform which works on the three coordinates passed in;
-   this works most efficiently if you've already got the three numbers
-   (x,y,z) in the right registers (fr0,fr1,fr2). */
+/** \brief  Macro to transform a single vertex by the internal matrix.
+
+    This macro is an inline assembly operation to transform a single vertex. It
+    works most efficiently if the x value is in fr0, y is in fr1, and z is in
+    fr2 before using the macro.
+
+    \param  x               The X coordinate to transform.
+    \param  y               The Y coordinate to transform.
+    \param  z               The Z coordinate to transform.
+*/
 #define mat_trans_single(x, y, z) { \
 	register float __x __asm__("fr0") = (x); \
 	register float __y __asm__("fr1") = (y); \
@@ -59,7 +112,19 @@ void mat_transform_sq(void * input, void * output, int veccnt);
 	x = __x; y = __y; z = __z; \
 }
 
-/* Same as above, but allows an input to and preserves the Z/W value */
+/** \brief  Macro to transform a single vertex by the internal matrix.
+
+    This macro is an inline assembly operation to transform a single vertex. It
+    works most efficiently if the x value is in fr0, y is in fr1, z is in
+    fr2, and w is in fr3 before using the macro. This macro is similar to
+    mat_trans_single(), but this one allows an input to and preserves the Z/W
+    value.
+
+    \param  x               The X coordinate to transform.
+    \param  y               The Y coordinate to transform.
+    \param  z               The Z coordinate to transform.
+    \param  w               The W coordinate to transform.
+*/
 #define mat_trans_single4(x, y, z, w) { \
 	register float __x __asm__("fr0") = (x); \
 	register float __y __asm__("fr1") = (y); \
@@ -79,8 +144,17 @@ void mat_transform_sq(void * input, void * output, int veccnt);
 	x = __x; y = __y; z = __z; w = __w; \
 }
 
-/* This is like mat_trans_single, but it leaves z/w instead of 1/w
-   for the z component. */
+/** \brief  Macro to transform a single vertex by the internal matrix.
+
+    This macro is an inline assembly operation to transform a single vertex. It
+    works most efficiently if the x value is in fr0, y is in fr1, and z is in
+    fr2 before using the macro. This macro is similar to mat_trans_single(), but
+    this one leaves z/w instead of 1/w for the z component.
+
+    \param  x               The X coordinate to transform.
+    \param  y               The Y coordinate to transform.
+    \param  z               The Z coordinate to transform.
+*/
 #define mat_trans_single3(x, y, z) { \
 	register float __x __asm__("fr0") = (x); \
 	register float __y __asm__("fr1") = (y); \
@@ -97,7 +171,19 @@ void mat_transform_sq(void * input, void * output, int veccnt);
 	x = __x; y = __y; z = __z; \
 }
 
-/* Transform vector, without any perspective division. */
+/** \brief  Macro to transform a single vertex by the internal matrix with no
+            perspective division.
+
+    This macro is an inline assembly operation to transform a single vertex. It
+    works most efficiently if the x value is in fr0, y is in fr1, z is in
+    fr2, and w is in fr3 before using the macro. This macro is similar to
+    mat_trans_single(), but this one does not do any perspective division.
+
+    \param  x               The X coordinate to transform.
+    \param  y               The Y coordinate to transform.
+    \param  z               The Z coordinate to transform.
+    \param  w               The W coordinate to transform.
+*/
 #define mat_trans_nodiv(x, y, z, w) { \
 	register float __x __asm__("fr0") = (x); \
 	register float __y __asm__("fr1") = (y); \

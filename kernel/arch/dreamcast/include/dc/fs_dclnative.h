@@ -5,6 +5,18 @@
 
 */
 
+/** \file   dc/fs_dclnative.h
+    \brief  Implementation of dcload-ip over KOS network drivers.
+
+    This file contains declarations related to using dcload-ip over the KOS
+    network adapter drivers. This should be considered deprecated in favor of
+    fs_dclsocket, and I'm not even sure that it would still work at this point.
+
+    \author Dan Potter
+    \see    dc/fs_dclsocket.h
+    \see    dc/fs_dcload.h
+*/
+
 #ifndef __DC_FS_DCLNATIVE_H
 #define __DC_FS_DCLNATIVE_H
 
@@ -20,6 +32,7 @@ __BEGIN_DECLS
 
 #include <dc/fs_dcload.h>
 
+/* \cond */
 /* Printk replacement */
 void dclnative_printk(const char *str);
 
@@ -37,6 +50,8 @@ int     dclnative_unlink(vfs_handler_t * vfs, const char *fn);
 /* Init/Shutdown */
 int fs_dclnative_init();
 int fs_dclnative_shutdown();
+
+/* \endcond */
 
 __END_DECLS
 
