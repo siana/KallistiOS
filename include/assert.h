@@ -12,8 +12,8 @@
 __BEGIN_DECLS
 
 /**
-	\file assert.h
-	\brief Standard C Assertions
+	\file   assert.h
+	\brief  Standard C Assertions
 
 	This file contains the standard C assertions to raise an assertion or to
 	change the assertion handler.
@@ -31,57 +31,62 @@ __BEGIN_DECLS
 #	define assert(e) ((void)0)
 #	define assert_msg(e, m) ((void)0)
 #else
-/**
-	\brief standard C assertion
 
-	\param e a value or expression to be evaluated as true or false
+/** \brief  Standard C assertion macro.
 
-	\return if e is true (void)0 is returned, otherwise, the function does not
-	return and abort() is called
+    This macro does a standard C assertion, wherein the expression is evaluated,
+    and if false, the program is ultimately aborted using abort(). If the
+    expression evaluates to true, the macro does nothing (other than any side
+    effects of evaluating the expression).
+
+	\param  e               A value or expression to be evaluated as true or
+                            false.
 */
 #	define assert(e)        ((e) ? (void)0 : __assert(__FILE__, __LINE__, #e, NULL, __FUNCTION__))
 
-/**
-	\brief assert with a custom message
+/** \brief  assert() with a custom message.
 
-	\param e a value or expression to be evaluated as true or false
-	\param m a const char * message
+    This macro acts the same as the assert() macro, but allows you to specify a
+    custom message to be printed out if the assertion fails.
 
-	\return if e is true (void)0 is returned, otherwise the function does not
-	return, a custom message is displayed, and abort() is called
+	\param  e               A value or expression to be evaluated as true or
+                            false.
+	\param  m               A message (const char *).
 */
 #	define assert_msg(e, m) ((e) ? (void)0 : __assert(__FILE__, __LINE__, #e, m, __FUNCTION__))
 #endif
 
+/* \cond */
 /* Defined in assert.c */
 void __assert(const char *file, int line, const char *expr,
 	const char *msg, const char *func);
+/* \endcond */
 
-/**
-	\brief assert handler
+/** \brief  Assertion handler type.
 
-	An assertion handler can be a user defined assertion handler,
-	otherwise the default is used, which calls abort()
+    The user can provide their own assertion handler with this type. If none is
+    provided, a default is used which ultimately prints out the location of the
+    failed assertion and calls abort().
 
-	\param file The filename where the assertion happened
-	\param line The line number where the assertion happened
-	\param expr The expression that raised the assertion
-	\param msg A custom message for why the assertion happened
-	\param func The function name from which the assertion happened
+	\param  file            The filename where the assertion happened.
+	\param  line            The line number where the assertion happened.
+	\param  expr            The expression that raised the assertion.
+	\param  msg             A custom message for why the assertion happened.
+	\param  func            The function name from which the assertion happened.
 
-	\sa assert_set_handler
+	\see    assert_set_handler
 */
 typedef void (*assert_handler_t)(const char * file, int line, const char * expr,
 	const char * msg, const char * func);
 
-/**
-	\brief set an "assert handler" to call on an assert
+/** \brief  Set an assertion handler to call on a failed assertion.
 
-	By default, this will print a message and call abort().
+	The default assertion handler simply will print a message and call abort().
 
-	\return the old assert_handler_t address
+	\return                 The old assertion handler so it may be restored
+                            later if appropriate.
 
-	\sa assert_handler_t
+	\see    assert_handler_t
 */
 assert_handler_t assert_set_handler(assert_handler_t hnd);
 

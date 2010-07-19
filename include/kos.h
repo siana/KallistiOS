@@ -5,6 +5,18 @@
 
 */
 
+/** \file   kos.h
+    \brief  Include everything KOS has to offer!
+
+    This file includes pretty much every KOS-related header file, so you don't
+    have to figure out what you actually need. The ultimate for the truly lazy!
+
+    You may want to include individual header files yourself if you need more
+    fine-grained control, as may be more appropriate for some projects.
+
+    \author Dan Potter
+*/
+
 #ifndef __KOS_H
 #define __KOS_H
 
