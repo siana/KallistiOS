@@ -42,6 +42,7 @@ void arch_stk_trace(int n);
     printing the results to stdout. This could be used for doing something like
     stack tracing a main thread from inside an IRQ handler.
 
+    \param  fp              The frame pointer to start from.
     \param  n               The number of frames to leave off.
 */
 void arch_stk_trace_at(uint32 fp, int n);

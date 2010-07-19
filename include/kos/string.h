@@ -41,7 +41,7 @@ void * memcpy4(void * dest,const void *src,size_t count);
     This implies that all 32-bits of c are used, not just the first 8 as in
     memset().
 
-    \param  dest            The destination of the set.
+    \param  s               The destination of the set.
     \param  c               The value to set to.
     \param  count           The number of bytes to set. This should be
                             divisible by 4 (and will be rounded down if not).
@@ -67,7 +67,7 @@ void * memcpy2(void * dest,const void *src,size_t count);
     This implies that all 16-bits of c are used, not just the first 8 as in
     memset().
 
-    \param  dest            The destination of the set.
+    \param  s               The destination of the set.
     \param  c               The value to set to.
     \param  count           The number of bytes to set. This should be
                             divisible by 2 (and will be rounded down if not).

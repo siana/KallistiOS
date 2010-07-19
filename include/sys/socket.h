@@ -163,7 +163,7 @@ ssize_t recvfrom(int socket, void *buffer, size_t length, int flags,
     This function sends messages to the peer on a connected socket.
 
     \param  socket      The socket to send on.
-    \param  buffer      A pointer to a buffer with the message to send.
+    \param  message     A pointer to a buffer with the message to send.
     \param  length      The length of the message.
     \param  flags       The type of message transmission. Set to 0 for now.
     \return             On success, the number of bytes sent. On error, -1,
@@ -178,7 +178,7 @@ ssize_t send(int socket, const void *message, size_t length, int flags);
     peer that the socket is connected to, or it may simply return error.
 
     \param  socket      The socket to send on.
-    \param  buffer      A pointer to a buffer with the message to send.
+    \param  message     A pointer to a buffer with the message to send.
     \param  length      The length of the message.
     \param  flags       The type of message transmission. Set to 0 for now.
     \param  dest_addr   A pointer to a sockaddr structure with the peer's name.

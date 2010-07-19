@@ -46,7 +46,7 @@ int vmu_beep_raw(maple_device_t * dev, uint32 beep);
     bitmap is 1bpp, and is 48x32 in size.
 
     \param  dev             The device to draw to.
-    \param  beep            The bitmap to show.
+    \param  bitmap          The bitmap to show.
     \retval MAPLE_EOK       On success.
     \retval MAPLE_EAGAIN    If the command couldn't be sent. Try again later.
     \retval MAPLE_ETIMEOUT  If the command timed out while blocking.
