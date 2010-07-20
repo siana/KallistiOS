@@ -122,12 +122,12 @@ typedef struct fs_socket_proto {
         called, and will be cleaned up by fs_socket if an error is returned from
         the handler (a return value of -1).
 
-        \param  s       The socket structure to initialize.
-        \param  domain  Domain of the socket.
-        \param  type    Type of the socket.
-        \param protocol Protocol of the socket.
-        \retval -1      On error (errno should be set appropriately).
-        \retval 0       On success.
+        \param  s           The socket structure to initialize
+        \param  domain      Domain of the socket
+        \param  type        Type of the socket
+        \param protocol     Protocol of the socket
+        \retval -1          On error (errno should be set appropriately)
+        \retval 0           On success
     */
     int (*socket)(net_socket_t *s, int domain, int type, int protocol);
 
@@ -138,7 +138,7 @@ typedef struct fs_socket_proto {
         with the close system call. There are no errors defined for this
         function.
 
-        \param  s       The socket to close.
+        \param  s           The socket to close
     */
     void (*close)(net_socket_t *hnd);
 
@@ -148,11 +148,11 @@ typedef struct fs_socket_proto {
         a socket created with this protocol. The semantics are the same as
         described in the documentation for that function.
 
-        \param  s       The socket to set flags on.
-        \param  flags   The flags to set.
-        \retval -1      On error (set errno appropriately).
-        \retval 0       On success.
-        \sa     fs_socket_setflags
+        \param  s           The socket to set flags on
+        \param  flags       The flags to set
+        \retval -1          On error (set errno appropriately)
+        \retval 0           On success
+        \see    fs_socket_setflags
     */
     int (*setflags)(net_socket_t *s, int flags);
 
@@ -161,11 +161,11 @@ typedef struct fs_socket_proto {
         This function should implement the ::accept() system call for the
         protocol. The semantics are exactly as expected for that function.
 
-        \param  s       The socket to accept a connection on.
-        \param  addr    The address of the incoming connection.
-        \param  alen    The length of the address.
-        \return A newly created socket for the incoming connection or -1 on
-                error (with errno set appropriately).
+        \param  s           The socket to accept a connection on
+        \param  addr        The address of the incoming connection
+        \param  alen        The length of the address
+        \return             A newly created socket for the incoming connection
+                            or -1 on error (with errno set appropriately)
     */
     int (*accept)(net_socket_t *s, struct sockaddr *addr, socklen_t *alen);
 
@@ -174,11 +174,11 @@ typedef struct fs_socket_proto {
         This function should implement the ::bind() system call for the
         protocol. The semantics are exactly as expected for that function.
 
-        \param  s       The socket to bind to the address.
-        \param  addr    The address to bind to.
-        \param  alen    The length of the address.
-        \retval -1      On error (set errno appropriately).
-        \retval 0       On success.
+        \param  s           The socket to bind to the address
+        \param  addr        The address to bind to
+        \param  alen        The length of the address
+        \retval -1          On error (set errno appropriately)
+        \retval 0           On success
     */
     int (*bind)(net_socket_t *s, const struct sockaddr *addr, socklen_t alen);
 
@@ -187,11 +187,11 @@ typedef struct fs_socket_proto {
         This function should implement the ::connect() system call for the
         protocol. The semantics are exactly as expected for that function.
 
-        \param  s       The socket to connect with.
-        \param  addr    The address to connect to.
-        \param  alen    The length of the address.
-        \retval -1      On error (with errno set appropriately).
-        \retval 0       On success.
+        \param  s           The socket to connect with
+        \param  addr        The address to connect to
+        \param  alen        The length of the address
+        \retval -1          On error (with errno set appropriately)
+        \retval 0           On success
     */
     int (*connect)(net_socket_t *s, const struct sockaddr *addr,
                    socklen_t alen);
@@ -202,10 +202,10 @@ typedef struct fs_socket_proto {
         This function should implement the ::listen() system call for the
         protocol. The semantics are exactly as expected for that function.
 
-        \param  s       The socket to listen on.
-        \param  backlog The number of connections to queue.
-        \retval -1      On error (with errno set appropriately).
-        \retval 0       On success.
+        \param  s           The socket to listen on
+        \param  backlog     The number of connections to queue
+        \retval -1          On error (with errno set appropriately)
+        \retval 0           On success
     */
     int (*listen)(net_socket_t *s, int backlog);
 
@@ -216,18 +216,18 @@ typedef struct fs_socket_proto {
         this function should implement the ::recv() system call, which will
         call this function with NULL for addr and alen.
 
-        \param  s       The socket to receive data on.
-        \param  buffer  The buffer to save data in.
-        \param  len     The length of the buffer.
-        \param  flags   Flags to the function.
-        \param  addr    Space to store the address that data came from (NULL
-                        if this was called by ::recv()).
-        \param  alen    Space to store the length of the address (NULL if this
-                        was called by ::recv()).
-        \retval -1      On error (set errno appropriately).
-        \retval 0       No outstanding data and the peer has disconnected
-                        cleanly.
-        \retval n       The number of bytes received (may be less than len).
+        \param  s           The socket to receive data on
+        \param  buffer      The buffer to save data in
+        \param  len         The length of the buffer
+        \param  flags       Flags to the function
+        \param  addr        Space to store the address that data came from (NULL
+                            if this was called by ::recv())
+        \param  alen        Space to store the length of the address (NULL if
+                            this was called by ::recv())
+        \retval -1          On error (set errno appropriately)
+        \retval 0           No outstanding data and the peer has disconnected
+                            cleanly
+        \retval n       T   he number of bytes received (may be less than len)
     */
     ssize_t (*recvfrom)(net_socket_t *s, void *buffer, size_t len, int flags,
                         struct sockaddr *addr, socklen_t *alen);
@@ -239,17 +239,17 @@ typedef struct fs_socket_proto {
         this function should implement the ::send() system call, which will
         call this function with NULL for addr and 0 for alen.
 
-        \param  s       The socket to send data on.
-        \param  msg     The data to send.
-        \param  len     The length of data to send.
-        \param  flags   Flags to the function.
-        \param  addr    The address to send data to (NULL if this was called by
-                        ::send()).
-        \param  alen    The length of the address (0 if this was called by
-                        ::send()).
-        \retval -1      On error (set errno appropriately).
-        \retval n       The number of bytes actually sent (may be less than
-                        len).
+        \param  s           The socket to send data on
+        \param  msg         The data to send
+        \param  len         The length of data to send
+        \param  flags       Flags to the function
+        \param  addr        The address to send data to (NULL if this was called
+                            by ::send())
+        \param  alen        The length of the address (0 if this was called by
+                            ::send())
+        \retval -1          On error (set errno appropriately)
+        \retval n           The number of bytes actually sent (may be less than
+                            len)
     */
     ssize_t (*sendto)(net_socket_t *s, const void *msg, size_t len, int flags,
                       const struct sockaddr *addr, socklen_t alen);
@@ -259,10 +259,10 @@ typedef struct fs_socket_proto {
         This function should implement the ::shutdown() system call for the
         protocol. The semantics are exactly as expected for that function.
 
-        \param  s       The socket to shut down.
-        \param  how     What should be shut down on the socket.
-        \retval -1      On error (set errno appropriately).
-        \retval 0       On success.
+        \param  s           The socket to shut down
+        \param  how         What should be shut down on the socket
+        \retval -1          On error (set errno appropriately)
+        \retval 0           On success
     */
     int (*shutdownsock)(net_socket_t *s, int how);
 } fs_socket_proto_t;
@@ -283,19 +283,20 @@ int fs_socket_shutdown();
     flags available for use here are largely protocol dependent, and for UDP
     the only flag available is O_NONBLOCK.
 
-    \param  sock    The socket to operate on (returned from a call to the
-                    function socket()).
-    \param  flags   The flags to set on the socket.
-    \retval -1      On error, and sets errno to EWOULDBLOCK if the function
-                    would block while inappropriate to do so (i.e, in an
-                    interrupt), EBADF if an invalid file descriptor was passed
-                    in, ENOTSOCK if a file descriptor that is not a socket was
-                    passed in, or EINVAL if an invalid flag was passed in.
-    \retval 0       On success.
+    \param  sock        The socket to operate on (returned from a call to the
+                        function socket())
+    \param  flags       The flags to set on the socket.
+    \retval -1          On error, and sets errno as appropriate
+    \retval 0           On success
+
+    \par    Error Conditions:
+    \em     EWOULDBLOCK - if the function would block while inappropriate to \n
+    \em     EBADF - if passed an invalid file descriptor \n
+    \em     ENOTSOCK - if passed a file descriptor other than a socket \n
+    \em     EINVAL - if an invalid flag was passed in
 */
 int fs_socket_setflags(int sock, int flags);
 
-/* Registration of protocols for fs_socket. */
 /** \brief  Add a new protocol for use with fs_socket.
 
     This function registers a protocol handler with fs_socket for use when
@@ -305,8 +306,8 @@ int fs_socket_setflags(int sock, int flags);
 
     This function is NOT safe to call inside an interrupt.
 
-    \param  proto   The new protocol handler to register.
-    \retval 0       On success (no error conditions are currently defined).
+    \param  proto       The new protocol handler to register
+    \retval 0           On success (no error conditions are currently defined)
 */
 int fs_socket_proto_add(fs_socket_proto_t *proto);
 
@@ -318,9 +319,9 @@ int fs_socket_proto_add(fs_socket_proto_t *proto);
     protocol to be removed (as they will not work properly once the handler has
     been removed).
 
-    \param  proto   The protocol handler to remove.
-    \retval -1      On error (This function does not directly change errno).
-    \retval 0       On success.
+    \param  proto       The protocol handler to remove
+    \retval -1          On error (This function does not directly change errno)
+    \retval 0           On success
 */
 int fs_socket_proto_remove(fs_socket_proto_t *proto);
 

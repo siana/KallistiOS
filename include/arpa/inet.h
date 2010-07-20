@@ -29,26 +29,26 @@ __BEGIN_DECLS
 #include <inttypes.h>
 
 /** \brief  Convert a 32-bit value from host byte order to network byte order.
-    \param  value   The value to convert.
-    \return value converted to network byte order.
+    \param  value           The value to convert.
+    \return                 value converted to network byte order.
 */
 uint32_t htonl(uint32_t value);
 
 /** \brief  Convert a 32-bit value from network byte order to host byte order.
-    \param  value   The value to convert.
-    \return value converted to host byte order.
+    \param  value           The value to convert.
+    \return                 value converted to host byte order.
 */
 uint32_t ntohl(uint32_t value);
 
 /** \brief  Convert a 16-bit value from host byte order to network byte order.
-    \param  value   The value to convert.
-    \return value converted to network byte order.
+    \param  value           The value to convert.
+    \return                 value converted to network byte order.
 */
 uint16_t htons(uint16_t value);
 
 /** \brief  Convert a 16-bit value from network byte order to host byte order.
-    \param  value   The value to convert.
-    \return value converted to host byte order.
+    \param  value           The value to convert.
+    \return                 value converted to host byte order.
 */
 uint16_t ntohs(uint16_t value);
 
@@ -58,9 +58,9 @@ uint16_t ntohs(uint16_t value);
     address to an in_addr_t for use in a struct in_addr. This function supports
     all POSIX-required formats for the representation of the address.
 
-    \param  cp      A string representation of an IPv4 address.
-    \return The binary representation of the requested IPv4 address. 
-            (in_addr_t)(-1) is returned on error.
+    \param  cp              A string representation of an IPv4 address.
+    \return                 The binary representation of the requested IPv4
+                            address. (in_addr_t)(-1) is returned on error.
 */
 in_addr_t inet_addr(const char *cp);
 
@@ -75,10 +75,10 @@ in_addr_t inet_addr(const char *cp);
     address (255.255.255.255). This version actually distinguishes between that
     address and invalid addresses.
 
-    \param  cp      A string representation of an IPv4 address.
-    \param  pin     The destination for the conversion.
-    \retval 0       An invalid IPv4 address was given.
-    \retval 1       Upon successful conversion.
+    \param  cp              A string representation of an IPv4 address.
+    \param  pin             The destination for the conversion.
+    \retval 0               An invalid IPv4 address was given.
+    \retval 1               Upon successful conversion.
 */
 int inet_aton(const char *cp, struct in_addr *pin);
 
@@ -95,15 +95,18 @@ int inet_aton(const char *cp, struct in_addr *pin);
     function that you should actually use to convert addresses from strings to
     binary in new code, rather than inet_addr or inet_aton.
 
-    \param  af      The address family that src is an address in. The only
-                    supported value is AF_INET (IPv4).
-    \param  src     A string representation of the address.
-    \param  dst     Storage for the result. For AF_INET, this must be at least
-                    32-bits in size (the function treats it as a struct
-                    in_addr).
-    \retval -1      af is unsupported (errno is set to EAFNOSUPPORT).
-    \retval 0       An invalid address was given.
-    \retval 1       Upon successful conversion.
+    \param  af              The address family that src is an address in. The
+                            only supported value currently is AF_INET (IPv4).
+    \param  src             A string representation of the address.
+    \param  dst             Storage for the result. For AF_INET, this must be at
+                            least 32-bits in size (the function treats it as a
+                            struct in_addr).
+    \retval -1              af is unsupported.
+    \retval 0               An invalid address was given.
+    \retval 1               Upon successful conversion.
+
+    \par    Error Conditions:
+    \em     EAFNOSUPPORT - the specified address family is unsupported
 */
 int inet_pton(int af, const char *src, void *dst);
 
@@ -115,16 +118,18 @@ int inet_pton(int af, const char *src, void *dst);
     convert a binary representation of an IP address to a string. Note that this
     function, like all of KOS' network system, does not support IPv6.
 
-    \param  af      The address family that src is in. The only supported value
-                    is AF_INET (IPv4).
-    \param  src     A binary representation of an IP address.
-    \param  dst     Storage for the resulting string. This string should be at
-                    least 16-bytes long for IPv4.
-    \param  size    The length of dst.
-    \retval NULL    Upon failed conversion. errno will be set to EAFNOSUPPORT
-                    if af was invalid or ENOSPC if the buffer was not of an
-                    adequate length.
-    \retval dst     Upon successful conversion.
+    \param  af              The address family that src is in. The only
+                            supported value currently is AF_INET (IPv4).
+    \param  src             A binary representation of an IP address.
+    \param  dst             Storage for the resulting string. This string should
+                            be at least 16-bytes long for IPv4.
+    \param  size            The length of dst.
+    \retval NULL            Upon failed conversion.
+    \retval dst             Upon successful conversion.
+
+    \par    Error Conditions:
+    \em     EAFNOSUPPORT - the specified address family is unsupported \n
+    \em     ENOSPC - the size given is insufficient
 */
 const char *inet_ntop(int af, const void *src, char *dst, socklen_t size);
 
@@ -135,8 +140,9 @@ const char *inet_ntop(int af, const void *src, char *dst, socklen_t size);
     is non-reentrant (not thread-safe), and will always only support IPv4
     addresses. It is suggested to use inet_ntop in any new code.
 
-    \param  addr    The address to convert.
-    \return A string representation of addr (in dotted-decimal form).
+    \param  addr            The address to convert.
+    \return                 A string representation of addr (in dotted-decimal
+                            form).
 */
 char *inet_ntoa(struct in_addr addr);
 
