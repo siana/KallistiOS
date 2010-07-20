@@ -33,7 +33,6 @@ __BEGIN_DECLS
 #include <unistd.h>
 
 #include <kos/fs.h>
-#include <kos/fs_builtin.h>
 #include <kos/fs_romdisk.h>
 #include <kos/fs_ramdisk.h>
 #include <kos/fs_pty.h>
