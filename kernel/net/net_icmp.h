@@ -2,7 +2,7 @@
 
    kernel/net/net_icmp.h
    Copyright (C) 2002 Dan Potter
-   Copyright (C) 2005, 2007 Lawrence Sebald
+   Copyright (C) 2005, 2007, 2010 Lawrence Sebald
 
 */
 
@@ -17,12 +17,21 @@ __BEGIN_DECLS
 
 #define packed __attribute__((packed))
 typedef struct {
-	uint8	type;
-	uint8	code;
-	uint16	checksum;
-	uint8	misc[4];
+    uint8 type;
+    uint8 code;
+    uint16 checksum;
+    union {
+        uint8 m8[4];
+        uint16 m16[2];
+        uint32 m32;
+    } misc;
 } packed icmp_hdr_t;
 #undef packed
+
+#define ICMP_MESSAGE_ECHO_REPLY         0
+#define ICMP_MESSAGE_DEST_UNREACHABLE   3
+#define ICMP_MESSAGE_ECHO               8
+#define ICMP_MESSAGE_TIME_EXCEEDED      11
 
 int net_icmp_input(netif_t *src, ip_hdr_t *ih, const uint8 *data, int size);
 

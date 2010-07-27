@@ -2,7 +2,7 @@
 
    include/kos/net.h
    Copyright (C) 2002 Dan Potter
-   Copyright (C) 2005, 2006, 2007, 2008, 2009 Lawrence Sebald
+   Copyright (C) 2005, 2006, 2007, 2008, 2009, 2010 Lawrence Sebald
 
 */
 
@@ -201,8 +201,21 @@ typedef void (*net_echo_cb)(const uint8 *, uint16, uint64, uint8, const uint8 *,
 extern net_echo_cb net_icmp_echo_cb;
 
 /* Send an ICMP Echo packet to the specified IP. */
-int net_icmp_send_echo(netif_t *net, const uint8 ipaddr[4], const uint8 *data,
-                       int size);
+int net_icmp_send_echo(netif_t *net, const uint8 ipaddr[4], uint16 ident,
+                       uint16 seq, const uint8 *data, int size);
+
+/* Valid values for the code in the net_icmp_send_dest_unreach() function. */
+#define ICMP_PROTOCOL_UNREACHABLE       2
+#define ICMP_PORT_UNREACHABLE           3
+
+/* Send an ICMP Destination Unreachable packet in reply to the given message */
+int net_icmp_send_dest_unreach(netif_t *net, uint8 code, const uint8 *msg);
+
+/* Valid values for the code in the net_icmp_send_time_exceeded() function. */
+#define ICMP_REASSEMBLY_TIME_EXCEEDED   1
+
+/* Send an ICMP Time Exceeded packet in reply to the given message */
+int net_icmp_send_time_exceeded(netif_t *net, uint8 code, const uint8 *msg);
 
 /***** net_ipv4.c *********************************************************/
 

@@ -37,7 +37,7 @@ int main(int argc, char *argv[]) {
 
     /* Send out 10 pings, waiting 250ms between attempts. */
     for(i = 0; i < 10; ++i) {
-        net_icmp_send_echo(net_default_dev, addr, data, DATA_SIZE);
+        net_icmp_send_echo(net_default_dev, addr, 0, i, data, DATA_SIZE);
         thd_sleep(250);
     }
 

@@ -2,7 +2,7 @@
 
    kernel/net/net_ipv4.c
 
-   Copyright (C) 2005, 2006, 2007, 2008, 2009 Lawrence Sebald
+   Copyright (C) 2005, 2006, 2007, 2008, 2009, 2010 Lawrence Sebald
 
    Portions adapted from KOS' old net_icmp.c file:
    Copyright (c) 2002 Dan Potter
@@ -236,8 +236,11 @@ int net_ipv4_input_proto(netif_t *src, ip_hdr_t *ip, const uint8 *data) {
             return net_udp_input(src, ip, data, ntohs(ip->length) - hdrlen);
     }
 
-    /* There's no handler for this packet type, bail out */
+    /* There's no handler for this packet type, send an ICMP Destination
+       Unreachable, and log the unknown protocol. */
     ++ipv4_stats.pkt_recv_bad_proto;
+    net_icmp_send_dest_unreach(src, ICMP_PROTOCOL_UNREACHABLE, (uint8 *)ip);
+
     return -1;
 }
 

@@ -3,7 +3,7 @@
    kernel/net/net_icmp.c
 
    Copyright (C) 2002 Dan Potter
-   Copyright (C) 2005, 2006, 2007, 2009 Lawrence Sebald
+   Copyright (C) 2005, 2006, 2007, 2009, 2010 Lawrence Sebald
 
  */
 
@@ -22,18 +22,33 @@
 This file implements RFC 792, the Internet Control Message Protocol.
 Currently implemented message types are:
    0  - Echo Reply
+   3  - Destination Unreachable
    8  - Echo
+   11 - Time Exceeded
 
 Message types that are not implemented yet (if ever):
-   3  - Destination Unreachable
    4  - Source Quench
    5  - Redirect
-   11 - Time Exceeded
+   6  - Alternate Host Address
+   9  - Router Advertisement
+   10 - Router Solicitation
    12 - Parameter Problem
    14 - Timestamp Reply
    13 - Timestamp
    15 - Information Request
    16 - Information Reply
+   17 - Address Mask Request
+   18 - Address Mask Reply
+   30 - Traceroute
+   31 - Datagram Conversion Error
+   32 - Mobile Host Redirect
+   33 - Where-Are-You
+   34 - Here-I-Am
+   35 - Mobile Registration Request
+   36 - Mobile Registration Reply
+   37 - Domain Name Request
+   38 - Domain Name Reply
+   Any other numbers not listed in the earlier list...
 */
 
 struct ping_pkt {
@@ -48,7 +63,6 @@ struct ping_pkt {
 LIST_HEAD(ping_pkt_list, ping_pkt);
 
 static struct ping_pkt_list pings = LIST_HEAD_INITIALIZER(0);
-static uint16 icmp_echo_seq = 1;
 
 static void icmp_default_echo_cb(const uint8 *ip, uint16 seq, uint64 delta_us,
                                  uint8 ttl, const uint8* data, int data_sz) {
@@ -88,7 +102,7 @@ static void net_icmp_input_0(netif_t *src, ip_hdr_t *ip, icmp_hdr_t *icmp,
 static void net_icmp_input_8(netif_t *src, ip_hdr_t *ip, icmp_hdr_t *icmp,
                              const uint8 *d, int s) {
     /* Set type to echo reply */
-    icmp->type = 0;
+    icmp->type = ICMP_MESSAGE_ECHO_REPLY;
 
     /* Recompute the ICMP header checksum */
     icmp->checksum = 0;
@@ -98,7 +112,7 @@ static void net_icmp_input_8(netif_t *src, ip_hdr_t *ip, icmp_hdr_t *icmp,
     /* Set the destination to the original source, and substitute in our IP
        for the src (done this way so that pings that are broadcasted get an
        appropriate reply), and send it away. */
-    net_ipv4_send(src, d, s, ip->packet_id, ip->ttl, 1, ip->dest, ip->src);
+    net_ipv4_send(src, d, s, ip->packet_id, 255, 1, ip->dest, ip->src);
 }
 
 int net_icmp_input(netif_t *src, ip_hdr_t *ip, const uint8 *d, int s) {
@@ -117,17 +131,22 @@ int net_icmp_input(netif_t *src, ip_hdr_t *ip, const uint8 *d, int s) {
     }
 
     switch(icmp->type) {
-        case 0: /* Echo reply */
+        case ICMP_MESSAGE_ECHO_REPLY:
             net_icmp_input_0(src, ip, icmp, d, s);
             break;
 
-        case 3: /* Destination unreachable */
-            dbglog(DBG_KDEBUG, "net_icmp: Destination unreachable,"
+        case ICMP_MESSAGE_DEST_UNREACHABLE:
+            dbglog(DBG_WARNING, "net_icmp: Destination unreachable,"
                    " code %d\n", icmp->code);
             break;
 
-        case 8: /* Echo */
+        case ICMP_MESSAGE_ECHO:
             net_icmp_input_8(src, ip, icmp, d, s);
+            break;
+
+        case ICMP_MESSAGE_TIME_EXCEEDED:
+            dbglog(DBG_WARNING, "net_icmp: Time exceeded, code %d\n",
+                   icmp->code);
             break;
 
         default:
@@ -139,25 +158,22 @@ int net_icmp_input(netif_t *src, ip_hdr_t *ip, const uint8 *d, int s) {
 }
 
 /* Send an ICMP Echo (PING) packet to the specified device */
-int net_icmp_send_echo(netif_t *net, const uint8 ipaddr[4], const uint8 *data,
-                       int size) {
+int net_icmp_send_echo(netif_t *net, const uint8 ipaddr[4], uint16 ident,
+                       uint16 seq, const uint8 *data, int size) {
     icmp_hdr_t *icmp;
     struct ping_pkt *newping;
     int r = -1;
     uint8 databuf[sizeof(icmp_hdr_t) + size];
-    uint16 seq = icmp_echo_seq++;
     uint32 src;
 
     icmp = (icmp_hdr_t *)databuf;
 
     /* Fill in the ICMP Header */
-    icmp->type = 8; /* Echo */
+    icmp->type = ICMP_MESSAGE_ECHO; /* Echo */
     icmp->code = 0;
     icmp->checksum = 0;
-    icmp->misc[0] = (uint8) 'D';
-    icmp->misc[1] = (uint8) 'C';
-    icmp->misc[2] = (uint8) (seq >> 8);
-    icmp->misc[3] = (uint8) (seq & 0xFF);
+    icmp->misc.m16[0] = htons(ident);
+    icmp->misc.m16[1] = htons(seq);
     memcpy(databuf + sizeof(icmp_hdr_t), data, size);
 
     /* Compute the ICMP Checksum */
@@ -180,9 +196,58 @@ int net_icmp_send_echo(netif_t *net, const uint8 ipaddr[4], const uint8 *data,
     LIST_INSERT_HEAD(&pings, newping, pkt_list);
 
     newping->usec = timer_us_gettime64();
-    r = net_ipv4_send(net, databuf, sizeof(icmp_hdr_t) + size, seq, 64, 1,
-                      htonl(src),
-                      htonl(net_ipv4_address(ipaddr)));
+    r = net_ipv4_send(net, databuf, sizeof(icmp_hdr_t) + size, seq, 255, 1,
+                      htonl(src), htonl(net_ipv4_address(ipaddr)));
 
     return r;
+}
+
+/* Send an ICMP Destination Unreachable packet in reply to the given message */
+int net_icmp_send_dest_unreach(netif_t *net, uint8 code, const uint8 *msg) {
+    icmp_hdr_t *icmp;
+    const ip_hdr_t *orig_msg = (ip_hdr_t *)msg;
+    int hdrsz = (orig_msg->version_ihl & 0x0F) << 2;
+    int sz = ((hdrsz + 8) > orig_msg->length) ? orig_msg->length : (hdrsz + 8);
+    uint8 databuf[sizeof(icmp_hdr_t) + sz];
+
+    icmp = (icmp_hdr_t *)databuf;
+
+    /* Fill in the ICMP Header */
+    icmp->type = ICMP_MESSAGE_DEST_UNREACHABLE;
+    icmp->code = code;
+    icmp->checksum = 0;
+    icmp->misc.m32 = 0;
+    memcpy(databuf + sizeof(icmp_hdr_t), orig_msg, sz);
+
+    /* Compute the ICMP Checksum */
+    icmp->checksum = net_ipv4_checksum(databuf, sizeof(icmp_hdr_t) + sz);
+
+    /* Send the packet away */
+    return net_ipv4_send(net, databuf, sizeof(icmp_hdr_t) + sz, 0, 255, 1,
+                         orig_msg->dest, orig_msg->src);
+}
+
+/* Send an ICMP Time Exceeded packet in reply to the given message */
+int net_icmp_send_time_exceeded(netif_t *net, uint8 code, const uint8 *msg) {
+    icmp_hdr_t *icmp;
+    const ip_hdr_t *orig_msg = (ip_hdr_t *)msg;
+    int hdrsz = (orig_msg->version_ihl & 0x0F) << 2;
+    int sz = ((hdrsz + 8) > orig_msg->length) ? orig_msg->length : (hdrsz + 8);
+    uint8 databuf[sizeof(icmp_hdr_t) + sz];
+
+    icmp = (icmp_hdr_t *)databuf;
+
+    /* Fill in the ICMP Header */
+    icmp->type = ICMP_MESSAGE_TIME_EXCEEDED;
+    icmp->code = code;
+    icmp->checksum = 0;
+    icmp->misc.m32 = 0;
+    memcpy(databuf + sizeof(icmp_hdr_t), orig_msg, sz);
+
+    /* Compute the ICMP Checksum */
+    icmp->checksum = net_ipv4_checksum(databuf, sizeof(icmp_hdr_t) + sz);
+
+    /* Send the packet away */
+    return net_ipv4_send(net, databuf, sizeof(icmp_hdr_t) + sz, 0, 255, 1,
+                         orig_msg->dest, orig_msg->src);
 }
