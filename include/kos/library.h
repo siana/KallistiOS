@@ -5,6 +5,23 @@
 
 */
 
+/** \file   kos/library.h
+    \brief  Dynamically loadable library support.
+
+    This file contains definitions for accessing loadable libraries at runtime.
+    Each library has a name and a version number that it can be referenced by.
+    One must be careful with these dynamic libraries as there is no private
+    storage per instance, and all memory space is shared.
+
+    Libraries can both export and import symbols. Imported symbols may require
+    other libraries to be loaded earlier. Libraries are reference counted so
+    that they can be opened multiple times without actually loading them
+    multiple times, and so that a close will act as expected in situations like
+    this.
+
+    \author Dan Potter
+*/
+
 #ifndef __KOS_LIBRARY_H
 #define __KOS_LIBRARY_H
 
@@ -15,107 +32,242 @@ __BEGIN_DECLS
 #include <kos/elf.h>
 #include <kos/fs.h>
 
+/** \cond */
 /* Pre-define list/queue types */
 struct klibrary;
 TAILQ_HEAD(klqueue, klibrary);
 LIST_HEAD(kllist, klibrary);
+/** \endcond */
 
 /* Thread IDs are ok for us */
-typedef tid_t libid_t;
+typedef tid_t libid_t;                  /**< \brief Library ID type. */
 
-/* Structure describing one loaded library. Each lib basically consists of
-   a set of loaded program code and a set of standard exported entry points. */
+/** \brief  Loaded library structure.
+
+    This structure represents a single loaded library. Each library is
+    essentially a loaded binary of code and a set of exported entry points that
+    are standardized.
+
+    Each loaded library should export at least the functions described in this
+    structure:
+    \li     const char *lib_get_name()
+    \li     uint32 %lib_get_version()
+    \li     int lib_open(struct klibrary *lib)
+    \li     int lib_close(struct klibrary *lib)
+
+    You should not modify any members of this structure yourself (except if you
+    are implementing a library).
+
+    \headerfile kos/library.h
+*/
 typedef struct klibrary {
-	/* Library list handle */
-	LIST_ENTRY(klibrary)	list;
+    /** \brief  Library list handle.
 
-	/* Kernel library id */
-	libid_t	libid;
+        Contrary to what doxygen might think, this is not a function.
+    */
+    LIST_ENTRY(klibrary) list;
 
-	/* Flags */
-	uint32	flags;
+    /** \brief  Library ID (assigned at runtime). */
+    libid_t	libid;
 
-	/* ELF program image for this library */
-	elf_prog_t image;
+    /** \brief  Library flags. */
+    uint32	flags;
 
-	/* The library's reference count. If it is opened more than once, this
-	   will go to >1 values. The library is actually shut down and removed
-	   if this reaches zero. */
-	int refcnt;
+    /** \brief  ELF image for this library.
 
-	/* Standard library entry points. Every loaded library must provide
-	   at least these things. */
+        This can be used to look up additional entry points in the library.
+    */
+    elf_prog_t image;
 
-	/* Return a pointer to a string containing the library's symbolic
-	   name. Must work before calling lib_open. */
-	const char * (*lib_get_name)();
+    /** \brief  Library reference count.
 
-	/* Return an integer containing the library's version ID. Must work
-	   before calling lib_open. */
-	uint32 (*lib_get_version)();
+        This value is incremented every time the library is opened, and
+        decremented each time it is closed. Once the library's reference count
+        hits 0, a close will actually destroy the library.
+    */
+    int refcnt;
 
-	/* "Open" the library (i.e., init and/or increase ref count). Return
-	   >= 0 value here to signal success. If failure is signaled on the
-	   first lib_open, it is assumed we can remove this library from memory. */
-	int (*lib_open)(struct klibrary * lib);
+    /* Standard library entry points. Every loaded library must provide
+       at least these things. */
 
-	/* "Close" the library (i.e., dec ref count and/or shut down). Return
-	   >= 0 on success or < 0 on failure. */
-	int (*lib_close)(struct klibrary * lib);
+    /** \brief  Retrieve the library's symbolic name.
+
+        This function must be implemented by all loadable libraries to fetch the
+        library's symbolic name. This function must work before calling
+        lib_open() on the library.
+
+        \return             The library's symbolic name
+    */
+    const char * (*lib_get_name)();
+
+    /** \brief  Retrieve the library's version.
+
+        This function must be implemented by all loadble libraries to fetch the
+        library's version number. This function must work before calling
+        lib_open() on the library.
+
+        \return             The library's version number
+    */
+    uint32 (*lib_get_version)();
+
+    /** \brief  Open a library.
+
+        This function must be implemented by all loadable libraries to
+        initialize the library on load. If the library is already opened, this
+        may only involve increasing the reference count.
+
+        \param  lib         The library structure
+        \return             Values >= 0 indicate success, < 0 indicates failure.
+                            A failure on the first lib_open is indicative that
+                            the library should be removed from memory.
+    */
+    int (*lib_open)(struct klibrary * lib);
+
+    /** \brief  Close an opened library.
+
+        This function must be implemented by all loadable libraries to close and
+        deinitialize a library. If the library's reference count is > 1 when
+        this function is called, this may involve simply decrementing the
+        reference count.
+
+        \param  lib         The library structure
+        \return             Values >= 0 indicate success, < 0 indicates failure
+    */
+    int (*lib_close)(struct klibrary * lib);
 } klibrary_t;
 
 /* Library flag values */
-#define LIBRARY_DEFAULTS	0	/* Defaults: no flags */
+#define LIBRARY_DEFAULTS    0           /**< \brief Defaults: no flags */
 
+/** \cond */
 /* Library list; note: do not manipulate directly */
 extern struct kllist library_list;
+/** \endcond */
 
-/* Given a library ID, locates the lib structure */
+/** \brief  Look up a library by ID.
+
+    This function looks up a library by its library ID.
+
+    \param  libid           The library ID to look up
+    \return                 The specified library, or NULL if not found
+*/
 klibrary_t *library_by_libid(libid_t libid);
 
-/* New library shell function. When you want to load a new library, this
-   function will handle that for you. This will generally only be used by
-   the library code internally. */
+/** \brief  Create a new library shell.
+
+    This function creates a new library, adding it to the list of libraries. You
+    generally should not call this function directly, unless you have some good
+    reason to do so.
+
+    \param  flags           Flags to create the library with.
+    \return                 The newly created library, or NULL on error
+*/
 klibrary_t *library_create(int flags);
 
-/* Given a library handle, this function removes the library from the library
-   list. Any remaining resources assigned to this library will be freed. This
-   will generally only be used by the library code internally. */
+/** \brief  Destroy a library.
+
+    This function will take a loaded library and destroy it, unloading it
+    completely. Generally, you should not call this function, but rather use
+    library_close() to make sure that you're not closing something that is still
+    in use.
+
+    \param  lib             The library to close
+    \retval 0               Upon successfully destroying the library
+*/
 int library_destroy(klibrary_t *lib);
 
-/* Try to open a library by symbolic name. If the library open fails, then
-   attempt to load the library from the given filename. If this fails, then
-   return NULL for error. On success, return a handle to the library;
-   lib_open will already have been called. */
+/** \brief  Try to open a library by name.
+
+    This function attempts to open a library by its name. If it cannot be found
+    by name, this function will attempt to load the library from the specified
+    filename.
+
+    \param  name            The symbolic name of the library
+    \param  fn              The filename to load the library from
+    \return                 A handle to the library, or NULL on error with errno
+                            set as appropriate
+
+    \par    Error Conditions:
+    \em     EINVAL - the library was found or loaded, but invalid \n
+    \em     ENOMEM - out of memory \n
+    \em     ENOENT - library not found and no filename given
+*/
 klibrary_t * library_open(const char * name, const char * fn);
 
-/* Look up a library by name without trying to load or open it. This is
-   useful if you want to open a library in one place and not have to keep
-   track of the handle to close it later. */
+/** \brief  Look up a library by name.
+
+    This function looks up a library by its symbolic name without trying to
+    actually load or open it. This is useful if you want to open a library but
+    not keep around a handle to it (which isn't necessarily encouraged).
+
+    \param  name            The name of the library to search for
+    \return                 The library, if found. NULL if not found, errno set
+                            as appropriate.
+
+    \par    Error Conditions:
+    \em     ENOENT - the library was not found
+*/
 klibrary_t * library_lookup(const char * name);
 
-/* Close a previously opened library. If this fails, return < 0 for error. If
-   it succeeds, return > 0; lib_close will already have been called, and the
-   library may have been destroyed as well (do NOT try to use it again). */
+/** \brief  Close a previously opened library.
+
+    This function will close the specified library. This may involve simply
+    decrementing its reference count, however, it may also involve actually
+    closing and freeing the library. Thus, don't try to use the library after
+    calling this without reopening it first.
+
+    \param  lib             The library to close
+    \retval 0               On success
+    \retval -1              On error, errno may be set to an appropriate code
+
+    \par    Error Conditions:
+    \em     EINVAL - the library is not valid
+*/
 int library_close(klibrary_t * lib);
 
-/* Retrieve library's libid (runtime ID) */
+/** \brief  Retrieve the specified library's runtime-assigned ID.
+    \param  lib             The library to examine
+    \return                 The library's ID, or -1 on error
+
+    \par    Error Conditions:
+    \em     EINVAL - the library is not valid
+*/
 libid_t library_get_libid(klibrary_t * lib);
 
-/* Retrieve library's reference count */
+/** \brief  Retrieve the specified library's reference count.
+    \param  lib             The library to examine
+    \return                 The library's reference count, or -1 on error
+
+    \par    Error Conditions:
+    \em     EINVAL - the library is not valid
+*/
 int library_get_refcnt(klibrary_t * lib);
 
-/* Retrieve library's name */
+/** \brief  Retrieve the specified library's name.
+    \param  lib             The library to examine
+    \return                 The library's symbolic name, or NULL on error
+
+    \par    Error Conditions:
+    \em     EINVAL - the library is not valid
+*/
 const char * library_get_name(klibrary_t * lib);
 
-/* Retrieve library's version */
+/** \brief  Retrieve the specified library's version.
+    \param  lib             The library to examine
+    \return                 The library's version number, or 0 on error
+
+    \par    Error Conditions
+    \em     EINVAL - the library is not valid
+*/
 uint32 library_get_version(klibrary_t * lib);
 
+/** \cond */
 /* Init */
 int library_init();
 
 /* Shutdown */
 void library_shutdown();
+/** \endcond */
 
 __END_DECLS
 

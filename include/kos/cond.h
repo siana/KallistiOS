@@ -56,10 +56,10 @@ __BEGIN_DECLS
     \headerfile kos/cond.h
 */
 typedef struct condvar {
-    /* \cond */
+    /** \cond */
 	/* List entry for the global list of condvars */
 	LIST_ENTRY(condvar)	g_list;
-    /* \endcond */
+    /** \endcond */
 } condvar_t;
 
 /* \cond */
@@ -71,10 +71,10 @@ LIST_HEAD(condlist, condvar);
     This function allocates and initializes a new condition variable for use.
 
     \return                 The created condvar on success. NULL is returned on
-                            failure, and errno is set as appropriate.
+                            failure and errno is set as appropriate.
 
     \par    Error Conditions:
-    \em     ENOMEM - Out of memory
+    \em     ENOMEM - out of memory
 */
 condvar_t *cond_create();
 
@@ -93,10 +93,10 @@ void cond_destroy(condvar_t *cv);
     this function has no timeout, and will sleep forever if the condition is not
     signalled.
 
-    \param  cv              The condition to wait on.
-    \param  m               The associated mutex.
-    \retval 0               On success.
-    \retval -1              On error, sets errno as appropriate.
+    \param  cv              The condition to wait on
+    \param  m               The associated mutex
+    \retval 0               On success
+    \retval -1              On error, sets errno as appropriate
 
     \par    Error Conditions:
     \em     EPERM - Called inside an interrupt \n
@@ -112,14 +112,14 @@ int cond_wait(condvar_t *cv, mutex_t * m);
     the lock more than once (since this function only unlocks it once). This was
     added specifically because it was required for GCC's C++0x threading code.
 
-    \param  cv              The condition to wait on.
-    \param  l               The associated lock.
-    \retval 0               On success.
-    \retval -1              On error, sets errno as appropriate.
+    \param  cv              The condition to wait on
+    \param  l               The associated lock
+    \retval 0               On success
+    \retval -1              On error, sets errno as appropriate
 
     \par    Error Conditions:
     \em     EPERM - Called inside an interrupt \n
-    \em     EINTR - Was interrupted.
+    \em     EINTR - Was interrupted
 
     \author Lawrence Sebald
 */
@@ -133,11 +133,11 @@ int cond_wait_recursive(condvar_t *cv, recursive_lock_t *l);
     If a timeout of 0 is given, the call is equivalent to cond_wait() (there is
     no timeout).
 
-    \param  cv              The condition to wait on.
-    \param  m               The associated mutex.
-    \param  timeout         The number of milliseconds before timeout.
-    \retval 0               On success.
-    \retval -1              On error, sets errno as appropriate.
+    \param  cv              The condition to wait on
+    \param  m               The associated mutex
+    \param  timeout         The number of milliseconds before timeout
+    \retval 0               On success
+    \retval -1              On error, sets errno as appropriate
 
     \par    Error Conditions:
     \em     EPERM - Called inside an interrupt \n
@@ -155,11 +155,11 @@ int cond_wait_timed(condvar_t *cv, mutex_t * m, int timeout);
     no timeout). The rant about cond_wait_recursive() being evil applies here
     as well.
 
-    \param  cv              The condition to wait on.
+    \param  cv              The condition to wait on
     \param  l               The associated recursive lock.
-    \param  timeout         The number of milliseconds before timeout.
-    \retval 0               On success.
-    \retval -1              On error, sets errno as appropriate.
+    \param  timeout         The number of milliseconds before timeout
+    \retval 0               On success
+    \retval -1              On error, sets errno as appropriate
 
     \par    Error Conditions:
     \em     EPERM - Called inside an interrupt \n
@@ -176,7 +176,7 @@ int cond_wait_timed_recursive(condvar_t *cv, recursive_lock_t *l, int timeout);
     The calling thread should be holding the associated mutex or recursive lock
     before calling this to guarantee sane behavior.
 
-    \param  cv              The condition to signal.
+    \param  cv              The condition to signal
 */
 void cond_signal(condvar_t *cv);
 
@@ -186,15 +186,15 @@ void cond_signal(condvar_t *cv);
     The calling thread should be holding the associated mutex or recursive lock
     before calling this to guarantee sane behavior.
 
-    \param  cv              The condition to signal.
+    \param  cv              The condition to signal
 */
 void cond_broadcast(condvar_t *cv);
 
 /* Init / shutdown */
-/* \cond */
+/** \cond */
 int cond_init();
 void cond_shutdown();
-/* \endcond */
+/** \endcond */
 
 __END_DECLS
 
