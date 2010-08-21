@@ -9,6 +9,33 @@ diff -ruN newlib-1.18.0/newlib/configure.host newlib-1.18.0-kos/newlib/configure
  	;;
    sparc*)
  	machine_dir=sparc
+diff -ruN newlib-1.18.0/newlib/libc/include/assert.h newlib-1.18.0-kos/newlib/libc/include/assert.h
+--- newlib-1.18.0/newlib/libc/include/assert.h	2008-07-17 16:56:51.000000000 -0400
++++ newlib-1.18.0-kos/newlib/libc/include/assert.h	2010-07-29 15:33:25.000000000 -0400
+@@ -13,8 +13,8 @@
+ #ifdef NDEBUG           /* required by ANSI standard */
+ # define assert(__e) ((void)0)
+ #else
+-# define assert(__e) ((__e) ? (void)0 : __assert_func (__FILE__, __LINE__, \
+-						       __ASSERT_FUNC, #__e))
++# define assert(__e) ((__e) ? (void)0 : __assert (__FILE__, __LINE__, #__e, \
++                                                  (char *)0, __ASSERT_FUNC))
+ 
+ # ifndef __ASSERT_FUNC
+   /* Use g++'s demangled names in C++.  */
+@@ -36,10 +36,8 @@
+ # endif /* !__ASSERT_FUNC */
+ #endif /* !NDEBUG */
+ 
+-void _EXFUN(__assert, (const char *, int, const char *)
+-	    _ATTRIBUTE ((__noreturn__)));
+-void _EXFUN(__assert_func, (const char *, int, const char *, const char *)
+-	    _ATTRIBUTE ((__noreturn__)));
++void _EXFUN(__assert, (const char *, int, const char *, const char *,
++                       const char *) _ATTRIBUTE ((__noreturn__)));
+ 
+ #ifdef __cplusplus
+ }
 diff -ruN newlib-1.18.0/newlib/libc/include/sys/types.h newlib-1.18.0-kos/newlib/libc/include/sys/types.h
 --- newlib-1.18.0/newlib/libc/include/sys/types.h	2009-09-28 12:42:21.000000000 -0400
 +++ newlib-1.18.0-kos/newlib/libc/include/sys/types.h	2010-06-13 19:05:19.000000000 -0400
@@ -78,6 +105,22 @@ diff -ruN newlib-1.18.0/newlib/libc/include/sys/types.h newlib-1.18.0-kos/newlib
  #else
  #if defined (__CYGWIN__)
  #include <cygwin/types.h>
+diff -ruN newlib-1.18.0/newlib/libc/stdlib/assert.c newlib-1.18.0-kos/newlib/libc/stdlib/assert.c
+--- newlib-1.18.0/newlib/libc/stdlib/assert.c	2009-10-08 12:44:10.000000000 -0400
++++ newlib-1.18.0-kos/newlib/libc/stdlib/assert.c	2010-07-29 14:12:29.000000000 -0400
+@@ -65,6 +65,7 @@
+ }
+ #endif /* HAVE_ASSERT_FUNC */
+ 
++#if 0
+ void
+ _DEFUN (__assert, (file, line, failedexpr),
+ 	const char *file _AND
+@@ -74,3 +75,4 @@
+    __assert_func (file, line, NULL, failedexpr);
+   /* NOTREACHED */
+ }
++#endif
 diff -ruN newlib-1.18.0/newlib/libc/sys/sh/ftruncate.c newlib-1.18.0-kos/newlib/libc/sys/sh/ftruncate.c
 --- newlib-1.18.0/newlib/libc/sys/sh/ftruncate.c	2003-07-10 11:31:30.000000000 -0400
 +++ newlib-1.18.0-kos/newlib/libc/sys/sh/ftruncate.c	2010-06-13 18:59:43.000000000 -0400
