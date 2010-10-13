@@ -51,10 +51,19 @@ struct sockaddr {
 #define SOCK_DGRAM 1
 
 /** \brief  Internet domain sockets for use with IPv4 addresses. */
-#define AF_INET 1
+#define AF_INET     1
 
-/** \brief  Protocol family for Internet domain sockets. */
-#define PF_INET AF_INET
+/** \brief  Internet domain sockets for use with IPv6 addresses.
+
+    Note, these are NOT supported just yet.
+*/
+#define AF_INET6    2
+
+/** \brief  Protocol family for Internet domain sockets (IPv4). */
+#define PF_INET     AF_INET
+
+/** \brief  Protocol family for Internet domain sockets (IPv6). */
+#define PF_INET6    AF_INET6
 
 /** \brief  Disable furhter receive operations. */
 #define SHUT_RD   0x00000001
