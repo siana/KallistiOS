@@ -10,9 +10,8 @@
 
     This file contains the standard definitions (as directed by the POSIX 2008
     standard) for internet-related functionality in the AF_INET address family.
-    This does not include anything related to AF_INET6 (as IPv6 is not currently
-    implemented in KOS), and is not guaranteed to have everything that one might
-    have in a fully-standard compliant implementation of the POSIX standard.
+    This does is not guaranteed to have everything that one might have in a
+    fully-standard compliant implementation of the POSIX standard.
 
     \author Lawrence Sebald
 */
@@ -212,6 +211,35 @@ extern const struct in6_addr in6addr_loopback;
      (a)->__s6_addr.__s6_addr16[6] == 0 && \
      (a)->__s6_addr.__s6_addr8[14] == 0 && \
      (a)->__s6_addr.__s6_addr8[15] == 1)
+
+/** \brief  Test if an IPv6 Address is an IPv4 mapped address.
+
+    This macro tests whether an IPv6 address (struct in6_addr *) is an IPv4
+    mapped address.
+
+    \param  a               The address to test (struct in6_addr *)
+    \return                 Nonzero if the address is IPv4 mapped, 0 otherwise.
+*/
+#define IN6_IS_ADDR_V4MAPPED(a)  \
+    ((a)->__s6_addr.__s6_addr32[0] == 0 &&      \
+     (a)->__s6_addr.__s6_addr32[1] == 0 &&      \
+     (a)->__s6_addr.__s6_addr16[4] == 0 &&      \
+     (a)->__s6_addr.__s6_addr16[5] == 0xFFFF)
+
+/** \brief  Test if an IPv6 Address is an IPv4 compatibility address.
+
+    This macro tests whether an IPv6 address (struct in6_addr *) is an IPv4
+    compatibility address.
+
+    \param  a               The address to test (struct in6_addr *)
+    \return                 Nonzero if the address is IPv4 compat, 0 otherwise.
+*/
+#define IN6_IS_ADDR_V4COMPAT(a)  \
+    ((a)->__s6_addr.__s6_addr32[0] == 0 && \
+     (a)->__s6_addr.__s6_addr32[1] == 0 && \
+     (a)->__s6_addr.__s6_addr32[2] == 0 && \
+     (a)->__s6_addr.__s6_addr32[3] != 0 && \
+     (a)->__s6_addr.__s6_addr8[15] != 1)
 
 __END_DECLS
 
