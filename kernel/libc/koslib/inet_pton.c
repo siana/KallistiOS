@@ -113,6 +113,11 @@ static int inet_pton6(const char *src, void *dst) {
         return 0;
     }
 
+    /* Adjust the after double colon count for embedded IPv4 addresses. */
+    if(ip4start && dc) {
+        afterdc += 2;
+    }
+
     ++afterdc;
 
     /* Reset these, since we need them reset below to start the parsing. */
