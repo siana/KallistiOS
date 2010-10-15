@@ -227,7 +227,7 @@ typedef struct fs_socket_proto {
         \retval -1          On error (set errno appropriately)
         \retval 0           No outstanding data and the peer has disconnected
                             cleanly
-        \retval n       T   he number of bytes received (may be less than len)
+        \retval n           The number of bytes received (may be less than len)
     */
     ssize_t (*recvfrom)(net_socket_t *s, void *buffer, size_t len, int flags,
                         struct sockaddr *addr, socklen_t *alen);

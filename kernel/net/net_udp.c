@@ -522,7 +522,7 @@ int net_udp_input(netif_t *src, ip_hdr_t *ip, const uint8 *data, int size) {
 #if 1
     checksum = ps->checksum;
     ps->checksum = 0;
-    ps->checksum = net_ipv4_checksum(buf, size + 12);
+    ps->checksum = net_ipv4_checksum(buf, size + 12, 0);
 
     if(checksum != ps->checksum) {
         /* The checksums don't match, bail out */
@@ -530,7 +530,7 @@ int net_udp_input(netif_t *src, ip_hdr_t *ip, const uint8 *data, int size) {
         return -1;
     }
 #else
-    if(net_ipv4_checksum(buf, size + 12)) {
+    if(net_ipv4_checksum(buf, size + 12, 0)) {
         /* The checksum was wrong, bail out */
         ++udp_stats.pkt_recv_bad_chksum;
         return -1;
@@ -616,7 +616,7 @@ static int net_udp_send_raw(netif_t *net, uint32 src_ip, uint16 src_port,
     ps->dst_port = dst_port;
     ps->hdrlength = ps->length;
     ps->checksum = 0;
-    ps->checksum = net_ipv4_checksum(buf, size + 12);
+    ps->checksum = net_ipv4_checksum(buf, size + 12, 0);
 
 retry_send:
     /* Pass everything off to the network layer to do the rest. */

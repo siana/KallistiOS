@@ -43,7 +43,7 @@ typedef struct {
 } packed ip_pseudo_hdr_t;
 #undef packed
 
-uint16 net_ipv4_checksum(const uint8 *data, int bytes);
+uint16 net_ipv4_checksum(const uint8 *data, int bytes, uint16 start);
 int net_ipv4_send_packet(netif_t *net, ip_hdr_t *hdr, const uint8 *data,
                          int size);
 int net_ipv4_send(netif_t *net, const uint8 *data, int size, int id, int ttl,

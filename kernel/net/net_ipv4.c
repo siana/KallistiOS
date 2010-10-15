@@ -21,8 +21,8 @@
 static net_ipv4_stats_t ipv4_stats = { 0 };
 
 /* Perform an IP-style checksum on a block of data */
-uint16 net_ipv4_checksum(const uint8 *data, int bytes) {
-    uint32 sum = 0;
+uint16 net_ipv4_checksum(const uint8 *data, int bytes, uint16 start) {
+    uint32 sum = start;
     int i;
 
     /* Make sure we don't do any unaligned memory accesses */
@@ -179,7 +179,7 @@ int net_ipv4_send(netif_t *net, const uint8 *data, int size, int id, int ttl,
     hdr.src = src;
     hdr.dest = dst;
 
-    hdr.checksum = net_ipv4_checksum((uint8 *)&hdr, sizeof(ip_hdr_t));
+    hdr.checksum = net_ipv4_checksum((uint8 *)&hdr, sizeof(ip_hdr_t), 0);
 
     return net_ipv4_frag_send(net, &hdr, data, size);
 }
@@ -208,7 +208,7 @@ int net_ipv4_input(netif_t *src, const uint8 *pkt, int pktsize) {
     /* Check ip header checksum */
     i = ip->checksum;
     ip->checksum = 0;
-    ip->checksum = net_ipv4_checksum((uint8 *)ip, hdrlen);
+    ip->checksum = net_ipv4_checksum((uint8 *)ip, hdrlen, 0);
 
     if(i != ip->checksum) {
         /* The checksums don't match, bail */

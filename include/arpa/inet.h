@@ -90,17 +90,18 @@ int inet_aton(const char *cp, struct in_addr *pin);
     actually standard (in POSIX 2008), and operates very similarly. The only
     differences between this function and inet_aton are that this function does
     not support hexadecimal or octal representations and that this function has
-    the ability to support IPv6 (although currently since KOS only supports
-    IPv4, the function does not actually parse IPv6 addresses). This is the
-    function that you should actually use to convert addresses from strings to
-    binary in new code, rather than inet_addr or inet_aton.
+    the ability to support IPv6. This is the function that you should actually
+    use to convert addresses from strings to binary in new code, rather than
+    inet_addr or inet_aton.
 
     \param  af              The address family that src is an address in. The
-                            only supported value currently is AF_INET (IPv4).
+                            only supported values are AF_INET and AF_INET6.
     \param  src             A string representation of the address.
     \param  dst             Storage for the result. For AF_INET, this must be at
                             least 32-bits in size (the function treats it as a
-                            struct in_addr).
+                            struct in_addr). For AF_INET6, this must be at least
+                            128-bits in size (the function treats it as a struct
+                            in6_addr).
     \retval -1              af is unsupported.
     \retval 0               An invalid address was given.
     \retval 1               Upon successful conversion.
@@ -115,14 +116,14 @@ int inet_pton(int af, const char *src, void *dst);
     This function does the exact oposite of the inet_pton function, converting
     a binary form of an address to a string. This function, unlike inet_ntoa, is
     reentrant, and is the function that you should generally use if you need to
-    convert a binary representation of an IP address to a string. Note that this
-    function, like all of KOS' network system, does not support IPv6.
+    convert a binary representation of an IP address to a string.
 
     \param  af              The address family that src is in. The only
-                            supported value currently is AF_INET (IPv4).
+                            supported values are AF_INET and AF_INET6.
     \param  src             A binary representation of an IP address.
     \param  dst             Storage for the resulting string. This string should
-                            be at least 16-bytes long for IPv4.
+                            be at least 16-bytes long for IPv4, and 46 bytes for
+                            IPv6.
     \param  size            The length of dst.
     \retval NULL            Upon failed conversion.
     \retval dst             Upon successful conversion.

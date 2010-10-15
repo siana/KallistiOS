@@ -107,7 +107,7 @@ static void net_icmp_input_8(netif_t *src, ip_hdr_t *ip, icmp_hdr_t *icmp,
     /* Recompute the ICMP header checksum */
     icmp->checksum = 0;
     icmp->checksum = net_ipv4_checksum((uint8 *)icmp, ntohs(ip->length) -
-                                       4 * (ip->version_ihl & 0x0f));
+                                       4 * (ip->version_ihl & 0x0f), 0);
 
     /* Set the destination to the original source, and substitute in our IP
        for the src (done this way so that pings that are broadcasted get an
@@ -123,7 +123,7 @@ int net_icmp_input(netif_t *src, ip_hdr_t *ip, const uint8 *d, int s) {
     icmp = (icmp_hdr_t*)d;
 
     /* Check the ICMP checksum */
-    i = net_ipv4_checksum(d, s);
+    i = net_ipv4_checksum(d, s, 0);
 
     if (i) {
         dbglog(DBG_KDEBUG, "net_icmp: icmp with invalid checksum\n");
@@ -177,7 +177,7 @@ int net_icmp_send_echo(netif_t *net, const uint8 ipaddr[4], uint16 ident,
     memcpy(databuf + sizeof(icmp_hdr_t), data, size);
 
     /* Compute the ICMP Checksum */
-    icmp->checksum = net_ipv4_checksum(databuf, sizeof(icmp_hdr_t) + size);
+    icmp->checksum = net_ipv4_checksum(databuf, sizeof(icmp_hdr_t) + size, 0);
 
     /* If we're sending to the loopback, set that as our source too. */
     if(ipaddr[0] == 127) {
@@ -220,7 +220,7 @@ int net_icmp_send_dest_unreach(netif_t *net, uint8 code, const uint8 *msg) {
     memcpy(databuf + sizeof(icmp_hdr_t), orig_msg, sz);
 
     /* Compute the ICMP Checksum */
-    icmp->checksum = net_ipv4_checksum(databuf, sizeof(icmp_hdr_t) + sz);
+    icmp->checksum = net_ipv4_checksum(databuf, sizeof(icmp_hdr_t) + sz, 0);
 
     /* Send the packet away */
     return net_ipv4_send(net, databuf, sizeof(icmp_hdr_t) + sz, 0, 255, 1,
@@ -245,7 +245,7 @@ int net_icmp_send_time_exceeded(netif_t *net, uint8 code, const uint8 *msg) {
     memcpy(databuf + sizeof(icmp_hdr_t), orig_msg, sz);
 
     /* Compute the ICMP Checksum */
-    icmp->checksum = net_ipv4_checksum(databuf, sizeof(icmp_hdr_t) + sz);
+    icmp->checksum = net_ipv4_checksum(databuf, sizeof(icmp_hdr_t) + sz, 0);
 
     /* Send the packet away */
     return net_ipv4_send(net, databuf, sizeof(icmp_hdr_t) + sz, 0, 255, 1,
