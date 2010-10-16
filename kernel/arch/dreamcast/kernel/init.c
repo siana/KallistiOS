@@ -116,11 +116,7 @@ int arch_auto_init() {
 		irq_enable();		/* Turn on IRQs */
 		maple_wait_scan();	/* Wait for the maple scan to complete */
 	}
-	/* if (!(__kos_init_flags & INIT_NO_DCLOAD) && *DCLOADMAGICADDR == DCLOADMAGICVALUE &&
-		(__kos_init_flags & INIT_NET))
-	{
-		old = dbgio_set_printk(dbgio_write_str);
-	} */
+
 	if (__kos_init_flags & INIT_NET) {
         /* Check if the dcload-ip console is up, and if so, disable it,
            otherwise we'll crash when we attempt to bring up the BBA */
@@ -138,14 +134,6 @@ int arch_auto_init() {
 			}
 		}
 	}
-	/* if (!(__kos_init_flags & INIT_NO_DCLOAD) && *DCLOADMAGICADDR == DCLOADMAGICVALUE &&
-		(__kos_init_flags & INIT_NET))
-	{
-		// dbgio_set_printk(old);
-		fs_dclnative_init();
-		dbglog(DBG_INFO, "dc-load-ip native support enabled\n");
-	} */
-
 
 	return 0;
 }

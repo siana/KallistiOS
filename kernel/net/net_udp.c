@@ -329,8 +329,6 @@ static ssize_t net_udp_sendto(net_socket_t *hnd, const void *message,
         goto err;
     }
 
-    realaddr = (struct sockaddr_in *) addr;
-
     if(udpsock->local_addr.sin_port == 0) {
         uint16 port = 1024, tmp = 0;
         struct udp_sock *iter;
@@ -599,6 +597,11 @@ static int net_udp_send_raw(netif_t *net, uint32 src_ip, uint16 src_port,
         }
         else if(net != NULL) {
             ps->src_addr = htonl(net_ipv4_address(net->ip_addr));
+        }
+        else {
+            errno = ENETDOWN;
+            ++udp_stats.pkt_send_failed;
+            return -1;
         }
     }
     else {
