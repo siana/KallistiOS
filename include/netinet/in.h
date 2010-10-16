@@ -187,8 +187,8 @@ extern const struct in6_addr in6addr_loopback;
     This macro tests whether an IPv6 address (struct in6_addr *) is an
     unspecified address.
 
-    \param  a               The address to test (struct in6_addr *)
-    \return                 Nonzero if the address is unspecified, 0 otherwise.
+    \param  a           The address to test (struct in6_addr *)
+    \return             Nonzero if the address is unspecified, 0 otherwise.
 */
 #define IN6_IS_ADDR_UNSPECIFIED(a)  \
     ((a)->__s6_addr.__s6_addr32[0] == 0 && \
@@ -201,8 +201,8 @@ extern const struct in6_addr in6addr_loopback;
     This macro tests whether an IPv6 address (struct in6_addr *) is a
     loopback address.
 
-    \param  a               The address to test (struct in6_addr *)
-    \return                 Nonzero if the address is a loopback, 0 otherwise.
+    \param  a           The address to test (struct in6_addr *)
+    \return             Nonzero if the address is a loopback, 0 otherwise.
 */
 #define IN6_IS_ADDR_LOOPBACK(a)  \
     ((a)->__s6_addr.__s6_addr32[0] == 0 && \
@@ -217,8 +217,8 @@ extern const struct in6_addr in6addr_loopback;
     This macro tests whether an IPv6 address (struct in6_addr *) is an IPv4
     mapped address.
 
-    \param  a               The address to test (struct in6_addr *)
-    \return                 Nonzero if the address is IPv4 mapped, 0 otherwise.
+    \param  a           The address to test (struct in6_addr *)
+    \return             Nonzero if the address is IPv4 mapped, 0 otherwise.
 */
 #define IN6_IS_ADDR_V4MAPPED(a)  \
     ((a)->__s6_addr.__s6_addr32[0] == 0 &&      \
@@ -231,8 +231,8 @@ extern const struct in6_addr in6addr_loopback;
     This macro tests whether an IPv6 address (struct in6_addr *) is an IPv4
     compatibility address.
 
-    \param  a               The address to test (struct in6_addr *)
-    \return                 Nonzero if the address is IPv4 compat, 0 otherwise.
+    \param  a           The address to test (struct in6_addr *)
+    \return             Nonzero if the address is IPv4 compat, 0 otherwise.
 */
 #define IN6_IS_ADDR_V4COMPAT(a)  \
     ((a)->__s6_addr.__s6_addr32[0] == 0 && \
@@ -240,6 +240,104 @@ extern const struct in6_addr in6addr_loopback;
      (a)->__s6_addr.__s6_addr32[2] == 0 && \
      (a)->__s6_addr.__s6_addr32[3] != 0 && \
      (a)->__s6_addr.__s6_addr8[15] != 1)
+
+/** \brief  Test if an IPv6 Address is a link-local address.
+
+    This macro tests whether an IPv6 address (struct in6_addr *) is a link-local
+    address.
+
+    \param  a           The address to test (struct in6_addr *)
+    \return             Nonzero if the address is link-local, 0 otherwise.
+*/
+#define IN6_IS_ADDR_LINKLOCAL(a)  \
+    (((a)->__s6_addr.__s6_addr16[0] & 0xFFC0) == 0xFE80)
+
+/** \brief  Test if an IPv6 Address is a site-local address.
+
+    This macro tests whether an IPv6 address (struct in6_addr *) is a site-local
+    address.
+
+    \param  a           The address to test (struct in6_addr *)
+    \return             Nonzero if the address is site-local, 0 otherwise.
+*/
+#define IN6_IS_ADDR_SITELOCAL(a)  \
+    (((a)->__s6_addr.__s6_addr16[0] & 0xFFC0) == 0xFEC0)
+
+/** \brief  Test if an IPv6 Address is a multicast address.
+
+    This macro tests whether an IPv6 address (struct in6_addr *) is a multicast
+    address.
+
+    \param  a           The address to test (struct in6_addr *)
+    \return             Nonzero if the address is multicast, 0 otherwise.
+*/
+#define IN6_IS_ADDR_MULTICAST(a)  \
+    ((a)->__s6_addr.__s6_addr8[0] == 0xFF)
+
+/** \brief  Test if an IPv6 Address is a node-local multicast address.
+
+    This macro tests whether an IPv6 address (struct in6_addr *) is a node-local
+    multicast address.
+
+    \param  a           The address to test (struct in6_addr *)
+    \return             Nonzero if the address is a node-local multicast
+                        address, 0 otherwise.
+*/
+#define IN6_IS_ADDR_MC_NODELOCAL(a)  \
+    IN6_IS_ADDR_MULTICAST(a) && \
+    (((a)->__s6_addr.__s6_addr8[1] & 0x0F) == 0x01)
+
+/** \brief  Test if an IPv6 Address is a link-local multicast address.
+
+    This macro tests whether an IPv6 address (struct in6_addr *) is a link-local
+    multicast address.
+
+    \param  a           The address to test (struct in6_addr *)
+    \return             Nonzero if the address is a link-local multicast
+                        address, 0 otherwise.
+*/
+#define IN6_IS_ADDR_MC_LINKLOCAL(a)  \
+    IN6_IS_ADDR_MULTICAST(a) && \
+    (((a)->__s6_addr.__s6_addr8[1] & 0x0F) == 0x02)
+
+/** \brief  Test if an IPv6 Address is a site-local multicast address.
+
+    This macro tests whether an IPv6 address (struct in6_addr *) is a site-local
+    multicast address.
+
+    \param  a           The address to test (struct in6_addr *)
+    \return             Nonzero if the address is a site-local multicast
+                        address, 0 otherwise.
+*/
+#define IN6_IS_ADDR_MC_SITELOCAL(a)  \
+    IN6_IS_ADDR_MULTICAST(a) && \
+    (((a)->__s6_addr.__s6_addr8[1] & 0x0F) == 0x05)
+
+/** \brief  Test if an IPv6 Address is an organization-local multicast address.
+
+    This macro tests whether an IPv6 address (struct in6_addr *) is an
+    organization-local multicast address.
+
+    \param  a           The address to test (struct in6_addr *)
+    \return             Nonzero if the address is an organization-local
+                        multicast address, 0 otherwise.
+*/
+#define IN6_IS_ADDR_MC_ORGLOCAL(a)  \
+    IN6_IS_ADDR_MULTICAST(a) && \
+    (((a)->__s6_addr.__s6_addr8[1] & 0x0F) == 0x08)
+
+/** \brief  Test if an IPv6 Address is a global multicast address.
+
+    This macro tests whether an IPv6 address (struct in6_addr *) is a global
+    multicast address.
+
+    \param  a           The address to test (struct in6_addr *)
+    \return             Nonzero if the address is a global multicast address,
+                        0 otherwise.
+*/
+#define IN6_IS_ADDR_MC_GLOBAL(a)  \
+    IN6_IS_ADDR_MULTICAST(a) && \
+    (((a)->__s6_addr.__s6_addr8[1] & 0x0F) == 0x0E)
 
 __END_DECLS
 
