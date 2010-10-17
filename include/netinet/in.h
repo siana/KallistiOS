@@ -250,7 +250,8 @@ extern const struct in6_addr in6addr_loopback;
     \return             Nonzero if the address is link-local, 0 otherwise.
 */
 #define IN6_IS_ADDR_LINKLOCAL(a)  \
-    (((a)->__s6_addr.__s6_addr16[0] & 0xFFC0) == 0xFE80)
+    (((a)->__s6_addr.__s6_addr8[0] == 0xFE) && \
+     (((a)->__s6_addr.__s6_addr8[1] & 0xC0) == 0x80))
 
 /** \brief  Test if an IPv6 Address is a site-local address.
 
@@ -261,8 +262,8 @@ extern const struct in6_addr in6addr_loopback;
     \return             Nonzero if the address is site-local, 0 otherwise.
 */
 #define IN6_IS_ADDR_SITELOCAL(a)  \
-    (((a)->__s6_addr.__s6_addr16[0] & 0xFFC0) == 0xFEC0)
-
+    (((a)->__s6_addr.__s6_addr8[0] == 0xFE) && \
+     (((a)->__s6_addr.__s6_addr8[1] & 0xC0) == 0xC0))
 /** \brief  Test if an IPv6 Address is a multicast address.
 
     This macro tests whether an IPv6 address (struct in6_addr *) is a multicast
@@ -284,8 +285,8 @@ extern const struct in6_addr in6addr_loopback;
                         address, 0 otherwise.
 */
 #define IN6_IS_ADDR_MC_NODELOCAL(a)  \
-    IN6_IS_ADDR_MULTICAST(a) && \
-    (((a)->__s6_addr.__s6_addr8[1] & 0x0F) == 0x01)
+    (IN6_IS_ADDR_MULTICAST(a) && \
+     (((a)->__s6_addr.__s6_addr8[1] & 0x0F) == 0x01))
 
 /** \brief  Test if an IPv6 Address is a link-local multicast address.
 
@@ -297,8 +298,8 @@ extern const struct in6_addr in6addr_loopback;
                         address, 0 otherwise.
 */
 #define IN6_IS_ADDR_MC_LINKLOCAL(a)  \
-    IN6_IS_ADDR_MULTICAST(a) && \
-    (((a)->__s6_addr.__s6_addr8[1] & 0x0F) == 0x02)
+    (IN6_IS_ADDR_MULTICAST(a) && \
+     (((a)->__s6_addr.__s6_addr8[1] & 0x0F) == 0x02))
 
 /** \brief  Test if an IPv6 Address is a site-local multicast address.
 
@@ -310,8 +311,8 @@ extern const struct in6_addr in6addr_loopback;
                         address, 0 otherwise.
 */
 #define IN6_IS_ADDR_MC_SITELOCAL(a)  \
-    IN6_IS_ADDR_MULTICAST(a) && \
-    (((a)->__s6_addr.__s6_addr8[1] & 0x0F) == 0x05)
+    (IN6_IS_ADDR_MULTICAST(a) && \
+     (((a)->__s6_addr.__s6_addr8[1] & 0x0F) == 0x05))
 
 /** \brief  Test if an IPv6 Address is an organization-local multicast address.
 
@@ -323,8 +324,8 @@ extern const struct in6_addr in6addr_loopback;
                         multicast address, 0 otherwise.
 */
 #define IN6_IS_ADDR_MC_ORGLOCAL(a)  \
-    IN6_IS_ADDR_MULTICAST(a) && \
-    (((a)->__s6_addr.__s6_addr8[1] & 0x0F) == 0x08)
+    (IN6_IS_ADDR_MULTICAST(a) && \
+     (((a)->__s6_addr.__s6_addr8[1] & 0x0F) == 0x08))
 
 /** \brief  Test if an IPv6 Address is a global multicast address.
 
@@ -336,8 +337,8 @@ extern const struct in6_addr in6addr_loopback;
                         0 otherwise.
 */
 #define IN6_IS_ADDR_MC_GLOBAL(a)  \
-    IN6_IS_ADDR_MULTICAST(a) && \
-    (((a)->__s6_addr.__s6_addr8[1] & 0x0F) == 0x0E)
+    (IN6_IS_ADDR_MULTICAST(a) && \
+     (((a)->__s6_addr.__s6_addr8[1] & 0x0F) == 0x0E))
 
 __END_DECLS
 
