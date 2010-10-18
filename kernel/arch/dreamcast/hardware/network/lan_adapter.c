@@ -2,7 +2,8 @@
 
    net/lan_adapter.c
 
-   (c)2002 Dan Potter
+   Copyright (C) 2002 Dan Potter
+   Copyright (C) 2010 Lawrence Sebald
 
 */
 
@@ -364,7 +365,7 @@ static int la_hw_init() {
 		la_write(i + DLCR8, la_mac[i]);
 
 	/* Clear the multicast address */
-	for (i=0; i<6; i++)
+	for (i=0; i<8; i++)
 		la_write(i + MAR8, 0);
 
 	dbglog(DBG_DEBUG, "lan_adapter: MAC address is %02x:%02x:%02x:%02x:%02x:%02x\n",
@@ -543,6 +544,21 @@ static void la_irq_hnd(uint32 code) {
 
 netif_t la_if;
 
+static void set_ipv6_lladdr() {
+	/* Set up the IPv6 link-local address. This is done in accordance with
+	   Section 4/5 of RFC 2464 based on the MAC Address of the adapter. */
+    la_if.ip6_lladdr.__s6_addr.__s6_addr8[0]  = 0xFE;
+	la_if.ip6_lladdr.__s6_addr.__s6_addr8[1]  = 0x80;
+	la_if.ip6_lladdr.__s6_addr.__s6_addr8[8]  = la_if.mac_addr[0] ^ 0x02;
+	la_if.ip6_lladdr.__s6_addr.__s6_addr8[9]  = la_if.mac_addr[1];
+	la_if.ip6_lladdr.__s6_addr.__s6_addr8[10] = la_if.mac_addr[2];
+	la_if.ip6_lladdr.__s6_addr.__s6_addr8[11] = 0xFF;
+	la_if.ip6_lladdr.__s6_addr.__s6_addr8[12] = 0xFE;
+	la_if.ip6_lladdr.__s6_addr.__s6_addr8[13] = la_if.mac_addr[3];
+	la_if.ip6_lladdr.__s6_addr.__s6_addr8[14] = la_if.mac_addr[4];
+	la_if.ip6_lladdr.__s6_addr.__s6_addr8[15] = la_if.mac_addr[5];
+}
+
 static int la_if_detect(netif_t * self) {
 	if (self->flags & NETIF_DETECTED)
 		return 0;
@@ -562,6 +578,7 @@ static int la_if_init(netif_t * self) {
 		return -1;
 
 	memcpy(self->mac_addr, la_mac, 6);
+	set_ipv6_lladdr();
 	self->flags |= NETIF_INITIALIZED;
 	return 0;
 }
@@ -631,6 +648,43 @@ static int la_if_set_flags(netif_t * self, uint32 flags_and, uint32 flags_or) {
 	return 0;
 }
 
+static int la_if_set_mc(netif_t *self, const uint8 *list, int count) {
+    int i;
+
+    /* Reset Data Link Control */
+    timer_spin_sleep(2);
+    la_write(DLCR6, la_read(DLCR6) | DLCR6_DLCRST);
+    timer_spin_sleep(2);
+
+    if(count == 0) {
+        /* Clear the multicast address filter */
+        for(i = 0; i < 8; i++) {
+            la_write(MAR8 + i, 0);
+        }
+    }
+    else {
+        int pos;
+        uint32 tmp;
+        uint8 mar[8] = { 0, 0, 0, 0, 0, 0, 0, 0 };
+
+        /* Go through each entry and add the value to the filter */
+        for(i = 0, pos = 0; i < count; ++i, pos += 6) {
+            tmp = net_crc32le(list + pos, 6) >> 26;
+            mar[tmp >> 3] |= 1 << (tmp & 7);
+        }
+
+        /* Set the multicast address filter */
+        for(i = 0; i < 8; i++) {
+            la_write(MAR8 + i, mar[i]);
+        }
+    }
+
+    /* Enable transmitter / receiver */
+    la_write(DLCR6, (la_read(DLCR6) & ~DLCR6_DLCRST));
+
+    return 0;
+}
+
 /* Set ISP configuration from the flashrom, as long as we're configured staticly */
 static void la_set_ispcfg() {
 	flashrom_ispcfg_t isp;
@@ -661,7 +715,7 @@ int la_init() {
 	la_if.name = "la";
 	la_if.descr = "Lan Adapter (HIT-0300)";
 	la_if.index = 0;
-	la_if.dev_id = 0 ;
+	la_if.dev_id = 0;
 	la_if.flags = NETIF_NO_FLAGS;
 	memset(la_if.ip_addr, 0, sizeof(la_if.ip_addr));
 	memset(la_if.netmask, 0, sizeof(la_if.netmask));
@@ -669,6 +723,12 @@ int la_init() {
 	memset(la_if.broadcast, 0, sizeof(la_if.broadcast));
 	memset(la_if.dns, 0, sizeof(la_if.dns));
 	la_if.mtu = 1500; /* The Ethernet v2 MTU */
+	memset(&la_if.ip6_lladdr, 0, sizeof(la_if.ip6_lladdr));
+	la_if.ip6_addrs = NULL;
+	la_if.ip6_addr_count = 0;
+	memset(&la_if.ip6_gateway, 0, sizeof(la_if.ip6_gateway));
+    la_if.mtu6 = 0;
+    la_if.hop_limit = 0;
 	la_if.if_detect = la_if_detect;
 	la_if.if_init = la_if_init;
 	la_if.if_shutdown = la_if_shutdown;
@@ -678,6 +738,7 @@ int la_init() {
 	la_if.if_tx_commit = la_if_tx_commit;
 	la_if.if_rx_poll = la_if_rx_poll;
 	la_if.if_set_flags = la_if_set_flags;
+    la_if.if_set_mc = la_if_set_mc;
 
 	/* Attempt to set up our IP address et al from the flashrom */
 	la_set_ispcfg();

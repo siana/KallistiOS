@@ -169,7 +169,7 @@ int net_icmp_send_echo(netif_t *net, const uint8 ipaddr[4], uint16 ident,
     icmp = (icmp_hdr_t *)databuf;
 
     /* Fill in the ICMP Header */
-    icmp->type = ICMP_MESSAGE_ECHO; /* Echo */
+    icmp->type = ICMP_MESSAGE_ECHO;
     icmp->code = 0;
     icmp->checksum = 0;
     icmp->misc.m16[0] = htons(ident);

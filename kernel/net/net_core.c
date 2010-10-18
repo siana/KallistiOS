@@ -15,6 +15,7 @@
 #include "net_dhcp.h"
 #include "net_thd.h"
 #include "net_ipv4.h"
+#include "net_ipv6.h"
 
 /*
 
@@ -143,6 +144,8 @@ int net_dev_init() {
 
 /* Init */
 int net_init() {
+	int rv = 0;
+
 	/* Make sure we haven't already done this */
 	if(net_initted)
 		return 0;
@@ -157,8 +160,17 @@ int net_init() {
 	/* Initialize the ARP cache */
 	net_arp_init();
 
-	/* Initialize IP fragmentation support */
+	/* Initialize the NDP cache */
+	net_ndp_init();
+
+	/* Initialize IPv4 fragmentation support */
 	net_ipv4_frag_init();
+
+    /* Initialize multicast support */
+    net_multicast_init();
+
+	/* Initialize IPv6 support */
+	net_ipv6_init();
 
 	/* Initialize the sockets-like interface */
 	fs_socket_init();
@@ -170,12 +182,12 @@ int net_init() {
 	net_dhcp_init();
 
 	if(net_default_dev && !net_default_dev->ip_addr[0]) {
-		return net_dhcp_request();
+		rv = net_dhcp_request();
 	}
 
 	net_initted = 1;
 
-	return 0;
+	return rv;
 }
 
 /* Shutdown */
@@ -195,8 +207,17 @@ void net_shutdown() {
 	/* Shut down the sockets-like interface */
 	fs_socket_shutdown();
 
-	/* Shut down IP fragmentation support */
+	/* Shut down IPv6 support */
+	net_ipv6_shutdown();
+
+    /* Shut down multicast support */
+    net_multicast_shutdown();
+
+	/* Shut down IPv4 fragmentation support */
 	net_ipv4_frag_shutdown();
+
+	/* Shut down the NDP cache */
+	net_ndp_shutdown();
 
 	/* Shut down the ARP cache */
 	net_arp_shutdown();

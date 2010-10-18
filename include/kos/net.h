@@ -14,6 +14,7 @@ __BEGIN_DECLS
 
 #include <arch/types.h>
 #include <sys/queue.h>
+#include <netinet/in.h>
 
 /* All functions in this header return < 0 on failure, and 0 on success. */
 
@@ -23,97 +24,115 @@ __BEGIN_DECLS
    centric, though I suppose you could stuff other things into this system
    like PPP. */
 typedef struct knetif {
-	/* Device list handle */
-	LIST_ENTRY(knetif)		if_list;
+    /* Device list handle */
+    LIST_ENTRY(knetif)  if_list;
 
-	/* Device name ("bba", "la", etc) */
-	const char 			*name;
+    /* Device name ("bba", "la", etc) */
+    const char          *name;
 
-	/* Long description of the device */
-	const char			*descr;
+    /* Long description of the device */
+    const char          *descr;
 
-	/* Unit index (starts at zero and counts upwards for multiple
-	   network devices of the same type) */
-	int				index;
+    /* Unit index (starts at zero and counts upwards for multiple
+       network devices of the same type) */
+    int                 index;
 
-	/* Internal device ID (for whatever the driver wants) */
-	uint32				dev_id;
+    /* Internal device ID (for whatever the driver wants) */
+    uint32              dev_id;
 
-	/* Interface flags */
-	uint32				flags;
+    /* Interface flags */
+    uint32              flags;
 
-	/* The device's MAC address */
-	uint8				mac_addr[6];
+    /* The device's MAC address */
+    uint8               mac_addr[6];
 
-	/* The device's IP address (if any) */
-	uint8				ip_addr[4];
+    /* The device's IP address (if any) */
+    uint8               ip_addr[4];
 
-	/* The device's netmask */
-	uint8				netmask[4];
+    /* The device's netmask */
+    uint8               netmask[4];
 
-	/* The device's gateway's IP address */
-	uint8				gateway[4];
+    /* The device's gateway's IP address */
+    uint8               gateway[4];
 
-	/* The device's broadcast address */
-	uint8				broadcast[4];
+    /* The device's broadcast address */
+    uint8               broadcast[4];
 
-	/* The device's DNS server address */
-	uint8				dns[4];
+    /* The device's DNS server address */
+    uint8               dns[4];
 
-	/* The interface's MTU */
-	int					mtu;
+    /* The device's MTU */
+    int                 mtu;
 
-	/* All of the following callback functions should return a negative
-	   value on failure, and a zero or positive value on success. Some
-	   functions have special values, as noted. */
+    /* The device's Link-local IPv6 address */
+    struct in6_addr     ip6_lladdr;
 
-	/* Attempt to detect the device */
-	int (*if_detect)(struct knetif * self);
+    /* Any further IPv6 addresses the device has. The first address in this list
+       will always be used, unless otherwise specified */
+    struct in6_addr     *ip6_addrs;
+    int                 ip6_addr_count;
 
-	/* Initialize the device */
-	int (*if_init)(struct knetif * self);
+    /* The device's gateway's IPv6 address */
+    struct in6_addr     ip6_gateway;
 
-	/* Shutdown the device */
-	int (*if_shutdown)(struct knetif * self);
+    /* Default MTU over IPv6 and default hop count */
+    uint32              mtu6;
+    int                 hop_limit;
 
-	/* Start the device (after init or stop) */
-	int (*if_start)(struct knetif * self);
+    /* All of the following callback functions should return a negative
+       value on failure, and a zero or positive value on success. Some
+       functions have special values, as noted. */
 
-	/* Stop (hibernate) the device */
-	int (*if_stop)(struct knetif * self);
+    /* Attempt to detect the device */
+    int (*if_detect)(struct knetif * self);
 
-	/* Queue a packet for transmission; see special return values
-	   below the structure */
-	int (*if_tx)(struct knetif * self, const uint8 * data, int len, int blocking);
+    /* Initialize the device */
+    int (*if_init)(struct knetif * self);
 
-	/* Commit any queued output packets */
-	int (*if_tx_commit)(struct knetif * self);
+    /* Shutdown the device */
+    int (*if_shutdown)(struct knetif * self);
 
-	/* Poll for queued receive packets, if neccessary */
-	int (*if_rx_poll)(struct knetif * self);
+    /* Start the device (after init or stop) */
+    int (*if_start)(struct knetif * self);
 
-	/* Set flags; you should generally manipulate flags through here so that
-	   the driver gets a chance to act on the info. */
-	int (*if_set_flags)(struct knetif * self, uint32 flags_and, uint32 flags_or);
+    /* Stop (hibernate) the device */
+    int (*if_stop)(struct knetif * self);
+
+    /* Queue a packet for transmission; see special return values
+       below the structure */
+    int (*if_tx)(struct knetif * self, const uint8 * data, int len, int blocking);
+
+    /* Commit any queued output packets */
+    int (*if_tx_commit)(struct knetif * self);
+
+    /* Poll for queued receive packets, if neccessary */
+    int (*if_rx_poll)(struct knetif * self);
+
+    /* Set flags; you should generally manipulate flags through here so that
+       the driver gets a chance to act on the info. */
+    int (*if_set_flags)(struct knetif * self, uint32 flags_and, uint32 flags_or);
+
+    /* Set a device's multicast list */
+    int (*if_set_mc)(struct knetif *self, const uint8 *list, int count);
 } netif_t;
 
 /* Flags for netif_t */
-#define NETIF_NO_FLAGS		0x00000000
-#define NETIF_REGISTERED	0x00000001		/* Is it registered? */
-#define NETIF_DETECTED		0x00000002		/* Is it detected? */
-#define NETIF_INITIALIZED	0x00000004		/* Has it been initialized? */
-#define NETIF_RUNNING		0x00000008		/* Has start() been called? */
-#define NETIF_PROMISC		0x00010000		/* Promiscuous mode */
-#define NETIF_NEEDSPOLL		0x01000000		/* Needs to be polled for input */
+#define NETIF_NO_FLAGS      0x00000000
+#define NETIF_REGISTERED    0x00000001      /* Is it registered? */
+#define NETIF_DETECTED      0x00000002      /* Is it detected? */
+#define NETIF_INITIALIZED   0x00000004      /* Has it been initialized? */
+#define NETIF_RUNNING       0x00000008      /* Has start() been called? */
+#define NETIF_PROMISC       0x00010000      /* Promiscuous mode */
+#define NETIF_NEEDSPOLL     0x01000000      /* Needs to be polled for input */
 
 /* Return types for if_tx */
-#define NETIF_TX_OK		0
-#define NETIF_TX_ERROR		-1
-#define NETIF_TX_AGAIN		-2
+#define NETIF_TX_OK     0
+#define NETIF_TX_ERROR  -1
+#define NETIF_TX_AGAIN  -2
 
 /* Blocking types */
-#define NETIF_NOBLOCK		0
-#define NETIF_BLOCK		1
+#define NETIF_NOBLOCK   0
+#define NETIF_BLOCK     1
 
 
 /* Define the list type */
@@ -124,17 +143,17 @@ LIST_HEAD(netif_list, knetif);
    an IP address, and a timestamp from 'jiffies'. The timestamp allows
    aging and eventual removal. */
 typedef struct netarp {
-	/* ARP cache list handle */
-	LIST_ENTRY(netarp)		ac_list;
+    /* ARP cache list handle */
+    LIST_ENTRY(netarp)  ac_list;
 
-	/* Mac address */
-	uint8				mac[6];
+    /* Mac address */
+    uint8               mac[6];
 
-	/* Associated IP address */
-	uint8				ip[4];
+    /* Associated IP address */
+    uint8               ip[4];
 
-	/* Cache entry time; if zero, this entry won't expire */
-	uint32				timestamp;
+    /* Cache entry time; if zero, this entry won't expire */
+    uint32              timestamp;
 } netarp_t;
 
 /* Define the list type */
@@ -222,12 +241,12 @@ int net_icmp_send_time_exceeded(netif_t *net, uint8 code, const uint8 *msg);
 /* IPv4 statistics structure. This structure holds some basic statistics about
    the IPv4 layer of the stack, and can be retrieved with the function below. */
 typedef struct net_ipv4_stats {
-	uint32	pkt_sent;				/* Packets sent out successfully */
-	uint32	pkt_send_failed;		/* Packets that failed to send */
-	uint32	pkt_recv;				/* Packets received successfully */
-	uint32	pkt_recv_bad_size;		/* Packets of a bad size */
-	uint32	pkt_recv_bad_chksum;	/* Packets with a bad checksum */
-	uint32	pkt_recv_bad_proto;		/* Packets with an unknown protocol */
+    uint32  pkt_sent;               /* Packets sent out successfully */
+    uint32  pkt_send_failed;        /* Packets that failed to send */
+    uint32  pkt_recv;               /* Packets received successfully */
+    uint32  pkt_recv_bad_size;      /* Packets of a bad size */
+    uint32  pkt_recv_bad_chksum;    /* Packets with a bad checksum */
+    uint32  pkt_recv_bad_proto;     /* Packets with an unknown protocol */
 } net_ipv4_stats_t;
 
 /* Retrieve statistics from the IPv4 layer. */
@@ -241,17 +260,97 @@ uint32 net_ipv4_address(const uint8 addr[4]);
    individual bytes */
 void net_ipv4_parse_address(uint32 addr, uint8 out[4]);
 
+/***** net_icmp6.c ********************************************************/
+
+/* Type of ping reply callback */
+typedef void (*net6_echo_cb)(const struct in6_addr *, uint16, uint64, uint8,
+                             const uint8 *, int);
+
+/* Where will we handle possibly notifying the user of ping replies? */
+extern net6_echo_cb net_icmp6_echo_cb;
+
+/* Send an ICMPv6 Echo (PING6) packet to the specified device */
+int net_icmp6_send_echo(netif_t *net, const struct in6_addr *dst, uint16 ident,
+                        uint16 seq, const uint8 *data, int size);
+
+/* Send a Neighbor Solicitation packet on the specified device */
+int net_icmp6_send_nsol(netif_t *net, const struct in6_addr *dst,
+                        const struct in6_addr *target, int dupdet);
+
+/* Send a Neighbor Advertisement packet on the specified device */
+int net_icmp6_send_nadv(netif_t *net, const struct in6_addr *dst,
+                        const struct in6_addr *target, int sol);
+
+/* Send a Router Solicitation request on the specified interface */
+int net_icmp6_send_rsol(netif_t *net);
+
+/* Destination Unreachable codes */
+#define ICMP6_DEST_UNREACH_NO_ROUTE     0
+#define ICMP6_DEST_UNREACH_PROHIBITED   1
+#define ICMP6_DEST_UNREACH_BEYOND_SCOPE 2
+#define ICMP6_DEST_UNREACH_ADDR_UNREACH 3
+#define ICMP6_DEST_UNREACH_PORT_UNREACH 4
+#define ICMP6_DEST_UNREACH_FAIL_EGRESS  5
+#define ICMP6_DEST_UNREACH_BAD_ROUTE    6
+
+/* Time Exceeded codes */
+#define ICMP6_TIME_EXCEEDED_HOPS_EXC    0
+#define ICMP6_TIME_EXCEEDED_FRAGMENT    1
+
+/* Parameter Problem codes */
+#define ICMP6_PARAM_PROB_BAD_HEADER     0
+#define ICMP6_PARAM_PROB_UNK_HEADER     1
+#define ICMP6_PARAM_PROB_UNK_OPTION     2
+
+/***** net_ipv6.c *********************************************************/
+
+/* IPv6 statistics structure. This structure holds some basic statistics about
+   the IPv6 layer of the stack, and can be retrieved with the function below. */
+typedef struct net_ipv6_stats {
+    uint32  pkt_sent;               /* Packets sent out successfully */
+    uint32  pkt_send_failed;        /* Packets that failed to send */
+    uint32  pkt_recv;               /* Packets received successfully */
+    uint32  pkt_recv_bad_size;      /* Packets of a bad size */
+    uint32  pkt_recv_bad_proto;     /* Packets with an unknown protocol */
+    uint32  pkt_recv_bad_ext;       /* Packets with an unknown ext. header */
+} net_ipv6_stats_t;
+
+/* Retrieve statistics from the IPv6 layer. */
+net_ipv6_stats_t net_ipv6_get_stats();
+
+/***** net_ndp.c **********************************************************/
+
+/* Init */
+int net_ndp_init();
+
+/* Shutdown */
+void net_ndp_shutdown();
+
+/* Garbage collect timed out entries */
+void net_ndp_gc();
+
+/* Add an entry to the NDP cache manually */
+int net_ndp_insert(netif_t *nif, const uint8 mac[6], const struct in6_addr *ip,
+                   int unsol);
+
+/* Look up an entry from the NDP cache; if no entry is found, then an NDP
+   query will be sent and an error will be returned. If you specify a packet
+   with the call, it will be sent when the reply comes in. pkt should be a
+   simple IPv6 header, data anything that comes after it. */
+int net_ndp_lookup(netif_t *net, const struct in6_addr *ip, uint8 mac_out[6],
+                   const void *pkt, const uint8 *data, int data_size);
+
 /***** net_udp.c **********************************************************/
 
 /* UDP statistics structure. This structure holds some basic statistics about
    the UDP layer of the stack, and can be retrieved with the function below. */
 typedef struct net_udp_stats {
-	uint32	pkt_sent;				/* Packets sent out successfully */
-	uint32	pkt_send_failed;		/* Packets that failed to send */
-	uint32	pkt_recv;				/* Packets received successfully */
-	uint32	pkt_recv_bad_size;		/* Packets of a bad size */
-	uint32	pkt_recv_bad_chksum;	/* Packets with a bad checksum */
-	uint32	pkt_recv_no_sock;		/* Packets with to an unopened socket */
+    uint32  pkt_sent;               /* Packets sent out successfully */
+    uint32  pkt_send_failed;        /* Packets that failed to send */
+    uint32  pkt_recv;               /* Packets received successfully */
+    uint32  pkt_recv_bad_size;      /* Packets of a bad size */
+    uint32  pkt_recv_bad_chksum;    /* Packets with a bad checksum */
+    uint32  pkt_recv_no_sock;       /* Packets with to an unopened socket */
 } net_udp_stats_t;
 
 /* Retrieve statistics from the UDP layer. */
@@ -262,6 +361,31 @@ int net_udp_init();
 
 /* Shutdown */
 void net_udp_shutdown();
+
+/***** net_crc.c **********************************************************/
+
+/* Calculate a "little-endian" CRC-32 over a block of data. */
+uint32 net_crc32le(const uint8 *data, int size);
+
+/* Calculate a "big-endian" CRC-32 over a block of data. */
+uint32 net_crc32be(const uint8 *data, int size);
+
+/***** net_multicast.c ****************************************************/
+
+/* Add a entry to our multicast list, autocommitting it to the network interface
+   in the process. */
+int net_multicast_add(const uint8 mac[6]);
+
+/* Delete an entry from our multicast list, autocommitting in the process. */
+int net_multicast_del(const uint8 mac[6]);
+
+/* Check if an address is on the multicast list. Returns 0 if the address is not
+   on the list, -1 on error, and 1 if the address is in the list. */
+int net_multicast_check(const uint8 mac[6]);
+
+/* Init / Shutdown */
+int net_multicast_init();
+void net_multicast_shutdown();
 
 /***** net_core.c *********************************************************/
 
@@ -282,7 +406,6 @@ int net_reg_device(netif_t *device);
 
 /* Unregister a network device */
 int net_unreg_device(netif_t *device);
-
 
 /* Init */
 int net_init();

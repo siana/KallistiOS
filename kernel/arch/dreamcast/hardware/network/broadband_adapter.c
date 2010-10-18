@@ -2,9 +2,9 @@
 
    net/broadband_adapter.c
 
-   Copyright (C)2001,2003,2005 Dan Potter
-   Copyright (C)2004 Vincent Penne
-   Copyright (C)2007, 2008 Lawrence Sebald
+   Copyright (C) 2001,2003,2005 Dan Potter
+   Copyright (C) 2004 Vincent Penne
+   Copyright (C) 2007, 2008, 2010 Lawrence Sebald
 
  */
 
@@ -863,6 +863,21 @@ static void bba_irq_hnd(uint32 code) {
 
 netif_t bba_if;
 
+static void set_ipv6_lladdr() {
+	/* Set up the IPv6 link-local address. This is done in accordance with
+	   Section 4/5 of RFC 2464 based on the MAC Address of the adapter. */
+	bba_if.ip6_lladdr.__s6_addr.__s6_addr8[0]  = 0xFE;
+	bba_if.ip6_lladdr.__s6_addr.__s6_addr8[1]  = 0x80;
+	bba_if.ip6_lladdr.__s6_addr.__s6_addr8[8]  = bba_if.mac_addr[0] ^ 0x02;
+	bba_if.ip6_lladdr.__s6_addr.__s6_addr8[9]  = bba_if.mac_addr[1];
+	bba_if.ip6_lladdr.__s6_addr.__s6_addr8[10] = bba_if.mac_addr[2];
+	bba_if.ip6_lladdr.__s6_addr.__s6_addr8[11] = 0xFF;
+	bba_if.ip6_lladdr.__s6_addr.__s6_addr8[12] = 0xFE;
+	bba_if.ip6_lladdr.__s6_addr.__s6_addr8[13] = bba_if.mac_addr[3];
+	bba_if.ip6_lladdr.__s6_addr.__s6_addr8[14] = bba_if.mac_addr[4];
+	bba_if.ip6_lladdr.__s6_addr.__s6_addr8[15] = bba_if.mac_addr[5];
+}
+
 /* They only ever made one GAPS peripheral, so this should suffice */
 static int bba_if_detect(netif_t *self) {
 	if (bba_if.flags & NETIF_DETECTED)
@@ -883,6 +898,7 @@ static int bba_if_init(netif_t *self) {
 		return -1;
 
 	memcpy(bba_if.mac_addr, rtl.mac, 6);
+    set_ipv6_lladdr();
 	bba_if.flags |= NETIF_INITIALIZED;
 	return 0;
 }
@@ -994,6 +1010,41 @@ static int bba_if_set_flags(netif_t *self, uint32 flags_and, uint32 flags_or) {
 	return 0;
 }
 
+static int bba_if_set_mc(netif_t *self, const uint8 *list, int count) {
+    uint32 old;
+
+    if(count == 0) {
+        /* Clear the multicast address filter */
+        g2_write_32(NIC(RT_MAR0 + 0), 0);
+        g2_write_32(NIC(RT_MAR0 + 4), 0);
+
+        /* Disable multicast reception */
+        old = g2_read_32(NIC(RT_RXCONFIG));
+        g2_write_32(NIC(RT_RXCONFIG), old & ~0x00000004);
+    }
+    else {
+        int i, pos;
+        uint32 tmp;
+        uint32 mar[2] = { 0, 0 };
+
+        /* Go through each entry and add the value to the filter */
+        for(i = 0, pos = 0; i < count; ++i, pos += 6) {
+            tmp = net_crc32be(list + pos, 6) >> 26;
+            mar[tmp >> 5] |= (1 << (tmp & 0x1F));
+        }
+
+        /* Set the multicast address filter */
+        g2_write_32(NIC(RT_MAR0 + 0), mar[0]);
+        g2_write_32(NIC(RT_MAR0 + 4), mar[1]);
+
+        /* Enable multicast reception */
+        old = g2_read_32(NIC(RT_RXCONFIG));
+        g2_write_32(NIC(RT_RXCONFIG), old | 0x00000004);
+    }
+
+    return 0;
+}
+
 /* We'll take packets from the interrupt handler and push them into netcore */
 static void bba_if_netinput(uint8 *pkt, int pktsize) {
 	net_input(&bba_if, pkt, pktsize);
@@ -1049,6 +1100,12 @@ int bba_init() {
 	memset(bba_if.broadcast, 0, sizeof(bba_if.broadcast));
 	memset(bba_if.dns, 0, sizeof(bba_if.dns));
 	bba_if.mtu = 1500; /* The Ethernet v2 MTU */
+	memset(&bba_if.ip6_lladdr, 0, sizeof(bba_if.ip6_lladdr));
+	bba_if.ip6_addrs = NULL;
+	bba_if.ip6_addr_count = 0;
+	memset(&bba_if.ip6_gateway, 0, sizeof(bba_if.ip6_gateway));
+    bba_if.mtu6 = 0;
+    bba_if.hop_limit = 0;
 	bba_if.if_detect = bba_if_detect;
 	bba_if.if_init = bba_if_init;
 	bba_if.if_shutdown = bba_if_shutdown;
@@ -1058,6 +1115,7 @@ int bba_init() {
 	bba_if.if_tx_commit = bba_if_tx_commit;
 	bba_if.if_rx_poll = bba_if_rx_poll;
 	bba_if.if_set_flags = bba_if_set_flags;
+    bba_if.if_set_mc = bba_if_set_mc;
 
 	/* Attempt to set up our IP address et al from the flashrom */
 	bba_set_ispcfg();
