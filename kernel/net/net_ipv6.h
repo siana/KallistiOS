@@ -8,24 +8,13 @@
 #ifndef __LOCAL_NET_IPV6_H
 #define __LOCAL_NET_IPV6_H
 
-#include <netinet/in.h>
+#include <kos/net.h>
 
 #ifdef PACKED
 #undef PACKED
 #endif
 
 #define PACKED __attribute__((packed))
-
-typedef struct ipv6_hdr_s {
-    uint8           version_lclass;
-    uint8           hclass_lflow;
-    uint16          lclass;
-    uint16          length;
-    uint8           next_header;
-    uint8           hop_limit;
-    struct in6_addr src_addr;
-    struct in6_addr dst_addr;
-} PACKED ipv6_hdr_t;
 
 typedef struct ipv6_ext_hdr_s {
     uint8       next_header;

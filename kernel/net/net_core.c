@@ -35,9 +35,6 @@ part of the networking system of KOS. They serve the following purposes:
 /* Active network devices list */
 struct netif_list net_if_list = LIST_HEAD_INITIALIZER(0);
 
-/* ARP cache */        
-struct netarp_list net_arp_cache = LIST_HEAD_INITIALIZER(0);
-
 /* Are we already initialized? */
 static int net_initted = 0;
 

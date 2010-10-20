@@ -28,7 +28,7 @@ typedef struct icmp6_dest_unreach_s {
     uint8   type;
     uint8   code;
     uint16  checksum;
-    uint32  reserved;
+    uint32  unused;
 } PACKED icmp6_dest_unreach_t;
 
 /* Header for Packet Too Big packets (type 2) */

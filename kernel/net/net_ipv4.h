@@ -8,6 +8,8 @@
 #ifndef __LOCAL_NET_IPV4_H
 #define __LOCAL_NET_IPV4_H
 
+#include <kos/net.h>
+
 /* These structs are from AndrewK's dcload-ip. */
 #define packed __attribute__((packed))
 typedef struct {
@@ -15,19 +17,6 @@ typedef struct {
 	uint8	src[6];
 	uint8	type[2];
 } packed eth_hdr_t;
-
-typedef struct {
-	uint8	version_ihl;
-	uint8	tos;
-	uint16	length;
-	uint16	packet_id;
-	uint16	flags_frag_offs;
-	uint8	ttl;
-	uint8	protocol;
-	uint16	checksum;
-	uint32	src;
-	uint32	dest;
-} packed ip_hdr_t;
 
 typedef struct {
 	uint32 src_addr;

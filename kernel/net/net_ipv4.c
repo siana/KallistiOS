@@ -10,6 +10,7 @@
 */
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <errno.h>
 #include <arpa/inet.h>
@@ -130,15 +131,16 @@ int net_ipv4_send_packet(netif_t *net, ip_hdr_t *hdr, const uint8 *data,
         /* Get our destination's MAC address. If we do not have the MAC address
            cached, return a distinguished error to the upper-level protocol so
            that it can decide what to do. */
-        err = net_arp_lookup(net, dest_ip, dest_mac);
+        err = net_arp_lookup(net, dest_ip, dest_mac, hdr, data, size);
         if(err == -1) {
             errno = ENETUNREACH;
             ++ipv4_stats.pkt_send_failed;
             return -1;
         }
         else if(err == -2) {
-            ++ipv4_stats.pkt_send_failed;
-            return -2;
+            /* It'll send when the ARP reply comes in (assuming one does), so
+               return success. */
+            return 0;
         }
     }
 
@@ -166,6 +168,12 @@ int net_ipv4_send_packet(netif_t *net, ip_hdr_t *hdr, const uint8 *data,
 int net_ipv4_send(netif_t *net, const uint8 *data, int size, int id, int ttl,
                   int proto, uint32 src, uint32 dst) {
     ip_hdr_t hdr;
+
+    /* If the ID is -1, generate a random ID value that can be used in case the
+       packet gets fragmented. */
+    if(id == -1) {
+        id = rand() & 0xFFFF;
+    }
 
     /* Fill in the IPv4 Header */
     hdr.version_ihl = 0x45;

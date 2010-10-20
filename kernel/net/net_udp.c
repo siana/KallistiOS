@@ -17,7 +17,9 @@
 #include <kos/fs_socket.h>
 #include <arch/irq.h>
 #include <sys/socket.h>
+
 #include "net_ipv4.h"
+#include "net_ipv6.h"
 #include "net_udp.h"
 
 #define packed __attribute__((packed))
@@ -517,6 +519,7 @@ int net_udp_input(netif_t *src, ip_hdr_t *ip, const uint8 *data, int size) {
     memcpy(&ps->src_port, data, size);
     ps->length = htons(size);
 
+    if(ps->checksum != 0) {
 #if 1
     checksum = ps->checksum;
     ps->checksum = 0;
@@ -534,6 +537,7 @@ int net_udp_input(netif_t *src, ip_hdr_t *ip, const uint8 *data, int size) {
         return -1;
     }
 #endif
+    }
 
     if(mutex_trylock(udp_mutex)) {
         /* Considering this function is usually called in an IRQ, if the
@@ -621,24 +625,10 @@ static int net_udp_send_raw(netif_t *net, uint32 src_ip, uint16 src_port,
     ps->checksum = 0;
     ps->checksum = net_ipv4_checksum(buf, size + 12, 0);
 
-retry_send:
     /* Pass everything off to the network layer to do the rest. */
-    err = net_ipv4_send(net, buf + 12, size, 0, 64, IPPROTO_UDP, ps->src_addr,
+    err = net_ipv4_send(net, buf + 12, size, -1, 64, IPPROTO_UDP, ps->src_addr,
                         ps->dst_addr);
-    
-    /* If the IP layer returns that the ARP cache didn't have the entry for the
-       destination, sleep for a little bit, and try again (as long as the
-       non-blocking flag was not set). */
-    if(err == -2 && !(flags & O_NONBLOCK)) {
-        thd_sleep(100);
-        goto retry_send;
-    }
-    else if(err == -2) {
-        errno = ENETUNREACH;
-        ++udp_stats.pkt_send_failed;
-        return -1;
-    }
-    else if(err < 0) {
+    if(err < 0) {
         ++udp_stats.pkt_send_failed;
         return -1;
     }

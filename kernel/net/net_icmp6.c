@@ -20,6 +20,9 @@
 This file implements RFC 4443, the Internet Control Message Protocol for IPv6.
 All messages mentioned below are from that RFC, unless otherwise specified.
 Currently implemented message types are:
+    1   - Destination Unreachable -- Sending only
+    3   - Time Exceeded -- Sending only
+    4   - Parameter Problem -- Sending only
     128 - Echo
     129 - Echo Reply
     133 - Router Solicitation (RFC 4861) -- Sending only
@@ -29,10 +32,7 @@ Currently implemented message types are:
     137 - Redirect (RFC 4861) -- partial
 
 Message types that are not implemented yet (if ever):
-    1   - Destination Unreachable
     2   - Packet Too Big
-    3   - Time Exceeded
-    4   - Parameter Problem
     Any other numbers not listed in the first list...
 */
 
@@ -669,4 +669,127 @@ int net_icmp6_send_rsol(netif_t *net) {
 
     return net_ipv6_send(net, databuf, size, 255, IPV6_HDR_ICMP, &src,
                          &in6addr_linklocal_allrouters);
+}
+
+/* Convenience function for handling the parts of error packets that are the
+   same no matter what kind we're dealing with. */
+static int send_err_pkt(netif_t *net, uint8 buf[1240], int ptr,
+                        const uint8 *ppkt, int pktsz, int mc_allow) {
+    int size = 1240 - ptr;
+    icmp6_hdr_t *pkt = (icmp6_hdr_t *)buf;
+    const ipv6_hdr_t *orig = (const ipv6_hdr_t *)ppkt;
+    uint16 cs;
+    struct in6_addr osrc, odst, src;
+
+    /* Copy out the original source and destination addresses */
+    memcpy(&osrc, &orig->src_addr, sizeof(struct in6_addr));
+    memcpy(&odst, &orig->dst_addr, sizeof(struct in6_addr));
+
+    /* Figure out if we should actually send a message or not */
+    if(IN6_IS_ADDR_UNSPECIFIED(&osrc) || IN6_IS_ADDR_MULTICAST(&osrc)) {
+        /* Don't send for any packets that have an unspecified or multicast
+           source address. */
+        return 0;
+    }
+
+    if(!mc_allow && IN6_IS_ADDR_MULTICAST(&odst)) {
+        /* Don't send anything where the destination is a multicast unless it
+           is specifically allowed (examples: packet too big and the parameter
+           problem code 2). */
+        return 0;
+    }
+
+    /* Pick the address we'll send from */
+    if(IN6_IS_ADDR_LINKLOCAL(&odst) || IN6_IS_ADDR_MC_LINKLOCAL(&odst)) {
+        src = net->ip6_lladdr;
+    }
+    else if(net->ip6_addr_count) {
+        src = net->ip6_addrs[0];
+    }
+    else {
+        return -1;
+    }
+
+    if(size > pktsz) {
+        memcpy(&buf[ptr], ppkt, pktsz);
+        size = ptr + pktsz;
+    }
+    else {
+        memcpy(&buf[ptr], ppkt, size);
+        size = 1240;
+    }
+
+    /* Compute the ICMP Checksum */
+    cs = net_ipv6_checksum_pseudo(&src, &osrc, size, IPV6_HDR_ICMP);
+    pkt->checksum = net_ipv4_checksum(buf, size, cs);
+
+    /* Send it away */
+    return net_ipv6_send(net, buf, size, 0, IPV6_HDR_ICMP, &src, &osrc);
+}
+
+/* Send an ICMPv6 Destination Unreachable about the given packet. */
+int net_icmp6_send_dest_unreach(netif_t *net, uint8 code, const uint8 *ppkt,
+                                int psz) {
+    uint8 buf[1240];
+    icmp6_dest_unreach_t *pkt = (icmp6_dest_unreach_t *)buf;
+
+    /* Make sure the given code is sane */
+    if(code > ICMP6_DEST_UNREACH_BAD_ROUTE) {
+        return -1;
+    }
+
+    /* Fill in the unique part of the message, and leave the rest to the general
+       error handling. */
+    pkt->type = ICMP6_MESSAGE_DEST_UNREACHABLE;
+    pkt->code = code;
+    pkt->unused = 0;
+
+    return send_err_pkt(net, buf, sizeof(icmp6_dest_unreach_t), ppkt, psz, 0);
+}
+
+/* Send an ICMPv6 Time Exceeded about the given packet. */
+int net_icmp6_send_time_exceeded(netif_t *net, uint8 code, const uint8 *ppkt,
+                                 int psz) {
+    uint8 buf[1240];
+    icmp6_time_exceeded_t *pkt = (icmp6_time_exceeded_t *)buf;
+
+    /* Make sure the given code is sane */
+    if(code > ICMP6_TIME_EXCEEDED_FRAGMENT) {
+        return -1;
+    }
+
+    /* Fill in the unique part of the message, and leave the rest to the general
+       error handling. */
+    pkt->type = ICMP6_MESSAGE_TIME_EXCEEDED;
+    pkt->code = code;
+    pkt->unused = 0;
+
+    return send_err_pkt(net, buf, sizeof(icmp6_time_exceeded_t), ppkt, psz, 0);
+}
+
+/* Send an ICMPv6 Parameter Problem about the given packet. */
+int net_icmp6_send_param_prob(netif_t *net, uint8 code, uint32 ptr,
+                              const uint8 *ppkt, int psz) {
+    uint8 buf[1240];
+    icmp6_param_problem_t *pkt = (icmp6_param_problem_t *)buf;
+    int mc_allow = 0;
+
+    /* Make sure the given code is sane */
+    if(code > ICMP6_PARAM_PROB_UNK_OPTION) {
+        return -1;
+    }
+
+    /* Do we allow sending this as a result of a multicast? */
+    if(code == ICMP6_PARAM_PROB_UNK_OPTION) {
+        mc_allow = 1;
+    }
+
+    /* Fill in the unique part of the message, and leave the rest to the general
+       error handling. */
+    pkt->type = ICMP6_MESSAGE_PARAM_PROBLEM;
+    pkt->code = code;
+    pkt->ptr = ntohl(ptr);
+
+    return send_err_pkt(net, buf, sizeof(icmp6_param_problem_t), ppkt, psz,
+                        mc_allow);
 }

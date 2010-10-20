@@ -156,7 +156,7 @@ static void net_ndp_send_sol(netif_t *net, const struct in6_addr *ip) {
 }
 
 int net_ndp_lookup(netif_t *net, const struct in6_addr *ip, uint8 mac_out[6],
-                   const void *pkt, const uint8 *data, int data_size) {
+                   const ipv6_hdr_t *pkt, const uint8 *data, int data_size) {
     ndp_entry_t *i;
     uint64 now = timer_ms_gettime64();
 
@@ -227,6 +227,12 @@ void net_ndp_shutdown() {
     i = LIST_FIRST(&ndp_cache);
     while(i) {
         tmp = LIST_NEXT(i, entry);
+
+        if(i->pkt) {
+            free(i->pkt);
+            free(i->data);
+        }
+
         free(i);
         i = tmp;
     }

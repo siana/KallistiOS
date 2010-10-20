@@ -138,32 +138,42 @@ typedef struct knetif {
 /* Define the list type */
 LIST_HEAD(netif_list, knetif);
 
+#ifdef PACKED
+#undef PACKED
+#endif
 
-/* Structure describing an ARP entry; each entry contains a MAC address,
-   an IP address, and a timestamp from 'jiffies'. The timestamp allows
-   aging and eventual removal. */
-typedef struct netarp {
-    /* ARP cache list handle */
-    LIST_ENTRY(netarp)  ac_list;
+#define PACKED __attribute__((packed))
 
-    /* Mac address */
-    uint8               mac[6];
+/* IPv4 Packet header */
+typedef struct {
+	uint8	version_ihl;
+	uint8	tos;
+	uint16	length;
+	uint16	packet_id;
+	uint16	flags_frag_offs;
+	uint8	ttl;
+	uint8	protocol;
+	uint16	checksum;
+	uint32	src;
+	uint32	dest;
+} PACKED ip_hdr_t;
 
-    /* Associated IP address */
-    uint8               ip[4];
+/* IPv6 Packet header */
+typedef struct ipv6_hdr_s {
+    uint8           version_lclass;
+    uint8           hclass_lflow;
+    uint16          lclass;
+    uint16          length;
+    uint8           next_header;
+    uint8           hop_limit;
+    struct in6_addr src_addr;
+    struct in6_addr dst_addr;
+} PACKED ipv6_hdr_t;
 
-    /* Cache entry time; if zero, this entry won't expire */
-    uint32              timestamp;
-} netarp_t;
+#undef PACKED
 
-/* Define the list type */
-LIST_HEAD(netarp_list, netarp);
 
 /***** net_arp.c **********************************************************/
-
-/* ARP cache */
-extern struct netarp_list net_arp_cache;
-
 
 /* Init */
 int net_arp_init();
@@ -178,10 +188,11 @@ int net_arp_gc();
 int net_arp_insert(netif_t *nif, uint8 mac[6], uint8 ip[4], uint32 timestamp);
 
 /* Look up an entry from the ARP cache; if no entry is found, then an ARP
-   query will be sent and an error will be returned. Thus your packet send
-   should also fail. Later when the transmit retries, hopefully the answer
-   will have arrived. */
-int net_arp_lookup(netif_t *nif, uint8 ip_in[4], uint8 mac_out[6]);
+   query will be sent and an error will be returned. If you specify a packet
+   with the call, it will be sent when the reply comes in. pkt should be a
+   simple IPv4 header, data anything that comes after it. */
+int net_arp_lookup(netif_t *nif, uint8 ip_in[4], uint8 mac_out[6],
+                   const ip_hdr_t *pkt, const uint8 *data, int data_size);
 
 /* Do a reverse ARP lookup: look for an IP for a given mac address; note
    that if this fails, you have no recourse. */
@@ -284,7 +295,7 @@ int net_icmp6_send_nadv(netif_t *net, const struct in6_addr *dst,
 /* Send a Router Solicitation request on the specified interface */
 int net_icmp6_send_rsol(netif_t *net);
 
-/* Destination Unreachable codes */
+/* Destination Unreachable codes -- only port unreachable really makes sense */
 #define ICMP6_DEST_UNREACH_NO_ROUTE     0
 #define ICMP6_DEST_UNREACH_PROHIBITED   1
 #define ICMP6_DEST_UNREACH_BEYOND_SCOPE 2
@@ -293,14 +304,24 @@ int net_icmp6_send_rsol(netif_t *net);
 #define ICMP6_DEST_UNREACH_FAIL_EGRESS  5
 #define ICMP6_DEST_UNREACH_BAD_ROUTE    6
 
-/* Time Exceeded codes */
+int net_icmp6_send_dest_unreach(netif_t *net, uint8 code, const uint8 *ppkt,
+                                int psz);
+
+/* Time Exceeded codes -- only fragment reassembly time exceeded makes sense */
 #define ICMP6_TIME_EXCEEDED_HOPS_EXC    0
 #define ICMP6_TIME_EXCEEDED_FRAGMENT    1
+
+int net_icmp6_send_time_exceeded(netif_t *net, uint8 code, const uint8 *ppkt,
+                                 int psz);
 
 /* Parameter Problem codes */
 #define ICMP6_PARAM_PROB_BAD_HEADER     0
 #define ICMP6_PARAM_PROB_UNK_HEADER     1
 #define ICMP6_PARAM_PROB_UNK_OPTION     2
+
+/* Send an ICMPv6 Parameter Problem about the given packet. */
+int net_icmp6_send_param_prob(netif_t *net, uint8 code, uint32 ptr,
+                              const uint8 *ppkt, int psz);
 
 /***** net_ipv6.c *********************************************************/
 
@@ -338,7 +359,7 @@ int net_ndp_insert(netif_t *nif, const uint8 mac[6], const struct in6_addr *ip,
    with the call, it will be sent when the reply comes in. pkt should be a
    simple IPv6 header, data anything that comes after it. */
 int net_ndp_lookup(netif_t *net, const struct in6_addr *ip, uint8 mac_out[6],
-                   const void *pkt, const uint8 *data, int data_size);
+                   const ipv6_hdr_t *pkt, const uint8 *data, int data_size);
 
 /***** net_udp.c **********************************************************/
 

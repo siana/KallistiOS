@@ -734,9 +734,9 @@ int fs_dclsocket_init() {
     /* Put dc-tool's info into our ARP cache */
     net_ipv4_parse_address(ip, ipaddr);
 
-    err = net_arp_lookup(net_default_dev, ipaddr, mac);
+    err = net_arp_lookup(net_default_dev, ipaddr, mac, NULL, NULL, 0);
     while(err == -1 || err == -2) {
-        err = net_arp_lookup(net_default_dev, ipaddr, mac);
+        err = net_arp_lookup(net_default_dev, ipaddr, mac, NULL, NULL, 0);
     }
 
     /* Make the entry permanent */
