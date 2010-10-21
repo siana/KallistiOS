@@ -263,6 +263,13 @@ void net_ipv4_parse_address(uint32 addr, uint8 out[4]) {
     out[3] = (uint8) (addr & 0xFF);
 }
 
+uint16 net_ipv4_checksum_pseudo(in_addr_t src, in_addr_t dst, uint8 proto,
+                                uint16 len) {
+    ipv4_pseudo_hdr_t ps = { src, dst, 0, proto, htons(len) };
+
+    return ~net_ipv4_checksum((uint8 *)&ps, sizeof(ipv4_pseudo_hdr_t), 0);
+}
+
 net_ipv4_stats_t net_ipv4_get_stats() {
     return ipv4_stats;
 }

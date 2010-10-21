@@ -24,12 +24,7 @@ typedef struct {
 	uint8 zero;
 	uint8 proto;
 	uint16 length;
-	uint16 src_port;
-	uint16 dst_port;
-	uint16 hdrlength;
-	uint16 checksum;
-	uint8 data[1];
-} packed ip_pseudo_hdr_t;
+} packed ipv4_pseudo_hdr_t;
 #undef packed
 
 uint16 net_ipv4_checksum(const uint8 *data, int bytes, uint16 start);
@@ -39,6 +34,9 @@ int net_ipv4_send(netif_t *net, const uint8 *data, int size, int id, int ttl,
                   int proto, uint32 src, uint32 dst);
 int net_ipv4_input(netif_t *src, const uint8 *pkt, int pktsize);
 int net_ipv4_input_proto(netif_t *net, ip_hdr_t *ip, const uint8 *data);
+
+uint16 net_ipv4_checksum_pseudo(in_addr_t src, in_addr_t dst, uint8 proto,
+                                uint16 len);
 
 /* In net_ipv4_frag.c */
 int net_ipv4_frag_send(netif_t *net, ip_hdr_t *hdr, const uint8 *data,

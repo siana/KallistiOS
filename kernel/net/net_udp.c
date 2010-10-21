@@ -500,9 +500,8 @@ static int net_udp_setflags(net_socket_t *hnd, int flags) {
 }
 
 int net_udp_input(netif_t *src, ip_hdr_t *ip, const uint8 *data, int size) {
-    uint8 buf[size + 12];
-    ip_pseudo_hdr_t *ps = (ip_pseudo_hdr_t *)buf;
-    uint16 checksum;
+    udp_hdr_t *hdr = (udp_hdr_t *)data;
+    uint16 cs;
     struct udp_sock *sock;
     struct udp_pkt *pkt;
 
@@ -512,31 +511,16 @@ int net_udp_input(netif_t *src, ip_hdr_t *ip, const uint8 *data, int size) {
         return -1;
     }
 
-    ps->src_addr = ip->src;
-    ps->dst_addr = ip->dest;
-    ps->zero = 0;
-    ps->proto = ip->protocol;
-    memcpy(&ps->src_port, data, size);
-    ps->length = htons(size);
+    cs = net_ipv4_checksum_pseudo(ip->src, ip->dest, ip->protocol, size);
 
-    if(ps->checksum != 0) {
-#if 1
-    checksum = ps->checksum;
-    ps->checksum = 0;
-    ps->checksum = net_ipv4_checksum(buf, size + 12, 0);
-
-    if(checksum != ps->checksum) {
-        /* The checksums don't match, bail out */
-        ++udp_stats.pkt_recv_bad_chksum;
-        return -1;
-    }
-#else
-    if(net_ipv4_checksum(buf, size + 12, 0)) {
-        /* The checksum was wrong, bail out */
-        ++udp_stats.pkt_recv_bad_chksum;
-        return -1;
-    }
-#endif
+    if(hdr->checksum != 0) {
+        /* If the checksum is right, we'll get zero back from the checksum
+           function */
+        if(net_ipv4_checksum(data, size, cs)) {
+            /* The checksum was wrong, bail out */
+            ++udp_stats.pkt_recv_bad_chksum;
+            return -1;
+        }
     }
 
     if(mutex_trylock(udp_mutex)) {
@@ -547,9 +531,9 @@ int net_udp_input(netif_t *src, ip_hdr_t *ip, const uint8 *data, int size) {
 
     LIST_FOREACH(sock, &net_udp_sockets, sock_list) {
         /* See if we have a socket matching the description provided */
-        if(sock->local_addr.sin_port == ps->dst_port &&
-           ((sock->remote_addr.sin_port == ps->src_port &&
-             sock->remote_addr.sin_addr.s_addr == ps->src_addr) ||
+        if(sock->local_addr.sin_port == hdr->dst_port &&
+           ((sock->remote_addr.sin_port == hdr->src_port &&
+             sock->remote_addr.sin_addr.s_addr == ip->src) ||
             (sock->remote_addr.sin_port == 0 &&
              sock->remote_addr.sin_addr.s_addr == INADDR_ANY))) {
             pkt = (struct udp_pkt *) malloc(sizeof(struct udp_pkt));
@@ -559,9 +543,9 @@ int net_udp_input(netif_t *src, ip_hdr_t *ip, const uint8 *data, int size) {
 
             pkt->from.sin_family = AF_INET;
             pkt->from.sin_addr.s_addr = ip->src;
-            pkt->from.sin_port = ps->src_port;
+            pkt->from.sin_port = hdr->src_port;
 
-            memcpy(pkt->data, ps->data, pkt->datasize);
+            memcpy(pkt->data, data + sizeof(udp_hdr_t), pkt->datasize);
 
             TAILQ_INSERT_TAIL(&sock->packets, pkt, pkt_queue);
 
@@ -585,49 +569,43 @@ int net_udp_input(netif_t *src, ip_hdr_t *ip, const uint8 *data, int size) {
 static int net_udp_send_raw(netif_t *net, uint32 src_ip, uint16 src_port,
                             uint32 dst_ip, uint16 dst_port, const uint8 *data,
                             int size, int flags) {
-    uint8 buf[size + 12 + sizeof(udp_hdr_t)];
-    ip_pseudo_hdr_t *ps = (ip_pseudo_hdr_t *) buf;
+    uint8 buf[size + sizeof(udp_hdr_t)];
+    udp_hdr_t *hdr = (udp_hdr_t *)buf;
+    uint16 cs;
     int err;
 
-    if(net == NULL && net_default_dev == NULL) {
-        errno = ENETDOWN;
-        ++udp_stats.pkt_send_failed;
-        return -1;
-    }
+    if(!net) {
+        net = net_default_dev;
 
-    if(src_ip == INADDR_ANY) {
-        if(net == NULL && net_default_dev != NULL) {
-            ps->src_addr = htonl(net_ipv4_address(net_default_dev->ip_addr));
-        }
-        else if(net != NULL) {
-            ps->src_addr = htonl(net_ipv4_address(net->ip_addr));
-        }
-        else {
+        if(!net) {
             errno = ENETDOWN;
             ++udp_stats.pkt_send_failed;
             return -1;
         }
     }
-    else {
-        ps->src_addr = src_ip;
+
+    if(src_ip == INADDR_ANY) {
+        src_ip = htonl(net_ipv4_address(net->ip_addr));
+
+        if(src_ip == INADDR_ANY) {
+            errno = ENETDOWN;
+            ++udp_stats.pkt_send_failed;
+            return -1;
+        }
     }
 
-    memcpy(ps->data, data, size);
+    memcpy(buf + sizeof(udp_hdr_t), data, size);
     size += sizeof(udp_hdr_t);
+    cs = net_ipv4_checksum_pseudo(src_ip, dst_ip, IPPROTO_UDP, size);
 
-    ps->dst_addr = dst_ip;
-    ps->zero = 0;
-    ps->proto = 17;
-    ps->length = htons(size);
-    ps->src_port = src_port;
-    ps->dst_port = dst_port;
-    ps->hdrlength = ps->length;
-    ps->checksum = 0;
-    ps->checksum = net_ipv4_checksum(buf, size + 12, 0);
+    hdr->src_port = src_port;
+    hdr->dst_port = dst_port;
+    hdr->length = size;
+    hdr->checksum = 0;
+    hdr->checksum = net_ipv4_checksum(buf, size, cs);
 
     /* Pass everything off to the network layer to do the rest. */
-    err = net_ipv4_send(net, buf + 12, size, -1, 64, IPPROTO_UDP, ps->src_addr,
-                        ps->dst_addr);
+    err = net_ipv4_send(net, buf, size, -1, 64, IPPROTO_UDP, src_ip, dst_ip);
     if(err < 0) {
         ++udp_stats.pkt_send_failed;
         return -1;
