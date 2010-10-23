@@ -42,13 +42,49 @@ struct sockaddr {
     char        sa_data[];
 };
 
+/** \brief  Size of the struct sockaddr_storage.
+    The size here is chosen for compatibility with anything that may expect the
+    struct sockaddr_storage to be of size 128. Technically, since there are no
+    current plans to support AF_UNIX sockets, this could be smaller, but most
+    implementations make it 128 bytes.
+*/
+#define _SS_MAXSIZE 128
+
+/** \brief  Desired alignment of struct sockaddr_storage. */
+#define _SS_ALIGNSIZE (sizeof(__uint64_t))
+
+/** \brief  First padding size used within struct sockaddr_storage. */
+#define _SS_PAD1SIZE (_SS_ALIGNSIZE - sizeof(sa_family_t))
+
+/** \brief  Second padding size used within struct sockaddr_storage. */
+#define _SS_PAD2SIZE (_SS_MAXSIZE - (sizeof(sa_family_t) + \
+                      _SS_PAD1SIZE + _SS_ALIGNSIZE))
+
+/** \brief  Socket address structure of appropriate size to hold any supported
+            socket type's addresses.
+    \headerfile sys/socket.h
+*/
+struct sockaddr_storage {
+    /** \brief  Address family. */
+    sa_family_t  ss_family;
+
+    /** \brief  First padding field. */
+    char _ss_pad1[_SS_PAD1SIZE];
+
+    /** \brief  Used to force alignment. */
+    __uint64_t _ss_align;
+
+    /** \brief  Second padding field to fill up the space required. */
+    char _ss_pad2[_SS_PAD2SIZE];
+};
+
 /** \brief  Datagram socket type.
 
     This socket type specifies that the socket in question transmits datagrams
     that may or may not be reliably transmitted. With IPv4, this implies using
     UDP as the underlying protocol.
 */
-#define SOCK_DGRAM 1
+#define SOCK_DGRAM  1
 
 /** \brief  Internet domain sockets for use with IPv4 addresses. */
 #define AF_INET     1
