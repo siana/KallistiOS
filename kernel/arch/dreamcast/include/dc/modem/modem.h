@@ -7,77 +7,254 @@
 
 */
 
+/** \file   dc/modem/modem.h
+    \brief  Definitions to use the Dreamcast modem.
+
+    This file contains functions and constants to be used with the Dreamcast
+    modem driver.
+
+    \author Nick Kochakian
+*/
+
 #ifndef __DC_MODEM_MODEM_H
 #define __DC_MODEM_MODEM_H
 
 #include "mconst.h"
 
-#define MODEM_MODE_REMOTE 0   /* Connect to a remote modem */
-#define MODEM_MODE_ANSWER 1   /* Answer a call when a ring is detected */
-#define MODEM_MODE_NULL   255 /* Not doing anything. Don't give this to
-                                 any function! */
+/** \defgroup   modem_modes     Modes of operation of the Dreamcast modem.
 
-/* V.22 bis modes */
+    This group defines the modes that the Dreamcast modem can be in at any given
+    point in time.
+
+    @{
+*/
+/** \brief  Connect to a remote modem. */
+#define MODEM_MODE_REMOTE 0
+
+/** \brief  Answer a call when a ring is detected. */
+#define MODEM_MODE_ANSWER 1
+
+/** \brief  Modem not in use. Do not attempt to set this mode yourself! */
+#define MODEM_MODE_NULL   255
+/** @} */
+
+/** \defgroup   modem_v22bis    Modem V.22bis modes
+    @{
+*/
+/** \brief  1200bps, V.22bis */
 #define MODEM_SPEED_V22BIS_1200 MODEM_MAKE_SPEED(MODEM_PROTOCOL_V22BIS, MODEM_SPEED_1200)
+
+/** \brief  2400bps, V.22bis */
 #define MODEM_SPEED_V22BIS_2400 MODEM_MAKE_SPEED(MODEM_PROTOCOL_V22BIS, MODEM_SPEED_2400)
+/** @} */
 
-/* V.22 modes */
+/** \defgroup   modem_v22       Modem V.22 modes
+    @{
+*/
+/** \brief  1200bps, V.22 */
 #define MODEM_SPEED_V22_1200 MODEM_MAKE_SPEED(MODEM_PROTOCOL_V22, MODEM_SPEED_1200)
+/** @} */
 
-/* V.32 modes */
+/** \defgroup   modem_v32       Modem V.32 modes
+    @{
+*/
+/** \brief  4800bps, V.32 */
 #define MODEM_SPEED_V32_4800 MODEM_MAKE_SPEED(MODEM_PROTOCOL_V32, MODEM_SPEED_4800)
+
+/** \brief  9600bps, V.32 */
 #define MODEM_SPEED_V32_9600 MODEM_MAKE_SPEED(MODEM_PROTOCOL_V32, MODEM_SPEED_9600)
+/** @} */
 
-/* V.32 bis modes */
+/** \defgroup   modem_v32bis    Modem V.32 bis modes
+    @{
+*/
+/** \brief  7200bps, V.32bis */
 #define MODEM_SPEED_V32BIS_7200  MODEM_MAKE_SPEED(MODEM_PROTOCOL_V32BIS, MODEM_SPEED_7200)
+
+/** \brief  12000bps, V.32bis */
 #define MODEM_SPEED_V32BIS_12000 MODEM_MAKE_SPEED(MODEM_PROTOCOL_V32BIS, MODEM_SPEED_12000)
+
+/** \brief  14400bps, V.32bis */
 #define MODEM_SPEED_V32BIS_14400 MODEM_MAKE_SPEED(MODEM_PROTOCOL_V32BIS, MODEM_SPEED_14400)
+/** @} */
 
-/* V.8 modes */
+/** \defgroup   modem_v8        Modem V.8 modes
+    @{
+*/
+/** \brief  2400bps, V.8 */
 #define MODEM_SPEED_V8_2400  MODEM_MAKE_SPEED(MODEM_PROTOCOL_V8, MODEM_SPEED_2400)
-#define MODEM_SPEED_V8_4800  MODEM_MAKE_SPEED(MODEM_PROTOCOL_V8, MODEM_SPEED_4800)
-#define MODEM_SPEED_V8_7200  MODEM_MAKE_SPEED(MODEM_PROTOCOL_V8, MODEM_SPEED_7200)
-#define MODEM_SPEED_V8_9600  MODEM_MAKE_SPEED(MODEM_PROTOCOL_V8, MODEM_SPEED_9600)
-#define MODEM_SPEED_V8_12000 MODEM_MAKE_SPEED(MODEM_PROTOCOL_V8, MODEM_SPEED_12000)
-#define MODEM_SPEED_V8_14400 MODEM_MAKE_SPEED(MODEM_PROTOCOL_V8, MODEM_SPEED_14400)
-#define MODEM_SPEED_V8_16800 MODEM_MAKE_SPEED(MODEM_PROTOCOL_V8, MODEM_SPEED_16800)
-#define MODEM_SPEED_V8_19200 MODEM_MAKE_SPEED(MODEM_PROTOCOL_V8, MODEM_SPEED_19200)
-#define MODEM_SPEED_V8_21600 MODEM_MAKE_SPEED(MODEM_PROTOCOL_V8, MODEM_SPEED_21600)
-#define MODEM_SPEED_V8_24000 MODEM_MAKE_SPEED(MODEM_PROTOCOL_V8, MODEM_SPEED_24000)
-#define MODEM_SPEED_V8_26400 MODEM_MAKE_SPEED(MODEM_PROTOCOL_V8, MODEM_SPEED_26400)
-#define MODEM_SPEED_V8_28000 MODEM_MAKE_SPEED(MODEM_PROTOCOL_V8, MODEM_SPEED_28000)
-#define MODEM_SPEED_V8_31200 MODEM_MAKE_SPEED(MODEM_PROTOCOL_V8, MODEM_SPEED_31200)
-#define MODEM_SPEED_V8_33600 MODEM_MAKE_SPEED(MODEM_PROTOCOL_V8, MODEM_SPEED_33600)
-#define MODEM_SPEED_V8_AUTO  MODEM_MAKE_SPEED(MODEM_PROTOCOL_V8, MODEM_SPEED_1200)
 
-/* Event constants */
+/** \brief  4800bps, V.8 */
+#define MODEM_SPEED_V8_4800  MODEM_MAKE_SPEED(MODEM_PROTOCOL_V8, MODEM_SPEED_4800)
+
+/** \brief  7200bps, V.8 */
+#define MODEM_SPEED_V8_7200  MODEM_MAKE_SPEED(MODEM_PROTOCOL_V8, MODEM_SPEED_7200)
+
+/** \brief  9600bps, V.8 */
+#define MODEM_SPEED_V8_9600  MODEM_MAKE_SPEED(MODEM_PROTOCOL_V8, MODEM_SPEED_9600)
+
+/** \brief  12000bps, V.8 */
+#define MODEM_SPEED_V8_12000 MODEM_MAKE_SPEED(MODEM_PROTOCOL_V8, MODEM_SPEED_12000)
+
+/** \brief  14400bps, V.8 */
+#define MODEM_SPEED_V8_14400 MODEM_MAKE_SPEED(MODEM_PROTOCOL_V8, MODEM_SPEED_14400)
+
+/** \brief  16800bps, V.8 */
+#define MODEM_SPEED_V8_16800 MODEM_MAKE_SPEED(MODEM_PROTOCOL_V8, MODEM_SPEED_16800)
+
+/** \brief  19200bps, V.8 */
+#define MODEM_SPEED_V8_19200 MODEM_MAKE_SPEED(MODEM_PROTOCOL_V8, MODEM_SPEED_19200)
+
+/** \brief  21600bps, V.8 */
+#define MODEM_SPEED_V8_21600 MODEM_MAKE_SPEED(MODEM_PROTOCOL_V8, MODEM_SPEED_21600)
+
+/** \brief  24000bps, V.8 */
+#define MODEM_SPEED_V8_24000 MODEM_MAKE_SPEED(MODEM_PROTOCOL_V8, MODEM_SPEED_24000)
+
+/** \brief  26400bps, V.8 */
+#define MODEM_SPEED_V8_26400 MODEM_MAKE_SPEED(MODEM_PROTOCOL_V8, MODEM_SPEED_26400)
+
+/** \brief  28000bps, V.8 */
+#define MODEM_SPEED_V8_28000 MODEM_MAKE_SPEED(MODEM_PROTOCOL_V8, MODEM_SPEED_28000)
+
+/** \brief  31200bps, V.8 */
+#define MODEM_SPEED_V8_31200 MODEM_MAKE_SPEED(MODEM_PROTOCOL_V8, MODEM_SPEED_31200)
+
+/** \brief  33600bps, V.8 */
+#define MODEM_SPEED_V8_33600 MODEM_MAKE_SPEED(MODEM_PROTOCOL_V8, MODEM_SPEED_33600)
+
+/** \brief  Automatically set speed, V.8 */
+#define MODEM_SPEED_V8_AUTO  MODEM_MAKE_SPEED(MODEM_PROTOCOL_V8, MODEM_SPEED_1200)
+/** @} */
+
+/** \brief  Modem event types.
+
+    These are teh events that a modem event handler should be expected to
+    receive at any given point in time.
+*/
 typedef enum
 {
-    MODEM_EVENT_CONNECTION_FAILED = 0, /* The modem tried to establish a connection but failed */
-    MODEM_EVENT_CONNECTED,             /* A connection has been established */
-    MODEM_EVENT_DISCONNECTED,          /* The remote modem dropped the connection */
-    MODEM_EVENT_RX_NOT_EMPTY,          /* New data has entered the previously empty receive buffer */
-    MODEM_EVENT_OVERFLOW,              /* The receive buffer overflowed and was cleared */
-    MODEM_EVENT_TX_EMPTY               /* The transmission buffer has been emptied */
+    /** \brief  The modem tried to establish a connection, but failed.*/
+    MODEM_EVENT_CONNECTION_FAILED = 0,
+
+    /** \brief  A connection has been established. */
+    MODEM_EVENT_CONNECTED,
+
+    /** \brief  The remote modem dropped the connection. */
+    MODEM_EVENT_DISCONNECTED,
+
+    /** \brief  New data has entered the previously empty receive buffer. */
+    MODEM_EVENT_RX_NOT_EMPTY,
+
+    /** \brief  The receive buffer overflowed and was cleared. */
+    MODEM_EVENT_OVERFLOW,
+
+    /** \brief  The transmit buffer has been emptied. */
+    MODEM_EVENT_TX_EMPTY
 } modemEvent_t;
 
+/** \brief  Type of a modem event handling function. */
 typedef void (*MODEMEVENTHANDLERPROC)(modemEvent_t event);
 
 /* From modem.c */
+/** \brief  Initialize the modem.
+
+    This function initializes the modem for use.
+
+    \retval 0               On failure.
+    \retval 1               On success.
+*/
 int           modem_init(void);
+
+/** \brief  Shut down the modem.
+
+    This function shuts down the modem after it has been initialized, resetting
+    all of the registers to their defaults.
+*/
 void          modem_shutdown(void);
+
+/** \brief  Set the modem up for the specified mode.
+
+    This function sets up the modem's registers for the specified mode and speed
+    combination.
+
+    \param  mode            The mode to use.
+    \param  speed           The speed to use.
+    \see    modem_modes
+    \see    modem_v22bis
+    \see    modem_v22
+    \see    modem_v32
+    \see    modem_v32bis
+    \see    modem_v8
+*/
 int           modem_set_mode(int mode, modem_speed_t speed);
+
+/** \brief  Wait for the modem to detect a dialtone.
+
+    This function waits for a dialtone to be detected on the modem.
+
+    \param  ms_timeout      The number of milliseconds to wait, in multiples of 100.
+    \retval 0               If a dialtone is detected before timeout.
+    \retval -1              If no dialtone is detected.
+*/
 int           modem_wait_dialtone(int ms_timeout);
+
+/** \brief  Dial the specified number on the modem.
+    \param  digits          The number to dial, as a string.
+    \retval 0               On failure.
+    \retval 1               On success.
+*/
 int           modem_dial(const char *digits);
+
+/** \brief  Set the event handler for the modem.
+
+    This function sets up an event handler for when things happen on the modem.
+
+    \param  eventHandler    The function to call when an event occurs.
+*/
 void          modem_set_event_handler(MODEMEVENTHANDLERPROC eventHandler);
+
+/** \brief  Disconnect the modem.
+
+    This function instructs the modem to disconnect from the remote modem.
+*/
 void          modem_disconnect(void);
+
+/** \brief  Check if the modem is connecting.
+    \return                 0 if the modem is not currently connecting, non-zero
+                            otherwise.
+*/
 int           modem_is_connecting(void);
+
+/** \brief  Check if the modem is connected.
+    \return                 0 if the modem is not currently connected, non-zero
+                            otherwise.
+*/
 int           modem_is_connected(void);
+
+/** \brief  Get the connection rate that the modem is connected at.
+    \return                 The connection rate in bits per second.
+*/
 unsigned long modem_get_connection_rate(void);
 
 /* From mdata.c */
+/** \brief  Read data from the modem buffers.
+    \param  data            The buffer to read into.
+    \param  size            The maximum number of bytes to read.
+    \return                 The actual number of bytes read.
+*/
 int modem_read_data(unsigned char *data, int size);
+
+/** \brief  Write data to the modem buffers.
+    \param  data            The buffer to write from.
+    \param  size            The maximum number of bytes to write.
+    \return                 The actual number of bytes written.
+*/
 int modem_write_data(unsigned char *data, int size);
+
+/** \brief  Check if the modem has data waiting to be read.
+    \return                 0 if no data available, non-zero otherwise.
+*/
 int modem_has_data(void);
 
 #endif
