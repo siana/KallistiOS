@@ -198,8 +198,10 @@ int net_ipv6_input(netif_t *src, const uint8 *pkt, int pktsize) {
             return net_icmp6_input(src, ip, pkt + sizeof(ipv6_hdr_t), len);
 
         default:
-            /* XXXX: Send a parameter problem */
-            return -1;
+            /* We don't know what to do with this packet, so send an ICMPv6
+               message indicating that. */
+            return net_icmp6_send_param_prob(src, ICMP6_PARAM_PROB_UNK_HEADER,
+                                             6, pkt, pktsize);
     }
 
     return 0;
@@ -218,6 +220,15 @@ uint16 net_ipv6_checksum_pseudo(const struct in6_addr *src,
        them in from header processing, do this the hard way. */
     memcpy(&ps.src_addr, src, sizeof(struct in6_addr));
     memcpy(&ps.dst_addr, dst, sizeof(struct in6_addr));
+
+    /* If this is actually an IPv4 packet, do the calculation there instead. */
+    if(IN6_IS_ADDR_V4MAPPED(&ps.src_addr) &&
+       IN6_IS_ADDR_V4MAPPED(&ps.dst_addr)) {
+        return net_ipv4_checksum_pseudo(ps.src_addr.__s6_addr.__s6_addr32[3],
+                                        ps.dst_addr.__s6_addr.__s6_addr32[3],
+                                        next_hdr, (uint16)upper_len);
+    }
+
     ps.upper_layer_len = htonl(upper_len);
     ps.next_header = next_hdr;
 
