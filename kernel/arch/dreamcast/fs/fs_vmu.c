@@ -481,14 +481,18 @@ static dirent_t *vmu_readdir(void * fd) {
 		
 	/* Ok, extract it and fill the dirent struct */
 	dir = dh->dirblocks + dh->entry;
-	if (dh->rootdir)
+	if (dh->rootdir) {
 		dh->dirent.size = -1;
-	else
+		dh->dirent.attr = O_DIR;
+	}
+	else {
 		dh->dirent.size = dir->filesize*512;
+		dh->dirent.attr = 0;
+	}
+
 	strncpy(dh->dirent.name, dir->filename, 12);
 	dh->dirent.name[12] = 0;
 	dh->dirent.time = 0;	/* FIXME */
-	dh->dirent.attr = 0;
 
 	/* Move to the next entry */
 	dh->entry++;

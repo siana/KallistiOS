@@ -85,6 +85,7 @@ static dirent_t *fs_root_readdir(fs_hnd_t * handle) {
 	if (nmhnd == NULL)
 		return NULL;
 
+	root_readdir_dirent.attr = O_DIR;
 	root_readdir_dirent.size = -1;
 	if (nmhnd->pathname[0] == '/')
 		strcpy(root_readdir_dirent.name, nmhnd->pathname+1);
