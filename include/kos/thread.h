@@ -1,8 +1,8 @@
 /* KallistiOS ##version##
 
    include/kos/thread.h
-   Copyright (C)2000,2001,2002,2003 Dan Potter
-   Copyright (C) 2009 Lawrence Sebald
+   Copyright (C) 2000, 2001, 2002, 2003 Dan Potter
+   Copyright (C) 2009, 2010 Lawrence Sebald
 
 */
 
@@ -109,18 +109,23 @@ typedef struct kthread {
 
 	/* Thread-local storage */
 	struct kthread_tls_kv_list tls_list;
+
+	/* Return value of the thread function */
+	void *rv;
 } kthread_t;
 
 /* Thread flag values */
-#define THD_DEFAULTS	0	/* Defaults: no flags */
-#define THD_USER	1	/* Thread runs in user mode */
-#define THD_QUEUED	2	/* Thread is in the run queue */
+#define THD_DEFAULTS    0   /* Defaults: no flags */
+#define THD_USER        1   /* Thread runs in user mode */
+#define THD_QUEUED      2   /* Thread is in the run queue */
+#define THD_DETACHED    4   /* Thread is detached */
 
 /* Thread state values */
-#define STATE_ZOMBIE		0x0000	/* Waiting to die */
-#define STATE_RUNNING		0x0001	/* Process is "current" */
-#define STATE_READY		0x0002	/* Ready to be scheduled */
-#define STATE_WAIT		0x0003	/* Blocked on a genwait */
+#define STATE_ZOMBIE    0x0000  /* Waiting to die */
+#define STATE_RUNNING   0x0001  /* Process is "current" */
+#define STATE_READY     0x0002  /* Ready to be scheduled */
+#define STATE_WAIT      0x0003  /* Blocked on a genwait */
+#define STATE_FINISHED  0x0004  /* Finished execution */
 
 /* Are threads cooperative or pre-emptive? */
 extern int thd_mode;
@@ -132,7 +137,6 @@ extern int thd_mode;
 extern kthread_t *thd_current;
 
 /* "Jiffy" count; just counts context switches */
-/* XXX: Deprecated! */
 extern vuint32 jiffies;
 
 /* Blocks the calling thread and performs a reschedule as if a context
@@ -165,7 +169,7 @@ int thd_remove_from_runnable(kthread_t *thd);
 /* New thread function; given a routine address, it will create a
    new kernel thread with a default stack. When the routine
    returns, the thread will exit. Returns the new thread id. */
-kthread_t *thd_create(void (*routine)(void *param), void *param);
+kthread_t *thd_create(int detach, void *(*routine)(void *param), void *param);
 
 /* Given a thread id, this function removes the thread from
    the execution chain. */
@@ -173,7 +177,7 @@ int thd_destroy(kthread_t *thd);
 
 /* Thread exit syscall (for use in user-mode processes, but can be used
    anywhere). */
-void thd_exit() __noreturn;
+void thd_exit(void *rv) __noreturn;
 
 /* Force a re-schedule; for most cases, you'll want to set front_of_line
    to zero, but read the comments in kernel/thread/thread.c for more
@@ -216,7 +220,10 @@ struct _reent * thd_get_reent(kthread_t *thd);
 int thd_set_mode(int mode);
 
 /* Wait for a thread to exit */
-int thd_wait(kthread_t * thd);
+int thd_join(kthread_t * thd, void **value_ptr);
+
+/* Detach a joinable thread */
+int thd_detach(kthread_t *thd);
 
 /* Print a list of all threads using the given print function. */
 int thd_pslist(int (*pf)(const char *fmt, ...));

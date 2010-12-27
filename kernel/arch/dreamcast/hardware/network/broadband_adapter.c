@@ -708,7 +708,7 @@ void bba_unlock() {
 }
 
 static int bcolor;
-static void bba_rx_threadfunc(void *dummy) {
+static void *bba_rx_threadfunc(void *dummy) {
 	while (!bba_rx_exit_thread) {
 		//sem_wait_timed(bba_rx_sema, 500);
 		sem_wait(bba_rx_sema);
@@ -733,6 +733,7 @@ static void bba_rx_threadfunc(void *dummy) {
 	bba_rx_exit_thread = 0;
 
 	printf("bba_rx_thread exiting ...\n");
+	return NULL;
 }
 
 static void bba_rx() {
@@ -925,7 +926,7 @@ static int bba_if_start(netif_t *self) {
 	assert( bba_rx_thread == NULL );
 	bba_rx_sema = sem_create(0);
 	bba_rx_sema2 = sem_create(1);
-	bba_rx_thread = thd_create(bba_rx_threadfunc, 0);
+	bba_rx_thread = thd_create(0, bba_rx_threadfunc, 0);
 	bba_rx_thread->prio = 1;
 	thd_set_label(bba_rx_thread, "BBA-rx-thd");
 
@@ -956,7 +957,7 @@ static int bba_if_stop(netif_t *self) {
 	bba_rx_exit_thread = 1;
 	sem_signal(bba_rx_sema);
 	sem_signal(bba_rx_sema2);
-	thd_wait(bba_rx_thread);
+	thd_join(bba_rx_thread, NULL);
 	sem_destroy(bba_rx_sema);
 	sem_destroy(bba_rx_sema2);
 

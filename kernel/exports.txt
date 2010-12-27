@@ -139,7 +139,8 @@ thd_schedule
 thd_schedule_next
 thd_sleep
 thd_pass
-thd_wait
+thd_join
+thd_detach
 thd_get_label
 thd_set_label
 thd_get_current

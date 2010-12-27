@@ -30,7 +30,7 @@ static kthread_t *thd;
 static int done = 0;
 static int cbid_top;
 
-static void net_thd_thd(void *data __attribute__((unused))) {
+static void *net_thd_thd(void *data __attribute__((unused))) {
     struct thd_cb *cb;
     uint64 now;
 
@@ -48,6 +48,8 @@ static void net_thd_thd(void *data __attribute__((unused))) {
         /* Go to sleep til we need to be run again. */
         thd_sleep(50);
     }
+
+    return NULL;
 }
 
 int net_thd_add_callback(void (*cb)(void *), void *data, uint64 timeout) {
@@ -107,7 +109,7 @@ int net_thd_init() {
     done = 0;
     cbid_top = 1;
 
-    thd = thd_create(&net_thd_thd, NULL);
+    thd = thd_create(0, &net_thd_thd, NULL);
 
     return 0;
 }
@@ -117,7 +119,7 @@ void net_thd_shutdown() {
 
     /* Kill the thread. */
     done = 1;
-    thd_wait(thd);
+    thd_join(thd, NULL);
 
     /* Free any handlers that we have laying around */
     c = TAILQ_FIRST(&cbs);

@@ -12,7 +12,7 @@ int pthread_create(pthread_t *thread, const pthread_attr_t  *attr,
 	assert( thread );
 	assert( start_routine );
 
-	nt = thd_create( (void (*)(void *))start_routine, arg );
+	nt = thd_create(0, start_routine, arg);
 	if (nt) {
 		*thread = nt;
 		return 0;
@@ -26,8 +26,7 @@ int pthread_create(pthread_t *thread, const pthread_attr_t  *attr,
 int pthread_join(pthread_t thread, void **value_ptr) {
 	assert( thread );
 
-	// XXX Need to get return value if value_ptr != NULL.
-	if (thd_wait(thread) < 0)
+	if (thd_join(thread, value_ptr) < 0)
 		return ESRCH;
 	else
 		return 0;
@@ -36,15 +35,23 @@ int pthread_join(pthread_t thread, void **value_ptr) {
 /* Detaching a Thread, P1003.1c/Draft 10, p. 149 */
 
 int pthread_detach(pthread_t thread) {
-	// Currently meaningless.
-	return 0;
+	int rv = thd_detach(thread);
+
+	if(rv == -3) {
+		return EINVAL;
+	}
+	else if(rv < 0) {
+		return ESRCH;
+	}
+	else {
+		return 0;
+	}
 }
 
 /* Thread Termination, p1003.1c/Draft 10, p. 150 */
 
 void pthread_exit(void *value_ptr) {
-	// XXX Need to get return value.
-	thd_exit();
+	thd_exit(value_ptr);
 }
 
 /* Get Calling Thread's ID, p1003.1c/Draft 10, p. XXX */
