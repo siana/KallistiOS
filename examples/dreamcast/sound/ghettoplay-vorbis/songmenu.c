@@ -104,7 +104,7 @@ static void draw_wave() {
 }
 
 
-static void load_song_list(void * p) {
+static void *load_song_list(void * p) {
 	file_t d;
 
 	d = fs_open(curdir, O_RDONLY | O_DIR);
@@ -117,7 +117,7 @@ static void load_song_list(void * p) {
 			strcpy(entries[0].fn,"Error!");
 			entries[0].size = 0;
 			mutex_unlock(mut);
-			return;
+			return NULL;
 		}
 	}
 	{
@@ -142,6 +142,7 @@ static void load_song_list(void * p) {
 	}
 	fs_close(d);
 	load_queued = 0;
+	return NULL;
 }
 
 /* Draws the song listing */
@@ -406,7 +407,7 @@ void song_menu_render() {
 	/* If we don't have a file listing, get it now */
 	if (num_entries == 0 && !load_queued) {
 		load_queued = 1;
-		thd_create(load_song_list, NULL);
+		thd_create(1, load_song_list, NULL);
 	}
 
 	/* if (load_queued)

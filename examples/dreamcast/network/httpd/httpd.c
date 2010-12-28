@@ -207,7 +207,7 @@ int do_dirlist(const char * name, http_state_t * hs, file_t f) {
 
 #define BUFSIZE (256*1024)
 
-void client_thread(void *p) {
+void *client_thread(void *p) {
 	http_state_t * hs = (http_state_t *)p;
 	char * buf, * ext;
 	const char * ct;
@@ -277,6 +277,7 @@ out:
 	st_destroy(hs);
 	if (f >= 0)
 		fs_close(f);
+	return NULL;
 }
 
 /**********************************************************************/
@@ -361,7 +362,7 @@ void httpd(void) {
 			if (hs->socket < 0) {
 				st_destroy(hs);
 			} else {
-				hs->thd = thd_create(client_thread, hs);
+				hs->thd = thd_create(1, client_thread, hs);
 				// hs->thd = sys_thread_new(client_thread, hs, 0);
 			}
 			/* else if (ioctl(hs->socket, FIONBIO, &tmp) < 0) {
