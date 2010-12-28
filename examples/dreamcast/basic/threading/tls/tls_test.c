@@ -32,7 +32,7 @@ void once_func(void) {
     }
 }
 
-void thd_func(void *param UNUSED) {
+void *thd_func(void *param UNUSED) {
     kthread_t *cur = thd_get_current();
     void *data;
 
@@ -47,7 +47,7 @@ void thd_func(void *param UNUSED) {
     printf("Thd %d: Writing to key 2\n", cur->tid);
     if(kthread_setspecific(key2, (void *)cur->tid)) {
         printf("Error in kthread_setspecific!!!\n");
-        thd_exit();
+        thd_exit(NULL);
     }
 
     if(cur->tid & 0x01) {
@@ -59,6 +59,7 @@ void thd_func(void *param UNUSED) {
     data = kthread_getspecific(key2);
     printf("Thd %d: kthread_getspecific returned %d (should be %d)\n", cur->tid,
            (int)data, cur->tid);
+    return NULL;
 }
 
 KOS_INIT_FLAGS(INIT_DEFAULT);
@@ -68,7 +69,7 @@ int main(int argc, char *argv[]) {
     void *data;
 
     cont_btn_callback(0, CONT_START | CONT_A | CONT_B | CONT_X | CONT_Y,
-                      arch_exit);
+                      (cont_btn_callback_t)arch_exit);
 
     printf("KallistiOS TLS test program\n");
 
@@ -85,12 +86,12 @@ int main(int argc, char *argv[]) {
 
     /* Create the threads. */
     printf("Main therad: Creating 2 threads\n");
-    thds[0] = thd_create(&thd_func, NULL);
-    thds[1] = thd_create(&thd_func, NULL);
+    thds[0] = thd_create(0, &thd_func, NULL);
+    thds[1] = thd_create(0, &thd_func, NULL);
 
     printf("Main thread: Waiting for the threads to finish\n");
-    thd_wait(thds[0]);
-    thd_wait(thds[1]);
+    thd_join(thds[0], NULL);
+    thd_join(thds[1], NULL);
 
     data = kthread_getspecific(key1);
     printf("Main thread: Key 1 value: %p\n", data);

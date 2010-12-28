@@ -22,7 +22,7 @@
 
 recursive_lock_t *l = NULL;
 
-void thd0(void *param UNUSED) {
+void *thd0(void *param UNUSED) {
     int i;
 
     printf("Thd 0: About to obtain lock 10 times\n");
@@ -47,9 +47,10 @@ void thd0(void *param UNUSED) {
     printf("Thd 0: Awake, about to release lock\n");
     rlock_unlock(l);
     printf("Thd 0: done\n");
+    return NULL;
 }
 
-void thd1(void *param UNUSED) {
+void *thd1(void *param UNUSED) {
     printf("Thd 1: About to obtain lock 2 times\n");
     rlock_lock(l);
     rlock_lock(l);
@@ -67,9 +68,10 @@ void thd1(void *param UNUSED) {
     printf("Thd 1: About to release lock\n");
     rlock_unlock(l);
     printf("Thd 1: done\n");
+    return NULL;
 }
 
-void thd2(void *param UNUSED) {
+void *thd2(void *param UNUSED) {
     int i;
 
     printf("Thd 2: About to obtain lock 200 times\n");
@@ -85,6 +87,7 @@ void thd2(void *param UNUSED) {
     }
 
     printf("Thd 2: done\n");
+    return NULL;
 }
 
 KOS_INIT_FLAGS(INIT_DEFAULT);
@@ -94,7 +97,7 @@ int main(int argc, char *argv[]) {
 
     /* Exit if the user presses all buttons at once. */
     cont_btn_callback(0, CONT_START | CONT_A | CONT_B | CONT_X | CONT_Y,
-                      arch_exit);
+                      (cont_btn_callback_t)arch_exit);
 
     printf("KallistiOS Recursive Lock test program\n");
 
@@ -107,14 +110,14 @@ int main(int argc, char *argv[]) {
     }
 
     printf("About to create threads\n");
-    t0 = thd_create(thd0, NULL);
-    t1 = thd_create(thd1, NULL);
-    t2 = thd_create(thd2, NULL);
+    t0 = thd_create(0, thd0, NULL);
+    t1 = thd_create(0, thd1, NULL);
+    t2 = thd_create(0, thd2, NULL);
 
     printf("About to sleep\n");
-    thd_wait(t0);
-    thd_wait(t1);
-    thd_wait(t2);
+    thd_join(t0, NULL);
+    thd_join(t1, NULL);
+    thd_join(t2, NULL);
 
     if(rlock_is_locked(l)) {
         printf("Lock is still locked!\n");

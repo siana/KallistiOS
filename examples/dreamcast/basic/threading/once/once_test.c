@@ -28,12 +28,13 @@ void once_func(void) {
     ++counter;
 }
 
-void thd_func(void *param UNUSED) {
+void *thd_func(void *param UNUSED) {
     kthread_t *cur = thd_get_current();
 
     printf("Thd %d: Attempting to call kthread_once\n", cur->tid);
     kthread_once(&once, &once_func);
     printf("Thd %d: kthread_once returned\n", cur->tid);
+    return NULL;
 }
 
 KOS_INIT_FLAGS(INIT_DEFAULT);
@@ -43,19 +44,19 @@ int main(int argc, char *argv[]) {
     kthread_t *thds[THD_COUNT];
 
     cont_btn_callback(0, CONT_START | CONT_A | CONT_B | CONT_X | CONT_Y,
-                      arch_exit);
+                      (cont_btn_callback_t)arch_exit);
 
     printf("KallistiOS kthread_once test program\n");
 
     /* Create the threads. */
     printf("Creating %d threads\n", THD_COUNT);
     for(i = 0; i < THD_COUNT; ++i) {
-        thds[i] = thd_create(&thd_func, NULL);
+        thds[i] = thd_create(0, &thd_func, NULL);
     }
 
     printf("Waiting for the threads to finish\n");
     for(i = 0; i < THD_COUNT; ++i) {
-        thd_wait(thds[i]);
+        thd_join(thds[i], NULL);
     }
 
     printf("Final counter value: %d (expected 1)\n", counter);

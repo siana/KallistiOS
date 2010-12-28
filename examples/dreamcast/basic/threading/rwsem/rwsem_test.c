@@ -25,13 +25,13 @@
 rw_semaphore_t *s = NULL;
 uint32 number = 0;
 
-void writer0(void *param UNUSED) {
+void *writer0(void *param UNUSED) {
     int i;
 
     for(i = 0; i < 20; ++i) {
         if(rwsem_write_lock(s)) {
             printf("Writer 0 could not obtain write lock!\n");
-            return;
+            return NULL;
         }
 
         printf("Writer 0 obtained write lock\n");
@@ -42,15 +42,16 @@ void writer0(void *param UNUSED) {
     }
 
     printf("Writer 0 done\n");
+    return NULL;
 }
 
-void writer1(void *param UNUSED) {
+void *writer1(void *param UNUSED) {
     int i;
 
     for(i = 0; i < 17; ++i) {
         if(rwsem_write_lock(s)) {
             printf("Writer 1 could not obtain write lock!\n");
-            return;
+            return NULL;
         }
 
         printf("Writer 1 obtained write lock\n");
@@ -61,15 +62,16 @@ void writer1(void *param UNUSED) {
     }
 
     printf("Writer 1 done\n");
+    return NULL;
 }
 
-void reader0(void *param UNUSED) {
+void *reader0(void *param UNUSED) {
     int i;
 
     for(i = 0; i < 12; ++i) {
         if(rwsem_read_lock(s)) {
             printf("Reader 0 could not obtain read lock!\n");
-            return;
+            return NULL;
         }
 
         printf("Reader 0 obtained read lock\n");
@@ -80,15 +82,16 @@ void reader0(void *param UNUSED) {
     }
 
     printf("Reader 0 done\n");
+    return NULL;
 }
 
-void reader1(void *param UNUSED) {
+void *reader1(void *param UNUSED) {
     int i;
 
     for(i = 0; i < 23; ++i) {
         if(rwsem_read_lock(s)) {
             printf("Reader 1 could not obtain read lock!\n");
-            return;
+            return NULL;
         }
 
         printf("Reader 1 obtained read lock\n");
@@ -99,6 +102,7 @@ void reader1(void *param UNUSED) {
     }
 
     printf("Reader 1 done\n");
+    return NULL;
 }
 
 KOS_INIT_FLAGS(INIT_DEFAULT);
@@ -107,7 +111,7 @@ int main(int argc, char *argv[]) {
 
     /* Exit if the user presses all buttons at once. */
     cont_btn_callback(0, CONT_START | CONT_A | CONT_B | CONT_X | CONT_Y,
-                      arch_exit);
+                      (cont_btn_callback_t)arch_exit);
 
     printf("KallistiOS Reader/Writer Semaphore test program\n");
 
@@ -120,16 +124,16 @@ int main(int argc, char *argv[]) {
     }
 
     printf("About to create threads\n");
-    w0 = thd_create(writer0, NULL);
-    w1 = thd_create(writer1, NULL);
-    r0 = thd_create(reader0, NULL);
-    r1 = thd_create(reader1, NULL);
+    w0 = thd_create(0, writer0, NULL);
+    w1 = thd_create(0, writer1, NULL);
+    r0 = thd_create(0, reader0, NULL);
+    r1 = thd_create(0, reader1, NULL);
 
     printf("About to sleep\n");
-    thd_wait(w0);
-    thd_wait(w1);
-    thd_wait(r0);
-    thd_wait(r1);
+    thd_join(w0, NULL);
+    thd_join(w1, NULL);
+    thd_join(r0, NULL);
+    thd_join(r1, NULL);
 
     if(rwsem_read_lock(s)) {
         printf("Could not obtain final read lock!\n");
