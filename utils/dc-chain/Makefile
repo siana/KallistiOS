@@ -3,9 +3,9 @@
 # adapted from Stalin's build script version 0.3
 #
 # Interesting parameters:
-# erase=0|1                   Erase build directories on the fly to save space
-# thread_model=posix|single   Set gcc threading model
-# verbose=0|1                 Display  
+# erase=0|1                     Erase build directories on the fly to save space
+# thread_model=posix|single|kos Set gcc threading model
+# verbose=0|1                   Display  
 #
 # Interesting targets (you can 'make' any of these):
 # all: patch build
@@ -28,14 +28,23 @@ arm_prefix := /opt/toolchains/dc/$(arm_target)
 kos_root=$(CURDIR)/../../..
 # kos_base: equivalent of KOS_BASE (contains include/ and kernel/)
 kos_base=$(kos_root)/kos
-binutils_ver=2.17
-gcc_ver=3.4.6
-newlib_ver=1.15.0
+binutils_ver=2.21
+gcc_ver=4.5.2
+newlib_ver=1.19.0
 gdb_ver=6.7.1
 insight_ver=6.7.1
-thread_model=posix
+# With GCC 4.x versions, the patches provide a kos thread model, so you should
+# use it. With 3.4.6, you probably want posix here. If you really don't want
+# threading support for C++ (or Objective C/Objective C++), you can set this to
+# single (why you would is beyond me, though).
+thread_model=kos
 erase=0
-verbose=0
+verbose=1
+# Set the languages to build for pass 2 of building gcc for sh-elf. The default
+# here is to build C, C++, Objective C, and Objective C++. You may want to take
+# out the latter two if you're not worried about them and/or you're short on
+# hard drive space.
+pass2_languages=c,c++,objc,obj-c++
 
 # Makefile variables
 install=$(prefix)/bin
@@ -92,7 +101,7 @@ build_sh4_targets=build-sh4-binutils build-sh4-gcc build-sh4-gcc-pass1 build-sh4
 build_arm_targets=build-arm-binutils build-arm-gcc build-arm-gcc-pass1
 $(build_sh4_targets): prefix = $(sh_prefix)
 $(build_sh4_targets): target = $(sh_target)
-$(build_sh4_targets): extra_configure_args = 
+$(build_sh4_targets): extra_configure_args = --with-multilib-list=m4-single-only,m4-nofpu,m4 --with-endian=little --with-cpu=m4-single-only
 $(build_arm_targets): prefix = $(arm_prefix)
 $(build_arm_targets): target = $(arm_target)
 $(build_arm_targets): extra_configure_args = --with-arch=armv4
@@ -115,9 +124,8 @@ $(build_binutils): logdir
 	@echo "+++ Building $(src_dir) to $(build)..."
 	-mkdir -p $(build)
 	> $(log)
-	cd $(build); ../$(src_dir)/configure --target=$(target) --prefix=$(prefix) $(to_log)
+	cd $(build); ../$(src_dir)/configure --target=$(target) --prefix=$(prefix) --enable-install-libbfd $(to_log)
 	make -C $(build) all install DESTDIR=$(DESTDIR) $(to_log) 
-	make -C $(build)/bfd install_libbfd DESTDIR=$(DESTDIR) $(to_log)
 	$(clean_up)
 
 $(build_gcc_pass1) $(build_gcc_pass2): build = build-gcc-$(target)-$(gcc_ver)
@@ -127,8 +135,8 @@ $(build_gcc_pass1): logdir
 	@echo "+++ Building $(src_dir) to $(build) (pass 1)..."
 	-mkdir -p $(build)
 	> $(log)
-	cd $(build);  ../$(src_dir)/configure --target=$(target) --prefix=$(prefix) --without-headers --with-newlib --enable-languages=c $(extra_configure_args) $(to_log)
-	make -C $(build) all-gcc install-gcc DESTDIR=$(DESTDIR) $(to_log)
+	cd $(build);  ../$(src_dir)/configure --target=$(target) --prefix=$(prefix) --without-headers --with-newlib --enable-languages=c --disable-libssp --disable-tls $(extra_configure_args) $(to_log)
+	make -C $(build) all install DESTDIR=$(DESTDIR) $(to_log)
 
 $(build_newlib): build = build-newlib-$(target)-$(newlib_ver)
 $(build_newlib): src_dir = newlib-$(newlib_ver)
@@ -137,10 +145,8 @@ $(build_newlib): logdir
 	@echo "+++ Building $(src_dir) to $(build)..."
 	-mkdir -p $(build)
 	> $(log)
-	cd $(build); ../$(src_dir)/configure --target=$(target) --prefix=$(prefix) $(to_log)
-	make -C $(build) all install CC_FOR_TARGET=$(install)/$(target)-gcc AS_FOR_TARGET=$(install)/$(target)-as \
-	        LD_FOR_TARGET=$(install)/$(target)-ld AR_FOR_TARGET=$(install)/$(target)-ar \
-	        RANLIB_FOR_TARGET=$(install)/$(target)-ranlib DESTDIR=$(DESTDIR) $(to_log)
+	cd $(build); ../$(src_dir)/configure --target=$(target) --prefix=$(prefix) $(extra_configure_args) $(to_log)
+	make -C $(build) all install DESTDIR=$(DESTDIR) $(to_log)
 	$(clean_up)
 
 fixup-sh4-newlib: newlib_inc=$(DESTDIR)$(sh_prefix)/$(sh_target)/include
@@ -164,8 +170,8 @@ $(build_gcc_pass2): logdir
 	@echo "+++ Building $(src_dir) to $(build) (pass 2)..."
 	-mkdir -p $(build)
 	> $(log)
-	cd $(build);  ../$(src_dir)/configure --target=$(target) --prefix=$(prefix) --with-newlib \
-	   --enable-threads=$(thread_model) --enable-languages=c,c++ $(to_log)
+	cd $(build);  ../$(src_dir)/configure --target=$(target) --prefix=$(prefix) --with-newlib --disable-libssp --disable-tls \
+	   --enable-threads=$(thread_model) --enable-languages=$(pass2_languages) $(extra_configure_args) $(to_log)
 	make -C $(build) all install DESTDIR=$(DESTDIR) $(to_log)
 	$(clean_up)
 
