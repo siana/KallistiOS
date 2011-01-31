@@ -1,4 +1,4 @@
-dc-chain 0.1
+dc-chain 0.3
 ------------
 
 This package contains a Makefile which both simplifies building the Dreamcast
@@ -22,4 +22,7 @@ its path in the Makefile, because some KOS includes are copied over to newlib.
 Finally, run make.  If anything goes wrong, check the output in logs/.
 
 Some patches are included in this package as well.  As of this writing,
-they patch newlib to work with KOS and gcc-3.4.6 to use POSIX threads.
+they patch newlib-1.19.0 and gcc-4.5.2 to work with KOS.
+
+You should not attempt to spawn multiple jobs with make. Using "make -j2" or any
+other number after the -j will probably break things.
