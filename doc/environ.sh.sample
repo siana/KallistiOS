@@ -55,6 +55,13 @@ export PATH="${PATH}:${KOS_CC_BASE}/bin:/usr/local/dc/bin"
 # Manually add our second addons tree
 export KOS_INC_PATHS="-I${KOS_BASE}/../kos-ports/include"
 
+# reset some options because there's no reason for them to persist across
+# multiple sourcing of this
+export KOS_CFLAGS=""
+export KOS_CPPFLAGS=""
+export KOS_LDFLAGS=""
+export KOS_AFLAGS=""
+
 # Setup some default CFLAGS for compilation. The things that will go here
 # are user specifyable, like optimization level and whether you want stack
 # traces enabled. Some platforms may have optimization restrictions,
