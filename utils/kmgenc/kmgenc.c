@@ -90,8 +90,7 @@ static void convert_to_16(image_t * img) {
 			out[i] = le16(PACK4444(fc.a, fc.r, fc.g, fc.b));
 			break;
 		case 2:
-			// out[i] = le16(PACK1555(fc.a, fc.r, fc.g, fc.b));
-			exit(-1);
+			out[i] = le16(PACK1555(fc.a, fc.r, fc.g, fc.b));
 			break;
 		}
 	}

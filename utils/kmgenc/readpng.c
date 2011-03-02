@@ -11,6 +11,7 @@
 #include <stdlib.h>
 
 #include <png.h>        /* libpng header; includes zlib.h */
+#include <zlib.h>
 #include "readpng.h"    /* typedefs, common macros, public prototypes */
 
 static png_structp png_ptr = NULL;
