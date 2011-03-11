@@ -21,10 +21,19 @@ Thanks to Marcus Comstedt for the bios font information.
 
 All the Japanese code is by Kazuaki Matsumoto.
 
+Foreground/background color switching based on code by Chilly Willy.
+
 */
 
 /* Our current conversion mode */
-int bfont_code_mode = BFONT_CODE_ISO8859_1;
+static int bfont_code_mode = BFONT_CODE_ISO8859_1;
+
+/* Current colors/pixel format. Default to white foreground, black background
+   and 16-bit drawing, so the default behavior doesn't change from what it has
+   been forever. */
+static uint32 bfont_fgcolor = 0xFFFFFFFF;
+static uint32 bfont_bgcolor = 0x00000000;
+static int bfont_32bit = 0;
 
 /* Select an encoding for Japanese (or disable) */
 void bfont_set_encoding(int enc) {
@@ -32,6 +41,27 @@ void bfont_set_encoding(int enc) {
 		assert_msg( 0, "Unknown bfont encoding mode" );
 	}
 	bfont_code_mode = enc;
+}
+
+/* Set the foreground color and return the old color */
+uint32 bfont_set_foreground_color(uint32 c) {
+	uint32 rv = bfont_fgcolor;
+	bfont_fgcolor = c;
+	return rv;
+}
+
+/* Set the background color and return the old color */
+uint32 bfont_set_background_color(uint32 c) {
+	uint32 rv = bfont_bgcolor;
+	bfont_bgcolor = c;
+	return rv;
+}
+
+/* Set the font to draw in 32 or 16 bit mode */
+int bfont_set_32bit_mode(int on) {
+	int rv = bfont_32bit;
+	bfont_32bit = !!on;
+	return rv;
 }
 
 /* A little assembly that grabs the font address */
@@ -132,7 +162,7 @@ uint8 *bfont_find_char_jp_half(int ch) {
 }
 
 /* Draw half-width kana */
-void bfont_draw_thin(uint16 *buffer, int bufwidth, int opaque, int c, int iskana) {
+void bfont_draw_thin(void *b, int bufwidth, int opaque, int c, int iskana) {
 	uint8	*ch;
 	uint16	word;
 	int	x, y;
@@ -142,77 +172,152 @@ void bfont_draw_thin(uint16 *buffer, int bufwidth, int opaque, int c, int iskana
 	else
 		ch = bfont_find_char(c);
 
-	for (y=0; y<24; ) {
-		/* Do the first row */
-		word = (((uint16)ch[0]) << 4) | ((ch[1] >> 4) & 0x0f);
-		for (x=0; x<12; x++) {
-			if (word & (0x0800 >> x))
-				*buffer = 0xffff;
-			else {
-				if (opaque)
-					*buffer = 0x0000;
-			}
-			buffer++;
-		}
-		buffer += bufwidth - 12;
-		y++;
+	if (!bfont_32bit) {
+		uint16 *buffer = (uint16 *)b;
 
-		/* Do the second row */
-		word = ( (((uint16)ch[1]) << 8) & 0xf00 ) | ch[2];
-		for (x=0; x<12; x++) {
-			if (word & (0x0800 >> x))
-				*buffer = 0xffff;
-			else {
-				if (opaque)
-					*buffer = 0x0000;
+		for (y=0; y<24; ) {
+			/* Do the first row */
+			word = (((uint16)ch[0]) << 4) | ((ch[1] >> 4) & 0x0f);
+			for (x=0; x<12; x++) {
+				if (word & (0x0800 >> x))
+					*buffer = bfont_fgcolor;
+				else {
+					if (opaque)
+						*buffer = bfont_bgcolor;
+				}
+				buffer++;
 			}
-			buffer++;
-		}
-		buffer += bufwidth - 12;
-		y++;
+			buffer += bufwidth - 12;
+			y++;
 
-		ch += 3;
+			/* Do the second row */
+			word = ( (((uint16)ch[1]) << 8) & 0xf00 ) | ch[2];
+			for (x=0; x<12; x++) {
+				if (word & (0x0800 >> x))
+					*buffer = bfont_fgcolor;
+				else {
+					if (opaque)
+						*buffer = bfont_bgcolor;
+				}
+				buffer++;
+			}
+			buffer += bufwidth - 12;
+			y++;
+
+			ch += 3;
+		}
+	}
+	else {
+		uint32 *buffer = (uint32 *)b;
+
+		for (y=0; y<24; ) {
+			/* Do the first row */
+			word = (((uint16)ch[0]) << 4) | ((ch[1] >> 4) & 0x0f);
+			for (x=0; x<12; x++) {
+				if (word & (0x0800 >> x))
+					*buffer = bfont_fgcolor;
+				else {
+					if (opaque)
+						*buffer = bfont_bgcolor;
+				}
+				buffer++;
+			}
+			buffer += bufwidth - 12;
+			y++;
+
+			/* Do the second row */
+			word = ( (((uint16)ch[1]) << 8) & 0xf00 ) | ch[2];
+			for (x=0; x<12; x++) {
+				if (word & (0x0800 >> x))
+					*buffer = bfont_fgcolor;
+				else {
+					if (opaque)
+						*buffer = bfont_bgcolor;
+				}
+				buffer++;
+			}
+			buffer += bufwidth - 12;
+			y++;
+
+			ch += 3;
+		}
 	}
 }
 
 /* Compat function */
-void bfont_draw(uint16 *buffer, int bufwidth, int opaque, int c) {
+void bfont_draw(void *buffer, int bufwidth, int opaque, int c) {
 	bfont_draw_thin(buffer, bufwidth, opaque, c, 0);
 }
 
 /* Draw wide character */
-void bfont_draw_wide(uint16 *buffer, int bufwidth, int opaque, int c) {
+void bfont_draw_wide(void *b, int bufwidth, int opaque, int c) {
 	uint8	*ch = bfont_find_char_jp(c);
 	uint16	word;
 	int	x, y;
 
-	for (y=0; y<24; ) {
-		/* Do the first row */
-		word = (((uint16)ch[0]) << 4) | ((ch[1] >> 4) & 0x0f);
-		for (x=0; x<12; x++) {
-			if (word & (0x0800 >> x))
-				*buffer = 0xffff;
-			else {
-				if (opaque)
-					*buffer = 0x0000;
-			}
-			buffer++;
-		}
+	if (!bfont_32bit) {
+		uint16 *buffer = (uint16 *)b;
 
-		word = ( (((uint16)ch[1]) << 8) & 0xf00 ) | ch[2];
-		for (x=0; x<12; x++) {
-			if (word & (0x0800 >> x))
-				*buffer = 0xffff;
-			else {
-				if (opaque)
-				*buffer = 0x0000;
+		for (y=0; y<24; ) {
+			/* Do the first row */
+			word = (((uint16)ch[0]) << 4) | ((ch[1] >> 4) & 0x0f);
+			for (x=0; x<12; x++) {
+				if (word & (0x0800 >> x))
+					*buffer = bfont_fgcolor;
+				else {
+					if (opaque)
+						*buffer = bfont_bgcolor;
+				}
+				buffer++;
 			}
-			buffer++;
-		}
-		buffer += bufwidth - 24;
-		y++;
 
-		ch += 3;
+			word = ( (((uint16)ch[1]) << 8) & 0xf00 ) | ch[2];
+			for (x=0; x<12; x++) {
+				if (word & (0x0800 >> x))
+					*buffer = bfont_fgcolor;
+				else {
+					if (opaque)
+					*buffer = bfont_bgcolor;
+				}
+				buffer++;
+			}
+			buffer += bufwidth - 24;
+			y++;
+
+			ch += 3;
+		}
+	}
+	else {
+		uint32 *buffer = (uint32 *)b;
+
+		for (y=0; y<24; ) {
+			/* Do the first row */
+			word = (((uint16)ch[0]) << 4) | ((ch[1] >> 4) & 0x0f);
+			for (x=0; x<12; x++) {
+				if (word & (0x0800 >> x))
+					*buffer = bfont_fgcolor;
+				else {
+					if (opaque)
+						*buffer = bfont_bgcolor;
+				}
+				buffer++;
+			}
+			
+			word = ( (((uint16)ch[1]) << 8) & 0xf00 ) | ch[2];
+			for (x=0; x<12; x++) {
+				if (word & (0x0800 >> x))
+					*buffer = bfont_fgcolor;
+				else {
+					if (opaque)
+						*buffer = bfont_bgcolor;
+				}
+				buffer++;
+			}
+			buffer += bufwidth - 24;
+			y++;
+			
+			ch += 3;
+		}
 	}
 }
 
@@ -220,8 +325,10 @@ void bfont_draw_wide(uint16 *buffer, int bufwidth, int opaque, int c) {
 /* Draw string of full-width (wide) and half-width (thin) characters
    Note that this handles the case of mixed encodings unless Japanese
    support is disabled (BFONT_CODE_ISO8859_1). */
-void bfont_draw_str(uint16 *buffer, int width, int opaque, char *str) {
+void bfont_draw_str(void *b, int width, int opaque, char *str) {
 	uint16 nChr, nMask, nFlag;
+	int adv = bfont_32bit ? 48 : 24;    /* Amount to advance, in bytes */
+	uint8 *buffer = (uint8 *)b;
 
 	while (*str) {
 		nFlag = 0;
@@ -250,14 +357,14 @@ void bfont_draw_str(uint16 *buffer, int width, int opaque, char *str) {
 				str++;
 				nChr = (nChr << 8) | (*str & 0xff);
 				bfont_draw_wide(buffer, width, opaque, nChr);
-				buffer += 24;
+				buffer += adv + adv;
 			} else {
 				bfont_draw_thin(buffer, width, opaque, nChr, 1);
-				buffer += 12;
+				buffer += adv;
 			}
 		} else {
 			bfont_draw_thin(buffer, width, opaque, nChr, 0);
-			buffer += 12;
+			buffer += adv;
 		}
 		str++;
 	}

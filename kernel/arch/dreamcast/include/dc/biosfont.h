@@ -14,7 +14,7 @@
     Japanese characters.
 
     \author Dan Potter
-    \author Kazuaki Matsumoto 
+    \author Kazuaki Matsumoto
 */
 
 #ifndef __DC_BIOSFONT_H
@@ -24,6 +24,38 @@
 __BEGIN_DECLS
 
 #include <arch/types.h>
+
+/** \brief  Set the font foreground color.
+
+    This function selects the foreground color to draw when a pixel is opaque in
+    the font. The value passed in for the color should be in whatever pixel
+    format that you intend to use for the image produced.
+
+    \param  c               The color to use.
+    \return                 The old foreground color.
+*/
+uint32 bfont_set_foreground_color(uint32 c);
+
+/** \brief  Set the font background color.
+
+    This function selects the background color to draw when a pixel is drawn in
+    the font. This color is only used for pixels not covered by the font when
+    you have selected to have the font be opaque.
+
+    \param  c               The color to use.
+    \return                 The old background color.
+*/
+uint32 bfont_set_background_color(uint32 c);
+
+/** \brief  Set the font to draw 32-bit color.
+
+    This function changes whether the font draws colors as 32-bit or 16-bit. The
+    default is to use 16-bit.
+
+    \param  on              Set to 0 to use 16-bit color, 32-bit otherwise.
+    \return                 The old state (1 = 32-bit, 0 = 16-bit).
+*/
+int bfont_set_32bit_mode(int on);
 
 /* Constants for the function below */
 #define BFONT_CODE_ISO8859_1    0	/**< \brief ISO-8859-1 (western) charset */
@@ -85,40 +117,40 @@ uint8 *bfont_find_char_jp_half(int ch);
     buffer. Calling this is equivalent to calling bfont_draw_thin() with 0 for
     the final parameter.
 
-    \param  buffer          The buffer to draw to (at least 12 x 24 uint16s)
+    \param  buffer          The buffer to draw to (at least 12 x 24 pixels)
     \param  bufwidth        The width of the buffer in pixels
     \param  opaque          If non-zero, overwrite blank areas with black,
                             otherwise do not change them from what they are
     \param  c               The character to draw
 */
-void bfont_draw(uint16 *buffer, int bufwidth, int opaque, int c);
+void bfont_draw(void *buffer, int bufwidth, int opaque, int c);
 
 /** \brief  Draw a single thin character to a buffer.
  
     This function draws a single character in the set encoding to the given
     buffer. This only works with ISO-8859-1 characters and half-width kana.
 
-    \param  buffer          The buffer to draw to (at least 12 x 24 uint16s)
+    \param  buffer          The buffer to draw to (at least 12 x 24 pixels)
     \param  bufwidth        The width of the buffer in pixels
     \param  opaque          If non-zero, overwrite blank areas with black,
                             otherwise do not change them from what they are
     \param  c               The character to draw
     \param  iskana          Set to 1 if the character is a kana, 0 if ISO-8859-1
 */
-void bfont_draw_thin(uint16 *buffer, int bufwidth, int opaque, int c, int iskana);
+void bfont_draw_thin(void *buffer, int bufwidth, int opaque, int c, int iskana);
 
 /** \brief  Draw a single wide character to a buffer.
 
     This function draws a single character in the set encoding to the given
     buffer. This only works with full-width kana and kanji.
 
-    \param  buffer          The buffer to draw to (at least 24 x 24 uint16s)
+    \param  buffer          The buffer to draw to (at least 24 x 24 pixels)
     \param  bufwidth        The width of the buffer in pixels
     \param  opaque          If non-zero, overwrite blank areas with black,
                             otherwise do not change them from what they are
     \param  c               The character to draw
 */
-void bfont_draw_wide(uint16 *buffer, int bufwidth, int opaque, int c);
+void bfont_draw_wide(void *buffer, int bufwidth, int opaque, int c);
 
 /** \brief  Draw a full string to a buffer.
 
@@ -132,7 +164,7 @@ void bfont_draw_wide(uint16 *buffer, int bufwidth, int opaque, int c);
                             otherwise do not change them from what they are
     \param  str             The string to draw
 */
-void bfont_draw_str(uint16 *buffer, int width, int opaque, char *str);
+void bfont_draw_str(void *buffer, int width, int opaque, char *str);
 
 __END_DECLS
 
