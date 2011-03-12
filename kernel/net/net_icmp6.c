@@ -36,27 +36,24 @@ Message types that are not implemented yet (if ever):
     Any other numbers not listed in the first list...
 */
 
-struct ping_pkt {
-    LIST_ENTRY(ping_pkt) pkt_list;
-    struct in6_addr ip;
-    uint8 *data;
-    int data_sz;
-    uint16 icmp_seq;
-    uint64 usec;
-};
-
-LIST_HEAD(ping_pkt_list, ping_pkt);
-
-static struct ping_pkt_list pings = LIST_HEAD_INITIALIZER(0);
-
 static void icmp6_default_echo_cb(const struct in6_addr *ip, uint16 seq,
                                   uint64 delta_us, uint8 hlim,
                                   const uint8 *data, int data_sz) {
     char ipstr[INET6_ADDRSTRLEN];
+    struct in6_addr a;
 
-    printf("%d bytes from %s, icmp_seq=%d hlim=%d time=%.3f ms\n", data_sz,
-           inet_ntop(AF_INET6, ip, ipstr, INET6_ADDRSTRLEN), seq, hlim,
-           delta_us / 1000.0);
+    /* Copy the address to prevent unaligned accesses... */
+    memcpy(&a, ip, sizeof(struct in6_addr));
+    inet_ntop(AF_INET6, &a, ipstr, INET6_ADDRSTRLEN);
+
+    if(delta_us != (uint64)-1) {
+        printf("%d bytes from %s, icmp_seq=%d hlim=%d time=%.3f ms\n", data_sz,
+               ipstr, seq, hlim, delta_us / 1000.0);
+    }
+    else {
+        printf("%d bytes from %s, icmp_seq=%d hlim=%d\n", data_sz, ipstr, seq,
+               hlim);
+    }
 }
 
 /* The default echo (ping6) callback */
@@ -65,26 +62,21 @@ net6_echo_cb net_icmp6_echo_cb = icmp6_default_echo_cb;
 /* Handle Echo Reply (ICMPv6 type 129) packets */
 static void net_icmp6_input_129(netif_t *net, ipv6_hdr_t *ip, icmp6_hdr_t *icmp,
                                 const uint8 *d, int s) {
-    uint64 tmr;
-    struct ping_pkt *ping;
+    uint64 tmr, otmr = 0;
     uint16 seq;
 
     tmr = timer_us_gettime64();
     seq = (d[7] | (d[6] << 8));
 
-    LIST_FOREACH(ping, &pings, pkt_list) {
-        if(ping->icmp_seq == seq) {
-            if(net_icmp6_echo_cb) {
-                net_icmp6_echo_cb(&ping->ip, seq, tmr - ping->usec,
-                                  ip->hop_limit, d, s);
-            }
-
-            LIST_REMOVE(ping, pkt_list);
-            free(ping->data);
-            free(ping);
-
-            return;
-        }
+    /* Read back the time if we have it */
+    if(s >= sizeof(icmp6_echo_hdr_t) + 8) {
+        otmr = ((uint64)d[8] << 56) | ((uint64)d[9] << 48) |
+            ((uint64)d[10] << 40) | ((uint64)d[11] << 32) |
+            (d[12] << 24) | (d[13] << 16) | (d[14] << 8) | (d[15]);
+        net_icmp6_echo_cb(&ip->src_addr, seq, tmr - otmr, ip->hop_limit, d, s);
+    }
+    else {
+        net_icmp6_echo_cb(&ip->src_addr, seq, -1, ip->hop_limit, d, s);
     }
 }
 
@@ -464,10 +456,11 @@ int net_icmp6_input(netif_t *net, ipv6_hdr_t *ip, const uint8 *d, int s) {
 int net_icmp6_send_echo(netif_t *net, const struct in6_addr *dst, uint16 ident,
                         uint16 seq, const uint8 *data, int size) {
     icmp6_echo_hdr_t *echo;
-    struct ping_pkt *newping;
-    uint8 databuf[sizeof(icmp6_hdr_t) + size + 4];
+    uint8 databuf[sizeof(icmp6_echo_hdr_t) + size + 8];
     struct in6_addr src;
     uint16 cs;
+    uint64 t;
+    uint16 sz = sizeof(icmp6_echo_hdr_t) + size + 8;
 
     if(!net) {
         if(!(net = net_default_dev)) {
@@ -497,25 +490,25 @@ int net_icmp6_send_echo(netif_t *net, const struct in6_addr *dst, uint16 ident,
     echo->checksum = 0;
     echo->ident = htons(ident);
     echo->seq = htons(seq);
-    memcpy(databuf + sizeof(icmp6_echo_hdr_t), data, size);
+    memcpy(databuf + sizeof(icmp6_echo_hdr_t) + 8, data, size);
+
+    /* Put the time in now, at the latest possible time (since we have to
+       calculate the checksum over it) */
+    t = timer_us_gettime64();
+    databuf[sizeof(icmp6_echo_hdr_t) + 0] = t >> 56;
+    databuf[sizeof(icmp6_echo_hdr_t) + 1] = t >> 48;
+    databuf[sizeof(icmp6_echo_hdr_t) + 2] = t >> 40;
+    databuf[sizeof(icmp6_echo_hdr_t) + 3] = t >> 32;
+    databuf[sizeof(icmp6_echo_hdr_t) + 4] = t >> 24;
+    databuf[sizeof(icmp6_echo_hdr_t) + 5] = t >> 16;
+    databuf[sizeof(icmp6_echo_hdr_t) + 6] = t >>  8;
+    databuf[sizeof(icmp6_echo_hdr_t) + 7] = t >>  0;
 
     /* Compute the ICMP Checksum */
-    cs = net_ipv6_checksum_pseudo(&src, dst, sizeof(icmp6_echo_hdr_t) + size,
-                                  IPV6_HDR_ICMP);
-    echo->checksum = net_ipv4_checksum(databuf, sizeof(icmp6_echo_hdr_t) + size,
-                                       cs);
+    cs = net_ipv6_checksum_pseudo(&src, dst, sz, IPV6_HDR_ICMP);
+    echo->checksum = net_ipv4_checksum(databuf, sz, cs);
 
-    newping = (struct ping_pkt *) malloc(sizeof(struct ping_pkt));
-    newping->data = (uint8 *)malloc(size);
-    newping->data_sz = size;
-    newping->icmp_seq = seq;
-    memcpy(newping->data, data, size);
-    newping->ip = *dst;
-    LIST_INSERT_HEAD(&pings, newping, pkt_list);
-
-    newping->usec = timer_us_gettime64();
-    return net_ipv6_send(net, databuf, sizeof(icmp6_echo_hdr_t) + size, 0,
-                         IPV6_HDR_ICMP, &src, dst);
+    return net_ipv6_send(net, databuf, sz, 0, IPV6_HDR_ICMP, &src, dst);
 }
 
 /* Send a Neighbor Solicitation packet on the specified device */
