@@ -3,7 +3,7 @@
    kernel/net/net_icmp.c
 
    Copyright (C) 2002 Dan Potter
-   Copyright (C) 2005, 2006, 2007, 2009, 2010 Lawrence Sebald
+   Copyright (C) 2005, 2006, 2007, 2009, 2010, 2011 Lawrence Sebald
 
  */
 
@@ -51,24 +51,17 @@ Message types that are not implemented yet (if ever):
    Any other numbers not listed in the earlier list...
 */
 
-struct ping_pkt {
-    LIST_ENTRY(ping_pkt) pkt_list;
-    uint8 ip[4];
-    uint8 *data;
-    int data_sz;
-    uint16 icmp_seq;
-    uint64 usec;
-};
-
-LIST_HEAD(ping_pkt_list, ping_pkt);
-
-static struct ping_pkt_list pings = LIST_HEAD_INITIALIZER(0);
-
 static void icmp_default_echo_cb(const uint8 *ip, uint16 seq, uint64 delta_us,
                                  uint8 ttl, const uint8* data, int data_sz) {
-    printf("%d bytes from %d.%d.%d.%d: icmp_seq=%d ttl=%d time=%.3f ms\n",
-           data_sz, ip[0], ip[1], ip[2], ip[3], seq, ttl,
-           delta_us / 1000.0);
+    if(delta_us != (uint64)-1) {
+        printf("%d bytes from %d.%d.%d.%d: icmp_seq=%d ttl=%d time=%.3f ms\n",
+               data_sz, ip[0], ip[1], ip[2], ip[3], seq, ttl,
+               delta_us / 1000.0);
+    }
+    else {
+        printf("%d bytes from %d.%d.%d.%d: icmp_seq=%d ttl=%d\n", data_sz,
+               ip[0], ip[1], ip[2], ip[3], seq, ttl);
+    }
 }
 
 /* The default echo (ping) callback */
@@ -77,24 +70,21 @@ net_echo_cb net_icmp_echo_cb = icmp_default_echo_cb;
 /* Handle Echo Reply (ICMP type 0) packets */
 static void net_icmp_input_0(netif_t *src, ip_hdr_t *ip, icmp_hdr_t *icmp,
                              const uint8 *d, int s) {
-    uint64 tmr;
-    struct ping_pkt *ping;
+    uint64 tmr, otmr;
     uint16 seq;
 
     tmr = timer_us_gettime64();
     seq = (d[7] | (d[6] << 8));
 
-    LIST_FOREACH(ping, &pings, pkt_list) {
-        if(ping->icmp_seq == seq) {
-            net_icmp_echo_cb((uint8 *)&ip->src, seq, 
-                             tmr - ping->usec, ip->ttl, d, s);
-
-            LIST_REMOVE(ping, pkt_list);
-            free(ping->data);
-            free(ping);
-
-            return;
-        }
+    /* Read back the time if we have it */
+    if(s >= sizeof(icmp_hdr_t) + 8) {
+        otmr = ((uint64)d[8] << 56) | ((uint64)d[9] << 48) |
+            ((uint64)d[10] << 40) | ((uint64)d[11] << 32) |
+            (d[12] << 24) | (d[13] << 16) | (d[14] << 8) | (d[15]);
+        net_icmp_echo_cb((uint8 *)&ip->src, seq, tmr - otmr, ip->ttl, d, s);
+    }
+    else {
+        net_icmp_echo_cb((uint8 *)&ip->src, seq, -1, ip->ttl, d, s);
     }
 }
 
@@ -161,10 +151,11 @@ int net_icmp_input(netif_t *src, ip_hdr_t *ip, const uint8 *d, int s) {
 int net_icmp_send_echo(netif_t *net, const uint8 ipaddr[4], uint16 ident,
                        uint16 seq, const uint8 *data, int size) {
     icmp_hdr_t *icmp;
-    struct ping_pkt *newping;
     int r = -1;
-    uint8 databuf[sizeof(icmp_hdr_t) + size];
+    uint16 sz = sizeof(icmp_hdr_t) + size + 8;
+    uint8 databuf[sz];
     uint32 src;
+    uint64 t;
 
     icmp = (icmp_hdr_t *)databuf;
 
@@ -174,10 +165,22 @@ int net_icmp_send_echo(netif_t *net, const uint8 ipaddr[4], uint16 ident,
     icmp->checksum = 0;
     icmp->misc.m16[0] = htons(ident);
     icmp->misc.m16[1] = htons(seq);
-    memcpy(databuf + sizeof(icmp_hdr_t), data, size);
+    memcpy(databuf + sizeof(icmp_hdr_t) + 8, data, size);
+
+    /* Put the time in now, at the latest possible time (since we have to
+       calculate the checksum over it) */
+    t = timer_us_gettime64();
+    databuf[sizeof(icmp_hdr_t) + 0] = t >> 56;
+    databuf[sizeof(icmp_hdr_t) + 1] = t >> 48;
+    databuf[sizeof(icmp_hdr_t) + 2] = t >> 40;
+    databuf[sizeof(icmp_hdr_t) + 3] = t >> 32;
+    databuf[sizeof(icmp_hdr_t) + 4] = t >> 24;
+    databuf[sizeof(icmp_hdr_t) + 5] = t >> 16;
+    databuf[sizeof(icmp_hdr_t) + 6] = t >>  8;
+    databuf[sizeof(icmp_hdr_t) + 7] = t >>  0;
 
     /* Compute the ICMP Checksum */
-    icmp->checksum = net_ipv4_checksum(databuf, sizeof(icmp_hdr_t) + size, 0);
+    icmp->checksum = net_ipv4_checksum(databuf, sz, 0);
 
     /* If we're sending to the loopback, set that as our source too. */
     if(ipaddr[0] == 127) {
@@ -187,17 +190,8 @@ int net_icmp_send_echo(netif_t *net, const uint8 ipaddr[4], uint16 ident,
         src = net_ipv4_address(net->ip_addr);
     }
 
-    newping = (struct ping_pkt*) malloc(sizeof(struct ping_pkt));
-    newping->data = (uint8 *)malloc(size);
-    newping->data_sz = size;
-    newping->icmp_seq = seq;
-    memcpy(newping->data, data, size);
-    memcpy(newping->ip, ipaddr, 4);
-    LIST_INSERT_HEAD(&pings, newping, pkt_list);
-
-    newping->usec = timer_us_gettime64();
-    r = net_ipv4_send(net, databuf, sizeof(icmp_hdr_t) + size, seq, 255, 1,
-                      htonl(src), htonl(net_ipv4_address(ipaddr)));
+    r = net_ipv4_send(net, databuf, sz, seq, 255, 1, htonl(src),
+                      htonl(net_ipv4_address(ipaddr)));
 
     return r;
 }

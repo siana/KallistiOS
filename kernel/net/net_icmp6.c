@@ -1,7 +1,7 @@
 /* KallistiOS ##version##
 
    kernel/net/net_icmp6.c
-   Copyright (C) 2010 Lawrence Sebald
+   Copyright (C) 2010, 2011 Lawrence Sebald
 
 */
 
