@@ -23,6 +23,8 @@ struct sched_param {
 #include <kos/sem.h>
 #include <kos/cond.h>
 #include <kos/mutex.h>
+#include <kos/tls.h>
+#include <kos/once.h>
 
 // Missing structs we don't care about in this impl.
 typedef struct {
@@ -37,21 +39,15 @@ typedef struct {
 	// Empty
 } pthread_attr_t;
 
-typedef struct {
-	int initialized;
-	int run;
-} pthread_once_t;
-
-typedef struct {
-	// Empty
-} pthread_key_t;
-
 // Map over KOS types. The mutex/condvar maps have to be pointers
 // because we allow _INIT #defines to work.
 typedef kthread_t * pthread_t;
 typedef mutex_t * pthread_mutex_t;
 typedef condvar_t * pthread_cond_t;
 
+// These, on the other hand, map right over.
+typedef kthread_once_t pthread_once_t;
+typedef kthread_key_t pthread_key_t;
 
 __END_DECLS
 

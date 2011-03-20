@@ -668,7 +668,7 @@ int thd_detach(kthread_t *thd) {
     old = irq_disable();
 
     /* Search the thread list and make sure that this thread hasn't
-     already died and been deallocated. */
+       already died and been deallocated. */
     LIST_FOREACH(t, &thd_list, t_list) {
         if (t == thd)
             break;

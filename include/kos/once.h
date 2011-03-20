@@ -29,10 +29,13 @@ __BEGIN_DECLS
     This object type should always be initialized with the KTHREAD_ONCE_INIT
     macro.
 */
-typedef int kthread_once_t;
+typedef struct {
+    int initialized;
+    int run;
+} kthread_once_t;
 
 /** \brief  Initializer for a kthread_once_t object. */
-#define KTHREAD_ONCE_INIT 0
+#define KTHREAD_ONCE_INIT { 1, 0 }
 
 /** \brief  Run a function once.
 
