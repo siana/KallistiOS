@@ -40,11 +40,8 @@ static void icmp6_default_echo_cb(const struct in6_addr *ip, uint16 seq,
                                   uint64 delta_us, uint8 hlim,
                                   const uint8 *data, int data_sz) {
     char ipstr[INET6_ADDRSTRLEN];
-    struct in6_addr a;
 
-    /* Copy the address to prevent unaligned accesses... */
-    memcpy(&a, ip, sizeof(struct in6_addr));
-    inet_ntop(AF_INET6, &a, ipstr, INET6_ADDRSTRLEN);
+    inet_ntop(AF_INET6, ip, ipstr, INET6_ADDRSTRLEN);
 
     if(delta_us != (uint64)-1) {
         printf("%d bytes from %s, icmp_seq=%d hlim=%d time=%.3f ms\n", data_sz,

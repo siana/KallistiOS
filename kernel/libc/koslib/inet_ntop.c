@@ -1,12 +1,13 @@
 /* KallistiOS ##version##
 
    inet_ntop.c
-   Copyright (C) 2007, 2010 Lawrence Sebald
+   Copyright (C) 2007, 2010, 2011 Lawrence Sebald
 
 */
 
 #include <arpa/inet.h>
 #include <errno.h>
+#include <string.h>
 
 static const char *inet_ntop4(const void *src, char *dst, socklen_t size) {
     char tmp[3];
@@ -54,21 +55,24 @@ static const char *inet_ntop4(const void *src, char *dst, socklen_t size) {
 }
 
 static const char *inet_ntop6(const void *src, char *dst, socklen_t size) {
-    struct in6_addr *addr = (struct in6_addr *)src;
     int tmp[8] = { 0 };
     int runstart = -1, maxzero = 0, dcs = -1, i;
     char tmpstr[4];
     char *ch = tmpstr, *ch2 = dst;
     int part;
+    struct in6_addr addr;
+
+    /* Copy the address, just in case the original was misaligned */
+    memcpy(&addr, src, sizeof(struct in6_addr));
 
     /* Handle the special cases of IPv4 Mapped and Compatibility addresses */
-    if(IN6_IS_ADDR_V4MAPPED(addr)) {
+    if(IN6_IS_ADDR_V4MAPPED(&addr)) {
         if(size > 7) {
             dst[0] = dst[1] = dst[6] = ':';
             dst[2] = dst[3] = dst[4] = dst[5] = 'f';
 
             /* Parse the IPv4 address at the end */
-            if(!inet_ntop4(&addr->__s6_addr.__s6_addr32[3], dst + 7, size - 7))
+            if(!inet_ntop4(&addr.__s6_addr.__s6_addr32[3], dst + 7, size - 7))
                 goto err;
 
             return dst;
@@ -77,12 +81,12 @@ static const char *inet_ntop6(const void *src, char *dst, socklen_t size) {
             goto err;
         }
     }
-    else if(IN6_IS_ADDR_V4COMPAT(addr)) {
+    else if(IN6_IS_ADDR_V4COMPAT(&addr)) {
         if(size > 2) {
             dst[0] = dst[1] = ':';
 
             /* Parse the IPv4 address at the end */
-            if(!inet_ntop4(&addr->__s6_addr.__s6_addr32[3], dst + 2, size - 2))
+            if(!inet_ntop4(&addr.__s6_addr.__s6_addr32[3], dst + 2, size - 2))
                goto err;
 
             return dst;
@@ -94,7 +98,7 @@ static const char *inet_ntop6(const void *src, char *dst, socklen_t size) {
 
     /* Figure out if we have any use for double colons in the address or not */
     for(i = 0; i < 8; ++i) {
-        if(addr->__s6_addr.__s6_addr16[i] == 0) {
+        if(addr.__s6_addr.__s6_addr16[i] == 0) {
             if(runstart != -1) {
                 ++tmp[runstart];
             }
@@ -141,7 +145,7 @@ static const char *inet_ntop6(const void *src, char *dst, socklen_t size) {
             }
         }
         else {
-            part = ntohs(addr->__s6_addr.__s6_addr16[i]);
+            part = ntohs(addr.__s6_addr.__s6_addr16[i]);
 
             do {
                 *ch = (char)(part & 0x0f) + '0';
