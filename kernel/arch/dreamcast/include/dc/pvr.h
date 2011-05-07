@@ -1,13 +1,31 @@
 /* KallistiOS ##version##
 
-   kernel/arch/dreamcast/include/dc/pvr.h
-   (C)2002 Dan Potter
+   dc/pvr.h
+   Copyright (C) 2002 Dan Potter
 
    Low-level PVR 3D interface for the DC
    Note: this API does _not_ handle any sort of transformations
     (including perspective!) so for that, you should look to KGL.
 */
 
+/** \file   dc/pvr.h
+    \brief  Low-level PVR (3D hardware) interface.
+
+    This file provides support for using the PVR 3D hardware in the Dreamcast.
+    Note that this does not handle any sort of perspective transformations or
+    anything of the like. This is just a very thin wrapper around the actual
+    hardware support.
+
+    This file is used for pretty much everything related to the PVR, from memory
+    management to actual primitive rendering.
+
+    \author Dan Potter
+    \author Roger Cattermole
+    \author Paul Boese
+    \author Brian Paul
+    \author Lawrence Sebald
+    \author Benoit Miller
+*/
 
 #ifndef __DC_PVR_H
 #define __DC_PVR_H
@@ -21,194 +39,393 @@ __BEGIN_DECLS
 
 /* Data types ********************************************************/
 
-/* PVR texture memory pointer; unlike the old "TA" system, PVR pointers
-   in the new system are actually SH-4 compatible pointers and can
-   be used directly in place of ta_txr_map(). */
+/** \brief  PVR texture memory pointer.
+
+    Unlike the old "TA" system, PVR pointers in the new system are actually SH-4
+    compatible pointers and can be used directly in place of ta_txr_map().
+
+    Not that anyone probably even remembers the old TA system anymore... */
 typedef void * pvr_ptr_t;
 
-/* PVR list specification */
+/** \brief  PVR list specification.
+
+    Each primitive in the PVR is submitted to one of the hardware primitive
+    lists. This type is an identifier for a list.
+
+    \see    pvr_lists
+*/
 typedef uint32 pvr_list_t;
 
-/* Polygon context; you should use this more human readable format for
-   specifying your polygon contexts, and then compile them into polygon
-   headers (below) when you are ready to start using them.
+/** \brief  PVR polygon context.
 
-   This has embedded structures in it for two reasons; the first reason
-   is to make it easier for me to add new stuff later without breaking
-   existing code. The second reason is to make it more readable and
-   usable.
-*/ 
-typedef struct {
-	int		list_type;
-	struct {
-		int		alpha;
-		int		shading;
-		int		fog_type;
-		int		culling;
-		int		color_clamp;
-		int		clip_mode;
-		int		modifier_mode;
-		int		alpha2;
-		int		fog_type2;
-		int		color_clamp2;
-	} gen;
-	struct {
-		int		src, dst;
-		int		src_enable, dst_enable;
-		int		src2, dst2;
-		int		src_enable2, dst_enable2;
-	} blend;
-	struct {
-		int		color;
-		int		uv;
-		int		modifier;
-	} fmt;
-	struct {
-		int		comparison;
-		int		write;
-	} depth;
-	struct {
-		int		enable;
-		int		filter;		/* none, bi-linear, tri-linear, etc */
-		int		mipmap;
-		int		mipmap_bias;
-		int		uv_flip;
-		int		uv_clamp;
-		int		alpha;
-		int		env;
-		int		width;
-		int		height;
-		int		format;		/* bit format, vq, twiddle, stride */
-		pvr_ptr_t	base;		/* texture location */
-	} txr;
-    struct {
-		int		enable;
-		int		filter;		/* none, bi-linear, tri-linear, etc */
-		int		mipmap;
-		int		mipmap_bias;
-		int		uv_flip;
-		int		uv_clamp;
-		int		alpha;
-		int		env;
-		int		width;
-		int		height;
-		int		format;		/* bit format, vq, twiddle, stride */
-		pvr_ptr_t	base;		/* texture location */
-	} txr2;
-} pvr_poly_cxt_t;
+    You should use this more human readable format for specifying your polygon
+    contexts, and then compile them into polygon headers when you are ready to
+    start using them.
 
-/* Sprite context; use this somewhat readable format to specify your
-   sprites before compiling them into polygon headers.
+    This has embedded structures in it for two reasons; the first reason is to
+    make it easier for me to add new stuff later without breaking existing code.
+    The second reason is to make it more readable and usable.
+
+    Unfortunately, it seems that Doxygen chokes up a little bit on this
+    structure, and others like it. The documentation should still be mostly
+    understandable though...
+
+    \headerfile dc/pvr.h
 */
 typedef struct {
-	int		list_type;
-	struct {
-		int		alpha;
-		int		fog_type;
-		int		culling;
-		int		color_clamp;
-		int		clip_mode;
-	} gen;
-	struct {
-		int		src, dst;
-		int		src_enable, dst_enable;
+    int     list_type;          /**< \brief Primitive list
+                                     \see   pvr_lists */
+    struct {
+        int     alpha;          /**< \brief Enable or disable alpha outside modifier
+                                     \see   pvr_alpha_switch */
+        int     shading;        /**< \brief Shading type
+                                     \see   pvr_shading_types */
+        int     fog_type;       /**< \brief Fog type outside modifier
+                                     \see   pvr_fog_types */
+        int     culling;        /**< \brief Culling mode
+                                     \see   pvr_cull_modes */
+        int     color_clamp;    /**< \brief Color clamp enable/disable outside modifier
+                                     \see   pvr_colclamp_switch */
+        int     clip_mode;      /**< \brief Clipping mode
+                                     \see   pvr_clip_modes */
+        int     modifier_mode;  /**< \brief Modifier mode */
+        int     alpha2;         /**< \brief Enable/disable alpha inside modifier
+                                     \see   pvr_alpha_switch */
+        int     fog_type2;      /**< \brief Fog type inside modifier
+                                     \see   pvr_fog_types */
+        int     color_clamp2;   /**< \brief Color clamp enable/disable inside modifier
+                                     \see   pvr_colclamp_switch */
+    } gen;                      /**< \brief General parameters */
+    struct {
+        int     src;            /**< \brief Source blending mode outside modifier
+                                     \see   pvr_blend_modes */
+        int     dst;            /**< \brief Dest blending mode outside modifier
+                                     \see   pvr_blend_modes */
+        int     src_enable;     /**< \brief Source blending enable outside modifier
+                                     \see   pvr_blend_switch */
+        int     dst_enable;     /**< \brief Dest blending enable outside modifier
+                                     \see   pvr_blend_switch */
+        int     src2;           /**< \brief Source blending mode inside modifier
+                                     \see   pvr_blend_modes */
+        int     dst2;           /**< \brief Dest blending mode inside modifier
+                                     \see   pvr_blend_modes */
+        int     src_enable2;    /**< \brief Source blending mode inside modifier
+                                     \see   pvr_blend_switch */
+        int     dst_enable2;    /**< \brief Dest blending mode inside modifier
+                                     \see   pvr_blend_switch */
+    } blend;                    /**< \brief Blending parameters */
+    struct {
+        int     color;          /**< \brief Color format in vertex
+                                     \see   pvr_color_fmts */
+        int     uv;             /**< \brief U/V data format in vertex
+                                     \see   pvr_uv_fmts */
+        int     modifier;       /**< \brief Enable or disable modifier effect
+                                     \see   pvr_mod_switch */
+    } fmt;                      /**< \brief Format control */
+    struct {
+        int     comparison;     /**< \brief Depth comparison mode
+                                     \see pvr_depth_modes */
+        int     write;          /**< \brief Enable or disable depth writes
+                                     \see pvr_depth_switch */
+    } depth;                    /**< \brief Depth comparison/write modes */
+    struct {
+        int     enable;         /**< \brief Enable/disable texturing 
+                                     \see   pvr_txr_switch */
+        int     filter;         /**< \brief Filtering mode
+                                     \see   pvr_filter_modes */
+        int     mipmap;         /**< \brief Enable/disable mipmaps
+                                     \see   pvr_mip_switch */
+        int     mipmap_bias;    /**< \brief Mipmap bias
+                                     \see   pvr_mip_bias */
+        int     uv_flip;        /**< \brief Enable/disable U/V flipping
+                                     \see   pvr_uv_flip */
+        int     uv_clamp;       /**< \brief Enable/disable U/V clamping
+                                     \see   pvr_uv_clamp */
+        int     alpha;          /**< \brief Enable/disable texture alpha
+                                     \see   pvr_txralpha_switch */
+        int     env;            /**< \brief Texture color contribution
+                                     \see   pvr_txrenv_modes */
+        int     width;          /**< \brief Texture width (requires a power of 2) */
+        int     height;         /**< \brief Texture height (requires a power of 2) */
+        int     format;         /**< \brief Texture format
+                                     \see   pvr_txr_fmts */
+        pvr_ptr_t base;         /**< \brief Texture pointer */
+    } txr;                      /**< \brief Texturing params outside modifier */
+    struct {
+        int     enable;         /**< \brief Enable/disable texturing 
+                                     \see   pvr_txr_switch */
+        int     filter;         /**< \brief Filtering mode
+                                     \see   pvr_filter_modes */
+        int     mipmap;         /**< \brief Enable/disable mipmaps
+                                     \see   pvr_mip_switch */
+        int     mipmap_bias;    /**< \brief Mipmap bias
+                                     \see   pvr_mip_bias */
+        int     uv_flip;        /**< \brief Enable/disable U/V flipping
+                                     \see   pvr_uv_flip */
+        int     uv_clamp;       /**< \brief Enable/disable U/V clamping
+                                     \see   pvr_uv_clamp */
+        int     alpha;          /**< \brief Enable/disable texture alpha
+                                     \see   pvr_txralpha_switch */
+        int     env;            /**< \brief Texture color contribution
+                                     \see   pvr_txrenv_modes */
+        int     width;          /**< \brief Texture width (requires a power of 2) */
+        int     height;         /**< \brief Texture height (requires a power of 2) */
+        int     format;         /**< \brief Texture format
+                                     \see   pvr_txr_fmts */
+        pvr_ptr_t base;         /**< \brief Texture pointer */
+    } txr2;                     /**< \brief Texturing params inside modifier */
+} pvr_poly_cxt_t;
+
+/** \brief  PVR sprite context.
+
+    You should use this more human readable format for specifying your sprite
+    contexts, and then compile them into sprite headers when you are ready to
+    start using them.
+
+    Unfortunately, it seems that Doxygen chokes up a little bit on this
+    structure, and others like it. The documentation should still be mostly
+    understandable though...
+
+    \headerfile dc/pvr.h
+*/
+typedef struct {
+    int     list_type;          /**< \brief Primitive list
+                                     \see   pvr_lists */
+    struct {
+        int     alpha;          /**< \brief Enable or disable alpha outside modifier
+                                     \see   pvr_alpha_switch */
+        int     fog_type;       /**< \brief Fog type outside modifier
+                                     \see   pvr_fog_types */
+        int     culling;        /**< \brief Culling mode
+                                     \see   pvr_cull_modes */
+        int     color_clamp;    /**< \brief Color clamp enable/disable outside modifier
+                                     \see   pvr_colclamp_switch */
+        int     clip_mode;      /**< \brief Clipping mode
+                                     \see   pvr_clip_modes */
+    } gen;                      /**< \brief General parameters */
+    struct {
+        int     src;            /**< \brief Source blending mode outside modifier
+                                     \see   pvr_blend_modes */
+        int     dst;            /**< \brief Dest blending mode outside modifier
+                                     \see   pvr_blend_modes */
+        int     src_enable;     /**< \brief Source blending enable outside modifier
+                                     \see   pvr_blend_switch */
+        int     dst_enable;     /**< \brief Dest blending enable outside modifier
+                                     \see   pvr_blend_switch */
 	} blend;
-	struct {
-		int		comparison;
-		int		write;
-	} depth;
-	struct {
-		int		enable;
-		int		filter;
-		int		mipmap;
-		int		mipmap_bias;
-		int		uv_flip;
-		int		uv_clamp;
-		int		alpha;
-		int		width;
-		int		height;
-		int		format;
-		pvr_ptr_t	base;
-	} txr;
+    struct {
+        int     comparison;     /**< \brief Depth comparison mode
+                                     \see pvr_depth_modes */
+        int     write;          /**< \brief Enable or disable depth writes
+                                     \see pvr_depth_switch */
+    } depth;                    /**< \brief Depth comparison/write modes */
+    struct {
+        int     enable;         /**< \brief Enable/disable texturing 
+                                     \see   pvr_txr_switch */
+        int     filter;         /**< \brief Filtering mode
+                                     \see   pvr_filter_modes */
+        int     mipmap;         /**< \brief Enable/disable mipmaps
+                                     \see   pvr_mip_switch */
+        int     mipmap_bias;    /**< \brief Mipmap bias
+                                     \see   pvr_mip_bias */
+        int     uv_flip;        /**< \brief Enable/disable U/V flipping
+                                     \see   pvr_uv_flip */
+        int     uv_clamp;       /**< \brief Enable/disable U/V clamping
+                                     \see   pvr_uv_clamp */
+        int     alpha;          /**< \brief Enable/disable texture alpha
+                                     \see   pvr_txralpha_switch */
+        int     width;          /**< \brief Texture width (requires a power of 2) */
+        int     height;         /**< \brief Texture height (requires a power of 2) */
+        int     format;         /**< \brief Texture format
+                                     \see   pvr_txr_fmts */
+        pvr_ptr_t base;         /**< \brief Texture pointer */
+    } txr;                      /**< \brief Texturing params */
 } pvr_sprite_cxt_t;
 
 /* Constants for the above structure; thanks to Benoit Miller for these */
-/* list_type */
-#define PVR_LIST_OP_POLY		0	/* opaque poly */
-#define PVR_LIST_OP_MOD			1	/* opaque modifier */
-#define PVR_LIST_TR_POLY		2	/* translucent poly */
-#define PVR_LIST_TR_MOD			3	/* translucent modifier */
-#define PVR_LIST_PT_POLY		4	/* punch-thru poly */
 
-#define PVR_SHADE_FLAT			0	/* shading */
-#define PVR_SHADE_GOURAUD		1
+/** \defgroup pvr_lists PVR primitive list types
 
-#define PVR_DEPTHCMP_NEVER		0	/* depth_comparison */
-#define PVR_DEPTHCMP_LESS		1
-#define PVR_DEPTHCMP_EQUAL		2
-#define PVR_DEPTHCMP_LEQUAL		3
-#define PVR_DEPTHCMP_GREATER		4
-#define PVR_DEPTHCMP_NOTEQUAL		5
-#define PVR_DEPTHCMP_GEQUAL		6
-#define PVR_DEPTHCMP_ALWAYS		7
+    Each primitive submitted to the PVR must be placed in one of these lists,
+    depending on its characteristics.
 
-#define PVR_CULLING_NONE		0	/* culling */
-#define PVR_CULLING_SMALL		1
-#define PVR_CULLING_CCW			2
-#define PVR_CULLING_CW			3
+    @{
+*/
+#define PVR_LIST_OP_POLY        0   /**< \brief Opaque polygon list */
+#define PVR_LIST_OP_MOD         1   /**< \brief Opaque modifier list */
+#define PVR_LIST_TR_POLY        2   /**< \brief Translucent polygon list */
+#define PVR_LIST_TR_MOD         3   /**< \brief Translucent modifier list*/
+#define PVR_LIST_PT_POLY        4   /**< \brief Punch-thru polygon list */
+/** @} */
 
-#define PVR_DEPTHWRITE_ENABLE		0	/* depth_write */
-#define PVR_DEPTHWRITE_DISABLE		1
+/** \defgroup pvr_shading_types     PVR shading modes
 
-#define PVR_TEXTURE_DISABLE		0	/* txr_enable */
-#define PVR_TEXTURE_ENABLE		1
+    Each polygon can define how it wants to be shaded, be it with flat or
+    Gouraud shading using these constants in the appropriate place in its
+    pvr_poly_cxt_t.
 
-#define PVR_BLEND_ZERO			0	/* src_blend / dst_blend */
-#define PVR_BLEND_ONE			1
-#define PVR_BLEND_DESTCOLOR		2
-#define PVR_BLEND_INVDESTCOLOR		3
-#define PVR_BLEND_SRCALPHA		4
-#define PVR_BLEND_INVSRCALPHA		5
-#define PVR_BLEND_DESTALPHA		6
-#define PVR_BLEND_INVDESTALPHA		7
+    @{
+*/
+#define PVR_SHADE_FLAT          0   /**< \brief Use flat shading */
+#define PVR_SHADE_GOURAUD       1   /**< \brief Use Gouraud shading */
+/** @} */
 
-#define PVR_BLEND_DISABLE		0	/* src_blend_enable / dst_blend_enable */
-#define PVR_BLEND_ENABLE		1
+/** \defgroup pvr_depth_modes       PVR depth comparison modes
 
-#define PVR_FOG_TABLE			0	/* fog_type */
-#define PVR_FOG_VERTEX			1
-#define PVR_FOG_DISABLE			2
-#define PVR_FOG_TABLE2			3
+    These set the depth function used for comparisons.
 
-#define PVR_USERCLIP_DISABLE		0	/* clip_mode */
-#define PVR_USERCLIP_INSIDE		2
-#define PVR_USERCLIP_OUTSIDE		3
+    @{
+*/
+#define PVR_DEPTHCMP_NEVER      0   /**< \brief Never pass */
+#define PVR_DEPTHCMP_LESS       1   /**< \brief Less than */
+#define PVR_DEPTHCMP_EQUAL      2   /**< \brief Equal to */
+#define PVR_DEPTHCMP_LEQUAL     3   /**< \brief Less than or equal to */
+#define PVR_DEPTHCMP_GREATER    4   /**< \brief Greater than */
+#define PVR_DEPTHCMP_NOTEQUAL   5   /**< \brief Not equal to */
+#define PVR_DEPTHCMP_GEQUAL     6   /**< \brief Greater than or equal to */
+#define PVR_DEPTHCMP_ALWAYS     7   /**< \brief Always pass */
+/** @} */
 
-#define PVR_CLRCLAMP_DISABLE		0	/* color_clamp */
-#define PVR_CLRCLAMP_ENABLE		1
+/** \defgroup pvr_cull_modes        PVR culling modes
 
-#define PVR_ALPHA_DISABLE		0	/* alpha */
-#define PVR_ALPHA_ENABLE		1
+    These culling modes can be set by polygons to determine when they are
+    culled. They work pretty much as you'd expect them to if you've ever used
+    any 3D hardware before.
 
-#define PVR_TXRALPHA_ENABLE		0	/* txr_alpha */
-#define PVR_TXRALPHA_DISABLE		1
+    @{
+*/
+#define PVR_CULLING_NONE        0   /**< \brief Disable culling */
+#define PVR_CULLING_SMALL		1   /**< \brief Cull if small */
+#define PVR_CULLING_CCW			2   /**< \brief Cull if counterclockwise */
+#define PVR_CULLING_CW			3   /**< \brief Cull if clockwise */
+/** @} */
 
-#define PVR_UVFLIP_NONE			0	/* txr_uvflip */
-#define PVR_UVFLIP_V			1
-#define PVR_UVFLIP_U			2
-#define PVR_UVFLIP_UV			3
+/** \defgroup pvr_depth_switch      Enable or disable PVR depth writes
+    @{
+*/
+#define PVR_DEPTHWRITE_ENABLE   0   /**< \brief Update the Z value */
+#define PVR_DEPTHWRITE_DISABLE  1   /**< \brief Do not update the Z value */
+/** @} */
 
-#define PVR_UVCLAMP_NONE		0	/* txr_uvclamp */
-#define PVR_UVCLAMP_V			1
-#define PVR_UVCLAMP_U			2
-#define PVR_UVCLAMP_UV			3
+/** \defgroup pvr_txr_switch        Enable or disable texturing on polygons
+    @{
+*/
+#define PVR_TEXTURE_DISABLE     0   /**< \brief Disable texturing */
+#define PVR_TEXTURE_ENABLE      1   /**< \brief Enable texturing */
+/** @} */
 
-#define PVR_FILTER_NONE			0	/* txr_filter */
-#define PVR_FILTER_NEAREST		0
-#define PVR_FILTER_BILINEAR		2
-#define PVR_FILTER_TRILINEAR1		4
-#define PVR_FILTER_TRILINEAR2		6
+/** \defgroup pvr_blend_modes       PVR blending modes
 
+    These are all the blending modes that can be done with regard to alpha
+    blending on the PVR.
+
+    @{
+*/
+#define PVR_BLEND_ZERO          0   /**< \brief None of this color */
+#define PVR_BLEND_ONE           1   /**< \brief All of this color */
+#define PVR_BLEND_DESTCOLOR     2   /**< \brief Destination color */
+#define PVR_BLEND_INVDESTCOLOR  3   /**< \brief Inverse of destination color */
+#define PVR_BLEND_SRCALPHA      4   /**< \brief Blend with source alpha */
+#define PVR_BLEND_INVSRCALPHA   5   /**< \brief Blend with inverse source alpha */
+#define PVR_BLEND_DESTALPHA     6   /**< \brief Blend with destination alpha */
+#define PVR_BLEND_INVDESTALPHA  7   /**< \brief Blend with inverse destination alpha */
+/** @} */
+
+/** \defgroup pvr_blend_switch      Enable or disable blending
+    @{
+*/
+#define PVR_BLEND_DISABLE       0   /**< \brief Disable blending */
+#define PVR_BLEND_ENABLE        1   /**< \brief Enable blending */
+/** @} */
+
+/** \defgroup pvr_fog_types         PVR fog modes
+
+    Each polygon can decide what fog type is used with regard to it using these
+    constants in its pvr_poly_cxt_t.
+
+    @{
+*/
+#define PVR_FOG_TABLE           0   /**< \brief Table fog */
+#define PVR_FOG_VERTEX          1   /**< \brief Vertex fog */
+#define PVR_FOG_DISABLE         2   /**< \brief Disable fog */
+#define PVR_FOG_TABLE2          3   /**< \brief Table fog mode 2 */
+/** @} */
+
+/** \defgroup pvr_clip_modes        PVR clipping modes
+
+    These control how primitives are clipped against the user clipping area.
+
+    @{
+*/
+#define PVR_USERCLIP_DISABLE    0   /**< \brief Disable clipping */
+#define PVR_USERCLIP_INSIDE     2   /**< \brief Enable clipping inside area */
+#define PVR_USERCLIP_OUTSIDE    3   /**< \brief Enable clipping outside area */
+/** @} */
+
+/** \defgroup pvr_colclamp_switch   Enable or disable color clamping
+
+    Enabling color clamping will clamp colors between the minimum and maximum
+    values before any sort of fog processing.
+
+    @{
+*/
+#define PVR_CLRCLAMP_DISABLE    0   /**< \brief Disable color clamping */
+#define PVR_CLRCLAMP_ENABLE     1   /**< \brief Enable color clamping */
+/** @} */
+
+/** \defgroup pvr_alpha_switch      Enable or disable alpha blending
+
+    This causes the alpha value in the vertex color to be paid attention to. It
+    really only makes sense to enable this for translucent or punch-thru polys.
+
+    @{
+*/  
+#define PVR_ALPHA_DISABLE       0   /**< \brief Disable alpha blending */
+#define PVR_ALPHA_ENABLE        1   /**< \brief Enable alpha blending */
+/** @} */
+
+/** \defgroup pvr_txralpha_switch   Enable or disable texture alpha blending
+
+    This causes the alpha value in the texel color to be paid attention to. It
+    really only makes sense to enable this for translucent or punch-thru polys.
+
+    @{
+*/ 
+#define PVR_TXRALPHA_ENABLE     0   /**< \brief Enable alpha blending */
+#define PVR_TXRALPHA_DISABLE    1   /**< \brief Disable alpha blending */
+/** @} */
+
+/** \defgroup pvr_uv_flip           Enable or disable U/V flipping on the PVR
+    @{
+*/
+#define PVR_UVFLIP_NONE         0   /**< \brief No flipped coordinates */
+#define PVR_UVFLIP_V            1   /**< \brief Flip V only */
+#define PVR_UVFLIP_U            2   /**< \brief Flip U only */
+#define PVR_UVFLIP_UV           3   /**< \brief Flip U and V */
+/** @} */
+
+/** \defgroup pvr_uv_clamp          Enable or disable clamping of U/V on the PVR
+    @{
+*/
+#define PVR_UVCLAMP_NONE        0   /**< \brief Disable clamping */
+#define PVR_UVCLAMP_V           1   /**< \brief Clamp V only */
+#define PVR_UVCLAMP_U           2   /**< \brief Clamp U only */
+#define PVR_UVCLAMP_UV          3   /**< \brief Clamp U and V */
+/** @} */
+
+/** \defgroup pvr_filter_modes      PVR texture sampling modes
+    @{
+*/
+#define PVR_FILTER_NONE         0   /**< \brief No filtering (point sample) */
+#define PVR_FILTER_NEAREST      0   /**< \brief No filtering (point sample) */
+#define PVR_FILTER_BILINEAR     2   /**< \brief Bilinear interpolation */
+#define PVR_FILTER_TRILINEAR1   4   /**< \brief Trilinear interpolation pass 1 */
+#define PVR_FILTER_TRILINEAR2   6   /**< \brief Trilinear interpolation pass 2 */
+/** @} */
+
+/** \defgroup pvr_mip_bias          PVR mipmap bias modes
+    @{
+*/
 #define PVR_MIPBIAS_NORMAL		PVR_MIPBIAS_1_00	/* txr_mipmap_bias */
 #define PVR_MIPBIAS_0_25		1
 #define PVR_MIPBIAS_0_50		2
@@ -225,47 +442,83 @@ typedef struct {
 #define PVR_MIPBIAS_3_25		13
 #define PVR_MIPBIAS_3_50		14
 #define PVR_MIPBIAS_3_75		15
+/** @} */
 
-/* txr_env */
-#define PVR_TXRENV_REPLACE		0	/* C = Ct, A = At */
-#define PVR_TXRENV_MODULATE		1	/* C = Cs * Ct, A = At */
-#define PVR_TXRENV_DECAL		2	/* C = (Cs * At) + (Cs * (1-At)), A = As */
-#define PVR_TXRENV_MODULATEALPHA	3	/* C = Cs * Ct, A = As * At */
+/** \defgroup pvr_txrenv_modes      Texture color calculation modes
+    @{
+*/
+#define PVR_TXRENV_REPLACE          0	/**< \brief C = Ct, A = At */
+#define PVR_TXRENV_MODULATE         1	/**< \brief  C = Cs * Ct, A = At */
+#define PVR_TXRENV_DECAL            2	/**< \brief C = (Cs * At) + (Cs * (1-At)), A = As */
+#define PVR_TXRENV_MODULATEALPHA    3	/**< \brief C = Cs * Ct, A = As * At */
+/** @} */
 
-#define PVR_MIPMAP_DISABLE		0	/* txr_mipmap */
-#define PVR_MIPMAP_ENABLE		1
+/** \defgroup pvr_mip_switch        Enable or disable PVR mipmap processing
+    @{
+*/
+#define PVR_MIPMAP_DISABLE      0   /**< \brief Disable mipmap processing */
+#define PVR_MIPMAP_ENABLE       1   /**< \brief Enable mipmap processing */
+/** @} */
 
-#define PVR_TXRFMT_NONE			0		/* txr_format */
-#define PVR_TXRFMT_VQ_DISABLE		(0 << 30)
-#define PVR_TXRFMT_VQ_ENABLE		(1 << 30)
-#define PVR_TXRFMT_ARGB1555		(0 << 27)
-#define PVR_TXRFMT_RGB565		(1 << 27)
-#define PVR_TXRFMT_ARGB4444		(2 << 27)
-#define PVR_TXRFMT_YUV422		(3 << 27)
-#define PVR_TXRFMT_BUMP			(4 << 27)
-#define PVR_TXRFMT_PAL4BPP		(5 << 27)
-#define PVR_TXRFMT_PAL8BPP		(6 << 27)
-#define PVR_TXRFMT_TWIDDLED		(0 << 26)
-#define PVR_TXRFMT_NONTWIDDLED		(1 << 26)
-#define PVR_TXRFMT_NOSTRIDE		(0 << 21)
-#define PVR_TXRFMT_STRIDE		(1 << 21)
+/** \defgroup pvr_txr_fmts          PVR texture formats
+
+    These are the texture formats that the PVR supports. Note that some of
+    these, you can OR together with other values.
+
+    @{
+*/
+#define PVR_TXRFMT_NONE         0           /**< \brief No texture */
+#define PVR_TXRFMT_VQ_DISABLE   (0 << 30)   /**< \brief Not VQ encoded */
+#define PVR_TXRFMT_VQ_ENABLE    (1 << 30)   /**< \brief VQ encoded */
+#define PVR_TXRFMT_ARGB1555     (0 << 27)   /**< \brief 16-bit ARGB1555 */
+#define PVR_TXRFMT_RGB565       (1 << 27)   /**< \brief 16-bit RGB565 */
+#define PVR_TXRFMT_ARGB4444     (2 << 27)   /**< \brief 16-bit ARGB4444 */
+#define PVR_TXRFMT_YUV422       (3 << 27)   /**< \brief YUV422 format */
+#define PVR_TXRFMT_BUMP         (4 << 27)   /**< \brief Bumpmap format */
+#define PVR_TXRFMT_PAL4BPP      (5 << 27)   /**< \brief 4BPP paletted format */
+#define PVR_TXRFMT_PAL8BPP      (6 << 27)   /**< \brief 8BPP paletted format */
+#define PVR_TXRFMT_TWIDDLED     (0 << 26)   /**< \brief Texture is twiddled */
+#define PVR_TXRFMT_NONTWIDDLED  (1 << 26)   /**< \brief Texture is not twiddled */
+#define PVR_TXRFMT_NOSTRIDE     (0 << 21)   /**< \brief Texture is not strided */
+#define PVR_TXRFMT_STRIDE       (1 << 21)   /**< \brief Texture is strided */
 
 /* OR one of these into your texture format if you need it. Note that
    these coincide with the twiddled/stride bits, so you can't have a 
    non-twiddled/strided texture that's paletted! */
-#define PVR_TXRFMT_8BPP_PAL(x)		((x) << 25)
-#define PVR_TXRFMT_4BPP_PAL(x)		((x) << 21)
+/** \brief  8BPP palette selector
+    \param  x               The palette index */
+#define PVR_TXRFMT_8BPP_PAL(x)  ((x) << 25)
 
-#define PVR_CLRFMT_ARGBPACKED		0	/* color_format */
-#define PVR_CLRFMT_4FLOATS		1
-#define PVR_CLRFMT_INTENSITY		2
-#define PVR_CLRFMT_INTENSITY_PREV	3
+/** \brief 4BPP palette selector 
+    \param  x               The palette index */
+#define PVR_TXRFMT_4BPP_PAL(x)  ((x) << 21)
+/** @} */
 
-#define PVR_UVFMT_32BIT			0	/* txr_uv_format */
-#define PVR_UVFMT_16BIT			1
+/** \defgroup pvr_color_fmts        PVR vertex color formats
 
-#define PVR_MODIFIER_DISABLE		0	/* modifier_format */
-#define PVR_MODIFIER_ENABLE		1
+    These control how colors are represented in polygon data.
+
+    @{
+*/
+#define PVR_CLRFMT_ARGBPACKED       0   /**< \brief 32-bit integer ARGB */
+#define PVR_CLRFMT_4FLOATS          1   /**< \brief 4 floating point values */
+#define PVR_CLRFMT_INTENSITY        2   /**< \brief Intensity color */
+#define PVR_CLRFMT_INTENSITY_PREV	3   /**< \brief Use last intensity */
+/** @} */
+
+/** \defgroup pvr_uv_fmts           PVR U/V data format control
+    @{
+*/
+#define PVR_UVFMT_32BIT         0   /**< \brief 32-bit floating point U/V */
+#define PVR_UVFMT_16BIT         1   /**< \brief 16-bit floating point U/V */
+/** @} */
+
+/** \defgroup pvr_mod_switch        Enable or disable modifier effects
+    @{
+*/
+#define PVR_MODIFIER_DISABLE    0   /**< \brief Disable modifier effects */
+#define PVR_MODIFIER_ENABLE     1   /**< \brief Enable modifier effects */
+/** @} */
 
 #define PVR_MODIFIER_CHEAP_SHADOW	0	
 #define PVR_MODIFIER_NORMAL		1
