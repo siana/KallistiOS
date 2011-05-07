@@ -371,7 +371,7 @@ int vmufs_delete(maple_device_t * dev, const char * fn);
 
     You should check this number before attempting to write.
 
-    \return                 The number of blocks free for writing. */
+    \return                 The number of blocks free for writing.
 */
 int vmufs_free_blocks(maple_device_t * dev);
 
