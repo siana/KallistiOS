@@ -115,9 +115,6 @@ int	cont_init();
 void	cont_shutdown();
 /* \endcond */
 
-/* Compat function */
-int	cont_get_cond(uint8 addr, cont_cond_t *cond) __attribute__((deprecated));
-
 /** \brief  Controller automatic callback type.
 
     Functions of this type can be set with cont_btn_callback() to respond

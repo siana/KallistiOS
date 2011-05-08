@@ -16,9 +16,6 @@ OBJS := $(OBJS) purupuru.o sip.o dreameye.o
 # Output devices
 OBJS := $(OBJS) vmu.o
 
-# Old maple compatibility
-OBJS := $(OBJS) maple_compat.o
-
 SUBDIRS =
 
 include $(KOS_BASE)/Makefile.prefab

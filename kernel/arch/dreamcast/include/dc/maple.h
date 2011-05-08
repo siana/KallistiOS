@@ -352,39 +352,6 @@ maple_device_t * maple_enum_type_ex(int n, uint32 func, uint32 cap);
 void * maple_dev_status(maple_device_t *dev);
 
 /**************************************************************************/
-/* maple_compat.h */
-
-/* Utility function used by other compat functions */
-int maple_compat_resolve(uint8 addr, maple_device_t **dev, uint32 funcs);
-
-/* Retrieve function code... */
-uint32 maple_device_func(int port, int unit) __attribute__((deprecated));
-
-/* First with a given function code... */
-uint8 maple_first_device(int code) __attribute__((deprecated));
-
-/* First controller */
-uint8 maple_first_controller() __attribute__((deprecated));
-
-/* First mouse */
-uint8 maple_first_mouse() __attribute__((deprecated));
-
-/* First keyboard */
-uint8 maple_first_kb() __attribute__((deprecated));
-
-/* First LCD unit */
-uint8 maple_first_lcd() __attribute__((deprecated));
-
-/* First VMU */ 
-uint8 maple_first_vmu() __attribute__((deprecated));
-
-/* NOP now */
-#define maple_rescan_bus(Q)	/* NADA */
-
-/* Renamed */
-#define maple_create_addr(A, B) maple_addr(A, B)
-
-/**************************************************************************/
 /* maple_init.c */
 
 /* Init / Shutdown */
