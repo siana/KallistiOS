@@ -28,6 +28,8 @@ __BEGIN_DECLS
 
     This object type should always be initialized with the KTHREAD_ONCE_INIT
     macro.
+
+    \headerfile kos/once.h
 */
 typedef struct {
     int initialized;

@@ -158,6 +158,8 @@ int flashrom_get_block(int partid, int blockid, uint8 * buffer_out);
 
     This structure is filled in with the settings set in the BIOS from the
     flashrom_get_syscfg() function.
+
+    \headerfile dc/flashrom.h
 */
 typedef struct flashrom_syscfg {
     int	language;   /**< \brief Language setting.
@@ -259,6 +261,8 @@ int flashrom_get_region();
     This structure will be filled in by flashrom_get_ispcfg() (DreamPassport) or
     flashrom_get_pw_ispcfg() (PlanetWeb). Thanks to Sam Steele for the
     information about DreamPassport's ISP settings.
+
+    \headerfile dc/flashrom.h
 */
 typedef struct flashrom_ispcfg {
     int     method;         /**< \brief DHCP, Static, dialup(?), PPPoE

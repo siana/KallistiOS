@@ -29,6 +29,8 @@ __BEGIN_DECLS
     Anyone wanting to package a VMU file should create one of these somewhere;
     eventually it will be turned into a flat file that you can save using
     fs_vmu.
+
+    \headerfile dc/vmu_pkg.h
 */
 typedef struct vmu_pkg {
     char        desc_short[20];     /**< \brief Short file description */
@@ -47,6 +49,8 @@ typedef struct vmu_pkg {
 /** \brief  Final VMU package type.
 
     This structure will be written into the file itself, not vmu_pkg_t.
+
+    \headerfile dc/vmu_pkg.h
 */
 typedef struct vmu_hdr {
     char    desc_short[16];     /**< \brief Space-padded short description */

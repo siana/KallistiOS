@@ -36,6 +36,8 @@ __BEGIN_DECLS
 
     Each usable network device should have one of these describing it. These
     must be registered to the network layer before the device is useable.
+
+    \headerfile kos/net.h
 */
 typedef struct knetif {
     /** \brief  Device list handle (not a function!) */
@@ -202,7 +204,9 @@ LIST_HEAD(netif_list, knetif);
 #define PACKED __attribute__((packed))
 /* \endcond */
 
-/** \brief IPv4 Packet header */
+/** \brief IPv4 Packet header.
+    \headerfile kos/net.h
+*/
 typedef struct ip_hdr_s {
     uint8   version_ihl;        /**< \brief IP version and header length */
     uint8   tos;                /**< \brief Type of Service */
@@ -216,7 +220,9 @@ typedef struct ip_hdr_s {
     uint32  dest;               /**< \brief Destination IP address */
 } PACKED ip_hdr_t;
 
-/** \brief  IPv6 Packet header */
+/** \brief  IPv6 Packet header.
+    \headerfile kos/net.h
+*/
 typedef struct ipv6_hdr_s {
     uint8           version_lclass; /**< \brief Version and low-order class
                                                 byte */
@@ -400,7 +406,10 @@ int net_icmp_send_time_exceeded(netif_t *net, uint8 code, const uint8 *msg);
 /** \brief IPv4 statistics structure.
 
     This structure holds some basic statistics about the IPv4 layer of the
-    stack, and can be retrieved with the appropriate function. */
+    stack, and can be retrieved with the appropriate function.
+
+    \headerfile kos/net.h
+*/
 typedef struct net_ipv4_stats {
     uint32  pkt_sent;               /** \brief Packets sent out successfully */
     uint32  pkt_send_failed;        /** \brief Packets that failed to send */
@@ -538,7 +547,10 @@ int net_icmp6_send_param_prob(netif_t *net, uint8 code, uint32 ptr,
 /** \brief  IPv6 statistics structure.
 
     This structure holds some basic statistics about the IPv6 layer of the
-    stack, and can be retrieved with the appropriate function. */
+    stack, and can be retrieved with the appropriate function.
+
+    \headerfile kos/net.h
+*/
 typedef struct net_ipv6_stats {
     uint32  pkt_sent;               /**< \brief Packets sent out successfully */
     uint32  pkt_send_failed;        /**< \brief Packets that failed to send */
@@ -601,7 +613,10 @@ int net_ndp_lookup(netif_t *net, const struct in6_addr *ip, uint8 mac_out[6],
 /** \brief  UDP statistics structure.
 
     This structure holds some basic statistics about the UDP layer of the stack,
-    and can be retrieved with the appropriate function. */
+    and can be retrieved with the appropriate function.
+
+    \headerfile kos/net.h
+*/
 typedef struct net_udp_stats {
     uint32  pkt_sent;               /**< \brief Packets sent out successfully */
     uint32  pkt_send_failed;        /**< \brief Packets that failed to send */

@@ -61,7 +61,9 @@ typedef long _ssize_t;
 /** \endcond */
 
 #ifndef __mbstate_t_defined
-/** \brief  Conversion state information.  */
+/** \brief  Conversion state information.
+    \headerfile sys/_types.h
+*/
 typedef struct
 {
   int __count;

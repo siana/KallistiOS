@@ -33,7 +33,9 @@ __BEGIN_DECLS
 #define __packed__ __attribute__((packed))
 /* \endcond */
 
-/** \brief  BCD timestamp, used several places in the vmufs. */
+/** \brief  BCD timestamp, used several places in the vmufs.
+    \headerfile dc/vmufs.h
+*/
 typedef struct {
     uint8   cent;   /**< \brief Century */
     uint8   year;   /**< \brief Year, within century */
@@ -45,7 +47,9 @@ typedef struct {
     uint8   dow;    /**< \brief Day of week (0 = monday, etc) */
 } __packed__ vmu_timestamp_t;
 
-/** \brief  VMU FS Root block layout. */
+/** \brief  VMU FS Root block layout.
+    \headerfile dc/vmufs.h
+*/
 typedef struct {
     uint8           magic[16];      /**< \brief All should contain 0x55 */
     uint8           use_custom;     /**< \brief 0 = standard, 1 = custom */
@@ -63,7 +67,9 @@ typedef struct {
     uint8           unk2[430];      /**< \brief ??? */
 } __packed__ vmu_root_t;
 
-/** \brief  VMU FS Directory entries, 32 bytes each. */
+/** \brief  VMU FS Directory entries, 32 bytes each.
+    \headerfile dc/vmufs.h
+*/
 typedef struct {
     uint8           filetype;       /**< \brief 0x00 = no file; 0x33 = data; 0xcc = a game */
     uint8           copyprotect;    /**< \brief 0x00 = copyable; 0xff = copy protected */

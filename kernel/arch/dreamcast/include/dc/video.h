@@ -122,6 +122,8 @@ enum {
 
     KOS maintains a list of valid video modes internally that correspond to the
     specific display modes enumeration. Each of them is built of one of these.
+
+    \headerfile dc/video.h
 */
 typedef struct vid_mode {
     int     generic;    /**< \brief Generic mode type for vid_set_mode() */
