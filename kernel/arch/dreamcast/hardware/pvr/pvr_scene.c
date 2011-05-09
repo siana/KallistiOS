@@ -144,7 +144,7 @@ int pvr_list_begin(pvr_list_t list) {
 #endif	/* !NDEBUG */
 
 	/* If we already had a list open, close it first */
-	if (pvr_state.list_reg_open != -1)
+	if (pvr_state.list_reg_open != -1 && pvr_state.list_reg_open != list)
 		pvr_list_finish();
 
 	/* Ok, set the flag */
