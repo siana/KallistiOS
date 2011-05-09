@@ -398,6 +398,7 @@ int net_icmp_send_time_exceeded(netif_t *net, uint8 code, const uint8 *msg);
 /***** net_ipv4.c *********************************************************/
 
 /** \brief IPv4 statistics structure.
+
     This structure holds some basic statistics about the IPv4 layer of the
     stack, and can be retrieved with the appropriate function. */
 typedef struct net_ipv4_stats {
@@ -535,6 +536,7 @@ int net_icmp6_send_param_prob(netif_t *net, uint8 code, uint32 ptr,
 /***** net_ipv6.c *********************************************************/
 
 /** \brief  IPv6 statistics structure.
+
     This structure holds some basic statistics about the IPv6 layer of the
     stack, and can be retrieved with the appropriate function. */
 typedef struct net_ipv6_stats {
@@ -597,6 +599,7 @@ int net_ndp_lookup(netif_t *net, const struct in6_addr *ip, uint8 mac_out[6],
 /***** net_udp.c **********************************************************/
 
 /** \brief  UDP statistics structure.
+
     This structure holds some basic statistics about the UDP layer of the stack,
     and can be retrieved with the appropriate function. */
 typedef struct net_udp_stats {

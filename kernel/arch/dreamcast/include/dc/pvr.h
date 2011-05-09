@@ -523,139 +523,276 @@ typedef struct {
 #define PVR_MODIFIER_CHEAP_SHADOW	0	
 #define PVR_MODIFIER_NORMAL		1
 
-#define PVR_MODIFIER_OTHER_POLY		0	/* PM1 modifer instruction */
-#define PVR_MODIFIER_INCLUDE_LAST_POLY		1	/* ...in inclusion vol */
-#define PVR_MODIFIER_EXCLUDE_LAST_POLY		2	/* ...in exclusion vol */
+/** \defgroup pvr_mod_modes         Modifier volume mode parameters
+
+    All triangles in a single modifier volume should be of the other poly type,
+    except for the last one. That should be either of the other two types,
+    depending on whether you want an inclusion or exclusion volume.
+
+    @{
+*/
+#define PVR_MODIFIER_OTHER_POLY         0   /**< \brief Not the last polygon in the volume */
+#define PVR_MODIFIER_INCLUDE_LAST_POLY  1   /**< \brief Last polygon, inclusion volume */
+#define PVR_MODIFIER_EXCLUDE_LAST_POLY  2	/**< \brief Last polygon, exclusion volume */
+/** @} */
 
 
-/* "Polygon header" -- this is the hardware equivalent of a rendering
-   context; you'll create one of these from your pvr_poly_context_t and
-   use it for submission to the hardware. */
+/** \brief  PVR polygon header.
+
+    This is the hardware equivalent of a rendering context; you'll create one of
+    these from your pvr_poly_cxt_t and use it for submission to the hardware.
+
+    \headerfile dc/pvr.h
+*/
 typedef struct {
-	uint32		cmd;			/* TA command */
-	uint32		mode1, mode2, mode3;	/* mode parameters */
-	uint32		d1, d2, d3, d4;		/* dummies */
+    uint32  cmd;                /**< \brief TA command */
+    uint32  mode1;              /**< \brief Parameter word 1 */
+    uint32  mode2;              /**< \brief Parameter word 2 */
+    uint32  mode3;              /**< \brief Parameter word 3 */
+    uint32  d1;                 /**< \brief Dummy value */
+    uint32  d2;                 /**< \brief Dummy value */
+    uint32  d3;                 /**< \brief Dummy value */
+    uint32  d4;                 /**< \brief Dummy value */
 } pvr_poly_hdr_t;
 
-/* Polygon header with intensity color. This is the equivalent of
-   pvr_poly_hdr_t, but for use with intensity color. */
+/** \brief  PVR polygon header with intensity color.
+
+    This is the equivalent of pvr_poly_hdr_t, but for use with intensity color.
+
+    \headerfile dc/pvr.h
+*/
 typedef struct {
-	uint32		cmd;					/* TA command */
-	uint32		mode1, mode2, mode3;	/* mode parameters */
-	float		a, r, g, b;				/* color */
+    uint32  cmd;                /**< \brief TA command */
+    uint32  mode1;              /**< \brief Parameter word 1 */
+    uint32  mode2;              /**< \brief Parameter word 2 */
+    uint32  mode3;              /**< \brief Parameter word 3 */
+    float   a;                  /**< \brief Face color alpha component */
+    float   r;                  /**< \brief Face color red component */
+    float   g;                  /**< \brief Face color green component */
+    float   b;                  /**< \brief Face color blue component */
 } pvr_poly_ic_hdr_t;
 
-/* Polygon header to be used with modifier volumes. This is the
-   equivalent of a pvr_poly_hdr_t for use when a polygon is to
-   be used with modifier volumes. */
+/** \brief  PVR polygon header to be used with modifier volumes.
+
+    This is the equivalent of a pvr_poly_hdr_t for use when a polygon is to be
+    used with modifier volumes.
+
+    \headerfile dc/pvr.h
+*/
 typedef struct {
-	uint32		cmd;			/* TA command */
-	uint32		mode1;			/* mode parameters */
-	uint32		mode2_0, mode3_0;
-	uint32		mode2_1, mode3_1;
-	uint32		d1, d2;			/* dummies */
+    uint32  cmd;                /**< \brief TA command */
+    uint32  mode1;              /**< \brief Parameter word 1 */
+    uint32  mode2_0;            /**< \brief Parameter word 2 (outside volume) */
+    uint32  mode3_0;            /**< \brief Parameter word 3 (outside volume) */
+    uint32  mode2_1;            /**< \brief Parameter word 2 (inside volume) */
+    uint32  mode3_1;            /**< \brief Parameter word 3 (inside volume) */
+    uint32  d1;                 /**< \brief Dummy value */
+    uint32  d2;                 /**< \brief Dummy value */
 } pvr_poly_mod_hdr_t;
 
-/* Polygon header specifically for sprites. */
+/** \brief  PVR polygon header specifically for sprites.
+
+    This is the equivalent of a pvr_poly_hdr_t for use when a quad/sprite is to
+    be rendered. Note that the color data is here, not in the vertices.
+
+    \headerfile dc/pvr.h
+*/
 typedef struct {
-	uint32		cmd;					/* TA command */
-	uint32		mode1, mode2, mode3;	/* mode parameters */
-	uint32		argb;					/* sprite color */
-	uint32		oargb;					/* offset color */
-	uint32		d1, d2;					/* dummies */
+    uint32  cmd;                /**< \brief TA command */
+    uint32  mode1;              /**< \brief Parameter word 1 */
+    uint32  mode2;              /**< \brief Parameter word 2 */
+    uint32  mode3;              /**< \brief Parameter word 3 */
+    uint32  argb;               /**< \brief Sprite face color */
+    uint32  oargb;              /**< \brief Sprite offset color */
+    uint32  d1;                 /**< \brief Dummy value */
+    uint32  d2;                 /**< \brief Dummy value */
 } pvr_sprite_hdr_t;
 
-/* Modifier volume header. */
+/** \brief  Modifier volume header.
+
+    This is the header that should be submitted when dealing with setting a
+    modifier volume.
+
+    \headerfile dc/pvr.h
+*/
 typedef struct {
-	uint32		cmd;					/* TA command */
-	uint32		mode1;					/* mode parameter */
-	uint32		d1, d2, d3, d4, d5, d6;	/* dummies */
+    uint32  cmd;                /**< \brief TA command */
+    uint32  mode1;              /**< \brief Parameter word 1 */
+    uint32  d1;                 /**< \brief Dummy value */
+    uint32  d2;                 /**< \brief Dummy value */
+    uint32  d3;                 /**< \brief Dummy value */
+    uint32  d4;                 /**< \brief Dummy value */
+    uint32  d5;                 /**< \brief Dummy value */
+    uint32  d6;                 /**< \brief Dummy value */
 } pvr_mod_hdr_t;
 
-/* Generic vertex type; the PVR chip itself supports many more vertex
-   types, but this is the main one that can be used with both textured
-   and non-textured polygons, and is fairly fast. You can find other
-   variants below. */
+/** \brief  Generic PVR vertex type.
+
+    The PVR chip itself supports many more vertex types, but this is the main
+    one that can be used with both textured and non-textured polygons, and is
+    fairly fast.
+
+    \headerfile dc/pvr.h
+*/
 typedef struct {
-	uint32		flags;			/* vertex flags */
-	float		x, y, z;		/* the coodinates */
-	float		u, v;			/* texture coords */
-	uint32		argb;			/* vertex color */
-	uint32		oargb;			/* offset color */
+    uint32  flags;              /**< \brief TA command (vertex flags) */
+    float   x;                  /**< \brief X coordinate */
+    float   y;                  /**< \brief Y coordinate */
+    float   z;                  /**< \brief Z coordinate */
+    float   u;                  /**< \brief Texture U coordinate */
+    float   v;                  /**< \brief Texture V coordinate */
+    uint32  argb;               /**< \brief Vertex color */
+    uint32  oargb;              /**< \brief Vertex offset color */
 } pvr_vertex_t;
 
-/* Non-textured, packed color, affected by modifier volume. This
-   vertex type has two copies of colors. The second color is used when
-   enclosed within a modifier volume. */
+/** \brief  PVR vertex type: Non-textured, packed color, affected by modifier
+            volume.
+
+    This vertex type has two copies of colors. The second color is used when
+    enclosed within a modifier volume.
+
+    \headerfile dc/pvr.h
+*/
 typedef struct {
-	uint32		flags;
-	float		x, y, z;
-	uint32		argb0;
-	uint32		argb1;
-	uint32		d1, d2;
+    uint32  flags;              /**< \brief TA command (vertex flags) */
+    float   x;                  /**< \brief X coordinate */
+    float   y;                  /**< \brief Y coordinate */
+    float   z;                  /**< \brief Z coordinate */
+    uint32  argb0;              /**< \brief Vertex color (outside volume) */
+    uint32  argb1;              /**< \brief Vertex color (inside volume) */
+    uint32  d1;                 /**< \brief Dummy value */
+    uint32  d2;                 /**< \brief Dummy value */
 } pvr_vertex_pcm_t;
 
-/* Textured, packed color, affected by modifer volume. Note that this
-   vertex type has two copies of colors, offset colors and texture 
-   coords. The second set of texture coords, colors, and offset colors
-   are used when enclosed within a modifer volume */
+/** \brief  PVR vertex type: Textured, packed color, affected by modifer volume.
+
+    Note that this vertex type has two copies of colors, offset colors, and
+    texture coords. The second set of texture coords, colors, and offset colors
+    are used when enclosed within a modifer volume.
+
+    \headerfile dc/pvr.h
+*/
 typedef struct {
-	uint32 flags;				/* vertex flags */
-	float x, y, z;				/* the coordinates */
-	float u0, v0;				/* texture coords 0 */
-	uint32 argb0;				/* vertex color 0 */
-	uint32 oargb0;				/* offset color 0 */
-	float u1, v1;				/* texture coords 1 */
-	uint32 argb1;				/* vertex color 1 */
-	uint32 oargb1;				/* offset color 1 */
-	uint32 d1, d2, d3, d4;			/* dummies */
+    uint32  flags;              /**< \brief TA command (vertex flags) */
+    float   x;                  /**< \brief X coordinate */
+    float   y;                  /**< \brief Y coordinate */
+    float   z;                  /**< \brief Z coordinate */
+    float   u0;                 /**< \brief Texture U coordinate (outside) */
+    float   v0;                 /**< \brief Texture V coordinate (outside) */
+    uint32  argb0;              /**< \brief Vertex color (outside) */
+    uint32  oargb0;             /**< \brief Vertex offset color (outside) */
+    float   u1;                 /**< \brief Texture U coordinate (inside) */
+    float   v1;                 /**< \brief Texture V coordinate (inside) */
+    uint32  argb1;              /**< \brief Vertex color (inside) */
+    uint32  oargb1;             /**< \brief Vertex offset color (inside) */
+    uint32  d1;                 /**< \brief Dummy value */
+    uint32  d2;                 /**< \brief Dummy value */
+    uint32  d3;                 /**< \brief Dummy value */
+    uint32  d4;                 /**< \brief Dummy value */
 } pvr_vertex_tpcm_t;
 
-/* Textured sprite. This vertex type is to be used with the sprite
-   polygon header and the sprite related commands to draw textured
-   sprites. */
+/** \brief  PVR vertex type: Textured sprite.
+
+    This vertex type is to be used with the sprite polygon header and the sprite
+    related commands to draw textured sprites. Note that there is on fourth Z
+    coordinate. I suppose it just gets interpolated?
+
+    The U/V coordinates in here are in the 16-bit per coordinate form. Also,
+    like the fourth Z value, there is no fourth U or V, so it must get
+    interpolated from the others.
+
+    \headerfile dc/pvr.h
+*/
 typedef struct {
-	uint32 flags;
-	float ax, ay, az;
-	float bx, by, bz;
-	float cx, cy, cz;
-	float dx, dy;
-	uint32 dummy;
-	uint32 auv;
-	uint32 buv;
-	uint32 cuv;
+    uint32  flags;              /**< \brief TA command (vertex flags) */
+    float   ax;                 /**< \brief First X coordinate */
+    float   ay;                 /**< \brief First Y coordinate */
+    float   az;                 /**< \brief First Z coordinate */
+    float   bx;                 /**< \brief Second X coordinate */
+    float   by;                 /**< \brief Second Y coordinate */
+    float   bz;                 /**< \brief Second Z coordinate */
+    float   cx;                 /**< \brief Third X coordinate */
+    float   cy;                 /**< \brief Third Y coordinate */
+    float   cz;                 /**< \brief Third Z coordinate */
+    float   dx;                 /**< \brief Fourth X coordinate */
+    float   dy;                 /**< \brief Fourth Y coordinate */
+	uint32 dummy;               /**< \brief Dummy value */
+	uint32 auv;                 /**< \brief First U/V texture coordinates */
+	uint32 buv;                 /**< \brief Second U/V texture coordinates */
+	uint32 cuv;                 /**< \brief Third U/V texture coordinates */
 } pvr_sprite_txr_t;
 
-/* Untextured sprite. This vertex type is to be used with the sprite
-   polygon header and the sprite related commands to draw untextured
-   sprites (aka, quads). */
+/** \brief  PVR vertex type: Untextured sprite.
+
+    This vertex type is to be used with the sprite polygon header and the sprite
+    related commands to draw untextured sprites (aka, quads).
+*/
 typedef struct {
-	uint32 flags;
-	float ax, ay, az;
-	float bx, by, bz;
-	float cx, cy, cz;
-	float dx, dy;
-	uint32 d1, d2, d3, d4;
+    uint32  flags;              /**< \brief TA command (vertex flags) */
+    float   ax;                 /**< \brief First X coordinate */
+    float   ay;                 /**< \brief First Y coordinate */
+    float   az;                 /**< \brief First Z coordinate */
+    float   bx;                 /**< \brief Second X coordinate */
+    float   by;                 /**< \brief Second Y coordinate */
+    float   bz;                 /**< \brief Second Z coordinate */
+    float   cx;                 /**< \brief Third X coordinate */
+    float   cy;                 /**< \brief Third Y coordinate */
+    float   cz;                 /**< \brief Third Z coordinate */
+    float   dx;                 /**< \brief Fourth X coordinate */
+    float   dy;                 /**< \brief Fourth Y coordinate */
+    uint32  d1;                 /**< \brief Dummy value */
+    uint32  d2;                 /**< \brief Dummy value */
+    uint32  d3;                 /**< \brief Dummy value */
+    uint32  d4;                 /**< \brief Dummy value */
 } pvr_sprite_col_t;
 
-/* This vertex is only for modifer volumes */
+/** \brief  PVR vertex type: Modifier volume.
+ 
+    This vertex type is to be used with the modifier volume header to specify
+    triangular modifier areas.
+*/
 typedef struct {
-	uint32 flags;				/* vertex flags */
-	float ax, ay, az;			/* 3 sets of coordinates */
-	float bx, by, bz;
-	float cx, cy, cz;
-	uint32 d1, d2, d3, d4, d5, d6;		/* dummies */
+    uint32  flags;              /**< \brief TA command (vertex flags) */
+    float   ax;                 /**< \brief First X coordinate */
+    float   ay;                 /**< \brief First Y coordinate */
+    float   az;                 /**< \brief First Z coordinate */
+    float   bx;                 /**< \brief Second X coordinate */
+    float   by;                 /**< \brief Second Y coordinate */
+    float   bz;                 /**< \brief Second Z coordinate */
+    float   cx;                 /**< \brief Third X coordinate */
+    float   cy;                 /**< \brief Third Y coordinate */
+    float   cz;                 /**< \brief Third Z coordinate */
+    uint32  d1;                 /**< \brief Dummy value */
+    uint32  d2;                 /**< \brief Dummy value */
+    uint32  d3;                 /**< \brief Dummy value */
+    uint32  d4;                 /**< \brief Dummy value */
+    uint32  d5;                 /**< \brief Dummy value */
+    uint32  d6;                 /**< \brief Dummy value */
 } pvr_modifier_vol_t;
 
-/* Small macro for packing float color values */
+/** \brief  Pack four floating point color values into a 32-bit integer form.
+
+    All of the color values should be between 0 and 1.
+
+    \param  a               Alpha value
+    \param  r               Red value
+    \param  g               Green value
+    \param  b               Blue value
+    \return                 The packed color value
+*/
 #define PVR_PACK_COLOR(a, r, g, b) ( \
 	( ((uint8)( a * 255 ) ) << 24 ) | \
 	( ((uint8)( r * 255 ) ) << 16 ) | \
 	( ((uint8)( g * 255 ) ) << 8 ) | \
 	( ((uint8)( b * 255 ) ) << 0 ) )
 
-/* Small function for packing two 32-bit u/v values into
-   two 16-bit u/v values. */
+/** \brief  Pack two floating point coordinates into one 32-bit value,
+            truncating them to 16-bits each.
+
+    \param  u               First coordinate to pack
+    \param  v               Second coordinate to pack
+    \return                 The packed coordinates
+*/
 static inline uint32 PVR_PACK_16BIT_UV(float u, float v) {
 	return ( ((*((uint32 *) &u)) >> 0  ) & 0xFFFF0000 ) |
 	       ( ((*((uint32 *) &v)) >> 16 ) & 0x0000FFFF );
@@ -663,17 +800,30 @@ static inline uint32 PVR_PACK_16BIT_UV(float u, float v) {
 
 /* ... other vertex structs omitted for now ... */
 
-/* Constants that apply to all primitives */
-#define PVR_CMD_POLYHDR		0x80840000	/* sublist, striplength=2 */
-#define PVR_CMD_VERTEX		0xe0000000
-#define PVR_CMD_VERTEX_EOL	0xf0000000
-#define PVR_CMD_USERCLIP	0x20000000
-#define PVR_CMD_MODIFIER	0x80000000
-#define PVR_CMD_SPRITE		0xA0000000
+/** \defgroup pvr_commands          TA command values
 
-/* Constants and bitmasks for handling polygon headers; note that thanks
-   to the arrangement of constants above, this is mainly a matter of bit
-   shifting to compile it... */
+    These are are appropriate values for TA commands. Use whatever goes with the
+    primitive type you're using.
+
+    @{
+*/
+#define PVR_CMD_POLYHDR     0x80840000	/**< \brief PVR polygon header.
+                                             Striplength set to 2 */
+#define PVR_CMD_VERTEX      0xe0000000  /**< \brief PVR vertex data */
+#define PVR_CMD_VERTEX_EOL  0xf0000000  /**< \brief PVR vertex, end of strip */
+#define PVR_CMD_USERCLIP    0x20000000  /**< \brief PVR user clipping area */
+#define PVR_CMD_MODIFIER    0x80000000  /**< \brief PVR modifier volume */
+#define PVR_CMD_SPRITE      0xA0000000  /**< \brief PVR sprite header */
+/** @} */
+
+/** \defgroup pvr_bitmasks          Constants and bitmasks for handling polygon
+                                    headers.
+
+    Note that thanks to the arrangement of constants, this is mainly a matter of
+    bit shifting to compile headers...
+
+    @{
+*/
 #define PVR_TA_CMD_TYPE_SHIFT		24
 #define PVR_TA_CMD_TYPE_MASK		(7 << PVR_TA_CMD_TYPE_SHIFT)
 
@@ -760,97 +910,119 @@ static inline uint32 PVR_PACK_16BIT_UV(float u, float v) {
 
 #define PVR_TA_PM3_TXRFMT_SHIFT		0
 #define PVR_TA_PM3_TXRFMT_MASK		0xffffffff
-
-
+/** @} */
 
 /**** Register macros ***************************************************/
 
 /* We use these macros to do all PVR register access, so that it's
    simple later on to hook them for debugging or whatnot. */
 
+/** \brief  Retrieve a PVR register value
+    \param  REG             The register to fetch
+    \return                 The value of that register (32-bits)
+*/
 #define PVR_GET(REG) (* ( (uint32*)( 0xa05f8000 + (REG) ) ) )
+
+/** \brief  Set a PVR register value
+    \param  REG             The register to set
+    \param  VALUE           The value to set in the register (32-bits)
+*/
 #define PVR_SET(REG, VALUE) PVR_GET(REG) = (VALUE)
 
 /* The registers themselves; these are from Maiwe's powervr-reg.txt */
 /* Note that 2D specific registers have been excluded for now (like
    vsync, hsync, v/h size, etc) */
 
-#define PVR_ID			0x0000		/* Chip ID */
-#define PVR_REVISION		0x0004		/* Chip revision */
-#define PVR_RESET		0x0008		/* Reset pins */
-#define PVR_ISP_START		0x0014		/* Start the ISP/TSP */
-#define PVR_UNK_0018		0x0018		/* ?? */
-#define PVR_ISP_VERTBUF_ADDR	0x0020		/* Vertex buffer address for scene rendering */
-#define PVR_ISP_TILEMAT_ADDR	0x002c		/* Tile matrix address for scene rendering */
-#define PVR_SPANSORT_CFG	0x0030		/* ?? -- write 0x101 for now */
-#define PVR_FB_CFG_1		0x0044		/* Framebuffer config 1 */
-#define PVR_FB_CFG_2		0x0048		/* Framebuffer config 2 */
-#define PVR_RENDER_MODULO	0x004c		/* Render modulo */
-#define PVR_RENDER_ADDR		0x0060		/* Render output address */
-#define PVR_RENDER_ADDR_2	0x0064		/* Output for strip-buffering */
-#define PVR_PCLIP_X		0x0068		/* Horizontal clipping area */
-#define PVR_PCLIP_Y		0x006c		/* Vertical clipping area */
-#define PVR_CHEAP_SHADOW	0x0074		/* Cheap shadow control */
-#define PVR_OBJECT_CLIP		0x0078		/* Distance for polygon culling */
-#define PVR_UNK_007C		0x007c		/* ?? -- write 0x0027df77 for now */
-#define PVR_UNK_0080		0x0080		/* ?? -- write 7 for now */
-#define PVR_TEXTURE_CLIP	0x0084		/* Distance for texture clipping */
-#define PVR_BGPLANE_Z		0x0088		/* Distance for background plane */
-#define PVR_BGPLANE_CFG		0x008c		/* Background plane config */
-#define PVR_UNK_0098		0x0098		/* ?? -- write 0x00800408 for now */
-#define PVR_UNK_00A0		0x00a0		/* ?? -- write 0x20 for now */
-#define PVR_UNK_00A8		0x00a8		/* ?? -- write 0x15d1c951 for now */
-#define PVR_FOG_TABLE_COLOR	0x00b0		/* Table fog color */
-#define PVR_FOG_VERTEX_COLOR	0x00b4		/* Vertex fog color */
-#define PVR_FOG_DENSITY		0x00b8		/* Fog density coefficient */
-#define PVR_COLOR_CLAMP_MAX	0x00bc		/* RGB Color clamp max */
-#define PVR_COLOR_CLAMP_MIN	0x00c0		/* RGB Color clamp min */
-#define PVR_GUN_POS		0x00c4		/* Light gun position */
-#define PVR_UNK_00C8		0x00c8		/* ?? -- write same as border H in 00d4 << 16 */
-#define PVR_VPOS_IRQ		0x00cc		/* Vertical position IRQ */
-#define PVR_TEXTURE_MODULO	0x00e4		/* Output texture width modulo */
-#define PVR_VIDEO_CFG		0x00e8		/* Misc video config */
-#define PVR_SCALER_CFG		0x00f4		/* Smoothing scaler */
-#define PVR_PALETTE_CFG		0x0108		/* Palette format */
-#define PVR_SYNC_STATUS		0x010c		/* V/H blank status */
-#define PVR_UNK_0110		0x0110		/* ?? -- write 0x93f39 for now */
-#define PVR_UNK_0114		0x0114		/* ?? -- write 0x200000 for now */
-#define PVR_UNK_0118		0x0118		/* ?? -- write 0x8040 for now */
-#define PVR_TA_OPB_START	0x0124		/* Object Pointer Buffer start for TA usage */
-#define PVR_TA_VERTBUF_START	0x0128		/* Vertex buffer start for TA usage */
-#define PVR_TA_OPB_END		0x012c		/* OPB end for TA usage */
-#define PVR_TA_VERTBUF_END	0x0130		/* Vertex buffer end for TA usage */
-#define PVR_TA_OPB_POS		0x0134		/* Top used memory location in OPB for TA usage */
-#define PVR_TA_VERTBUF_POS	0x0138		/* Top used memory location in vertbuf for TA usage */
-#define PVR_TILEMAT_CFG		0x013c		/* Tile matrix size config */
-#define PVR_OPB_CFG		0x0140		/* Active lists / list size */
-#define PVR_TA_INIT		0x0144		/* Initialize vertex reg. params */
-#define PVR_YUV_ADDR		0x0148		/* YUV conversion destination */
-#define PVR_YUV_CFG_1		0x014c		/* YUV configuration */
-#define PVR_UNK_0160		0x0160		/* ?? */
-#define PVR_TA_OPB_INIT		0x0164		/* Object pointer buffer position init */
-#define PVR_FOG_TABLE_BASE	0x0200		/* Base of the fog table */
-#define PVR_PALETTE_TABLE_BASE	0x1000		/* Base of the palette table */
+/** \defgroup pvr_regs              Offsets to registers of the PVR
+    @{
+*/
+#define PVR_ID                  0x0000  /**< \brief Chip ID */
+#define PVR_REVISION            0x0004  /**< \brief Chip revision */
+#define PVR_RESET               0x0008  /**< \brief Reset pins */
+#define PVR_ISP_START           0x0014  /**< \brief Start the ISP/TSP */
+#define PVR_UNK_0018            0x0018  /**< \brief ?? */
+#define PVR_ISP_VERTBUF_ADDR    0x0020  /**< \brief Vertex buffer address for scene rendering */
+#define PVR_ISP_TILEMAT_ADDR    0x002c  /**< \brief Tile matrix address for scene rendering */
+#define PVR_SPANSORT_CFG        0x0030  /**< \brief ?? -- write 0x101 for now */
+#define PVR_FB_CFG_1            0x0044  /**< \brief Framebuffer config 1 */
+#define PVR_FB_CFG_2            0x0048  /**< \brief Framebuffer config 2 */
+#define PVR_RENDER_MODULO       0x004c  /**< \brief Render modulo */
+#define PVR_RENDER_ADDR         0x0060  /**< \brief Render output address */
+#define PVR_RENDER_ADDR_2       0x0064  /**< \brief Output for strip-buffering */
+#define PVR_PCLIP_X             0x0068  /**< \brief Horizontal clipping area */
+#define PVR_PCLIP_Y             0x006c  /**< \brief Vertical clipping area */
+#define PVR_CHEAP_SHADOW        0x0074  /**< \brief Cheap shadow control */
+#define PVR_OBJECT_CLIP         0x0078  /**< \brief Distance for polygon culling */
+#define PVR_UNK_007C            0x007c  /**< \brief ?? -- write 0x0027df77 for now */
+#define PVR_UNK_0080            0x0080  /**< \brief ?? -- write 7 for now */
+#define PVR_TEXTURE_CLIP        0x0084  /**< \brief Distance for texture clipping */
+#define PVR_BGPLANE_Z           0x0088  /**< \brief Distance for background plane */
+#define PVR_BGPLANE_CFG         0x008c  /**< \brief Background plane config */
+#define PVR_UNK_0098            0x0098  /**< \brief ?? -- write 0x00800408 for now */
+#define PVR_UNK_00A0            0x00a0  /**< \brief ?? -- write 0x20 for now */
+#define PVR_UNK_00A8            0x00a8  /**< \brief ?? -- write 0x15d1c951 for now */
+#define PVR_FOG_TABLE_COLOR     0x00b0  /**< \brief Table fog color */
+#define PVR_FOG_VERTEX_COLOR    0x00b4  /**< \brief Vertex fog color */
+#define PVR_FOG_DENSITY         0x00b8  /**< \brief Fog density coefficient */
+#define PVR_COLOR_CLAMP_MAX     0x00bc  /**< \brief RGB Color clamp max */
+#define PVR_COLOR_CLAMP_MIN     0x00c0  /**< \brief RGB Color clamp min */
+#define PVR_GUN_POS             0x00c4  /**< \brief Light gun position */
+#define PVR_UNK_00C8            0x00c8  /**< \brief ?? -- write same as border H in 00d4 << 16 */
+#define PVR_VPOS_IRQ            0x00cc  /**< \brief Vertical position IRQ */
+#define PVR_TEXTURE_MODULO      0x00e4  /**< \brief Output texture width modulo */
+#define PVR_VIDEO_CFG           0x00e8  /**< \brief Misc video config */
+#define PVR_SCALER_CFG          0x00f4  /**< \brief Smoothing scaler */
+#define PVR_PALETTE_CFG         0x0108  /**< \brief Palette format */
+#define PVR_SYNC_STATUS         0x010c  /**< \brief V/H blank status */
+#define PVR_UNK_0110            0x0110  /**< \brief ?? -- write 0x93f39 for now */
+#define PVR_UNK_0114            0x0114  /**< \brief ?? -- write 0x200000 for now */
+#define PVR_UNK_0118            0x0118  /**< \brief ?? -- write 0x8040 for now */
+#define PVR_TA_OPB_START        0x0124  /**< \brief Object Pointer Buffer start for TA usage */
+#define PVR_TA_VERTBUF_START    0x0128  /**< \brief Vertex buffer start for TA usage */
+#define PVR_TA_OPB_END          0x012c  /**< \brief OPB end for TA usage */
+#define PVR_TA_VERTBUF_END      0x0130  /**< \brief Vertex buffer end for TA usage */
+#define PVR_TA_OPB_POS          0x0134  /**< \brief Top used memory location in OPB for TA usage */
+#define PVR_TA_VERTBUF_POS      0x0138  /**< \brief Top used memory location in vertbuf for TA usage */
+#define PVR_TILEMAT_CFG         0x013c  /**< \brief Tile matrix size config */
+#define PVR_OPB_CFG             0x0140  /**< \brief Active lists / list size */
+#define PVR_TA_INIT             0x0144  /**< \brief Initialize vertex reg. params */
+#define PVR_YUV_ADDR            0x0148  /**< \brief YUV conversion destination */
+#define PVR_YUV_CFG_1           0x014c  /**< \brief YUV configuration */
+#define PVR_UNK_0160            0x0160  /**< \brief ?? */
+#define PVR_TA_OPB_INIT         0x0164  /**< \brief Object pointer buffer position init */
+#define PVR_FOG_TABLE_BASE      0x0200  /**< \brief Base of the fog table */
+#define PVR_PALETTE_TABLE_BASE  0x1000  /**< \brief Base of the palette table */
+/** @} */
 
 /* Useful memory locations */
-#define PVR_TA_INPUT		0x10000000	/* TA command input */
-#define PVR_RAM_BASE		0xa5000000	/* PVR RAM (raw) */
-#define PVR_RAM_INT_BASE	0xa4000000	/* PVR RAM (interleaved) */
-#define PVR_RAM_SIZE		(8*1024*1024)	/* RAM size in bytes */
-#define PVR_RAM_TOP		(PVR_RAM_BASE + PVR_RAM_SIZE)		/* Top of raw PVR RAM */
-#define PVR_RAM_INT_TOP		(PVR_RAM_INT_BASE + PVR_RAM_SIZE)	/* Top of int PVR RAM */
+#define PVR_TA_INPUT        0x10000000  /**< \brief TA command input */
+#define PVR_RAM_BASE        0xa5000000  /**< \brief PVR RAM (raw) */
+#define PVR_RAM_INT_BASE    0xa4000000  /**< \brief PVR RAM (interleaved) */
+
+#define PVR_RAM_SIZE        (8*1024*1024)   /**< \brief RAM size in bytes */
+
+#define PVR_RAM_TOP         (PVR_RAM_BASE + PVR_RAM_SIZE)       /**< \brief Top of raw PVR RAM */
+#define PVR_RAM_INT_TOP     (PVR_RAM_INT_BASE + PVR_RAM_SIZE)   /**< \brief Top of int PVR RAM */
 
 /* Register content defines, as needed; these will be filled in over time
    as the implementation requires them. There's too many to do otherwise. */
 
-#define PVR_RESET_ALL		0xffffffff	/* PVR_RESET */
-#define PVR_RESET_NONE		0x00000000
-#define PVR_RESET_TA		0x00000001
-#define PVR_RESET_ISPTSP	0x00000002
+/** \defgroup pvr_reset_vals        Values used to reset parts of the PVR
 
-#define PVR_ISP_START_GO	0xffffffff	/* PVR_ISP_START */
+    These values are written to the PVR_RESET register in order to reset the
+    system or to take it out of reset.
 
-#define PVR_TA_INIT_GO		0x80000000	/* PVR_TA_INIT */
+    @{
+*/
+#define PVR_RESET_ALL       0xffffffff  /**< \brief Reset the wole PVR */
+#define PVR_RESET_NONE      0x00000000  /**< \brief Cancel reset state */
+#define PVR_RESET_TA        0x00000001  /**< \brief Reset only the TA */
+#define PVR_RESET_ISPTSP    0x00000002  /**< \brief Reset only the ISP/TSP */
+/** @} */
+
+#define PVR_ISP_START_GO	0xffffffff	/**< \brief Write to the PVR_ISP_START register to start rendering */
+
+#define PVR_TA_INIT_GO		0x80000000	/**< \brief Write to the PVR_TA_INIT register to confirm settings */
 
 
 /* Initialization ****************************************************/
@@ -858,45 +1030,86 @@ static inline uint32 PVR_PACK_16BIT_UV(float u, float v) {
 /* Initialization and shutdown: stuff you should only ever have to do
    once in your program. */
 
-/* Bin sizes */
-#define PVR_BINSIZE_0			0
-#define PVR_BINSIZE_8			8
-#define PVR_BINSIZE_16			16
-#define PVR_BINSIZE_32			32
+/** \defgroup pvr_binsizes          Available sizes for primitive bins
+    @{
+*/
+#define PVR_BINSIZE_0   0   /**< \brief 0-length (disables the list) */
+#define PVR_BINSIZE_8   8   /**< \brief 8-word (32-byte) length */
+#define PVR_BINSIZE_16  16  /**< \brief 16-word (64-byte) length */
+#define PVR_BINSIZE_32  32  /**< \brief 32-word (128-byte) length */
+/** @} */
 
-/* You'll fill in this structure before calling init */
+/** \brief  PVR initialization structure
+
+    This structure defines how the PVR initializes various parts of the system,
+    including the primitive bin sizes, the vertex buffer size, and whether
+    vertex DMA will be enabled.
+
+    You essentially fill one of these in, and pass it to pvr_init().
+
+    \headerfile dc/pvr.h
+*/
 typedef struct {
-	/* Bin sizes: opaque polygons, opaque modifiers, translucent
-	   polygons, translucent modifiers, punch-thrus */
-	int		opb_sizes[5];
+    /** \brief  Bin sizes.
 
-	/* Vertex buffer size (should be a nice round number) */
-	int		vertex_buf_size;
+        The bins go in the following order: opaque polygons, opaque modifiers,
+        translucent polygons, translucent modifiers, punch-thrus
+    */
+    int     opb_sizes[5];
 
-	/* Non-zero if we want to enable vertex DMA mode. Note that
-	   if this is set, then _all_ enabled lists need to have a
-	   vertex buffer assigned. */
-	int		dma_enabled;
+    /** \brief  Vertex buffer size (should be a nice round number) */
+    int     vertex_buf_size;
 
-	/* Non-zero if horizontal scaling is to be enabled. By enabling
-	   this setting and stretching your image to double the native
-	   screen width, you can get horizontal full-screen anti-aliasing. */
-	int		fsaa_enabled;
+    /** \brief  Enable vertex DMA?
+
+        Set to non-zero if we want to enable vertex DMA mode. Note that if this
+        is set, then _all_ enabled lists need to have a vertex buffer assigned,
+        even if you never use that list for anything.
+    */
+    int     dma_enabled;
+
+    /** \brief  Enable horizontal scaling?
+
+        Set to non-zero if horizontal scaling is to be enabled. By enabling this
+        setting and stretching your image to double the native screen width, you
+        can get horizontal full-screen anti-aliasing. */
+    int     fsaa_enabled;
 } pvr_init_params_t;
 
-/* Initialize the PVR chip to ready status, enabling the specified lists
-   and using the specified parameters; note that bins and vertex buffers
-   come from the texture memory pool! Expects that a 2D mode was 
-   initialized already using the vid_* API. */
+/** \brief  Initialize the PVR chip to ready status.
+
+    This function enables the specified lists and uses the specified parameters.
+    Note that bins and vertex buffers come from the texture memory pool, so only
+    allocate what you actually need. Expects that a 2D mode was initialized
+    already using the vid_* API.
+
+    \param  params          The set of parameters to initialize with
+    \retval 0               On success
+    \retval -1              If the PVR has already been initialized or the video
+                            mode active is not suitable for 3D
+*/
 int pvr_init(pvr_init_params_t *params);
 
-/* Simpler function which initializes the PVR using 16/16 for the opaque
-   and translucent lists, and 0's for everything else; 512k of vertex
-   buffer. This is equivalent to the old ta_init_defaults() for now. */
+/** \brief  Simple PVR initialization.
+
+    This simpler function initializes the PVR using 16/16 for the opaque
+    and translucent lists' bin sizes, and 0's for everything else. It sets 512KB
+    of vertex buffer. This is equivalent to the old ta_init_defaults() for now.
+
+    \retval 0               On success
+    \retval -1              If the PVR has already been initialized or the video
+                            mode active is not suitable for 3D
+*/
 int pvr_init_defaults();
 
-/* Shut down the PVR chip from ready status, leaving it in 2D mode as it
-   was before the init. */
+/** \brief  Shut down the PVR chip from ready status.
+
+    This essentially leaves the video system in 2D mode as it was before the
+    init.
+
+    \retval 0               On success
+    \retval -1              If the PVR has not been initialized
+*/
 int pvr_shutdown();
 
 
@@ -905,30 +1118,58 @@ int pvr_shutdown();
 /* These are miscellaneous parameters you can set which affect the
    rendering process. */
 
-/* Set the background plane color (the area of the screen not covered by
-   any other polygons) */
+/** \brief  Set the background plane color.
+
+    This function sets the color of the area of the screen not covered by any
+    other polygons.
+
+    \param  r               Red component of the color to set
+    \param  g               Green component of the color to set
+    \param  b               Blue component of the color to set
+*/
 void pvr_set_bg_color(float r, float g, float b);
 
-/* Return the current VBlank count */
+/** \brief  Retrieve the current VBlank count.
+
+    This function retrieves the number of VBlank interrupts that have occurred
+    since the PVR was initialized.
+
+    \return                 The number of VBlanks since init
+*/
 int pvr_get_vbl_count();
 
 /* Statistics structure */
+/** \brief  PVR statistics structure.
+
+    This structure is used to hold various statistics about the operation of the
+    PVR since initialization.
+
+    \headerfile dc/pvr.h
+*/
 typedef struct pvr_stats {
-	uint32		enabled_list_mask;	/* Which lists are enabled? */
-	uint32		vbl_count;		/* VBlank count */
-	int		frame_last_time;	/* Ready-to-Ready length for the last frame in milliseconds */
-	float		frame_rate;		/* Current frame rate (per second) */
-	int		reg_last_time;		/* Registration time for the last frame in milliseconds */
-	int		rnd_last_time;		/* Rendering time for the last frame in milliseconds */
-	int		vtx_buffer_used;	/* Number of bytes used in the vertex buffer for the last frame */
-	int		vtx_buffer_used_max;	/* Number of bytes used in the vertex buffer for the largest frame */
-	int		buf_last_time;		/* DMA buffer file time for the last frame in milliseconds */
-	uint32		frame_count;		/* Total number of rendered/viewed frames */
-	/* ... more later as it's implemented ... */
+    uint32  enabled_list_mask;  /**< \brief Which lists are enabled? */
+    uint32  vbl_count;          /**< \brief VBlank count */
+    int     frame_last_time;    /**< \brief Ready-to-Ready length for the last frame in milliseconds */
+    float   frame_rate;         /**< \brief Current frame rate (per second) */
+    int     reg_last_time;      /**< \brief Registration time for the last frame in milliseconds */
+    int     rnd_last_time;      /**< \brief Rendering time for the last frame in milliseconds */
+    int     vtx_buffer_used;    /**< \brief Number of bytes used in the vertex buffer for the last frame */
+    int     vtx_buffer_used_max;/**< \brief Number of bytes used in the vertex buffer for the largest frame */
+    int     buf_last_time;      /**< \brief DMA buffer file time for the last frame in milliseconds */
+    uint32  frame_count;        /**< \brief Total number of rendered/viewed frames */
+    /* ... more later as it's implemented ... */
 } pvr_stats_t;
 
-/* Fill in a statistics structure (above) from current data. This
-   is a super-set of frame count. */
+/** \brief  Get the current statistics from the PVR.
+
+    This function fills in the pvr_stats_t structure passed in with the current
+    statistics of the system.
+
+    \param  stat            The statistics structure to fill in. Must not be
+                            NULL
+    \retval 0               On success
+    \retval -1              If the PVR is not initialized
+*/
 int pvr_get_stats(pvr_stats_t *stat);
 
 
@@ -939,17 +1180,44 @@ int pvr_get_stats(pvr_stats_t *stat);
    most of the time, but they can be useful for doing some interesting
    special effects, like the old cheap "worm hole". */
 
-/* Palette formats */
-#define PVR_PAL_ARGB1555	0
-#define PVR_PAL_RGB565		1
-#define PVR_PAL_ARGB4444	2
-#define PVR_PAL_ARGB8888	3
+/** \defgroup pvr_palfmts           PVR palette formats
 
-/* Set the palette format */
+    Entries in the PVR's palettes can be of any of these formats. Note that you
+    can only have one format active at a time.
+
+    @{
+*/
+#define PVR_PAL_ARGB1555    0   /**< \brief 16-bit ARGB1555 palette format */
+#define PVR_PAL_RGB565      1   /**< \brief 16-bit RGB565 palette format */
+#define PVR_PAL_ARGB4444    2   /**< \brief 16-bit ARGB4444 palette format */
+#define PVR_PAL_ARGB8888    3   /**< \brief 32-bit ARGB8888 palette format */
+/** @} */
+
+/** \brief  Set the palette format.
+
+    This function sets the currently active palette format on the PVR. Each
+    entry in the palette table is 32-bits in length, regardless of what color
+    format is in use.
+
+    Be sure to use care when using the PVR_PAL_ARGB8888 format. Rendering speed
+    is greatly affected (cut about in half) if you use any filtering with
+    paletted textures with ARGB8888 entries in the palette.
+
+    \param  fmt             The format to use
+    \see    pvr_palfmts
+*/
 void pvr_set_pal_format(int fmt);
 
-/* Set a palette value; note that the format of the table is variable,
-   so for maximum speed we simply let the user decide what to do here. */
+/** \brief  Set a palette value.
+
+    Note that while the color format is variable, each entry is still 32-bits in
+    length regardless (and you only get a total of 1024 of them). If using one
+    of the 16-bit palette formats, only the low-order 16-bits of the entry are
+    valid, and the high bits should be filled in with 0.
+
+    \param  idx             The index to set to (0-1023)
+    \param  value           The color value to set in that palette entry
+*/
 static inline void pvr_set_pal_entry(uint32 idx, uint32 value) {
 	PVR_SET(PVR_PALETTE_TABLE_BASE + 4*idx, value);
 }
@@ -959,25 +1227,79 @@ static inline void pvr_set_pal_entry(uint32 idx, uint32 value) {
 
 /* Thanks to Paul Boese for figuring this stuff out */
 
-/* Set the fog table color */
+/** \brief  Set the table fog color.
+
+    This function sets the color of fog for table fog. 0-1 range for all colors.
+
+    \param  a               Alpha value of the fog
+    \param  r               Red value of the fog
+    \param  g               Green value of the fog
+    \param  b               Blue value of the fog
+*/
 void pvr_fog_table_color(float a, float r, float g, float b);
 
-/* Set the fog vertex color */
+/** \brief  Set the vertex fog color.
+
+    This function sets the fog color for vertex fog. 0-1 range for all colors.
+    This function is currently not implemented, as vertex fog is not supported
+    by KOS. Calling this function will cause an assertion failure.
+
+    \param  a               Alpha value of the fog
+    \param  r               Red value of the fog
+    \param  g               Green value of the fog
+    \param  b               Blue value of the fog
+*/
 void pvr_fog_vertex_color(float a, float r, float g, float b);
 
-/* Set the fog far depth */
+/** \brief  Set the fog far depth.
+
+    This function sets the PVR_FOG_DENSITY register appropriately for the
+    specified value.
+
+    \param  d               The depth to set
+*/
 void pvr_fog_far_depth(float d);
 
-/* Initialize the fog table using an exp2 algorithm (like GL_EXP2) */
+/** \brief  Initialize the fog table using an exp2 algorithm (like GL_EXP2).
+
+    This function will automatically set the PVR_FOG_DENSITY register to
+    259.999999 as a part of its processing, then set up the fog table.
+
+    \param  density         Fog density value
+*/
 void pvr_fog_table_exp2(float density);
 
-/* Initialize the fog table using an exp algorithm (like GL_EXP) */
+/** \brief  Initialize the fog table using an exp algorithm (like GL_EXP).
+
+    This function will automatically set the PVR_FOG_DENSITY register to
+    259.999999 as a part of its processing, then set up the fog table.
+
+    \param  density         Fog density value
+*/
 void pvr_fog_table_exp(float density);
 
-/* Initialize the fog table using a linear algorithm (like GL_LINEAR) */
+/** \brief  Initialize the fog table using a linear algorithm (like GL_LINEAR).
+
+    This function will set the PVR_FOG_DENSITY register to the as appropriate
+    for the end value, and initialize the fog table for perspectively correct
+    linear fog.
+
+    \param  start           Fog start point
+    \param  end             Fog end point
+*/
 void pvr_fog_table_linear(float start, float end);
 
-/* Set a custom fog table from float values */
+/** \brief  Set a custom fog table from float values
+
+    This function allows you to specify whatever values you need to for your fog
+    parameters. All values should be clamped between 0 and 1, and its your
+    responsibility to set up the PVR_FOG_DENSITY register by calling
+    pvr_fog_far_depth() with an appropriate value. The table passed in should
+    have 129 entries, where the 0th entry is farthest from the eye and the last
+    entry is nearest. Higher values = heavier fog.
+
+    \param  tbl1            The table of fog values to set
+*/
 void pvr_fog_table_custom(float tbl1[]);
 
 
@@ -986,25 +1308,49 @@ void pvr_fog_table_custom(float tbl1[]);
 /* PVR memory management in KOS uses a modified dlmalloc; see the
    source file pvr_mem_core.c for more info. */
 
-/* Allocate a chunk of memory from texture space; the returned value
-   will be relative to the base of texture memory (zero-based) */
+/** \brief  Allocate a chunk of memory from texture space.
+
+    This function acts as the memory allocator for the PVR texture RAM pool. It
+    acts exactly as one would expect a malloc() function to act, returning a
+    normal pointer that can be directly written to if one desires to do so. All
+    allocations will be aligned to a 32-byte boundary.
+
+    \param  size            The amount of memory to allocate
+    \return                 A pointer to the memory on success, NULL on error
+*/
 pvr_ptr_t pvr_mem_malloc(size_t size);
 
-/* Free a previously allocated chunk of memory */
+/** \brief  Free a block of allocated memory in the PVR RAM pool.
+
+    This function frees memory previously allocated with pvr_mem_malloc().
+
+    \param  chunk           The location of the start of the block to free
+*/
 void pvr_mem_free(pvr_ptr_t chunk);
 
-/* Return the number of bytes available still in the memory pool */
+/** \brief  Return the number of bytes available still in the PVR RAM pool.
+    \return                 The number of bytes available
+*/
 uint32 pvr_mem_available();
 
-/* Reset the memory pool, equivalent to freeing all textures currently
-   residing in RAM. */
+/** \brief  Reset the PVR RAM pool.
+
+    This will essentially free any blocks allocated within the pool. There's
+    generally not many good reasons for doing this.
+*/
 void pvr_mem_reset();
 
-/* Check the memory block list to see what's allocated */
-/* Only available if you've enabled KM_DBG in pvr_mem.c */
+/** \brief  Print the list of allocated blocks in the PVR RAM pool.
+
+    This function only works if you've enabled KM_DBG in pvr_mem.c.
+*/
 void pvr_mem_print_list();
 
-/* Print some statistics (like mallocstats) */
+/** \brief  Print statistics about the PVR RAM pool.
+
+    This prints out statistics like what malloc_stats() provides. Also, if
+    KM_DBG is enabled in pvr_mem.c, it prints the list of allocated blocks.
+*/
 void pvr_mem_stats();
 
 /* Scene rendering ***************************************************/
@@ -1047,126 +1393,217 @@ void pvr_mem_stats();
    care of starting a frame rendering (after scene_finish()) and also
    flipping pages when appropriate. */
 
-/* Returns non-zero if vertex DMA was enabled at init time. */
+/** \brief  Is vertex DMA enabled?
+    \return                 Non-zero if vertex DMA was enabled at init time
+*/
 int pvr_vertex_dma_enabled();
 
-/* Setup a vertex buffer for one of the list types. If the specified list type
-   already has a vertex buffer, it will be replaced by the new one; if NULL
-   is specified as a buffer location, the list type will be switched to direct
-   mode. The old buffer location will be returned (if any). Note that each
-   buffer should actually be twice as long (to hold two frames' worth of
-   data). The 'len' should be a multiple of 64, and the pointer should be
-   aligned to a 32-byte boundary. 'len' also may not be smaller than 128
-   bytes, even if you have no intention of using the given list. Also you
-   should generally not try to do this at any time besides before a frame
-   is begin, or Bad Things May Happen. */
+/** \brief  Setup a vertex buffer for one of the list types.
+
+    If the specified list type already has a vertex buffer, it will be replaced
+    by the new one. Note that each buffer should actually be twice as long as
+    what you will need to hold two frames worth of data).
+
+    You should generally not try to do this at any time besides before a frame
+    is begun, or Bad Things May Happen.
+
+    \param  list            The primitive list to set the buffer for.
+    \param  buffer          The location of the buffer in main RAM. This must be
+                            aligned to a 32-byte boundary.
+    \param  len             The length of the buffer. This must be a multiple of
+                            64, and must be at least 128 (even if you're not
+                            using the list).
+    \return                 The old buffer location (if any)
+*/
 void * pvr_set_vertbuf(pvr_list_t list, void * buffer, int len);
 
-/* Return a pointer to the current output location in the DMA buffer for
-   the requested list. DMA must globally be enabled for this to work. Data
-   may be added to this buffer by the user program directly. */
+/** \brief  Retrieve a pointer to the current output location in the DMA buffer
+            for the requested list.
+
+    Vertex DMA must globally be enabled for this to work. Data may be added to
+    this buffer by the user program directly; however, make sure to call
+    pvr_vertbuf_written() to notify the system of any such changes.
+
+    \param  list            The primitive list to get the buffer for.
+    \return                 The tail of that list's buffer.
+*/
 void * pvr_vertbuf_tail(pvr_list_t list);
 
-/* Notify the PVR system that data have been written into the output buffer
-   for the given list. This should always be done after writing data directly
-   to these buffers or it will get overwritten by other data. 'amt' is in
-   bytes and should _always_ be a multiple of 32. */
+/** \brief  Notify the PVR system that data have been written into the output
+            buffer for the given list.
+
+    This should always be done after writing data directly to these buffers or
+    it will get overwritten by other data.
+
+    \param  list            The primitive list that was modified.
+    \param  amt             Number of bytes written. Must be a multiple of 32.
+*/
 void pvr_vertbuf_written(pvr_list_t list, uint32 amt);
 
-/* Begin collecting data for a frame of 3D output to the off-screen
-   frame buffer */
+/** \brief  Begin collecting data for a frame of 3D output to the off-screen
+            frame buffer.
+
+    You must call this function (or pvr_scene_begin_txr()) for ever frame of
+    output.
+*/
 void pvr_scene_begin();
 
-/* Begin collecting data for a frame of 3D output to the specified texture;
-   pass in the size of the buffer in rx and ry, and the return values in
-   rx and ry will be the size actually used (if changed). Note that
-   currently this only supports screen-sized output! */
+/** \brief  Begin collecting data for a frame of 3D output to the specified
+            texture.
+
+    This function currently only supports outputting at the same size as the
+    actual screen. Thus, make sure rx and ry are at least large enough for that.
+    For a 640x480 output, rx will generally be 1024 on input and ry 512, as
+    these are the smallest values that are powers of two and will hold the full
+    screen sized output.
+
+    \param  txr             The texture to render to.
+    \param  rx              Width of the texture buffer (in pixels).
+    \param  ry              Height of the texture buffer (in pixels).
+*/
 void pvr_scene_begin_txr(pvr_ptr_t txr, uint32 *rx, uint32 *ry);
 
-/* Begin collecting data for the given list type. Lists do not have to be
-   submitted in any particular order, but all types of a list must be 
-   submitted at once (unless vertex DMA mode is enabled). If the given list
-   has already been closed, then an error (-1) is returned. Note that there
-   is no need to call this function in DMA mode unless you want to make use
-   of pvr_prim for compatibility. */
+/** \brief  Begin collecting data for the given list type.
+
+    Lists do not have to be submitted in any particular order, but all types of
+    a list must be submitted at once (unless vertex DMA mode is enabled).
+
+    Note that there is no need to call this function in DMA mode unless you want
+    to make use of pvr_prim() for compatibility. This function will
+    automatically call pvr_list_finish() if a list is already opened before
+    opening the new list.
+
+    \param  list            The list to open.
+    \retval 0               On success.
+    \retval -1              If the specified list has already been closed.
+*/
 int pvr_list_begin(pvr_list_t list);
 
-/* End collecting data for the current list type. Lists can never be opened
-   again within a single frame once they have been closed. Thus submitting
-   a primitive that belongs in a closed list is considered an error. Closing
-   a list that is already closed is also an error (-1). Note that if you open
-   a list but do not submit any primitives, a blank one will be submitted to
-   satisfy the hardware. If vertex DMA mode is enabled, then this simply
-   sets the current list pointer to no list, and none of the above restrictions
-   apply. */
+/** \brief  End collecting data for the current list type.
+
+    Lists can never be opened again within a single frame once they have been
+    closed. Thus submitting a primitive that belongs in a closed list is
+    considered an error. Closing a list that is already closed is also an error.
+
+    Note that if you open a list but do not submit any primitives, a blank one
+    will be submitted to satisfy the hardware. If vertex DMA mode is enabled,
+    then this simply sets the current list pointer to no list, and none of the
+    above restrictions apply.
+
+    \retval 0               On success.
+    \retval -1              On error.
+*/
 int pvr_list_finish();
 
-/* Submit a primitive of the _current_ list type; note that any values
-   submitted in this fashion will go directly to the hardware without any
-   sort of buffering, and submitting a primitive of the wrong type will
-   quite likely ruin your scene. Note that this also will not work if you
-   haven't begun any list types (i.e., all data is queued). If DMA is enabled,
-   the primitive will be appended to the end of the currently selected list's
-   buffer. Returns -1 for failure. */
+/** \brief  Submit a primitive of the current list type.
+
+    Note that any values submitted in this fashion will go directly to the
+    hardware without any sort of buffering, and submitting a primitive of the
+    wrong type will quite likely ruin your scene. Note that this also will not
+    work if you haven't begun any list types (i.e., all data is queued). If DMA
+    is enabled, the primitive will be appended to the end of the currently
+    selected list's buffer.
+
+    \param  data            The primitive to submit.
+    \param  size            The length of the primitive, in bytes. Must be a
+                            multiple of 32.
+    \retval 0               On success.
+    \retval -1              On error.
+*/
 int pvr_prim(void * data, int size);
 
-/* Initialize a state variable for Direct Rendering; variable should be
-   of the type pvr_dr_state_t */
+/** \brief  Direct Rendering state variable type. */
+typedef uint32 pvr_dr_state_t;
+
+/** \brief  Initialize a state variable for Direct Rendering.
+
+    \param  vtx_buf_ptr     A variable of type pvr_dr_state_t to init.
+*/
 #define pvr_dr_init(vtx_buf_ptr) do { \
 	(vtx_buf_ptr) = 0; \
 	QACR0 = ((((uint32)PVR_TA_INPUT) >> 26) << 2) & 0x1c; \
 	QACR1 = ((((uint32)PVR_TA_INPUT) >> 26) << 2) & 0x1c; \
 } while (0)
-#define pvr_dr_state_t uint32
 
-/* Obtain the target address for Direct Rendering; this will return a
-   write-only destination address where a primitive should be written to get
-   ready to submit it to the TA in DR mode. You must pass in a variable
-   which was initialized with pvr_dr_init(). */
+/** \brief  Obtain the target address for Direct Rendering.
+
+    \param  vtx_buf_ptr     State variable for Direct Rendering. Should be of
+                            type pvr_dr_state_t, and must have been initialized
+                            previously in the scene with pvr_dr_init().
+    \return                 A write-only destination address where a primitive
+                            should be written to get ready to submit it to the
+                            TA in DR mode.
+*/
 #define pvr_dr_target(vtx_buf_ptr) \
 	({ (vtx_buf_ptr) ^= 32; \
 	   (pvr_vertex_t *)(0xe0000000 | (vtx_buf_ptr)); \
 	})
 
-/* Commit a primitive written into the Direct Rendering target address; pass
-   the address returned by pvr_dr_target(). */
+/** \brief  Commit a primitive written into the Direct Rendering target address.
+
+    \param  addr            The address returned by pvr_dr_target(), after you
+                            have written the primitive to it.
+*/
 #define pvr_dr_commit(addr) __asm__ __volatile__("pref @%0" : : "r" (addr))
 
-/* Submit a primitive of the given list type; if the requested list is not
-   the current list, then the data will be queued in a vertex buffer if
-   available, otherwise it will be submitted directly. If a vertex buffer
-   doesn't exist when one is needed, an error (-1) is returned. */
+/** \brief  Submit a primitive of the given list type.
+
+    Data will be queued in a vertex buffer, thus one must be available for the
+    list specified (will be asserted by the code).
+
+    \param  list            The list to submit to.
+    \param  data            The primitive to submit.
+    \param  size            The size of the primitive in bytes. This must be a
+                            multiple of 32.
+    \retval 0               On success.
+    \retval -1              On error.
+*/
 int pvr_list_prim(pvr_list_t list, void * data, int size);
 
-/* Called to flush buffered data of the given list type to the hardware
-   processor. If there is no vertex buffer for the given type, then an error
-   (-1) is returned. The list must have been started with pvr_begin_list().
-   This is intended to be used later in a "hybrid" mode where both direct
-   and DMA TA submission is possible. */
+/** \brief  Flush the buffered data of the given list type to the TA.
+
+    This function is currently not implemented, and calling it will result in an
+    assertion failure. It is intended to be used later in a "hybrid" mode where
+    both direct and DMA TA submission is possible.
+
+    \param  list            The list to flush.
+    \retval -1              On error (it is not possible to succeed).
+*/
 int pvr_list_flush(pvr_list_t list);
 
-/* Call this after you have finished submitting all data for a frame; once
-   this has been called, you can not submit any more data until one of the
-   pvr_scene_begin() functions is called again. An error (-1) is returned if
-   you have not started a scene already. */
+/** \brief  Call this after you have finished submitting all data for a frame.
+
+    Once this has been called, you can not submit any more data until one of the
+    pvr_scene_begin() or pvr_scene_begin_txr() functions is called again.
+
+    \retval 0               On success.
+    \retval -1              On error (no scene started).
+*/
 int pvr_scene_finish();
 
-/* Block the caller until the PVR system is ready for another frame to be
-   submitted. The PVR system allocates enough space for two frames: one in
-   data collection mode, and another in rendering mode. If a frame is 
-   currently rendering, and another frame has already been closed, then the
-   caller cannot do anything else until the rendering frame completes. Note
-   also that the new frame cannot be activated except during a vertical
-   blanking period, so this essentially waits until a rendered frame is
-   complete _AND_ a vertical blank happens. Returns -1 if the wait times
-   out. Note that once this returns, the PVR system is ready for another
-   frame's data to be collected. */
+/** \brief  Block the caller until the PVR system is ready for another frame to
+            be submitted.
+
+    The PVR system allocates enough space for two frames: one in data collection
+    mode, and another in rendering mode. If a frame is currently rendering, and
+    another frame has already been closed, then the caller cannot do anything
+    else until the rendering frame completes. Note also that the new frame
+    cannot be activated except during a vertical blanking period, so this
+    essentially waits until a rendered frame is complete and a vertical blank
+    happens.
+
+    \retval 0               On success. A new scene can be started now.
+    \retval -1              On error. Something is probably very wrong...
+*/
 int pvr_wait_ready();
 
-/* Same thing as above, but in non-blocking form; returns -1 if the PVR isn't
-   ready; returns 0 when the PVR has accepted your frame and is ready for
-   more. If this returns 0 then you _must_ call pvr_wait_ready afterwards
-   to clear the condition. */
+/** \brief  Check if the PVR system is ready for another frame to be submitted.
+
+    \retval 0               If the PVR is ready for a new scene. You must call
+                            pvr_wait_ready() afterwards, before starting a new
+                            scene.
+    \retval -1              If the PVR is not ready for a new scene yet.
+*/
 int pvr_check_ready();
 
 
@@ -1175,45 +1612,152 @@ int pvr_check_ready();
 /* These functions help you prepare primitives for loading into the
    PVR for scene processing. */
 
-/* Compile a polygon context into a polygon header */
+/** \brief  Compile a polygon context into a polygon header.
+
+    This function compiles a pvr_poly_cxt_t into the form needed by the hardware
+    for rendering. This is for use with normal polygon headers.
+
+    \param  dst             Where to store the compiled header.
+    \param  src             The context to compile.
+*/
 void pvr_poly_compile(pvr_poly_hdr_t *dst, pvr_poly_cxt_t *src);
 
-/* Create a colored polygon context with parameters similar to
-   the old "ta" function `ta_poly_hdr_col' */
+/** \brief  Fill in a polygon context for non-textured polygons.
+
+    This function fills in a pvr_poly_cxt_t with default parameters appropriate
+    for rendering a non-textured polygon in the given list.
+
+    \param  dst             Where to store the polygon context.
+    \param  list            The primitive list to be used.
+*/
 void pvr_poly_cxt_col(pvr_poly_cxt_t *dst, pvr_list_t list);
 
-/* Create a textured polygon context with parameters similar to
-   the old "ta" function `ta_poly_hdr_txr' */
+/** \brief  Fill in a polygon context for a textured polygon.
+
+    This function fills in a pvr_poly_cxt_t with default parameters appropriate
+    for rendering a textured polygon in the given list.
+
+    \param  dst             Where to store the polygon context.
+    \param  list            The primitive list to be used.
+    \param  textureformat   The format of the texture used.
+    \param  tw              The width of the texture, in pixels.
+    \param  th              The height of the texture, in pixels.
+    \param  textureaddr     A pointer to the texture.
+    \param  filtering       The type of filtering to use.
+
+    \see    pvr_txr_fmts
+    \see    pvr_filter_modes
+*/
 void pvr_poly_cxt_txr(pvr_poly_cxt_t *dst, pvr_list_t list,
 	int textureformat, int tw, int th, pvr_ptr_t textureaddr,
 	int filtering);
 
-/* Compile a sprite context into a colored polygon header */
+/** \brief  Compile a sprite context into a sprite header.
+
+    This function compiles a pvr_sprite_cxt_t into the form needed by the
+    hardware for rendering. This is for use with sprite headers.
+
+    \param  dst             Where to store the compiled header.
+    \param  src             The context to compile.
+*/
 void pvr_sprite_compile(pvr_sprite_hdr_t *dst,
 	pvr_sprite_cxt_t *src);
 
-/* Create an untextured sprite context */
+/** \brief  Fill in a sprite context for non-textured sprites.
+ 
+    This function fills in a pvr_sprite_cxt_t with default parameters
+    appropriate for rendering a non-textured sprite in the given list.
+
+    \param  dst             Where to store the sprite context.
+    \param  list            The primitive list to be used.
+*/
 void pvr_sprite_cxt_col(pvr_sprite_cxt_t *dst, pvr_list_t list);
 
-/* Create a textured sprite context */
+/** \brief  Fill in a sprite context for a textured sprite.
+
+    This function fills in a pvr_sprite_cxt_t with default parameters
+    appropriate for rendering a textured sprite in the given list.
+
+    \param  dst             Where to store the sprite context.
+    \param  list            The primitive list to be used.
+    \param  textureformat   The format of the texture used.
+    \param  tw              The width of the texture, in pixels.
+    \param  th              The height of the texture, in pixels.
+    \param  textureaddr     A pointer to the texture.
+    \param  filtering       The type of filtering to use.
+
+    \see    pvr_txr_fmts
+    \see    pvr_filter_modes
+*/
 void pvr_sprite_cxt_txr(pvr_sprite_cxt_t *dst, pvr_list_t list,
 	int textureformat, int tw, int th, pvr_ptr_t textureaddr,
 	int filtering);
 
-/* Create a modifier volume context */
+/** \brief  Create a modifier volume header.
+
+    This function fills in a modifier volume header with the parameters
+    specified. Note that unlike for polygons and sprites, there is no context
+    step for modifiers.
+
+    \param  dst             Where to store the modifier header.
+    \param  list            The primitive list to be used.
+    \param  mode            The mode for this modifier.
+    \param  cull            The culling mode to use.
+
+    \see    pvr_mod_modes
+    \see    pvr_cull_modes
+*/
 void pvr_mod_compile(pvr_mod_hdr_t *dst, pvr_list_t list, uint32 mode,
                      uint32 cull);
 
-/* Compile a polygon context into a polygon header that is affected by
-   modifier volumes */
+/** \brief  Compile a polygon context into a polygon header that is affected by
+            modifier volumes.
+
+    This function works pretty similarly to pvr_poly_compile(), but compiles
+    into the header type that is affected by a modifier volume. The context
+    should have been created with either pvr_poly_cxt_col_mod() or
+    pvr_poly_cxt_txr_mod().
+
+    \param  dst             Where to store the compiled header.
+    \param  src             The context to compile.
+*/
 void pvr_poly_mod_compile(pvr_poly_mod_hdr_t *dst, pvr_poly_cxt_t *src);
 
-/* Create a colored polygon context for polygons affected by
-   modifier volumes */
+/** \brief  Fill in a polygon context for non-textured polygons affected by a
+            modifier volume.
+
+    This function fills in a pvr_poly_cxt_t with default parameters appropriate
+    for rendering a non-textured polygon in the given list that will be affected
+    by modifier volumes.
+
+    \param  dst             Where to store the polygon context.
+    \param  list            The primitive list to be used.
+*/
 void pvr_poly_cxt_col_mod(pvr_poly_cxt_t *dst, pvr_list_t list);
 
-/* Create a textured polygon context for polygons affected by
-   modifier volumes */
+/** \brief  Fill in a polygon context for a textured polygon affected by
+            modifier volumes.
+ 
+    This function fills in a pvr_poly_cxt_t with default parameters appropriate
+    for rendering a textured polygon in the given list and being affected by
+    modifier volumes.
+
+    \param  dst             Where to store the polygon context.
+    \param  list            The primitive list to be used.
+    \param  textureformat   The format of the texture used (outside).
+    \param  tw              The width of the texture, in pixels (outside).
+    \param  th              The height of the texture, in pixels (outside).
+    \param  textureaddr     A pointer to the texture (outside).
+    \param  filtering       The type of filtering to use (outside).
+    \param  textureformat2  The format of the texture used (inside).
+    \param  tw2             The width of the texture, in pixels (inside).
+    \param  th2             The height of the texture, in pixels (inside).
+    \param  textureaddr2    A pointer to the texture (inside).
+    \param  filtering2      The type of filtering to use (inside).
+
+    \see    pvr_txr_fmts
+    \see    pvr_filter_modes
+*/
 void pvr_poly_cxt_txr_mod(pvr_poly_cxt_t *dst, pvr_list_t list,
                           int textureformat, int tw, int th,
                           pvr_ptr_t textureaddr, int filtering,
@@ -1224,69 +1768,188 @@ void pvr_poly_cxt_txr_mod(pvr_poly_cxt_t *dst, pvr_list_t list,
 
 /* Helper functions for handling texture tasks of various kinds. */
 
-/* Load raw texture data from an SH-4 buffer into PVR RAM */
+/** \brief  Load raw texture data from an SH-4 buffer into PVR RAM.
+
+    This essentially just acts as a memcpy() from main RAM to PVR RAM, using
+    the store queues.
+
+    \param  src             The location in main RAM holding the texture.
+    \param  dst             The location in PVR RAM to copy to.
+    \param  count           The size of the texture in bytes (must be a multiple
+                            of 32).
+*/
 void pvr_txr_load(void * src, pvr_ptr_t dst, uint32 count);
 
-/* Constants for texture loading */
-#define PVR_TXRLOAD_4BPP	0x01	/* Basic pixel formats */
-#define PVR_TXRLOAD_8BPP	0x02
-#define PVR_TXRLOAD_16BPP	0x03
-#define PVR_TXRLOAD_FMT_MASK	0x0f
+/** \defgroup pvr_txrload_constants     Texture loading constants
 
-#define PVR_TXRLOAD_VQ_LOAD		0x10	/* Do VQ encoding (not supported yet, if ever) */
-#define PVR_TXRLOAD_INVERT_Y		0x20	/* Invert the Y axis while loading */
-#define PVR_TXRLOAD_FMT_VQ		0x40	/* Texture is already VQ encoded */
-#define PVR_TXRLOAD_FMT_TWIDDLED	0x80	/* Texture is already twiddled */
-#define PVR_TXRLOAD_FMT_NOTWIDDLE	0x80	/* Same sorta thing -- don't twiddle it */
-#define PVR_TXRLOAD_DMA			0x8000	/* Use DMA to load the texture */
-#define PVR_TXRLOAD_NONBLOCK		0x4000	/* Use non-blocking loads (only for DMA) */
-#define PVR_TXRLOAD_SQ			0x2000	/* Use store queues to load */
+    These are constants for the flags parameter to pvr_txr_load_ex() or
+    pvr_txr_load_kimg().
 
-/* Load texture data from an SH-4 buffer into PVR RAM, twiddling it
-   in the process, among other things (see pvr_texture.c for more
-   details) */
+    @{
+*/
+#define PVR_TXRLOAD_4BPP            0x01    /**< \brief 4BPP format */
+#define PVR_TXRLOAD_8BPP            0x02    /**< \brief 8BPP format */
+#define PVR_TXRLOAD_16BPP           0x03    /**< \brief 16BPP format */
+#define PVR_TXRLOAD_FMT_MASK        0x0f    /**< \brief Bits used for basic formats */
+
+#define PVR_TXRLOAD_VQ_LOAD         0x10	/**< \brief Do VQ encoding (not supported yet, if ever) */
+#define PVR_TXRLOAD_INVERT_Y        0x20	/**< \brief Invert the Y axis while loading */
+#define PVR_TXRLOAD_FMT_VQ          0x40	/**< \brief Texture is already VQ encoded */
+#define PVR_TXRLOAD_FMT_TWIDDLED    0x80	/**< \brief Texture is already twiddled */
+#define PVR_TXRLOAD_FMT_NOTWIDDLE   0x80	/**< \brief Don't twiddle the texture while loading */
+#define PVR_TXRLOAD_DMA             0x8000	/**< \brief Use DMA to load the texture */
+#define PVR_TXRLOAD_NONBLOCK        0x4000	/**< \brief Use non-blocking loads (only for DMA) */
+#define PVR_TXRLOAD_SQ              0x2000	/**< \brief Use store queues to load */
+/** @} */
+
+/** \brief  Load texture data from an SH-4 buffer into PVR RAM, twiddling it in
+            the process.
+
+    This function loads a texture to the PVR's RAM with the specified set of
+    flags. It will currently always twiddle the data, whether you ask it to or
+    not, and many of the parameters are just plain not supported at all...
+    Pretty much the only supported flag, other than the format ones is the
+    PVR_TXRLOAD_INVERT_Y one.
+
+    This will be slower than using pvr_txr_load() in pretty much all cases, so
+    unless you need to twiddle your texture, just use that instead.
+
+    \param  src             The location to copy from.
+    \param  dst             The location to copy to.
+    \param  w               The width of the texture, in pixels.
+    \param  h               The height of the texture, in pixels.
+    \param  flags           Some set of flags, ORed together.
+
+    \see    pvr_txrload_constants
+*/
 void pvr_txr_load_ex(void * src, pvr_ptr_t dst, uint32 w, uint32 h, uint32 flags);
 
-/* Load a KOS Platform Independent Image (subject to restraint checking) */
+/** \brief  Load a KOS Platform Independent Image (subject to constraint
+            checking).
+
+    This function loads a KOS Platform Independent image to the PVR's RAM with
+    the specified set of flags. This function, unlike pvr_txr_load_ex() supports
+    everything in the flags available, other than what's explicitly marked as
+    not supported.
+
+    \param  img             The image to load.
+    \param  dst             The location to copy to.
+    \param  flags           Some set of flags, ORed together.
+
+    \see    pvr_txrload_constants
+*/
 void pvr_txr_load_kimg(kos_img_t *img, pvr_ptr_t dst, uint32 flags);
 
 
 /* PVR DMA ***********************************************************/
 
-/** Interrupt callback type */
+/** \brief  PVR DMA interrupt callback type.
+
+    Functions that act as callbacks when DMA completes should be of this type.
+    These functions will be called inside an interrupt context, so don't try to
+    use anything that might stall.
+
+    \param  data            User data passed in to the pvr_dma_transfer()
+                            function.
+*/
 typedef void (*pvr_dma_callback_t)(ptr_t data);
 
-/** Perform a DMA transfer to the PVR. The source pointer must be 32-byte
-    aligned, and the count should be a multiple of 32 bytes. Type should
-    be one of the constants below. If block is non-zero, then the function
-    will only return when the DMA operation has completed. If callback is
-    non-NULL, then the function will be called on completion (in an interrupt
-    context!). Returns <0 for failure. */
+/** \brief  Perform a DMA transfer to the PVR.
+
+    This function copies a block of data to the PVR or its memory via DMA. There
+    are all kinds of constraints that must be fulfilled to actually do this, so
+    make sure to read all the fine print with the parameter list.
+
+    If a callback is specified, it will be called in an interrupt context, so
+    keep that in mind in writing the callback.
+
+    \param  src             Where to copy from. Must be 32-byte aligned.
+    \param  dest            Where to copy to. Must be 32-byte aligned.
+    \param  count           The number of bytes to copy. Must be a multiple of
+                            32.
+    \param  type            The type of DMA transfer to do (see list of modes).
+    \param  block           Non-zero if you want the function to block until the
+                            DMA completes.
+    \param  callback        A function to call upon completion of the DMA.
+    \param  cbdata          Data to pass to the callback function.
+    \retval 0               On success.
+    \retval -1              On failure. Sets errno as appropriate.
+
+    \par    Error Conditions:
+    \em     EINPROGRESS - DMA already in progress \n
+    \em     EFAULT - dest is not 32-byte aligned \n
+    \em     EIO - I/O error
+
+    \see    pvr_dma_modes
+*/
 int pvr_dma_transfer(void * src, uint32 dest, uint32 count, int type,
 	int block, pvr_dma_callback_t callback, ptr_t cbdata);
 
-#define PVR_DMA_VRAM64	0	/*< Transfer to VRAM in interleaved mode */
-#define PVR_DMA_VRAM32	1	/*< Transfer to VRAM in linear mode */
-#define PVR_DMA_TA	2	/*< Transfer to the tile accelerator */
+/** \defgroup pvr_dma_modes         Transfer modes with PVR DMA
+    @{
+*/
+#define PVR_DMA_VRAM64  0   /**< \brief Transfer to VRAM in interleaved mode */
+#define PVR_DMA_VRAM32  1   /**< \brief Transfer to VRAM in linear mode */
+#define PVR_DMA_TA      2   /**< \brief Transfer to the tile accelerator */
+/** @} */
 
-/** Load a texture using PVR DMA. If block is non-zero, then the function
-    will not return until the texture DMA is complete. Otherwise, check
-    the value of pvr_dma_ready() to see if things are ready. */
+/** \brief  Load a texture using PVR DMA.
+
+    This is essentially a convenience wrapper for pvr_dma_transfer(), so all
+    notes that apply to it also apply here.
+
+    \param  src             Where to copy from. Must be 32-byte aligned.
+    \param  dest            Where to copy to. Must be 32-byte aligned.
+    \param  count           The number of bytes to copy. Must be a multiple of
+                            32.
+    \param  block           Non-zero if you want the function to block until the
+                            DMA completes.
+    \param  callback        A function to call upon completion of the DMA.
+    \param  cbdata          Data to pass to the callback function.
+    \retval 0               On success.
+    \retval -1              On failure. Sets errno as appropriate.
+
+    \par    Error Conditions:
+    \em     EINPROGRESS - DMA already in progress \n
+    \em     EFAULT - dest is not 32-byte aligned \n
+    \em     EIO - I/O error
+*/
 int pvr_txr_load_dma(void * src, pvr_ptr_t dest, uint32 count, int block,
 	pvr_dma_callback_t callback, ptr_t cbdata);
 
-/** Loads a block of vertex data to the tile accelerator. Same semantics as
-    the above stuff. */
+/** \brief  Load vertex data to the TA using PVR DMA.
+ 
+    This is essentially a convenience wrapper for pvr_dma_transfer(), so all
+    notes that apply to it also apply here.
+ 
+    \param  src             Where to copy from. Must be 32-byte aligned.
+    \param  count           The number of bytes to copy. Must be a multiple of
+                            32.
+    \param  block           Non-zero if you want the function to block until the
+                            DMA completes.
+    \param  callback        A function to call upon completion of the DMA.
+    \param  cbdata          Data to pass to the callback function.
+    \retval 0               On success.
+    \retval -1              On failure. Sets errno as appropriate.
+
+    \par    Error Conditions:
+    \em     EINPROGRESS - DMA already in progress \n
+    \em     EFAULT - dest is not 32-byte aligned \n
+    \em     EIO - I/O error
+ */
 int pvr_dma_load_ta(void * src, uint32 count, int block,
 	pvr_dma_callback_t callback, ptr_t cbdata);
 
-/** Returns non-zero if PVR DMA is inactive. */
+/** \brief  Is PVR DMA is inactive?
+    \return                 Non-zero if there is no PVR DMA active, thus a DMA
+                            can begin or 0 if there is an active DMA.
+*/
 int pvr_dma_ready();
 
-/** Initialize PVR DMA */
+/** \brief  Initialize PVR DMA. */
 void pvr_dma_init();
 
-/** Shut down PVR DMA */
+/** \brief  Shut down PVR DMA. */
 void pvr_dma_shutdown();
 
 /*********************************************************************/
