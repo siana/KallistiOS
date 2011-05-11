@@ -98,7 +98,7 @@ int flashrom_read(int offset, void * buffer_out, int bytes);
     This function implements the FLASHROM_WRITE syscall; given a flashrom
     offset, an input buffer, and a count, this writes data to the flashrom.
 
-    NOTE: It is not possible to write ones to the flashrom over zeros. If you
+    \note It is not possible to write ones to the flashrom over zeros. If you
     want to do this, you must save the old data in the flashrom, delete it out,
     and save the new data back.
 
