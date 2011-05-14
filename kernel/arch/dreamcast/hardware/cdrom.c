@@ -73,7 +73,7 @@ static void gdc_abort_cmd(int cmd) { MAKE_SYSCALL(/**/,cmd, 0, 8); }
 static mutex_t * mutex = NULL;
 static int sector_size = 2048;   /*default 2048, 2352 for raw data reading*/
 
-void set_sector_size (int size) {
+void cdrom_set_sector_size(int size) {
 	sector_size = size;
 	cdrom_reinit();
 } 
