@@ -1,8 +1,17 @@
 /* KallistiOS ##version##
 
    arch/dreamcast/include/arch.h
-   (c)2001 Dan Potter
+   Copyright (C) 2001 Dan Potter
    
+*/
+
+/** \file   arch/arch.h
+    \brief  Dreamcast architecture specific options.
+
+    This file has various architecture specific options defined in it. Also, any
+    functions that start with arch_ are in here.
+
+    \author Dan Potter
 */
 
 #ifndef __ARCH_ARCH_H
@@ -13,122 +22,211 @@ __BEGIN_DECLS
 
 #include <dc/video.h>
 
-/* Page size info (for MMU) */
-#define PAGESIZE	4096
-#define PAGESIZE_BITS	12
-#define PAGEMASK	(PAGESIZE - 1)
+#define PAGESIZE        4096            /**< \brief Page size (for MMU) */
+#define PAGESIZE_BITS   12              /**< \brief Bits for page size */
+#define PAGEMASK        (PAGESIZE - 1)  /**< \brief Mask for page offset */
 
-/* Page count variable; in this case it's static, so we can
-   optimize this quite a bit. */
-#define page_count ((16*1024*1024 - 0x10000) / PAGESIZE)
+/** \brief  Page count "variable".
 
-/* Base address of available physical pages */
-#define page_phys_base 0x8c010000
+    The number of pages is static, so we can optimize this quite a bit. */
+#define page_count      ((16*1024*1024 - 0x10000) / PAGESIZE)
 
-/* Number of timer ticks per second */
-#define HZ		100
+/** \brief  Base address of available physical pages. */
+#define page_phys_base  0x8c010000
 
-/* Default thread stack size */
-#define THD_STACK_SIZE	8192
+/** \brief  Number of timer ticks per second. */
+#define HZ              100
 
-/* Default video mode */
-#define DEFAULT_VID_MODE	DM_640x480
-#define DEFAULT_PIXEL_MODE	PM_RGB565
+/** \brief  Default thread stack size. */
+#define THD_STACK_SIZE  8192
 
-/* Default serial parameters */
-#define DEFAULT_SERIAL_BAUD	57600
-#define DEFAULT_SERIAL_FIFO	1
+/** \brief  Default video mode. */
+#define DEFAULT_VID_MODE    DM_640x480
 
-/* Do we need symbol prefixes? */
-#define ELF_SYM_PREFIX "_"
-#define ELF_SYM_PREFIX_LEN 1
+/** \brief  Default pixel mode for video. */
+#define DEFAULT_PIXEL_MODE  PM_RGB565
 
-/* Panic function */
+/** \brief  Default serial bitrate. */
+#define DEFAULT_SERIAL_BAUD 57600
+
+/** \brief  Default serial FIFO behavior. */
+#define DEFAULT_SERIAL_FIFO 1
+
+/** \brief  Global symbol prefix in ELF files. */
+#define ELF_SYM_PREFIX      "_"
+
+/** \brief  Length of global symbol prefix in ELF files. */
+#define ELF_SYM_PREFIX_LEN  1
+
+/** \brief  Panic function.
+
+    This function will cause a kernel panic, printing the specified message.
+
+    \param  str             The error message to print.
+    \note                   This function will never return!
+*/
 void panic(const char *str) __noreturn;
 
-/* Prototype for the portable kernel main() */
-int kernel_main(const char *args);
-
-/* Kernel C-level entry point */
+/** \brief  Kernel C-level entry point.
+    \return                 The program's return value.
+*/
 int arch_main();
 
-/* Potential exit paths from the kernel on arch_exit() */
-#define ARCH_EXIT_RETURN	1
-#define ARCH_EXIT_MENU		2
-#define ARCH_EXIT_REBOOT	3
+/** \defgroup arch_retpaths         Potential exit paths from the kernel on
+                                    arch_exit()
 
-/* Set the exit path (default is RETURN) */
+    @{
+*/  
+#define ARCH_EXIT_RETURN    1   /**< \brief Return to loader */
+#define ARCH_EXIT_MENU      2   /**< \brief Return to system menu */
+#define ARCH_EXIT_REBOOT    3   /**< \brief Reboot the machine */
+/** @} */
+
+/** \brief  Set the exit path.
+
+    The default, if you don't call this, is ARCH_EXIT_RETURN.
+
+    \param  path            What arch_exit() should do.
+    \see    arch_retpaths
+*/
 void arch_set_exit_path(int path);
 
-/* Generic kernel "exit" point */
+/** \brief  Generic kernel "exit" point.
+    \note                   This function will never return!
+*/
 void arch_exit() __noreturn;
 
-/* Kernel "return" point */
+/** \brief  Kernel "return" point.
+    \note                   This function will never return!
+*/
 void arch_return() __noreturn;
 
-/* Kernel "abort" point */
+/** \brief  Kernel "abort" point.
+    \note                   This function will never return!
+*/
 void arch_abort() __noreturn;
 
-/* Kernel "reboot" call */
+/** \brief  Kernel "reboot" call.
+    \note                   This function will never return!
+*/
 void arch_reboot() __noreturn;
 
-/* Kernel "exit to menu" call */
+/** \brief Kernel "exit to menu" call.
+    \note                   This function will never return!
+*/
 void arch_menu() __noreturn;
 
-/* Call to run all ctors / dtors */
+/** \brief  Call to run all ctors. */
 void arch_ctors();
+
+/** \brief  Call to run all dtors. */
 void arch_dtors();
 
-/* Hook to ensure linking of crtend.c */
+/** \brief  Hook to ensure linking of crtend.c. */
 void __crtend_pullin();
 
 /* These are in mm.c */
+/** \brief  Initialize the memory management system.
+    \retval 0               On success (no error conditions defined).
+*/
 int mm_init();
+
+/** \brief  Request more core memory from the system.
+    \param  increment       The number of bytes requested.
+    \return                 A pointer to the memory.
+    \note                   This function will panic if no memory is available.
+*/
 void * mm_sbrk(unsigned long increment);
 
-/* Use this macro to determine the level of initialization you'd like in
-   your program by default. The defaults line will be fine for most things. */
+/** \brief  Use this macro to determine the level of initialization you'd like
+            in your program by default.
+
+    The defaults line will be fine for most things.
+
+    \param  flags           Parts of KOS to init.
+*/
 #define KOS_INIT_FLAGS(flags)	uint32 __kos_init_flags = (flags)
 
+/** \brief  The init flags. Do not modify this directly! */
 extern uint32 __kos_init_flags;
 
-/* Defaults */
-#define INIT_DEFAULT \
-	(INIT_IRQ | INIT_THD_PREEMPT)
-
-/* Define a romdisk for your program, if you'd like one */
+/** \brief  Define a romdisk for your program, if you'd like one.
+    \param  rd              Pointer to the romdisk image in your code.
+*/
 #define KOS_INIT_ROMDISK(rd)	void * __kos_romdisk = (rd)
 
+/** \brief  Built-in romdisk. Do not modify this directly! */
 extern void * __kos_romdisk;
 
-/* State that you don't want a romdisk */
+/** \brief  State that you don't want a romdisk. */
 #define KOS_INIT_ROMDISK_NONE	NULL
 
-/* Constants for the above */
-#define INIT_NONE		0x0000		/* Kernel enables */
-#define INIT_IRQ		0x0001
-#define INIT_THD_PREEMPT	0x0002
-#define INIT_NET		0x0004
-#define INIT_MALLOCSTATS	0x0008
-#define INIT_QUIET		0x0010
+/** \defgroup arch_initflags        Available flags for initialization
+
+    These are the flags you can specify with KOS_INIT_FLAGS().
+    @{
+*/
+/** \brief  Default init flags (IRQs on, preemption enabled). */
+#define INIT_DEFAULT \
+    (INIT_IRQ | INIT_THD_PREEMPT)
+
+#define INIT_NONE           0x0000  /**< \brief Don't init optional things */
+#define INIT_IRQ            0x0001  /**< \brief Enable IRQs at startup */
+#define INIT_THD_PREEMPT    0x0002  /**< \brief Enable thread preemption */
+#define INIT_NET            0x0004  /**< \brief Enable built-in networking */
+#define INIT_MALLOCSTATS    0x0008  /**< \brief Enable malloc statistics */
+#define INIT_QUIET          0x0010  /**< \brief Disable dbgio */
 
 /* DC-specific stuff */
-#define INIT_OCRAM		0x10000
-#define INIT_NO_DCLOAD		0x20000
+#define INIT_OCRAM          0x10000 /**< \brief Use half of the dcache as RAM */
+#define INIT_NO_DCLOAD      0x20000 /**< \brief Disable dcload */
+/** @} */
 
 /* Dreamcast-specific arch init things */
-void arch_real_exit() __noreturn;
-int hardware_sys_init();
-int hardware_periph_init();
-void hardware_shutdown();
-void syscall_init();
+/** \brief  Jump back to the bootloader.
 
-/* Dreamcast specific sleep mode function */
+    You generally shouldn't use this function, but rather use arch_exit() or
+    exit() instead.
+
+    \note                   This function will never return!
+*/
+void arch_real_exit() __noreturn;
+
+/** \brief  Initialize bare-bones hardware systems.
+
+    This will be done automatically for you on start by the default arch_main(),
+    so you shouldn't have to deal with this yourself.
+
+    \retval 0               On success (no error conditions defined).
+*/
+int hardware_sys_init();
+
+/** \brief  Initialize some peripheral systems.
+
+    This will be done automatically for you on start by the default arch_main(),
+    so you shouldn't have to deal with this yourself.
+
+    \retval 0               On success (no error conditions defined).
+*/
+int hardware_periph_init();
+
+/** \brief  Shut down hardware that was initted.
+
+    This function will shut down anything initted with hardware_sys_init() and
+    hardware_periph_init(). This will be done for you automatically by the
+    various exit points, so you shouldn't have to do this yourself.
+*/
+void hardware_shutdown();
+
+/** \brief  Dreamcast specific sleep mode "function". */
 #define arch_sleep() do { \
 		__asm__ __volatile__("sleep"); \
 	} while(0)
 
-/* DC specific function to get the return address from the current function */
+/** \brief  DC specific "function" to get the return address from the current
+            function.
+    \return                 The return address of the current function.
+*/
 #define arch_get_ret_addr() ({ \
 		uint32 pr; \
 		__asm__ __volatile__("sts	pr,%0\n" \
@@ -141,7 +239,11 @@ void syscall_init();
    valid if you have compiled your code WITHOUT -fomit-frame-pointer. These
    are mainly useful for getting a stack trace from an error. */
 
-/* DC specific function to get the frame pointer from the current function */
+/** \brief  DC specific "function" to get the frame pointer from the current
+            function.
+    \return                 The frame pointer from the current function.
+    \note                   This only works if you don't disable frame pointers.
+*/
 #define arch_get_fptr() ({ \
 		uint32 fp; \
 		__asm__ __volatile__("mov	r14,%0\n" \
@@ -150,14 +252,28 @@ void syscall_init();
 			: "memory" ); \
 	fp; })
 
-/* Pass in a frame pointer value to get the return address for the given frame */
+/** \brief  Pass in a frame pointer value to get the return address for the
+            given frame.
+
+    \param  fptr            The frame pointer to look at.
+    \return                 The return address of the pointer.
+*/
 #define arch_fptr_ret_addr(fptr) (*((uint32*)fptr))
 
-/* Pass in a frame pointer value to get the previous frame pointer for the given frame */
+/** \brief  Pass in a frame pointer value to get the previous frame pointer for
+            the given frame.
+
+    \param  fptr            The frame pointer to look at.
+    \return                 The previous frame pointer.
+*/
 #define arch_fptr_next(fptr) (*((uint32*)(fptr+4)))
 
-/* Returns true if the passed address is likely to be valid. Doesn't
-   have to be exact, just a sort of general idea. */
+/** \brief  Returns true if the passed address is likely to be valid. Doesn't
+            have to be exact, just a sort of general idea.
+
+    \return                 Whether the address is valid or not for normal
+                            memory access.
+*/
 #define arch_valid_address(ptr) ((ptr_t)(ptr) >= 0x8c010000 && (ptr_t)(ptr) < 0x8d000000)
 
 __END_DECLS
