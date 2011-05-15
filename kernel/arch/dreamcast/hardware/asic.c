@@ -183,7 +183,7 @@ void asic_evt_enable(uint32 code, int irqlevel) {
 }
 
 /* Initialize events */
-void asic_evt_init() {
+static void asic_evt_init() {
 	/* Clear any pending interrupts and disable all events */
 	asic_evt_disable_all();
 	ASIC_ACK_A = 0xffffffff;
@@ -200,7 +200,7 @@ void asic_evt_init() {
 }
 
 /* Shutdown events */
-void asic_evt_shutdown() {
+static void asic_evt_shutdown() {
 	/* Disable all events */
 	asic_evt_disable_all();
 	
@@ -219,8 +219,3 @@ void asic_init() {
 void asic_shutdown() {
 	asic_evt_shutdown();
 }
-
-
-
-
-
