@@ -1,8 +1,44 @@
 /* KallistiOS ##version##
 
    arch/dreamcast/include/arch/mmu.h
-   (c)2001 Dan Potter
+   Copyright (C) 2001 Dan Potter
    
+*/
+
+/** \file   arch/mmu.h
+    \brief  Memory Management Unit and Translation Lookaside Buffer handling.
+
+    This file defines the interface to the Memory Management Unit (MMU) in the
+    SH4. The MMU, while not used normally by KOS, is available for virtual
+    memory use, if you so desire. While using this functionality is probably
+    overkill for most homebrew, there are a few very interesting things that
+    this functionality could be used for (like mapping large files into memory
+    that wouldn't otherwise fit).
+
+    The whole system is set up as a normal paged memory virtual->physical
+    address translation. KOS implements the page table as a sparse, two-level
+    page table. By default, pages are 4KB in size. Each top-level page table
+    entry has 512 2nd level entries (there are 1024 entries in the top-level
+    entry). This works out to about 2KB of space needed for one top-level entry.
+
+    The SH4 itself has 4 TLB entries for instruction fetches, and 64 "unified"
+    TLB entries (for combined instructions + data). Essentially, the UTLB acts
+    both as the TLB for data accesses (from mov instructions) and as a cache for
+    entries for the ITLB. If there is no entry in the ITLB for an instruction
+    access, the UTLB will automatically be searched. If no entry is found still,
+    an ITLB miss exception will be generated. Data accesses are handled
+    similarly to this (although additional complications are involved due to
+    write accesses, and of course the ITLB doesn't play into data accesses).
+
+    For more information about how the MMU works, refer to the Hitachi/Renesas
+    SH4 programming manual. It has much more detailed information than what is
+    in here, for obvious reasons.
+
+    This functionality was ported over to mainline KOS from the KOS-MMU project
+    of Dan Potter. Unfortunately, KOS-MMU never reached a real phase of maturity
+    and usefulness, but this piece can be quite useful on its own.
+
+    \author Dan Potter
 */
 
 #ifndef __ARCH_MMU_H
@@ -43,130 +79,262 @@ __BEGIN_DECLS
 
    */
 
-#define MMU_TOP_SHIFT 21
-#define MMU_TOP_BITS 10
-#define MMU_TOP_MASK ((1 << MMU_TOP_BITS) - 1)
-#define MMU_BOT_SHIFT 12
-#define MMU_BOT_BITS 9
-#define MMU_BOT_MASK ((1 << MMU_BOT_BITS) - 1)
-#define MMU_IND_SHIFT 0
-#define MMU_IND_BITS 12
-#define MMU_IND_MASK ((1 << MMU_IND_BITS) - 1)
+/** \defgroup mmu_bit_macros        MMU address bit definitions
 
-/* MMU TLB entry for a single page (one 32-bit word) */
+    The MMU code uses these to determine the page of a request.
+
+    @{
+*/
+#define MMU_TOP_SHIFT 21                        /**< \brief Top-level shift */
+#define MMU_TOP_BITS 10                         /**< \brief Top-level bits */
+#define MMU_TOP_MASK ((1 << MMU_TOP_BITS) - 1)  /**< \brief Top-level mask */
+#define MMU_BOT_SHIFT 12                        /**< \brief Bottom shift */
+#define MMU_BOT_BITS 9                          /**< \brief Bottom bits */
+#define MMU_BOT_MASK ((1 << MMU_BOT_BITS) - 1)  /**< \brief Bottom mask */
+#define MMU_IND_SHIFT 0                         /**< \brief Index shift */
+#define MMU_IND_BITS 12                         /**< \brief Index bits */
+#define MMU_IND_MASK ((1 << MMU_IND_BITS) - 1)  /**< \brief Index mask */
+/** @} */
+
+/** \defgroup mmu_prot_values       MMU protection settings
+
+    Each page mapped via the MMU can be protected in a couple of different ways,
+    as specified here.
+
+    @{
+*/
+#define MMU_KERNEL_RDONLY   0   /**< \brief No user access, kernel read-only */
+#define MMU_KERNEL_RDWR     1   /**< \brief No user access, kernel full */
+#define MMU_ALL_RDONLY      2   /**< \brief Read-only user and kernel */
+#define MMU_ALL_RDWR        3   /**< \brief Full access, user and kernel */
+/** @} */
+
+/** \defgroup mmu_cache_values      MMU cacheability settings
+
+    Each page mapped via the MMU can have its cacheability set individually.
+
+    @{
+*/
+#define MMU_NO_CACHE    1               /**< \brief Cache disabled */
+#define MMU_CACHE_BACK  2               /**< \brief Write-back cacheing */
+#define MMU_CACHE_WT    3               /**< \brief Write-through cacheing */
+#define MMU_CACHEABLE   MMU_CACHE_BACK  /**< \brief Default cacheing */
+/** @} */
+
+/** \brief  MMU TLB entry for a single page.
+
+    The TLB entries on the SH4 are a single 32-bit dword in length. We store
+    some other data here too for ease of use.
+
+    \headerfile arch/mmu.h
+*/
 typedef struct mmupage {
-	/* Explicit pieces, used for reference */
-	/*uint32	virtual; */	/* implicit */
-	uint32		physical:18;	/* Physical page ID	-- 18 bits */
-	uint32		prkey:2;	/* Protection key data	-- 2 bits  */
-	uint32		valid:1;	/* Valid mapping	-- 1 bit   */
-	uint32		shared:1;	/* Shared between procs	-- 1 bit   */
-	uint32		cache:1;	/* Cacheable		-- 1 bit   */
-	uint32		dirty:1;	/* Dirty		-- 1 bit   */
-	uint32		wthru:1;	/* Write-thru enable	-- 1 bit   */
-	uint32		blank:7;	/* Reserved		-- 7 bits */
+    /* Explicit pieces, used for reference */
+    /*uint32	virtual; */ /* implicit */
+    uint32  physical:18;    /**< \brief Physical page ID -- 18 bits */
+    uint32  prkey:2;        /**< \brief Protection key data -- 2 bits */
+    uint32  valid:1;        /**< \brief Valid mapping -- 1 bit */
+    uint32  shared:1;       /**< \brief Shared between procs -- 1 bit */
+    uint32  cache:1;        /**< \brief Cacheable -- 1 bit */
+    uint32  dirty:1;        /**< \brief Dirty -- 1 bit */
+    uint32  wthru:1;        /**< \brief Write-thru enable -- 1 bit */
+    uint32  blank:7;        /**< \brief Reserved -- 7 bits */
 
-	/* Pre-compiled pieces. These waste a bit of ram, but they also
-	   speed loading immensely at runtime. */
-	uint32          pteh, ptel;
+    /* Pre-compiled pieces. These waste a bit of ram, but they also
+       speed loading immensely at runtime. */
+    uint32  pteh;           /**< \brief Pre-built PTEH value */
+    uint32  ptel;           /**< \brief Pre-built PTEL value */
 } mmupage_t;
 
-/* MMU sub-context type. We have two-level page tables on
-   SH-4, and each sub-context contains 512 entries. */
-#define MMU_SUB_PAGES	512
+/** \brief  The number of pages in a sub-context. */
+#define MMU_SUB_PAGES   512
+
+/** \brief  MMU sub-context type.
+
+    We have two-level page tables on SH4, and each sub-context contains 512
+    entries.
+
+    \headerfile arch/mmu.h
+*/
 typedef struct mmusubcontext {
-	mmupage_t	page[MMU_SUB_PAGES];	/* 512 pages */
+    mmupage_t   page[MMU_SUB_PAGES];    /**< \brief 512 page entries */
 } mmusubcontext_t;
 
-/* MMU Context type */
-#define MMU_PAGES	1024
+/** \brief  The number of sub-contexts in the main level context. */
+#define MMU_PAGES   1024
+
+/** \brief  MMU context type.
+
+    This type is the top-level context that makes up the page table. There is
+    one of these, with 1024 sub-contexts.
+
+    \headerfile arch/mmu.h
+*/
 typedef struct mmucontext {
-	mmusubcontext_t	*sub[MMU_PAGES];	/* 1024 sub-contexts */
-	int		asid;			/* Address Space ID */
+    mmusubcontext_t *sub[MMU_PAGES];    /**< \brief 1024 sub-contexts */
+    int             asid;               /**< \brief Address Space ID */
 } mmucontext_t;
 
-/* "Current" page tables (for TLB exception handling) */
+/** \brief  "Current" page tables (for TLB exception handling).
+
+    You should not modify this directly, but rather use the functions provided
+    to do so.
+*/
 extern mmucontext_t *mmu_cxt_current;
 
-/* Set the "current" page tables for TLB handling */
+/** \brief  Set the "current" page tables for TLB handling.
+
+    This function is useful if you're trying to implement a process model or
+    something of the like on top of KOS. Essentially, this allows you to
+    completely boot the MMU context in use out and replace it with another. You
+    will need to call the mmu_switch_context() function afterwards to set the
+    address space id.
+
+    \param  context         The context to make current.
+*/
 void mmu_use_table(mmucontext_t *context);
 
-/* Allocate a new MMU context; each process should have exactly one of
-   these, and these should not exist without a process. */
+/** \brief  Allocate a new MMU context.
+ 
+    Each process should have exactly one of these, and these should not exist
+    without a process. Since KOS doesn't actually have a process model of its
+    own, that means you will only ever have one of these, if any.
+
+    \param  asid            The address space ID of this process.
+    \return                 The newly created context.
+*/
 mmucontext_t *mmu_context_create(int asid);
 
-/* Destroy an MMU context when a process is being destroyed. */
+/** \brief  Destroy an MMU context when a process is being destroyed.
+
+    This function cleans up a MMU context, deallocating any memory its using.
+
+    \param  context         The context to clean up after.
+*/
 void mmu_context_destroy(mmucontext_t *context);
 
-/* Using the given page tables, translate the virtual page ID to a 
-   physical page ID. Return -1 on failure. */
+/** \brief  Using the given page tables, translate the virtual page ID to a 
+            physical page ID.
+
+    \param  context         The context to look in.
+    \param  virtpage        The virtual page number to look for.
+    \return                 The physical page number, or -1 on failure.
+    \see    mmu_phys_to_virt()
+*/
 int mmu_virt_to_phys(mmucontext_t *context, int virtpage);
 
-/* Using the given page tables, translate the physical page ID to a
-   virtual page ID. Return -1 on failure. */
+/** \brief  Using the given page tables, translate the physical page ID to a
+            virtual page ID.
+
+    \param  context         The context to look in.
+    \param  physpage        The physical page number to look for.
+    \return                 The virtual page number, or -1 on failure.
+    \see    mmu_virt_to_phys()
+*/
 int mmu_phys_to_virt(mmucontext_t *context, int physpage);
 
-/* Switch to the given context; invalidate any caches as neccessary */
+/** \brief  Switch to the given context.
+
+    This function switches to the given context's address space ID. The context
+    should have already been made current with mmu_use_table().
+    You are responsible for invalidating any caches as neccessary, as well as
+    invalidating any stale TLB entries.
+
+    \param  context         The context to make current.
+*/
 void mmu_switch_context(mmucontext_t *context);
 
-/* Set the given virtual page as invalid (unmap it) */
-void mmu_page_invalidate(mmucontext_t *context, int virtpage, int count);
+/** \brief  Set the given virtual page to map to the given physical page.
 
-/* Set the given virtual page to map to the given physical page; implies
-   turning on the "valid" bit. Also sets the other named attributes.*/
+    This implies turning on the "valid" bit. Also sets the other named
+    attributes as specified.
+
+    \param  context         The context to modify.
+    \param  virtpage        The first virtual page to map.
+    \param  physpage        The first physical page to map.
+    \param  count           The number of sequential pages to map.
+    \param  prot            Memory protection for page (see
+                            \ref mmu_prot_values).
+    \param  cache           Cache scheme for page (see \ref mmu_cache_values).
+    \param  share           Set to 1 to share between processes (meaningless),
+                            otherwise set to 0.
+    \param  dirty           Set to 1 to mark the page as dirty, otherwise set to
+                            0.
+*/
 void mmu_page_map(mmucontext_t *context, int virtpage, int physpage,
-	int count, int prot, int cache, int share, int dirty);
+                  int count, int prot, int cache, int share, int dirty);
 
-/* Set the page protection to the given values */
-#define MMU_KERNEL_RDONLY	0
-#define MMU_KERNEL_RDWR		1
-#define MMU_ALL_RDONLY		2
-#define MMU_ALL_RDWR		3
-void mmu_page_protect(mmucontext_t *context, int virtpage, int count,
-	int prot);
+/** \brief  Copy a chunk of data from a process' address space into a kernel
+            buffer, taking into account page mappings.
 
-/* Set the cacheing type to the given values */
-#define MMU_NO_CACHE		1
-#define MMU_CACHE_BACK		2	/* Write-back */
-#define MMU_CACHE_WT		3	/* Write-thru */
-#define MMU_CACHEABLE		MMU_CACHE_BACK
-void mmu_page_cache(mmucontext_t *context, int virtpage, int count, int cache);
+    \param  context         The context to use.
+    \param  srcaddr         Source, in the mapped memory space.
+    \param  srccnt          The number of bytes to copy.
+    \param  buffer          The kernel buffer to copy into (should be in P1).
+    \return                 The number of bytes copied.
+*/
+int mmu_copyin(mmucontext_t *context, uint32 srcaddr, uint32 srccnt,
+               void *buffer);
 
-/* Set a page as shared or not */
-#define MMU_NOT_SHARED		0
-#define MMU_SHARED		1
-void mmu_page_share(mmucontext_t *context, int virtpage, int count, int share);
+/** \brief  Copy a chunk of data from one process' address space to another
+            process' address space, taking into account page mappings.
 
-/* Read the "dirty" bit of the page; potentially reset the bit. */
-#define MMU_NO_CHANGE		0
-#define MMU_CLEAN		1
-#define MMU_DIRTY		2
-int mmu_page_dirty(mmucontext_t *context, int virtpage, int count, int reset);
-
-/* Copy a chunk of data from a process' address space into a
-   kernel buffer, taking into account page mappings. */
-int mmu_copyin(mmucontext_t *context, uint32 srcaddr, uint32 srccnt, void *buffer);
-
-/* Copy a chunk of data from one process' address space to another
-   process' address space, taking into account page mappings. */
+    \param  context1        The source's context.
+    \param  iov1            The scatter/gather array to copy from.
+    \param  iovcnt1         The number of entries in iov1.
+    \param  context2        The destination's context.
+    \param  iov2            The scatter/gather array to copy to.
+    \param  iovcnt2         The number of entries in iov2.
+*/
 int mmu_copyv(mmucontext_t *context1, iovec_t *iov1, int iovcnt1,
 	mmucontext_t *context2, iovec_t *iov2, int iovcnt2);
 
-/* MMU syscalls */
-void sc_mmu_mmap(uint32 dst, size_t len, uint32 src);
+/** \brief  MMU mapping handler.
 
-/* Get/set thefunction to handle virt->phys page mapping; the function
-   should return a pointer to an mmupage_t on success, or NULL on
-   failure. */
+    This type is used for functions that will take over the mapping for the
+    kernel. In general, there shouldn't be much use for taking this over
+    yourself, unless you want to change the size of the page table entries or
+    something of the like.
+
+    \param  context         The context in use.
+    \param  virtpage        The virtual page to map.
+    \return                 The page table entry, or NULL if none exists.
+*/
 typedef mmupage_t * (*mmu_mapfunc_t)(mmucontext_t * context, int virtpage);
+
+/** \brief  Get the current mapping function.
+    \return                 The current function that maps pages.
+*/
 mmu_mapfunc_t mmu_map_get_callback();
+
+/** \brief  Set a new MMU mapping handler.
+
+    This function will allow you to set a new function to handle mapping for
+    memory pages. There's not much of a reason to do this unless you really do
+    not like the way KOS handles the page mapping internally.
+
+    \param  newfunc         The new function to handle mapping.
+    \return                 The old function that did mapping.
+*/
 mmu_mapfunc_t mmu_map_set_callback(mmu_mapfunc_t newfunc);
 
-/* Init / shutdown MMU */
+/** \brief  Initialize MMU support.
+
+    Unlike most things in KOS, the MMU is not initialized by a normal startup.
+    This is because for most homebrew, its not needed.
+
+    \retval 0               On success (no error conditions defined).
+*/
 int mmu_init();
+
+/** \brief  Shutdown MMU support.
+
+    Turn off the MMU after it was initialized. You should try to make sure this
+    gets done if you initialize the MMU in your program, so as to play nice with
+    loaders and the like (that will not expect that its on, in general).
+*/
 void mmu_shutdown();
 
 __END_DECLS
 
 #endif	/* __ARCH_MMU_H */
-
