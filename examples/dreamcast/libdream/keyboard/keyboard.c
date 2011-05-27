@@ -5,27 +5,27 @@ void kb_test() {
 	cont_state_t *state;
 	int k, x = 20, y = 20+24;
 
-	printf("Now doing keyboard test\n");	
+	printf("Now doing keyboard test\n");
 
 	while (1) {
 		cont = maple_enum_type(0, MAPLE_FUNC_CONTROLLER);
 		if (!cont) continue;
 		kbd = maple_enum_type(0, MAPLE_FUNC_KEYBOARD);
 		if (!kbd) continue;
-		
+
 		/* Check for start on the controller */
 		state = (cont_state_t *)maple_dev_status(cont);
 		if (!state) {
 			return;
 		}
-		
+
 		if (state->buttons & CONT_START) {
 			printf("Pressed start\n");
 			return;
 		}
-		
+
 		thd_sleep(10);
-		
+
 		/* Check for keyboard input */
 		/* if (kbd_poll(mkb)) {
 			printf("Error checking keyboard status\n");
@@ -41,7 +41,7 @@ void kb_test() {
 
 			if (k > 0xff)
 				printf("Special key %04x\n", k);
-			
+
 			if (k != 13) {
 				bfont_draw(vram_s + y*640+x, 640, 0, k);
 				x += 12;

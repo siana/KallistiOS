@@ -2,7 +2,7 @@
 
    ia32/irq.h
    Copyright (C)2000,2001,2003 Dan Potter
-  
+
 */
 
 #ifndef __ARCH_IRQ_H

@@ -38,7 +38,7 @@ int maple_driver_attach(maple_frame_t *det) {
 	memcpy(&dev->info, devinfo, sizeof(maple_devinfo_t));
 	dev->info.product_name[29] = 0;
 	dev->info.product_license[59] = 0;
-	memset(dev->status, 0, sizeof(dev->status));	
+	memset(dev->status, 0, sizeof(dev->status));
 	dev->drv = NULL;
 
 	/* Go through the list and look for a matching driver */

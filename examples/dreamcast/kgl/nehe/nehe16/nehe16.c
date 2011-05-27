@@ -19,7 +19,7 @@
    There is no lighting yet in GL, so it has not been included.
 
    DPAD controls the cube rotation, button A & B control the depth
-   of the cube, button X toggles fog on/off, and button Y toggles fog type. 
+   of the cube, button X toggles fog on/off, and button Y toggles fog type.
 */
 
 static GLfloat xrot;		/* X Rotation */

@@ -312,7 +312,7 @@ cont:
             }
 
             pos += pkt->options[pos + 1] << 3;
-        }            
+        }
     }
 
     /* Send the neighbor advertisement */

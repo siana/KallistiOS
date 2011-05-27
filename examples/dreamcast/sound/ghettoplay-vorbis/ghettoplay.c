@@ -11,8 +11,8 @@
    created Ghetto Play that I made to browse and test various S3Ms
    with early versions of the player. It _really_ deserved the name
    GHETTO Play =). This one, like Ghetto Pong, is a 2.0 that is more
-   like "Pimpin' Play" ;-). However, sticking with tradition...   
-   
+   like "Pimpin' Play" ;-). However, sticking with tradition...
+
 */
 
 #include <oggvorbis/sndoggvorbis.h>
@@ -39,14 +39,14 @@ static int lmx[5] = {320, 320, 320, 320, 320},
 void mouse_render() {
 	int i;
 	int atall = 0;
-	
+
 	MAPLE_FOREACH_BEGIN(MAPLE_FUNC_MOUSE, mouse_state_t, st)
 		atall = 1;
 		if (st->dx || st->dy) {
-		
+
 			mx += st->dx;
 			my += st->dy;
-		
+
 			if (mx < 0) mx = 0;
 			if (mx > 640) mx = 640;
 			if (my < 0) my = 0;
@@ -94,7 +94,7 @@ void vmu_lcd_update() {
 			} else if ((phase % 20) == 10) {
 				vmu_set_icon(NULL);
 			}
-			
+
 			if (phase == 60) {
 				cycle = 0;
 				phase = 0;
@@ -137,7 +137,7 @@ int main(int argc, char **argv) {
 		/* Translucent list ********************************/
 
 		/* Top Banner */
-		draw_poly_box(0.0f, 10.0f, 640.0f, 20.0f+(24.0f*2.0f)+10.0f, 90.0f, 
+		draw_poly_box(0.0f, 10.0f, 640.0f, 20.0f+(24.0f*2.0f)+10.0f, 90.0f,
 			0.3f, 0.2f, 0.5f, 0.0f, 0.5f, 0.1f, 0.8f, 0.2f);
 		draw_poly_strf(5.0f, 20.0f, 100.0f, 1.0f, 1.0f, 1.0f, 1.0f,
 			"      GhettoPlay  (C)2000-2002 by Dan Potter      ");
@@ -146,11 +146,11 @@ int main(int argc, char **argv) {
 
 		/* Song menu */
 		song_menu_render();
-		
+
 		/* File Information */
-		draw_poly_box(20.0f, 440.0f-96.0f+4, 640.0f-20.0f, 440.0f, 90.0f, 
+		draw_poly_box(20.0f, 440.0f-96.0f+4, 640.0f-20.0f, 440.0f, 90.0f,
 			0.3f, 0.2f, 0.5f, 0.0f, 0.5f, 0.1f, 0.8f, 0.2f);
-		
+
 		draw_poly_strf(30.0f,440.0f-96.0f+6,100.0f,1.0f,1.0f,1.0f,1.0f,"File Information:");
 		draw_poly_strf(640.0f-180.0f-12.0f+(6*12.0f),440.0f-96.0f+6,100.0f,1.0f,1.0f,1.0f,1.0f,"bit/s");
 		draw_poly_strf(30.0f,440.0f-96.0f+6+24.0f+10.0f,100.0f,1.0f,1.0f,1.0f,1.0f,"Author:");
@@ -168,7 +168,7 @@ int main(int argc, char **argv) {
 			artist = sndoggvorbis_getartist(); if (!artist) artist = "[none]";
 			title = sndoggvorbis_gettitle(); if (!title) title = "[none]";
 			genre = sndoggvorbis_getgenre(); if (!genre) genre = "[none]";
-		
+
 			draw_poly_strf(640.0f-180.0f-12.0f -12.0f, 440.0f-96.0f+6, 100.0f, 1.0f, 1.0f, 1.0f, 1.0f,bitrate);
 			draw_poly_strf(30.0f+(12.0f*7),440.0f-96.0f+6+24.0f+10.0f,100.0f,1.0f,1.0f,1.0f,1.0f,artist);
 			draw_poly_strf(30.0f+(12.0f*6),440.0f-96.0f+6+48.0f+10.0f,100.0f,1.0f,1.0f,1.0f,1.0f,title);
@@ -184,11 +184,11 @@ int main(int argc, char **argv) {
 
 		/* Finish the frame *******************************/
 		pvr_scene_finish();
-		
+
 		/* Update the VMU LCD */
 		vmu_lcd_update();
 	}
-	
+
 	sndoggvorbis_shutdown();
 
 	/* Stop the sound */

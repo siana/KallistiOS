@@ -2,7 +2,7 @@
 
    kos/limits.h
    (c)2000-2001 Dan Potter
-  
+
 */
 
 /** \file   kos/limits.h

@@ -24,7 +24,7 @@ int check_start() {
 	if (!state) {
 		return 0;
 	}
-		
+
 	if (state->buttons & CONT_START) {
 		printf("Pressed start\n");
 		return 1;

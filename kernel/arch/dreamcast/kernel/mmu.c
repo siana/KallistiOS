@@ -163,7 +163,7 @@ static mmupage_t *map_virt(mmucontext_t *context, int virtpage) {
 	mmusubcontext_t	*sub;
 	mmupage_t	*page;
 	int		top, bot;
-	
+
 	/* Get back the virtual address */
 	virtpage = virtpage << MMU_IND_BITS;
 
@@ -185,7 +185,7 @@ static mmupage_t *map_virt(mmucontext_t *context, int virtpage) {
 	return page;
 }
 
-/* Using the given page tables, translate the virtual page ID to a 
+/* Using the given page tables, translate the virtual page ID to a
    physical page ID. Return -1 on failure. */
 int mmu_virt_to_phys(mmucontext_t *context, int virtpage) {
 	mmupage_t	*page;
@@ -210,7 +210,7 @@ static void mmu_page_map_single(mmucontext_t *context,
 	mmusubcontext_t	*sub;
 	mmupage_t	*page;
 	int		top, bot, i;
-	
+
 	/* Get back the virtual address */
 	virtpage = virtpage << MMU_IND_BITS;
 
@@ -274,7 +274,7 @@ void mmu_page_map(mmucontext_t *context,
    is considered to be a physical address. Use munmap to free them. */
 void sc_mmu_mmap(uint32 dst, size_t len, uint32 src) {
 	int anon = 0;
-	
+
 	/* Adjust length to page boundary */
 	if (len & PAGEMASK)
 		len = (len & ~PAGEMASK) + PAGESIZE;
@@ -289,7 +289,7 @@ void sc_mmu_mmap(uint32 dst, size_t len, uint32 src) {
 	}
 
 	/* Do the actual mapping */
-	/*dbgio_printf("sc: mmu_page_map(%08x,%08x,%08x,%08x,%d,%d,%d,%d)\n", 
+	/*dbgio_printf("sc: mmu_page_map(%08x,%08x,%08x,%08x,%d,%d,%d,%d)\n",
 		proc_current->pt, dst >> PAGESIZE_BITS, src >> PAGESIZE_BITS, len,
 		MMU_ALL_RDWR, anon ? MMU_CACHEABLE : MMU_NO_CACHE, MMU_SHARED, MMU_DIRTY); */
 	mmu_page_map(proc_current->pt,
@@ -466,7 +466,7 @@ int mmu_copyv(mmucontext_t *context1, iovec_t *iov1, int iovcnt1,
 		if (srccnt <= 0) {
 			srciov++;
 			if (srciov >= iovcnt1) break;
-			
+
 			srccnt = iov1[srciov].iov_len;
 			srcptr = (uint32)iov1[srciov].iov_base;
 			if (!srckrn) {
@@ -515,7 +515,7 @@ int mmu_copyv(mmucontext_t *context1, iovec_t *iov1, int iovcnt1,
 
 	return copied;
 }
-		
+
 
 /********************************************************************************/
 /* Exception handlers */
@@ -538,7 +538,7 @@ mmu_mapfunc_t mmu_map_set_callback(mmu_mapfunc_t newfunc) {
 
 static void unhandled_mmu(irq_t source, irq_context_t *context) {
 	int i;
-	
+
 	dbgio_printf("Exception happened in tid %d at PC %08lx, SR %08lx\n",
 		thd_current->tid, context->pc, context->sr);
 	dbgio_printf(" PTEH = %08lx, PTEL = %08lx\n", *pteh, *ptel);
@@ -567,7 +567,7 @@ void mmu_gen_tlb_miss(const char *what, irq_t source, irq_context_t *context) {
 			what, addr);
 		unhandled_mmu(source, context);
 	}
-	
+
 	/* Do we have page tables? */
 	if (map_func == map_virt && !mmu_cxt_current) {
 		dbgio_printf("%s: no page tables installed to map address %08lx!\n",
@@ -683,7 +683,7 @@ void mmu_shutdown() {
 	/* Turn off MMU */
 	*mmucr = 0x00000204;
 
-	/* No more shortcuts */	
+	/* No more shortcuts */
 	mmu_shortcut_ok = 0;
 
 	/* Unhook the IRQ handlers */

@@ -208,7 +208,7 @@ linkdata()                              /*  secondary data manipulation */
 void
 trapdel(sig)                            /* come here if he hits a del   */
 int sig;
-{	
+{
 	sig = 0;
 	delhit = 1;			/* main checks, treats as QUIT  */
 	signal(2,trapdel);		/* catch subsequent DELs        */

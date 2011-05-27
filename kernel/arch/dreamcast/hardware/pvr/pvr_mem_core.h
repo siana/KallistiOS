@@ -100,7 +100,7 @@ __BEGIN_DECLS
 * Vital statistics:
 
   Supported pointer representation:       4 or 8 bytes
-  Supported size_t  representation:       4 or 8 bytes 
+  Supported size_t  representation:       4 or 8 bytes
        Note that size_t is allowed to be 4 bytes even if pointers are 8.
        You can adjust this by defining INTERNAL_SIZE_T
 
@@ -132,7 +132,7 @@ __BEGIN_DECLS
        sizeof(size_t) bytes plus the remainder from a system page (the
        minimal mmap unit); typically 4096 or 8192 bytes.
 
-  Maximum allocated size:  4-byte size_t: 2^32 minus about two pages 
+  Maximum allocated size:  4-byte size_t: 2^32 minus about two pages
                            8-byte size_t: 2^64 minus about two pages
 
        It is assumed that (possibly signed) size_t values suffice to
@@ -166,7 +166,7 @@ __BEGIN_DECLS
        concurrent programs. (See http://www.malloc.de)
 
   Compliance: I believe it is compliant with the 1997 Single Unix Specification
-       (See http://www.opennc.org). Also SVID/XPG, ANSI C, and probably 
+       (See http://www.opennc.org). Also SVID/XPG, ANSI C, and probably
        others as well.
 
 * Synopsis of compile-time options:
@@ -193,7 +193,7 @@ __BEGIN_DECLS
     WIN32                      NOT defined
     HAVE_MEMCPY                defined
     USE_MEMCPY                 1 if HAVE_MEMCPY is defined
-    HAVE_MMAP                  defined as 1 
+    HAVE_MMAP                  defined as 1
     MMAP_CLEARS                1
     HAVE_MREMAP                0 unless linux defined
     malloc_getpagesize         derived from system #includes, or 4096 if not
@@ -220,9 +220,9 @@ __BEGIN_DECLS
     Options for customizing MORECORE:
 
     MORECORE                   sbrk
-    MORECORE_CONTIGUOUS        1 
+    MORECORE_CONTIGUOUS        1
     MORECORE_CANNOT_TRIM       NOT defined
-    MMAP_AS_MORECORE_SIZE      (1024 * 1024) 
+    MMAP_AS_MORECORE_SIZE      (1024 * 1024)
 
     Tuning options that are also dynamically changeable via mallopt:
 
@@ -378,7 +378,7 @@ __BEGIN_DECLS
 
 /*
   USE_DL_PREFIX will prefix all public routines with the string 'dl'.
-  This is necessary when you only want to use this malloc in one part 
+  This is necessary when you only want to use this malloc in one part
   of a program, using your regular system malloc elsewhere.
 */
 
@@ -413,7 +413,7 @@ __BEGIN_DECLS
 #endif
 
 
-/* 
+/*
    Two-phase name translation.
    All of the actual routines are given mangled names.
    When wrappers are used, they become the public callable versions.
@@ -482,7 +482,7 @@ __BEGIN_DECLS
   USE_MEMCPY should be defined as 1 if you actually want to
   have memset and memcpy called. People report that the macro
   versions are faster than libc versions on some systems.
-  
+
   Even if USE_MEMCPY is set to 1, loops to copy/clear small chunks
   (of <= 36 bytes) are manually unrolled in realloc and calloc.
 */
@@ -519,8 +519,8 @@ Void_t* memcpy();
   MALLOC_FAILURE_ACTION is the action to take before "return 0" when
   malloc fails to be able to return memory, either because memory is
   exhausted or because of illegal arguments.
-  
-  By default, sets errno if running on STD_C platform, else does nothing.  
+
+  By default, sets errno if running on STD_C platform, else does nothing.
 */
 
 /* #ifndef MALLOC_FAILURE_ACTION
@@ -612,7 +612,7 @@ extern Void_t*     sbrk();
 #ifndef HAVE_MMAP
 #define HAVE_MMAP 1
 
-/* 
+/*
    Standard unix mmap using /dev/zero clears memory so calloc doesn't
    need to.
 */
@@ -628,7 +628,7 @@ extern Void_t*     sbrk();
 #endif
 
 
-/* 
+/*
    MMAP_AS_MORECORE_SIZE is the minimum mmap size argument to use if
    sbrk fails, and mmap is used as a backup (which is done only if
    HAVE_MMAP).  The value must be a multiple of page size.  This
@@ -697,7 +697,7 @@ extern Void_t*     sbrk();
 #      define malloc_getpagesize getpagesize()
 #    else
 #      ifdef WIN32 /* use supplied emulation of getpagesize */
-#        define malloc_getpagesize getpagesize() 
+#        define malloc_getpagesize getpagesize()
 #      else
 #        ifndef LACKS_SYS_PARAM_H
 #          include <sys/param.h>
@@ -718,7 +718,7 @@ extern Void_t*     sbrk();
 #              ifdef PAGESIZE
 #                define malloc_getpagesize PAGESIZE
 #              else /* just guess */
-#                define malloc_getpagesize (4096) 
+#                define malloc_getpagesize (4096)
 #              endif
 #            endif
 #          endif
@@ -840,13 +840,13 @@ Void_t*  public_pvr_cALLOc();
   realloc(Void_t* p, size_t n)
   Returns a pointer to a chunk of size n that contains the same data
   as does chunk p up to the minimum of (n, p's size) bytes, or null
-  if no space is available. 
+  if no space is available.
 
   The returned pointer may or may not be the same as p. The algorithm
   prefers extending p when possible, otherwise it employs the
   equivalent of a malloc-copy-free sequence.
 
-  If p is null, realloc is equivalent to malloc.  
+  If p is null, realloc is equivalent to malloc.
 
   If space is not available, realloc returns null, errno is set (if on
   ANSI) and p is NOT freed.
@@ -917,7 +917,7 @@ Void_t*  public_pvr_vALLOc();
   Symbol            param #   default    allowed param values
   M_MXFAST          1         64         0-80  (0 disables fastbins)
   M_TRIM_THRESHOLD -1         128*1024   any   (-1U disables trimming)
-  M_TOP_PAD        -2         0          any  
+  M_TOP_PAD        -2         0          any
   M_MMAP_THRESHOLD -3         128*1024   any   (or 0 if no MMAP support)
   M_MMAP_MAX       -4         65536      any   (0 disables use of mmap)
 */
@@ -932,23 +932,23 @@ int      public_pvr_mALLOPt();
   mallinfo()
   Returns (by copy) a struct containing various summary statistics:
 
-  arena:     current total non-mmapped bytes allocated from system 
-  ordblks:   the number of free chunks 
+  arena:     current total non-mmapped bytes allocated from system
+  ordblks:   the number of free chunks
   smblks:    the number of fastbin blocks (i.e., small chunks that
                have been freed but not use resused or consolidated)
-  hblks:     current number of mmapped regions 
-  hblkhd:    total bytes held in mmapped regions 
+  hblks:     current number of mmapped regions
+  hblkhd:    total bytes held in mmapped regions
   usmblks:   the maximum total allocated space. This will be greater
                 than current total if trimming has occurred.
-  fsmblks:   total bytes held in fastbin blocks 
+  fsmblks:   total bytes held in fastbin blocks
   uordblks:  current total allocated space (normal or mmapped)
-  fordblks:  total free space 
+  fordblks:  total free space
   keepcost:  the maximum number of bytes that could ideally be released
                back to system via malloc_trim. ("ideally" means that
                it ignores page restrictions etc.)
 
   Because these fields are ints, but internal bookkeeping may
-  be kept as longs, the reported values may wrap around zero and 
+  be kept as longs, the reported values may wrap around zero and
   thus be inaccurate.
 */
 #if __STD_C
@@ -986,7 +986,7 @@ struct mallinfo public_pvr_mALLINFo();
   should instead use regular calloc and assign pointers into this
   space to represent elements.  (In this case though, you cannot
   independently free elements.)
-  
+
   independent_calloc simplifies and speeds up implementations of many
   kinds of pools.  It may also be useful when constructing large data
   structures that initially have a fixed number of fixed-sized nodes,
@@ -994,16 +994,16 @@ struct mallinfo public_pvr_mALLINFo();
   may later need to be freed. For example:
 
   struct Node { int item; struct Node* next; };
-  
+
   struct Node* build_list() {
     struct Node** pool;
     int n = read_number_of_nodes_needed();
     if (n <= 0) return 0;
     pool = (struct Node**)(independent_calloc(n, sizeof(struct Node), 0);
-    if (pool == 0) die(); 
-    // organize into a linked list... 
+    if (pool == 0) die();
+    // organize into a linked list...
     struct Node* first = pool[0];
-    for (i = 0; i < n-1; ++i) 
+    for (i = 0; i < n-1; ++i)
       pool[i]->next = pool[i+1];
     free(pool);     // Can now free the array (or not, if it is needed later)
     return first;
@@ -1036,11 +1036,11 @@ Void_t** public_pvr_iCALLOc();
   null if the allocation failed.  If n_elements is zero and chunks is
   null, it returns a chunk representing an array with zero elements
   (which should be freed if not wanted).
-  
+
   Each element must be individually freed when it is no longer
   needed. If you'd like to instead be able to free all at once, you
   should instead use a single regular malloc, and assign pointers at
-  particular offsets in the aggregate space. (In this case though, you 
+  particular offsets in the aggregate space. (In this case though, you
   cannot independently free elements.)
 
   independent_comallac differs from independent_calloc in that each
@@ -1097,7 +1097,7 @@ Void_t*  public_pvr_pVALLOc();
   Equivalent to free(p).
 
   cfree is needed/defined on some systems that pair it with calloc,
-  for odd historical reasons (such as: cfree is used in example 
+  for odd historical reasons (such as: cfree is used in example
   code in the first edition of K&R).
 */
 #if __STD_C
@@ -1117,7 +1117,7 @@ void     public_pvr_cFREe();
   some allocation patterns, some large free blocks of memory will be
   locked between two used chunks, so they cannot be given back to
   the system.
-  
+
   The `pad' argument to malloc_trim represents the amount of free
   trailing space to leave untrimmed. If this argument is zero,
   only the minimum amount of memory to maintain internal data
@@ -1125,7 +1125,7 @@ void     public_pvr_cFREe();
   can be supplied to maintain enough trailing space to service
   future expected allocations without having to re-obtain memory
   from the system.
-  
+
   Malloc_trim returns 1 if it actually released any memory, else 0.
   On systems that do not support "negative sbrks", it will always
   rreturn 0.
@@ -1213,7 +1213,7 @@ void     public_pvr_mSTATs();
 
 /* M_MXFAST is a standard SVID/XPG tuning option, usually listed in malloc.h */
 #ifndef M_MXFAST
-#define M_MXFAST            1    
+#define M_MXFAST            1
 #endif
 
 #ifndef DEFAULT_MXFAST
@@ -1263,7 +1263,7 @@ void     public_pvr_mSTATs();
   safeguards.
 
   The trim value It must be greater than page size to have any useful
-  effect.  To disable trimming completely, you can set to 
+  effect.  To disable trimming completely, you can set to
   (unsigned long)(-1)
 
   Trim settings interact with fastbin (MXFAST) settings: Unless
@@ -1334,9 +1334,9 @@ void     public_pvr_mSTATs();
 
   Segregating space in this way has the benefits that:
 
-   1. Mmapped space can ALWAYS be individually released back 
-      to the system, which helps keep the system level memory 
-      demands of a long-lived program low. 
+   1. Mmapped space can ALWAYS be individually released back
+      to the system, which helps keep the system level memory
+      demands of a long-lived program low.
    2. Mapped memory can never become `locked' between
       other chunks, as can happen with normally allocated chunks, which
       means that even trimming via malloc_trim would not release them.

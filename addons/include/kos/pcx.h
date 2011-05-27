@@ -1,5 +1,5 @@
 /* KallistiOS ##version##
-   
+
    kos/pcx.h
    (c)2000-2001 Dan Potter
 
@@ -16,7 +16,7 @@ __BEGIN_DECLS
 /* These first two versions are mainly for use with the GBA, and they are
    defined in the "pcx_small" file. They can be used on any architecture of
    course. */
-   
+
 /* Flat 15-bit BGR load of the PCX data into whatever buffer -- assumes the
    buffer is the same width as the PCX */
 int pcx_load_flat(const char *fn, int *w_out, int *h_out, void *pic_out);

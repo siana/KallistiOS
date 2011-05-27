@@ -3,13 +3,13 @@
    kernel/arch/dreamcast/fs/fs_dcload.c
    Copyright (C)2002 Andrew Kieschnick
    Copyright (C)2004 Dan Potter
-   
+
 */
 
 /*
 
 This is a rewrite of Dan Potter's fs_serconsole to use the dcload / dc-tool
-fileserver and console. 
+fileserver and console.
 
 printf goes to the dc-tool console
 /pc corresponds to / on the system running dc-tool
@@ -95,12 +95,12 @@ void *dcload_open(vfs_handler_t * vfs, const char *fn, int mode) {
     int hnd = 0;
     uint32 h;
     int dcload_mode = 0;
-    
+
     if (lwip_dclsc && irq_inside_int())
         return (void *)0;
 
     spinlock_lock(&mutex);
-    
+
     if (mode & O_DIR) {
         if (fn[0] == '\0') {
             fn = "/";
@@ -132,7 +132,7 @@ void *dcload_open(vfs_handler_t * vfs, const char *fn, int mode) {
 	hnd = dclsc(DCLOAD_OPEN, fn, dcload_mode, 0644);
 	hnd++; /* KOS uses 0 for error, not -1 */
     }
-    
+
     h = hnd;
 
     spinlock_unlock(&mutex);
@@ -146,7 +146,7 @@ void dcload_close(void * h) {
 	return;
 
     spinlock_lock(&mutex);
-    
+
     if (hnd) {
 	if (hnd > 100) /* hack */
 	    dclsc(DCLOAD_CLOSEDIR, hnd);
@@ -161,17 +161,17 @@ void dcload_close(void * h) {
 ssize_t dcload_read(void * h, void *buf, size_t cnt) {
     ssize_t ret = -1;
     uint32 hnd = (uint32)h;
-    
+
     if (lwip_dclsc && irq_inside_int())
 	return 0;
 
     spinlock_lock(&mutex);
-    
+
     if (hnd) {
 	hnd--; /* KOS uses 0 for error, not -1 */
 	ret = dclsc(DCLOAD_READ, hnd, buf, cnt);
     }
-    
+
     spinlock_unlock(&mutex);
     return ret;
 }
@@ -179,12 +179,12 @@ ssize_t dcload_read(void * h, void *buf, size_t cnt) {
 ssize_t dcload_write(void * h, const void *buf, size_t cnt) {
     ssize_t ret = -1;
     uint32 hnd = (uint32)h;
-    	
+
     if (lwip_dclsc && irq_inside_int())
 	return 0;
 
     spinlock_lock(&mutex);
-    
+
     if (hnd) {
 	hnd--; /* KOS uses 0 for error, not -1 */
 	ret = dclsc(DCLOAD_WRITE, hnd, buf, cnt);
@@ -215,7 +215,7 @@ off_t dcload_seek(void * h, off_t offset, int whence) {
 off_t dcload_tell(void * h) {
     off_t ret = -1;
     uint32 hnd = (uint32)h;
-    
+
     if (lwip_dclsc && irq_inside_int())
 	return 0;
 
@@ -234,19 +234,19 @@ size_t dcload_total(void * h) {
     size_t ret = -1;
     size_t cur;
     uint32 hnd = (uint32)h;
-	
+
     if (lwip_dclsc && irq_inside_int())
 	return 0;
 
     spinlock_lock(&mutex);
-	
+
     if (hnd) {
 	hnd--; /* KOS uses 0 for error, not -1 */
 	cur = dclsc(DCLOAD_LSEEK, hnd, 0, SEEK_CUR);
 	ret = dclsc(DCLOAD_LSEEK, hnd, 0, SEEK_END);
 	dclsc(DCLOAD_LSEEK, hnd, cur, SEEK_SET);
     }
-	
+
     spinlock_unlock(&mutex);
     return ret;
 }
@@ -268,7 +268,7 @@ dirent_t *dcload_readdir(void * h) {
     spinlock_lock(&mutex);
 
     dcld = (dcload_dirent_t *)dclsc(DCLOAD_READDIR, hnd);
-    
+
     if (dcld) {
 	rv = &dirent;
 	strcpy(rv->name, dcld->d_name);
@@ -287,12 +287,12 @@ dirent_t *dcload_readdir(void * h) {
 	    } else
 		rv->size = filestat.st_size;
 	    rv->time = filestat.st_mtime;
-	    
+
 	}
-	
+
 	free(fn);
     }
-    
+
     spinlock_unlock(&mutex);
     return rv;
 }
@@ -346,7 +346,7 @@ static vfs_handler_t vh = {
 
 	0, NULL,	/* no cache, privdata */
 
-	dcload_open, 
+	dcload_open,
 	dcload_close,
 	dcload_read,
 	dcload_write,

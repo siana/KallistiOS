@@ -18,7 +18,7 @@
    Scene rendering
 
    Please see ../../include/dc/pvr.h for more info on this API!
- 
+
 */
 
 void * pvr_set_vertbuf(pvr_list_t list, void * buffer, int len) {
@@ -131,7 +131,7 @@ void pvr_scene_begin_txr(pvr_ptr_t txr, uint32 *rx, uint32 *ry) {
 }
 
 /* Begin collecting data for the given list type. Lists do not have to be
-   submitted in any particular order, but all types of a list must be 
+   submitted in any particular order, but all types of a list must be
    submitted at once. If the given list has already been closed, then an
    error (-1) is returned. */
 int pvr_list_begin(pvr_list_t list) {
@@ -171,7 +171,7 @@ int pvr_list_finish() {
 	if (!pvr_state.dma_mode) {
 		/* In case we haven't sent anything in this list, send a dummy */
 		pvr_blank_polyhdr(pvr_state.list_reg_open);
-	
+
 		/* Set the flags */
 		pvr_state.lists_closed |= (1 << pvr_state.list_reg_open);
 
@@ -199,13 +199,13 @@ int pvr_prim(void * data, int size) {
 	} else {
 		return pvr_list_prim(pvr_state.list_reg_open, data, size);
 	}
-	
+
 	return 0;
 }
 
 int pvr_list_prim(pvr_list_t list, void * data, int size) {
 	volatile pvr_dma_buffers_t * b;
-	
+
 	b = pvr_state.dma_buffers + pvr_state.ram_target;
 	assert( b->base[list] );
 

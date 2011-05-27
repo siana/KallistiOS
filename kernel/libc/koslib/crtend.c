@@ -4,7 +4,7 @@
    Copyright (C)2002 Dan Potter
 */
 
-/* Handles ctors and dtors (for C++ programs). This is modeled on the 
+/* Handles ctors and dtors (for C++ programs). This is modeled on the
    FreeBSD crtend.c code. Note that the default linker scripts for
    GCC will automatically put our ctors at the end of the list. */
 

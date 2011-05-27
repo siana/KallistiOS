@@ -307,7 +307,7 @@ static void * pty_open_file(const char * fn, int mode) {
 		return NULL;
 	}
 	id = strtol(fn+2, NULL, 16);
-		
+
 	/* Do we have that pty? */
 	mutex_lock(list_mutex);
 	LIST_FOREACH(ph, &ptys, list) {
@@ -452,7 +452,7 @@ static ssize_t pty_read(void * h, void * buf, size_t bytes) {
 
 	/* Lock the ptyhalf */
 	mutex_lock(ph->mutex);
-	
+
 	/* Is there anything to read? */
 	while (!ph->cnt && ph->other->refcnt > 0) {
 		/* If we're in non-block, give up now */
@@ -573,7 +573,7 @@ static size_t pty_total(void * h) {
 static dirent_t * pty_readdir(void * h) {
 	pipefd_t * fdobj = (pipefd_t *)h;
 	dirlist_t * dl;
-	
+
 	assert( h );
 	if (fdobj->type != PF_DIR) {
 		errno = EINVAL;
@@ -591,10 +591,10 @@ static dirent_t * pty_readdir(void * h) {
 	dl->dirent.time = 0;
 	dl->dirent.attr = STAT_ATTR_RW;
 	dl->ptr++;
-	
+
 	return &dl->dirent;
 }
-        
+
 static vfs_handler_t vh = {
 	/* Name Handler */
 	{
@@ -607,7 +607,7 @@ static vfs_handler_t vh = {
 	},
 
 	0, NULL,		/* no cacheing, privdata */
-	
+
 	pty_open,
 	pty_close,
 	pty_read,
@@ -673,7 +673,7 @@ int fs_pty_shutdown() {
 		cond_destroy(c->ready_write);
 		mutex_destroy(c->mutex);
 		free(c);
-		
+
 		c = n;
 	}
 

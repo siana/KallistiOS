@@ -25,7 +25,7 @@ Thanks to NeHe's tutorials for the crate image.
    the quad in the order 0,0; 1,0; 1,1; 0,1. This only works for quads. */
 void cube(float r) {
 	glRotatef(r, 1.0f, 0.0f, 1.0f);
-	
+
 	glBegin(GL_QUADS);
 
 		/* Front face */
@@ -39,7 +39,7 @@ void cube(float r) {
 		glVertex3f(1.0f, -1.0f, -1.0f);
 		glVertex3f(1.0f, 1.0f, -1.0f);
 		glVertex3f(-1.0f, 1.0f, -1.0f);
-			
+
 		/* Left face */
 		glVertex3f(-1.0f, 1.0f, 1.0f);
 		glVertex3f(-1.0f, -1.0f, 1.0f);
@@ -131,7 +131,7 @@ int main(int argc, char **argv) {
 
         /* Enable Transparancy */
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	
+
 	/* Load a texture and make to look nice */
 	loadtxr("/rd/crate.pcx", &texture);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_FILTER, GL_FILTER_BILINEAR);
@@ -189,7 +189,7 @@ int main(int argc, char **argv) {
 		glTranslatef(0.0f, 0.0f, z);
 		glRotatef(r, 0.0f, 1.0f, 0.5f);
 		glPushMatrix();
-		
+
 		glTranslatef(-5.0f, 0.0f, 0.0f);
 		cube(r);
 

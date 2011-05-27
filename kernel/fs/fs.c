@@ -17,7 +17,7 @@ something like this:
   the handler. (This function is now handled by the name manager.)
 - The path handler receives the part of the path that is left after the
   part in the handler table. The path handler should return an internal
-  handle for accessing the file. An internal handle of zero is always 
+  handle for accessing the file. An internal handle of zero is always
   assumed to mean failure.
 - The kernel open function takes this value and wraps it in a structure that
   describes which service handled the request, and its internal handle.
@@ -112,7 +112,7 @@ static fs_hnd_t * fs_hnd_open(const char *fn, int mode) {
 
 	/* Are they trying to open the root? */
 	if (!strcmp(rfn, "/")) {
-		if ((mode & O_DIR)) 
+		if ((mode & O_DIR))
 			return fs_root_opendir();
 		else {
 			errno = EISDIR;
@@ -415,7 +415,7 @@ static vfs_handler_t * fs_verify_handler(const char * fn) {
 int fs_rename(const char *fn1, const char *fn2) {
 	vfs_handler_t	*fh1, *fh2;
 	char		rfn1[PATH_MAX], rfn2[PATH_MAX];
-	
+
 	if (!realpath(fn1, rfn1) || !realpath(fn2, rfn2))
 		return -1;
 
@@ -425,13 +425,13 @@ int fs_rename(const char *fn1, const char *fn2) {
 		errno = ENOENT;
 		return -1;
 	}
-	
+
 	fh2 = fs_verify_handler(rfn2);
 	if (fh2 == NULL) {
 		errno = ENOENT;
 		return -1;
 	}
-	
+
 	if (fh1 != fh2) {
 		errno = EXDEV;
 		return -1;

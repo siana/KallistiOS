@@ -45,7 +45,7 @@ typedef semaphore_t mutex_t;
 
     \return                 The created mutex on success. NULL is returned on
                             failure and errno is set as appropriate.
- 
+
     \par    Error Conditions:
     \em     ENOMEM - out of memory
 */

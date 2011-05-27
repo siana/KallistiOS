@@ -1,5 +1,5 @@
 /* KallistiOS ##version##
-   
+
    kos/img.h
    (c)2002 Dan Potter
 

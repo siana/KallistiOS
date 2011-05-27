@@ -16,7 +16,7 @@
    Texture handling
 
    Helper functions for handling texture tasks of various kinds.
- 
+
 */
 
 /* Load raw texture data from an SH-4 buffer into PVR RAM */
@@ -32,8 +32,8 @@ void pvr_txr_load(void * src, pvr_ptr_t dst, uint32 count) {
 #define TWIDOUT(x, y) ( TWIDTAB((y)) | (TWIDTAB((x)) << 1) )
 
 #define MIN(a, b) ( (a)<(b)? (a):(b) )
-        
-/* 
+
+/*
    Load texture data from an SH-4 buffer into PVR RAM, twiddling it
    in the process.
 
@@ -81,9 +81,9 @@ void pvr_txr_load_ex(void * src, pvr_ptr_t dst, uint32 w, uint32 h, uint32 flags
 			else
 				yout = ((h-1) - y);
 			for (x=0; x<w; x += 2) {
-				vtex[TWIDOUT((x&mask)/2, (yout&mask)/2) + 
-					(x/min + yout/min)*min*min/4] = 
-					(pixels[(x+y*w) >>1]&15) | ((pixels[(x+(y+1)*w) >>1]&15)<<4) | 
+				vtex[TWIDOUT((x&mask)/2, (yout&mask)/2) +
+					(x/min + yout/min)*min*min/4] =
+					(pixels[(x+y*w) >>1]&15) | ((pixels[(x+(y+1)*w) >>1]&15)<<4) |
 					((pixels[(x+y*w) >>1]>>4)<<8) | ((pixels[(x+(y+1)*w) >>1]>>4)<<12);
 			}
 		}
@@ -100,8 +100,8 @@ void pvr_txr_load_ex(void * src, pvr_ptr_t dst, uint32 w, uint32 h, uint32 flags
 			else
 				yout = ((h-1) - y);
 			for (x=0; x<w; x++) {
-				vtex[TWIDOUT((yout&mask)/2, x&mask) + 
-					(x/min + yout/min)*min*min/2] = 
+				vtex[TWIDOUT((yout&mask)/2, x&mask) +
+					(x/min + yout/min)*min*min/2] =
 					pixels[y*w+x] | (pixels[(y+1)*w+x]<<8);
 			}
 		}
@@ -118,7 +118,7 @@ void pvr_txr_load_ex(void * src, pvr_ptr_t dst, uint32 w, uint32 h, uint32 flags
 			else
 				yout = ((h-1) - y);
 			for (x=0; x<w; x++) {
-				vtex[TWIDOUT(x&mask,yout&mask) + 
+				vtex[TWIDOUT(x&mask,yout&mask) +
 					(x/min + yout/min)*min*min] = pixels[y*w+x];
 			}
 		}
@@ -130,7 +130,7 @@ void pvr_txr_load_ex(void * src, pvr_ptr_t dst, uint32 w, uint32 h, uint32 flags
 /* Load a KOS Platform Independent Image (subject to restraint checking) */
 void pvr_txr_load_kimg(kos_img_t *img, pvr_ptr_t dst, uint32 flags) {
 	int fmt, w, h;
-	
+
 	/* First check and make sure it's a format we can use */
 	fmt = KOS_IMG_FMT_I(img->fmt) & KOS_IMG_FMT_MASK;
 	assert_msg( fmt == KOS_IMG_FMT_RGB565 || fmt == KOS_IMG_FMT_ARGB4444

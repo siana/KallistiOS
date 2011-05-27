@@ -417,7 +417,7 @@ void maple_bus_disable();
 void maple_dma_start();
 
 /** \brief  Stop a Maple DMA.
- 
+
     This stuff will all be handled internally, so there's probably no reason to
     be doing this yourself.
 */

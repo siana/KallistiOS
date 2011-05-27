@@ -21,7 +21,7 @@ should probably hook up to something like NapLink's USB client.
 
 */
 
-/* This redirect is here to allow you to hook the debug output in your 
+/* This redirect is here to allow you to hook the debug output in your
    program if you want to do that. */
 dbgio_printk_func dbgio_printk = dbgio_null_write;
 
@@ -60,7 +60,7 @@ void dbgio_init() {
 	}
 
 	ps2lip_syscall = (int (*)(int, ...))ps2lip_block[2];
-	
+
 	dbgio_set_printk(dbgio_write_str);
 }
 

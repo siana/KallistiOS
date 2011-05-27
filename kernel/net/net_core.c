@@ -26,7 +26,7 @@ part of the networking system of KOS. They serve the following purposes:
   here, if their hardware is present
 - Link-level messages will be handled here, such as ARP
 - The whole networking system can be enabled or disabled from here
- 
+
 */
 
 /**************************************************************************/

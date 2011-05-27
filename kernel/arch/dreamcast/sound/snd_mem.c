@@ -36,7 +36,7 @@ in the hopes that a later free will coalesce with it.
 
 This system is a bit more simplistic than the standard "buckets" system, but
 I figure we don't need that sort of complexity in this code.
- 
+
 */
 
 #define SNDMEMDEBUG 0
@@ -63,7 +63,7 @@ static TAILQ_HEAD(snd_block_q, snd_block_str) pool = {0};
 /* Reinitialize the pool with the given RAM base offset */
 int snd_mem_init(uint32 reserve) {
 	snd_block_t *blk;
-	
+
 	if (initted)
 		snd_mem_shutdown();
 
@@ -92,7 +92,7 @@ int snd_mem_init(uint32 reserve) {
 /* Shut down the SPU allocator */
 void snd_mem_shutdown() {
 	snd_block_t	*e, *n;
-	
+
 	if (!initted) return;
 
 	e = TAILQ_FIRST(&pool);

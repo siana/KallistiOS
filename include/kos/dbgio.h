@@ -2,7 +2,7 @@
 
    kos/include/dbgio.h
    Copyright (C)2000,2004 Dan Potter
-  
+
 */
 
 /** \file   kos/dbgio.h
@@ -112,7 +112,7 @@ extern dbgio_handler_t dbgio_null;
 /** \endcond */
 
 /** \brief  Select a new dbgio interface by name.
- 
+
     This function manually selects a new dbgio interface by name. This function
     will allow you to select a device, even if it is not detected.
 

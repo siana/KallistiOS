@@ -68,21 +68,21 @@ static int kbd_enqueue(kbd_state_t *state, uint8 keycode) {
 	if (!kbd_queue_active)
 		return 0;
 
-	/* Figure out its key queue value */	
+	/* Figure out its key queue value */
 	if (state->shift_keys & (KBD_MOD_LSHIFT|KBD_MOD_RSHIFT))
 		ascii = keymap_shift[keycode];
 	else
 		ascii = keymap_noshift[keycode];
-	
+
 	if (ascii == 0)
 		ascii = ((uint16)keycode) << 8;
-		
+
 	/* Ok... now do the enqueue */
 	kbd_queue[kbd_queue_head] = ascii;
 	kbd_queue_head = (kbd_queue_head + 1) & (KBD_QUEUE_SIZE-1);
 
 	return 0;
-}	
+}
 
 /* Take a key off the key queue, or return -1 if there is none waiting */
 int kbd_get_key() {
@@ -91,14 +91,14 @@ int kbd_get_key() {
 	/* If queueing isn't active, there won't be anything to get */
 	if (!kbd_queue_active)
 		return -1;
-	
+
 	/* Check available */
 	if (kbd_queue_head == kbd_queue_tail)
 		return -1;
-	
+
 	rv = kbd_queue[kbd_queue_tail];
 	kbd_queue_tail = (kbd_queue_tail + 1) & (KBD_QUEUE_SIZE - 1);
-	
+
 	return rv;
 }
 
@@ -116,7 +116,7 @@ static void kbd_check_poll(maple_frame_t *frm) {
 
 	/* Check the shift state */
 	state->shift_keys = cond->modifiers;
-	
+
 	/* Process all pressed keys */
 	for (i=0; i<6; i++) {
 		if (cond->keys[i] != 0) {
@@ -126,7 +126,7 @@ static void kbd_check_poll(maple_frame_t *frm) {
 				kbd_enqueue(state, cond->keys[i]);
 		}
 	}
-	
+
 	/* Now normalize the key matrix */
 	for (i=0; i<256; i++) {
 		if (state->matrix[i] == 1)

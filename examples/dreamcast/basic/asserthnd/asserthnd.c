@@ -28,7 +28,7 @@ Assertion "a != 5" failed at asserthnd.c:40 in `func2': This is a test message!
 You can punch those numbers into addr2line to get a nice stack traceback,
 assuming you compiled your program with -g:
 
->] dc-addr2line -e asserthnd.elf 8c01016a 8c0101e0 8c010478 
+>] dc-addr2line -e asserthnd.elf 8c01016a 8c0101e0 8c010478
 /usr/local/home/bard/prj/kos/examples/dreamcast/basic/asserthnd/asserthnd.c:46
 /usr/local/home/bard/prj/kos/examples/dreamcast/basic/asserthnd/asserthnd.c:69
 /usr/local/home/bard/prj/kos/kernel/arch/dreamcast/kernel/main.c:129

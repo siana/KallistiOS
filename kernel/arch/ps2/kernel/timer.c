@@ -145,20 +145,20 @@ void timer_primary_disable() {
 /* Init */
 int timer_init() {
 	int i;
-	
+
 	/* Disable all timers */
 	for (i=0; i<4; i++) {
 		TIMER_MODE(i) = 0;
 		timer_disable_ints(i);
 	}
-	
+
 	return 0;
 }
 
 /* Shutdown */
 void timer_shutdown() {
 	int i;
-	
+
 	/* Disable all timers */
 	for (i=0; i<4; i++) {
 		TIMER_MODE(i) = 0;

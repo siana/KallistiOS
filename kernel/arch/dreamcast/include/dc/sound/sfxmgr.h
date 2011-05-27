@@ -62,7 +62,7 @@ sfxhnd_t snd_sfx_load(const char *fn);
 void snd_sfx_unload(sfxhnd_t idx);
 
 /** \brief  Unload all loaded sound effects.
- 
+
     This function unloads all previously loaded sound effect, and frees the
     memory associated with them.
 */

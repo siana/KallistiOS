@@ -109,7 +109,7 @@ sfxhnd_t snd_sfx_load(const char *fn) {
 		fs_close(fd);
 		return 0;
 	}
-	
+
 	/* Read WAV header info */
 	fs_seek(fd, 0x14, SEEK_SET);
 	fs_read(fd, &fmt, 2);
@@ -117,7 +117,7 @@ sfxhnd_t snd_sfx_load(const char *fn) {
 	fs_read(fd, &hz, 4);
 	fs_seek(fd, 0x22, SEEK_SET);
 	fs_read(fd, &bitsize, 2);
-	
+
 	/* Read WAV data */
 	fs_seek(fd, 0x28, SEEK_SET);
 	fs_read(fd, &len, 4);
@@ -168,7 +168,7 @@ sfxhnd_t snd_sfx_load(const char *fn) {
 		for (i=0; i<len/2; i+=2) {
 			tmp[i/2] = tmp[i];
 		}
-		
+
 		t->len = len/4;	/* Two stereo, 16-bit samples */
 		t->rate = hz;
 		t->used = 1;
@@ -215,7 +215,7 @@ sfxhnd_t snd_sfx_load(const char *fn) {
 	if (t) {
 		LIST_INSERT_HEAD(&snd_effects, t, list);
 	}
-	
+
 	return (sfxhnd_t)t;
 }
 
@@ -316,7 +316,7 @@ void snd_sfx_stop(int chn) {
 
 void snd_sfx_stop_all() {
 	int i;
-	
+
 	for (i=0; i<64; i++) {
 		if (sfx_inuse & (1 << i))
 			continue;

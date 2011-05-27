@@ -10,17 +10,17 @@
 #include <pcx/pcx.h>
 
 /* Really simple KGL example to demonstrate the glTexParameter
-   texture wrapping modes. 
+   texture wrapping modes.
 
    A Picture is worth a thousand words...
-   
+
    | top row
    | |---------  |---------  |--------   |--------  |
    | |S Repeat|  |S Clamp |  |S Repeat|  |S Clamp | |
    | |T Repeat|  |T Repeat|  |T Clamp |  |T Clamp | |
    | |        |  |        |  |        |  |        | |
    | ---------|  ---------|  ---------|  ---------| |
-   |        
+   |
    | bottom row
    | ...Same only transparent
    |
@@ -28,14 +28,14 @@
    To see the effects of wrapping you must use S T values greater than
    [0,1]. In this exmaple we are using 4x4 checkered pattern that is
    repeated 4 times. That is the S T (U, V) texture coordinates used
-   are [0,4]. 
+   are [0,4].
 
    e.g.:
 	glTexCoord2f(0.0f, 0.0f); glVertex3f(0,0,0);
 	glTexCoord2f(4.0f, 0.0f); glVertex3f(1,0,0);
 	glTexCoord2f(4.0f, 4.0f); glVertex3f(1,1,0);
 	glTexCoord2f(0.0f, 4.0f); glVertex3f(0,1,0);
-   
+
    Press start to quit.
 */
 
@@ -140,7 +140,7 @@ int main(int argc, char **argv) {
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
 		quad(496,275);
-		
+
 		/* bottom row, alpha texture */
 		glKosFinishList();
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);

@@ -74,11 +74,11 @@ static void sphere(sphere_t *s) { /* {{{ */
 			v->y = s->radius * fsin( pitch2 );
 			v->z = s->radius * fsin( yaw ) * fcos( pitch2 );
 
-			
+
 			r = 0.75f;
 			g = fcos( yaw*2 ) / 3.0f + 0.35f;
 			b = 0.0f;
-	
+
 			v->argb = plx_pack_color(0.5f, r, g, b);
 			v->flags = PVR_CMD_VERTEX;
 			v++;
@@ -94,7 +94,7 @@ static void sphere(sphere_t *s) { /* {{{ */
 			g = fsin( yaw*2 ) / 3.0f + 0.35f;
 			b = 0.0f;
 			// b = fsin( phase + pitch ) / 2.0f + 0.5f;
-			
+
 			v->argb = plx_pack_color(0.5f, r, g, b);
 			if (j == s->slices/2)
 				v->flags = PVR_CMD_VERTEX_EOL;
@@ -138,7 +138,7 @@ static void draw_sphere(sphere_t *s, int list) {
 			vd, 32 * s->stacks * (s->slices + 2));
 		irq_restore(o);
 	} */
-		
+
 	mat_transform_sq(v, sqd, s->stacks * (s->slices + 2));
 
 	pvr_vertbuf_written(list, 32 * s->stacks * (s->slices + 2));
@@ -234,7 +234,7 @@ void do_sphere_test() {
 pvr_init_params_t params = {
 	/* Enable opaque and translucent polygons with binsize 32 */
 	{ PVR_BINSIZE_32, PVR_BINSIZE_0, PVR_BINSIZE_32, PVR_BINSIZE_0, PVR_BINSIZE_0 },
-	
+
 	/* Vertex buffer size */
 	2560*1024,
 

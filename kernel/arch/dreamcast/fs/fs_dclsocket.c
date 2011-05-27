@@ -276,7 +276,7 @@ static void *dcls_open(struct vfs_handler *vfs, const char *fn, int mode) {
     }
 
     mutex_unlock(mutex);
-        
+
     return (void *)hnd;
 }
 
@@ -536,7 +536,7 @@ static int dcls_unlink(vfs_handler_t *vfs, const char *fn) {
     int len = strlen(fn) + 5, locked;
 
     locked = mutex_trylock(mutex);
-    
+
     if(locked == -1 && irq_inside_int()) {
         errno = EAGAIN;
         return -1;
@@ -666,7 +666,7 @@ static vfs_handler_t vh = {
 
     0, NULL,	/* no cache, privdata */
 
-    dcls_open, 
+    dcls_open,
     dcls_close,
     dcls_read,
     dcls_write,

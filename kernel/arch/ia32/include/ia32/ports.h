@@ -2,7 +2,7 @@
 
    ports.h
    Copyright (C)2003 Dan Potter
-   
+
 */
 
 #ifndef __IA32_PORTS_H

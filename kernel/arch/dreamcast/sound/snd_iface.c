@@ -59,7 +59,7 @@ int snd_init() {
 	}
 
 	initted = 1;
-	
+
 	return 0;
 }
 
@@ -165,7 +165,7 @@ int snd_aica_to_sh4(void *packetout) {
 	stop = start + size*4;
 	if (stop > top)
 		stop -= top - (SPU_RAM_BASE + AICA_MEM_RESP_QUEUE);
-	
+
 	while (start != stop) {
 		/* Fifo wait if necessary */
 		if (!(cnt % 8))

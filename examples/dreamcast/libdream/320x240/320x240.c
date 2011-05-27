@@ -10,7 +10,7 @@ int main(int argc, char **argv) {
 
 	/* Set the video mode */
 	vid_set_mode(DM_320x240, PM_RGB565);
-	
+
 	for (y=0; y<240; y++)
 		for (x=0; x<320; x++) {
 			int c = (x ^ y) & 255;

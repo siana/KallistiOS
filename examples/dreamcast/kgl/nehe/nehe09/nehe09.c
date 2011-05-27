@@ -12,7 +12,7 @@
 #include <GL/glu.h>
 #include <pcx/pcx.h>
 
-/* Simple KGL example to demonstrate texturing. 
+/* Simple KGL example to demonstrate texturing.
 
    Essentially the same thing as NeHe's lesson06 code.
    To learn more, go to http://nehe.gamedev.net/.
@@ -68,7 +68,7 @@ void draw_gl(void) {
 		glTranslatef(star[loop].dist,0.0f,0.0f);
 		glRotatef(-star[loop].angle,0.0f,1.0f,0.0f);
 		glRotatef(-tilt,1.0f,0.0f,0.0f);
-		
+
 		if (twinkle)
 		{
 			glColor4ub(star[(NUM_STARS-loop)-1].r,star[(NUM_STARS-loop)-1].g,star[(NUM_STARS-loop)-1].b,255);

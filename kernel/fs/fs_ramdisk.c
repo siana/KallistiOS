@@ -7,7 +7,7 @@
 
 /*
 
-This module implements a very simple file-based ramdisk file system. What this means 
+This module implements a very simple file-based ramdisk file system. What this means
 is that instead of setting up a block of memory as a virtual block device like
 many operating systems would do, this file system keeps the directory structure
 and file data in allocated chunks of RAM. This also means that the ramdisk can
@@ -54,11 +54,11 @@ typedef struct rd_file {
 	    data plus 4k (to avoid realloc thrashing). All files start
 	    out with a 1K block of space.
 	  - In directories, this is just a pointer to an rd_dir struct,
-	    which is defined below. datasize has no meaning for a 
+	    which is defined below. datasize has no meaning for a
 	    directory. */
 	void	* data;		/* Data block pointer */
 	uint32	datasize;	/* Size of data block pointer */
-	
+
 	LIST_ENTRY(rd_file)	dirlist;	/* Directory list entry */
 } rd_file_t;
 
@@ -152,7 +152,7 @@ static int ramdisk_get_parent(rd_dir_t * parent, const char * fn, rd_dir_t ** do
 	const char	* p;
 	char		* pname;
 	rd_file_t	* f;
-	
+
 	p = strrchr(fn, '/');
 	if (p == NULL) {
 		*dout = parent;
@@ -184,7 +184,7 @@ static rd_file_t * ramdisk_create_file(rd_dir_t * parent, const char * fn, int d
 	/* First, find the parent dir */
 	if (ramdisk_get_parent(parent, fn, &pdir, &p) < 0)
 		return NULL;
-	
+
 	/* Now add a file to the parent */
 	f = (rd_file_t *)malloc(sizeof(rd_file_t));
 	f->name = strdup(p);
@@ -281,7 +281,7 @@ static void * ramdisk_open(vfs_handler_t * vfs, const char *fn, int mode) {
 	default:
 		assert_msg( 0, "Unknown file mode" );
 	}
-	
+
 	/* If we're opening with O_TRUNC, kill the existing contents */
 	if (mm != O_RDONLY && (mode & O_TRUNC)) {
 		free(f->data);
@@ -303,7 +303,7 @@ static void * ramdisk_open(vfs_handler_t * vfs, const char *fn, int mode) {
 	/* Should do it... */
 	mutex_unlock(rd_mutex);
 	return (void *)fd;
-	
+
 error_out:
 	if (fd != -1)
 		fh[fd].file = NULL;
@@ -317,7 +317,7 @@ static void ramdisk_close(void * h) {
 	file_t		fd = (file_t)h;
 
 	mutex_lock(rd_mutex);
-	
+
 	/* Check that the fd is valid */
 	if (fd < MAX_RAM_FILES && fh[fd].file != NULL) {
 		f = fh[fd].file;
@@ -340,9 +340,9 @@ static void ramdisk_close(void * h) {
 static ssize_t ramdisk_read(void * h, void *buf, size_t bytes) {
 	ssize_t rv = -1;
 	file_t	fd = (file_t)h;
-	
+
 	mutex_lock(rd_mutex);
-	
+
 	/* Check that the fd is valid */
 	if (fd < MAX_RAM_FILES && fh[fd].file != NULL && !fh[fd].dir) {
 		/* Is there enough left? */
@@ -364,9 +364,9 @@ static ssize_t ramdisk_read(void * h, void *buf, size_t bytes) {
 static ssize_t ramdisk_write(void * h, const void *buf, size_t bytes) {
 	ssize_t rv = -1;
 	file_t	fd = (file_t)h;
-	
+
 	mutex_lock(rd_mutex);
-	
+
 	/* Check that the fd is valid */
 	if (fd < MAX_RAM_FILES && fh[fd].file != NULL && !fh[fd].dir && fh[fd].file->openfor == OPENFOR_WRITE) {
 		/* Is there enough left? */
@@ -402,7 +402,7 @@ static off_t ramdisk_seek(void * h, off_t offset, int whence) {
 	file_t	fd = (file_t)h;
 
 	mutex_lock(rd_mutex);
-	
+
 	/* Check that the fd is valid */
 	if (fd < MAX_RAM_FILES && fh[fd].file != NULL && !fh[fd].dir) {
 		/* Update current position according to arguments */
@@ -419,7 +419,7 @@ static off_t ramdisk_seek(void * h, off_t offset, int whence) {
 		default:
 			return -1;
 		}
-	
+
 		/* Check bounds */
 		if (fh[fd].ptr < 0) fh[fd].ptr = 0;
 		if (fh[fd].ptr > fh[fd].file->size) fh[fd].ptr = fh[fd].file->size;
@@ -471,7 +471,7 @@ static dirent_t *ramdisk_readdir(void * h) {
 		/* Find the current file and advance to the next */
 		f = (rd_file_t *)fh[fd].ptr;
 		fh[fd].ptr = (uint32)LIST_NEXT(f, dirlist);
-		
+
 		/* Copy out the requested data */
 		strcpy(fh[fd].dirent.name, f->name);
 		fh[fd].dirent.time = 0;
@@ -514,7 +514,7 @@ static int ramdisk_unlink(vfs_handler_t * vfs, const char *fn) {
 			rv = 0;
 		}
 	}
-	
+
 	mutex_unlock(rd_mutex);
 	return rv;
 }
@@ -522,9 +522,9 @@ static int ramdisk_unlink(vfs_handler_t * vfs, const char *fn) {
 static void * ramdisk_mmap(void * h) {
 	void	* rv = NULL;
 	file_t	fd = (file_t)h;
-	
+
 	mutex_lock(rd_mutex);
-	
+
 	if (fd < MAX_RAM_FILES && fh[fd].file != NULL && !fh[fd].dir) {
 		rv = fh[fd].file->data;
 	}
@@ -572,7 +572,7 @@ static vfs_handler_t vh = {
 int fs_ramdisk_attach(const char * fn, void * obj, size_t size) {
 	void 		*fd;
 	rd_file_t	*f;
-	
+
 	/* First of all, open a file for writing. This'll save us a bunch
 	   of duplicated code. */
 	fd = ramdisk_open(&vh, fn, O_WRONLY | O_TRUNC);
@@ -596,7 +596,7 @@ int fs_ramdisk_attach(const char * fn, void * obj, size_t size) {
 int fs_ramdisk_detach(const char * fn, void ** obj, size_t * size) {
 	void		*fd;
 	rd_file_t	*f;
-	
+
 	/* First of all, open a file for reading. This'll save us a bunch
 	   of duplicated code. */
 	fd = ramdisk_open(&vh, fn, O_RDONLY);
@@ -641,7 +641,7 @@ int fs_ramdisk_init() {
 
 	/* Reset fd's */
 	memset(fh, 0, sizeof(fh));
-	
+
 	/* Init thread mutexes */
 	rd_mutex = mutex_create();
 
@@ -665,7 +665,7 @@ int fs_ramdisk_shutdown() {
 
 	free(rootdir);
 	free(root);
-	   
+
 	mutex_destroy(rd_mutex);
 	return nmmgr_handler_remove(&vh.nmmgr);
 }

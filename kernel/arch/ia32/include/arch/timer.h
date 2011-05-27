@@ -71,7 +71,7 @@ typedef void (*timer_primary_callback_t)(irq_context_t *);
 timer_primary_callback_t timer_primary_set_callback(timer_primary_callback_t callback);
 
 /* Request a wakeup in approximately N milliseconds. You only get one
-   simultaneous wakeup. Any subsequent calls here will replace any 
+   simultaneous wakeup. Any subsequent calls here will replace any
    pending wakeup. */
 void timer_primary_wakeup(uint32 millis);
 

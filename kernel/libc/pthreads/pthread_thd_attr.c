@@ -107,7 +107,7 @@ void pthread_cleanup_push(void (*routine)( void * ), void *arg) {
 void pthread_cleanup_pop(int execute) {
 }
 
-/* Accessing a Thread CPU-time Clock, P1003.4b/D8, p. 58 */ 
+/* Accessing a Thread CPU-time Clock, P1003.4b/D8, p. 58 */
 
 // This isn't even man'd in Linux...
 /* int pthread_getcpuclockid(pthread_t thread_id, clockid_t *clock_id) {

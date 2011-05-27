@@ -24,7 +24,7 @@ __BEGIN_DECLS
    Pass it an array of points and it will calculate a set of B-spline
    co-efficients for generating a curve. There must be at least one point
    before the "current" one, and at least two after the "current" one (a
-   total of four points required). These values will be used in the 
+   total of four points required). These values will be used in the
    function below.
 */
 void bspline_coeff(const point_t *pnt);

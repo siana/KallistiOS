@@ -23,7 +23,7 @@
 void pvr_poly_compile(pvr_poly_hdr_t *dst, pvr_poly_cxt_t *src) {
 	int	u, v;
 	uint32	txr_base;
-	
+
 	/* Basically we just take each parameter, clip it, shift it
 	   into place, and OR it into the final result. */
 
@@ -155,7 +155,7 @@ void pvr_poly_cxt_txr(pvr_poly_cxt_t *dst, pvr_list_t list,
 		int textureformat, int tw, int th, pvr_ptr_t textureaddr,
 		int filtering) {
 	int alpha;
-	
+
 	/* Start off blank */
 	memset(dst, 0, sizeof(pvr_poly_cxt_t));
 
@@ -339,7 +339,7 @@ void pvr_sprite_compile(pvr_sprite_hdr_t *dst, pvr_sprite_cxt_t *src) {
 		/* Polygon mode 3 */
 		dst->mode3  = (src->txr.mipmap << PVR_TA_PM3_MIPMAP_SHIFT) & PVR_TA_PM3_MIPMAP_MASK;
 		dst->mode3 |= (src->txr.format << PVR_TA_PM3_TXRFMT_SHIFT) & PVR_TA_PM3_TXRFMT_MASK;
-            
+
 		txr_base = (uint32)src->txr.base;
 		txr_base = (txr_base & 0x00fffff8) >> 3;
 		dst->mode3 |= txr_base;

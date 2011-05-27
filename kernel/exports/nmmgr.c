@@ -25,7 +25,7 @@ interface at the front of their struct.
 /* Thread mutex for our name handler list */
 static mutex_t * mutex;
 
-/* Name handler structures; these structs contain path/type pairs that 
+/* Name handler structures; these structs contain path/type pairs that
    describe how to handle a given path name. */
 static nmmgr_list_t nmmgr_handlers;
 

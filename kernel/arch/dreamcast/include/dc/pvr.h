@@ -129,7 +129,7 @@ typedef struct {
                                      \see pvr_depth_switch */
     } depth;                    /**< \brief Depth comparison/write modes */
     struct {
-        int     enable;         /**< \brief Enable/disable texturing 
+        int     enable;         /**< \brief Enable/disable texturing
                                      \see   pvr_txr_switch */
         int     filter;         /**< \brief Filtering mode
                                      \see   pvr_filter_modes */
@@ -152,7 +152,7 @@ typedef struct {
         pvr_ptr_t base;         /**< \brief Texture pointer */
     } txr;                      /**< \brief Texturing params outside modifier */
     struct {
-        int     enable;         /**< \brief Enable/disable texturing 
+        int     enable;         /**< \brief Enable/disable texturing
                                      \see   pvr_txr_switch */
         int     filter;         /**< \brief Filtering mode
                                      \see   pvr_filter_modes */
@@ -220,7 +220,7 @@ typedef struct {
                                      \see pvr_depth_switch */
     } depth;                    /**< \brief Depth comparison/write modes */
     struct {
-        int     enable;         /**< \brief Enable/disable texturing 
+        int     enable;         /**< \brief Enable/disable texturing
                                      \see   pvr_txr_switch */
         int     filter;         /**< \brief Filtering mode
                                      \see   pvr_filter_modes */
@@ -379,7 +379,7 @@ typedef struct {
     really only makes sense to enable this for translucent or punch-thru polys.
 
     @{
-*/  
+*/
 #define PVR_ALPHA_DISABLE       0   /**< \brief Disable alpha blending */
 #define PVR_ALPHA_ENABLE        1   /**< \brief Enable alpha blending */
 /** @} */
@@ -390,7 +390,7 @@ typedef struct {
     really only makes sense to enable this for translucent or punch-thru polys.
 
     @{
-*/ 
+*/
 #define PVR_TXRALPHA_ENABLE     0   /**< \brief Enable alpha blending */
 #define PVR_TXRALPHA_DISABLE    1   /**< \brief Disable alpha blending */
 /** @} */
@@ -483,13 +483,13 @@ typedef struct {
 #define PVR_TXRFMT_STRIDE       (1 << 21)   /**< \brief Texture is strided */
 
 /* OR one of these into your texture format if you need it. Note that
-   these coincide with the twiddled/stride bits, so you can't have a 
+   these coincide with the twiddled/stride bits, so you can't have a
    non-twiddled/strided texture that's paletted! */
 /** \brief  8BPP palette selector
     \param  x               The palette index */
 #define PVR_TXRFMT_8BPP_PAL(x)  ((x) << 25)
 
-/** \brief 4BPP palette selector 
+/** \brief 4BPP palette selector
     \param  x               The palette index */
 #define PVR_TXRFMT_4BPP_PAL(x)  ((x) << 21)
 /** @} */
@@ -520,7 +520,7 @@ typedef struct {
 #define PVR_MODIFIER_ENABLE     1   /**< \brief Enable modifier effects */
 /** @} */
 
-#define PVR_MODIFIER_CHEAP_SHADOW	0	
+#define PVR_MODIFIER_CHEAP_SHADOW	0
 #define PVR_MODIFIER_NORMAL		1
 
 /** \defgroup pvr_mod_modes         Modifier volume mode parameters
@@ -747,7 +747,7 @@ typedef struct {
 } pvr_sprite_col_t;
 
 /** \brief  PVR vertex type: Modifier volume.
- 
+
     This vertex type is to be used with the modifier volume header to specify
     triangular modifier areas.
 */
@@ -828,8 +828,8 @@ static inline uint32 PVR_PACK_16BIT_UV(float u, float v) {
 #define PVR_TA_CMD_TYPE_MASK		(7 << PVR_TA_CMD_TYPE_SHIFT)
 
 #define PVR_TA_CMD_USERCLIP_SHIFT	16
-#define PVR_TA_CMD_USERCLIP_MASK	(3 << PVR_TA_CMD_USERCLIP_SHIFT) 
-	
+#define PVR_TA_CMD_USERCLIP_MASK	(3 << PVR_TA_CMD_USERCLIP_SHIFT)
+
 #define PVR_TA_CMD_CLRFMT_SHIFT		4
 #define PVR_TA_CMD_CLRFMT_MASK		(7 << PVR_TA_CMD_CLRFMT_SHIFT)
 
@@ -838,10 +838,10 @@ static inline uint32 PVR_PACK_16BIT_UV(float u, float v) {
 
 #define PVR_TA_CMD_UVFMT_SHIFT		0
 #define PVR_TA_CMD_UVFMT_MASK		(1 << PVR_TA_CMD_UVFMT_SHIFT)
-	
+
 #define PVR_TA_CMD_MODIFIER_SHIFT	7
 #define PVR_TA_CMD_MODIFIER_MASK	(1 <<  PVR_TA_CMD_MODIFIER_SHIFT)
-	
+
 #define PVR_TA_CMD_MODIFIERMODE_SHIFT	6
 #define PVR_TA_CMD_MODIFIERMODE_MASK	(1 <<  PVR_TA_CMD_MODIFIERMODE_SHIFT)
 
@@ -857,7 +857,7 @@ static inline uint32 PVR_PACK_16BIT_UV(float u, float v) {
 #define PVR_TA_PM1_TXRENABLE_SHIFT	25
 #define PVR_TA_PM1_TXRENABLE_MASK	(1 << PVR_TA_PM1_TXRENABLE_SHIFT)
 
-#define PVR_TA_PM1_MODIFIERINST_SHIFT	29 
+#define PVR_TA_PM1_MODIFIERINST_SHIFT	29
 #define PVR_TA_PM1_MODIFIERINST_MASK	(3 <<  PVR_TA_PM1_MODIFIERINST_SHIFT)
 
 #define PVR_TA_PM2_SRCBLEND_SHIFT	29
@@ -1356,7 +1356,7 @@ void pvr_mem_stats();
 /* Scene rendering ***************************************************/
 
 /* This API is used to submit triangle strips to the PVR via the TA
-   interace in the chip. 
+   interace in the chip.
 
    An important side note about the PVR is that all primitive types
    must be submitted grouped together. If you have 10 polygons for each
@@ -1373,7 +1373,7 @@ void pvr_mem_stats();
    which will be queued until the proper primitive type is active. In this
    case, each piece of data is copied into the vertex buffer while the
    wrong list is activated, and when the proper list becomes activated,
-   the data is all sent at once. Ideally this would be via DMA, right 
+   the data is all sent at once. Ideally this would be via DMA, right
    now it is by store queues. This has the advantage of allowing you to
    send data in any order and have the PVR functions resolve how it should
    get sent to the hardware, but it is slower.
@@ -1664,7 +1664,7 @@ void pvr_sprite_compile(pvr_sprite_hdr_t *dst,
 	pvr_sprite_cxt_t *src);
 
 /** \brief  Fill in a sprite context for non-textured sprites.
- 
+
     This function fills in a pvr_sprite_cxt_t with default parameters
     appropriate for rendering a non-textured sprite in the given list.
 
@@ -1737,7 +1737,7 @@ void pvr_poly_cxt_col_mod(pvr_poly_cxt_t *dst, pvr_list_t list);
 
 /** \brief  Fill in a polygon context for a textured polygon affected by
             modifier volumes.
- 
+
     This function fills in a pvr_poly_cxt_t with default parameters appropriate
     for rendering a textured polygon in the given list and being affected by
     modifier volumes.
@@ -1918,10 +1918,10 @@ int pvr_txr_load_dma(void * src, pvr_ptr_t dest, uint32 count, int block,
 	pvr_dma_callback_t callback, ptr_t cbdata);
 
 /** \brief  Load vertex data to the TA using PVR DMA.
- 
+
     This is essentially a convenience wrapper for pvr_dma_transfer(), so all
     notes that apply to it also apply here.
- 
+
     \param  src             Where to copy from. Must be 32-byte aligned.
     \param  count           The number of bytes to copy. Must be a multiple of
                             32.

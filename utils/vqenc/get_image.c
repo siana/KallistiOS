@@ -4,7 +4,7 @@
 #include <string.h>
 #include "get_image.h"
 
-int get_image(const char *filename, image_t *image) {	
+int get_image(const char *filename, image_t *image) {
 	int len = strlen(filename);
 
 	if (!strcmp(filename + len - 3, "png")) {

@@ -36,14 +36,14 @@ extern "C" {
 #include <sys/sched.h>
 
 /* Register Fork Handlers, P1003.1c/Draft 10, P1003.1c/Draft 10, p. 27
-  
+
     If an OS does not support processes, then it falls under this provision
     and may not provide pthread_atfork():
-  
+
     "Either the implementation shall support the pthread_atfork() function
-     as described above or the pthread_atfork() funciton shall not be 
+     as described above or the pthread_atfork() funciton shall not be
      provided."
-  
+
     NOTE: RTEMS does not provide pthread_atfork().  */
 
 #if !defined(__rtems__)
@@ -66,7 +66,7 @@ int	_EXFUN(pthread_mutex_init,
 int	_EXFUN(pthread_mutex_destroy, (pthread_mutex_t *mutex));
 
 /* This is used to statically initialize a pthread_mutex_t. Example:
-  
+
     pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
  */
 
@@ -87,41 +87,41 @@ int	_EXFUN(pthread_mutex_timedlock,
 #endif /* _POSIX_TIMEOUTS */
 
 /* Condition Variable Initialization Attributes, P1003.1c/Draft 10, p. 96 */
- 
+
 int	_EXFUN(pthread_condattr_init, (pthread_condattr_t *attr));
 int	_EXFUN(pthread_condattr_destroy, (pthread_condattr_t *attr));
 int	_EXFUN(pthread_condattr_getpshared,
 		(const pthread_condattr_t *attr, int *pshared));
 int	_EXFUN(pthread_condattr_setpshared,
 		(pthread_condattr_t *attr, int pshared));
- 
+
 /* Initializing and Destroying a Condition Variable, P1003.1c/Draft 10, p. 87 */
- 
+
 int	_EXFUN(pthread_cond_init,
 	(pthread_cond_t *cond, const pthread_condattr_t *attr));
 int	_EXFUN(pthread_cond_destroy, (pthread_cond_t *cond));
- 
+
 /* This is used to statically initialize a pthread_cond_t. Example:
-  
+
     pthread_cond_t cond = PTHREAD_COND_INITIALIZER;
  */
- 
+
 #define PTHREAD_COND_INITIALIZER  ((pthread_cond_t) 0xFFFFFFFF)
- 
+
 /* Broadcasting and Signaling a Condition, P1003.1c/Draft 10, p. 101 */
- 
+
 int	_EXFUN(pthread_cond_signal, (pthread_cond_t *cond));
 int	_EXFUN(pthread_cond_broadcast, (pthread_cond_t *cond));
- 
+
 /* Waiting on a Condition, P1003.1c/Draft 10, p. 105 */
- 
+
 int	_EXFUN(pthread_cond_wait,
 	(pthread_cond_t *cond, pthread_mutex_t *mutex));
- 
+
 int	_EXFUN(pthread_cond_timedwait,
 		(pthread_cond_t *cond, pthread_mutex_t *mutex,
 		const struct timespec *abstime));
- 
+
 #if defined(_POSIX_THREAD_PRIORITY_SCHEDULING)
 
 /* Thread Creation Scheduling Attributes, P1003.1c/Draft 10, p. 120 */
@@ -159,7 +159,7 @@ int	_EXFUN(pthread_setschedparam,
 #if defined(_POSIX_THREAD_PRIO_INHERIT) || defined(_POSIX_THREAD_PRIO_PROTECT)
 
 /* Mutex Initialization Scheduling Attributes, P1003.1c/Draft 10, p. 128 */
- 
+
 int	_EXFUN(pthread_mutexattr_setprotocol,
 	(pthread_mutexattr_t *attr, int protocol));
 int	_EXFUN(pthread_mutexattr_getprotocol,
@@ -228,13 +228,13 @@ int	_EXFUN(pthread_equal, (pthread_t t1, pthread_t t2));
 /* Dynamic Package Initialization */
 
 /* This is used to statically initialize a pthread_once_t. Example:
-  
+
     pthread_once_t once = PTHREAD_ONCE_INIT;
-  
+
     NOTE:  This is named inconsistently -- it should be INITIALIZER.  */
- 
+
 #define PTHREAD_ONCE_INIT  { 1, 0 }  /* is initialized and not run */
- 
+
 int	_EXFUN(pthread_once,
 	(pthread_once_t *once_control, void (*init_routine)(void)));
 
@@ -276,12 +276,12 @@ void 	_EXFUN(pthread_cleanup_push, (void (*routine)( void * ), void *arg));
 void 	_EXFUN(pthread_cleanup_pop, (int execute));
 
 #if defined(_POSIX_THREAD_CPUTIME)
- 
+
 /* Accessing a Thread CPU-time Clock, P1003.4b/D8, p. 58 */
- 
+
 int	_EXFUN(pthread_getcpuclockid,
 	(pthread_t thread_id, clockid_t *clock_id));
- 
+
 /* CPU-time Clock Thread Creation Attribute, P1003.4b/D8, p. 59 */
 
 int	_EXFUN(pthread_attr_setcputime,

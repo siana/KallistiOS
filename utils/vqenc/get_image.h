@@ -1,6 +1,6 @@
 
 #ifndef __GET_IMAGE_H
-#define __GET_IMAGE_H 
+#define __GET_IMAGE_H
 
 typedef struct image_t {
 	int w;

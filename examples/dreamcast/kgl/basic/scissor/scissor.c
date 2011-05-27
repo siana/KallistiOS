@@ -127,7 +127,7 @@ static void draw_gl(float rot, float x, float y) {
 	glPushMatrix();
 	glTranslatef(1.5f,0.0f,0.0f);
 	glRotatef(rquad,1.0f,1.0f,1.0f);
-		
+
 	glBegin(GL_QUADS);
 		glColor3f(0.0f,1.0f,0.0f);
 		glVertex3f( 1.0f, 1.0f,-1.0f);
@@ -174,9 +174,9 @@ static void draw_ortho_scene() {
 	glShadeModel(GL_FLAT);
 	glDepthFunc(GL_LESS);
 	glClearColor(0.8f, 0.4f, 0.4f, 1.0f);
-	
+
 	glViewport(0, 0, 640, 480);
-	glScissor(x, y, 320, 240); 
+	glScissor(x, y, 320, 240);
 	/* draw a nice 32x32 bitsize square checkered
 	   background */
 	glBindTexture(GL_TEXTURE_2D, texture);
@@ -211,12 +211,12 @@ static void draw_perspective_scene() {
 	glScissor(320, 0, 320, 240);
 	glViewport(320, 0, 320, 240);
 	draw_gl(rot, 1.0f, -1.0f);
-		
+
 	/* Draw scene - upper right */
 	glScissor(320, 240, 320, 240);
 	glViewport(320, 240, 320, 240);
 	draw_gl(rot, -1.0f, -1.0f);
-	
+
 }
 
 pvr_init_params_t params = {
@@ -267,10 +267,10 @@ int main(int argc, char **argv) {
 		if (!(state->buttons & CONT_DPAD_DOWN))
 			y+=8; if (y > 448) y = 448;
 		if (!(state->buttons & CONT_DPAD_LEFT))
-			x+=8; if (x > 632) x = 632; 
+			x+=8; if (x > 632) x = 632;
 		if (!(state->buttons & CONT_DPAD_RIGHT))
 			x-=8; if (x < -288) x = -288;
-		
+
 		/* Demo select button */
 		if ((state->buttons & CONT_A) && !ap) {
 			ap = GL_TRUE;
@@ -299,25 +299,25 @@ int main(int argc, char **argv) {
 		case USERCLIP_DISABLED:
 		case QUAD_SCREEN_UNCLIPPED:
 			glDisable(GL_SCISSOR_TEST);
-			/* or 
+			/* or
 			glDisable(GL_KOS_USERCLIP_OUTSIDE);
 			*/
 			break;
 		}
-		
+
 		switch (selected) {
 		case USERCLIP_INSIDE:
 		case USERCLIP_OUTSIDE:
 		case USERCLIP_DISABLED:
-			
+
 			draw_ortho_scene();
-			
+
 			break;
 		case QUAD_SCREEN_UNCLIPPED:
 		case QUAD_SCREEN_CLIPPED:
-			
+
 			draw_perspective_scene();
-			
+
 			rot += 2.0f;
 			rtri += 3.0f;
 			rquad += -2.5f;

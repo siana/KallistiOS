@@ -215,7 +215,7 @@ int main (int argc, char *argv[]) {
   conio_init(CONIO_TTY_SERIAL, CONIO_INPUT_LINE);
 
   luaB_set_fputs((void (*)(const char *))conio_printf);
-  
+
   L = lua_open();  /* create state */
   if (L == NULL) {
     printf("Invalid state.. giving up\n");

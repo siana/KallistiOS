@@ -58,14 +58,14 @@ void convert(char *ifn, char *ofn) {
 	/* Scans Text For "Vertices: ".  Number After Is Stored In ver */
 	sscanf( oneline, "Vertices: %d\n", &num_verts );
 	fwrite(&num_verts, sizeof(int), 1, out );
-	
+
 	/* Loops Through The Vertices */
 	for ( i = 0; i < num_verts; i++ )
 	{
 		/* Reads In The Next Line Of Text */
 		readstr( in, oneline );
 		/* Searches For 3 Floating Point Numbers, Store In rx,ry & rz */
-		sscanf( oneline, "%f %f %f", &rx, &ry, &rz ); 
+		sscanf( oneline, "%f %f %f", &rx, &ry, &rz );
 		fwrite(&rx, sizeof(float), 1, out );
 		fwrite(&ry, sizeof(float), 1, out );
 		fwrite(&rz, sizeof(float), 1, out );
@@ -76,7 +76,7 @@ void convert(char *ifn, char *ofn) {
 
 int main( int argc, char **argv )
 {
-	argc--; 
+	argc--;
 	if (argc != 2) {
 		printf("usage: txt2bin <input.txt> <output.bin>\n");
 		return 1;

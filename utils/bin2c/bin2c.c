@@ -1,5 +1,5 @@
 /* Converts a binary file into a C integer array (for inclusion in
-   a source file) 
+   a source file)
 
    (c)2000 Dan Potter
 

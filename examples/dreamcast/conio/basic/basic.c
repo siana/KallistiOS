@@ -1,6 +1,6 @@
 /* KallistiOS ##version##
 
-   basic.c 
+   basic.c
 
    (c)2002 Dan Potter
 

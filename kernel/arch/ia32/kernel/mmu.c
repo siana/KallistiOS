@@ -31,7 +31,7 @@ mmucontext_t *mmu_context_create(int asid) {
 void mmu_context_destroy(mmucontext_t *context) {
 }
 
-/* Using the given page tables, translate the virtual page ID to a 
+/* Using the given page tables, translate the virtual page ID to a
    physical page ID. Return -1 on failure. */
 int mmu_virt_to_phys(mmucontext_t *context, int virtpage) {
 	return 0;
@@ -67,7 +67,7 @@ int mmu_copyv(mmucontext_t *context1, iovec_t *iov1, int iovcnt1,
 		mmucontext_t *context2, iovec_t *iov2, int iovcnt2) {
 	return -1;
 }
-		
+
 
 /********************************************************************************/
 /* Exception handlers */

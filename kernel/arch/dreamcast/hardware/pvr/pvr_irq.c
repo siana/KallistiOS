@@ -143,7 +143,7 @@ void pvr_int_handler(uint32 code) {
 
 	// If all lists are fully transferred and a render is not in progress,
 	// we are ready to start rendering.
-	if (!pvr_state.render_busy	
+	if (!pvr_state.render_busy
 		&& pvr_state.lists_transferred == pvr_state.lists_enabled)
 	{
 		/* XXX Note:

@@ -59,7 +59,7 @@ extern int dcload_type;
 #define DCLOAD_LINK 5
 #define DCLOAD_UNLINK 6
 #define DCLOAD_CHDIR 7
-#define DCLOAD_CHMOD 8        
+#define DCLOAD_CHMOD 8
 #define DCLOAD_LSEEK 9
 #define DCLOAD_FSTAT 10
 #define DCLOAD_TIME 11
@@ -91,7 +91,7 @@ typedef struct dcload_dirent dcload_dirent_t;
 
 /* dcload stat */
 
-struct  dcload_stat { 
+struct  dcload_stat {
   unsigned short st_dev;
   unsigned short st_ino;
   int st_mode;

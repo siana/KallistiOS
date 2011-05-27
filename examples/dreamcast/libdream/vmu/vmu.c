@@ -23,7 +23,7 @@ void draw_one(maple_device_t *addr, char *fn, uint16 hdrblock) {
 		}
 
 		buf[0x10+32] = 0;
-		bfont_draw_str(vram_s+y1*640+10+(6+strlen(fn))*12, 640, 0, 
+		bfont_draw_str(vram_s+y1*640+10+(6+strlen(fn))*12, 640, 0,
 			buf+0x10);
 	}
 	y1 += 24;

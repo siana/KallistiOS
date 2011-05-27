@@ -7,7 +7,7 @@
 
 /*
 
-  This module implements the stuff enumerated in flashrom.h. 
+  This module implements the stuff enumerated in flashrom.h.
 
   Writing to the flash is disabled by default. To re-enable it, uncomment
   the #define below.
@@ -160,7 +160,7 @@ int flashrom_get_block(int partid, int blockid, uint8 * buffer_out) {
 		/* Little shortcut */
 		if (bitmap[i / 8] == 0)
 			i += 8;
-		
+
 		if (bitmap[i / 8] & (0x80 >> (i % 8)))
 			break;
 	}
@@ -198,7 +198,7 @@ int flashrom_get_block(int partid, int blockid, uint8 * buffer_out) {
 
 	/* Didn't find anything */
 	rv = -1;
-	
+
 ex:
 	free(bitmap);
 	return rv;
@@ -267,7 +267,7 @@ int flashrom_get_region() {
 	}
 }
 
-/* Structure of the ISP config blocks (as much as we know anyway). 
+/* Structure of the ISP config blocks (as much as we know anyway).
    Thanks to Sam Steele for this info. */
 typedef struct {
 	union {
@@ -276,7 +276,7 @@ typedef struct {
 			uint16	blockid;		/* Should be 0xE0 */
 			uint8	prodname[4];	/* SEGA */
 			uint8	unk1;			/* 0x13 */
-			uint8	method;	
+			uint8	method;
 			uint8	unk2[2];		/* 0x00 0x00 */
 			uint8	ip[4];			/* These are all in big-endian notation */
 			uint8	nm[4];
@@ -713,7 +713,7 @@ int flashrom_get_pw_ispcfg(flashrom_ispcfg_t *out) {
 		/* Grab the area code for phone 2, stripping away the parenthesis. */
 		strncpy(out->p2_areacode, isp->c1.ac2 + 1, 3);
 		out->p2_areacode[3] = '\0';
-		
+
 		/* Grab the start of phone number 2. */
 		strncpy(out->phone2, isp->c1.phone2_pt1, 23);
 		out->phone2[23] = '\0';

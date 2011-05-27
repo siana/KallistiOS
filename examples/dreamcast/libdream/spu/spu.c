@@ -20,7 +20,7 @@ void copy_s3m(char *song, int len) {
 
 	/* Switch channels to mono if uncommented */
 	/* snd_dbg[1] = 1; */
-	
+
 	printf("Load OK, starting ARM\n");
 	spu_enable();
 
@@ -38,17 +38,17 @@ void wait_start() {
 	while (1) {
 		cont = maple_enum_type(0, MAPLE_FUNC_CONTROLLER);
 		if (!cont) continue;
-		
+
 		/* Check for start on the controller */
 		state = (cont_state_t *)maple_dev_status(cont);
 		if (!state)
 			continue;
-		
+
 		if (state->buttons & CONT_START) {
 			printf("Pressed start\n");
 			return;
 		}
-		
+
 		thd_sleep(10);
 	}
 }
@@ -59,7 +59,7 @@ KOS_INIT_ROMDISK(romdisk);
 int main(int argc, char **argv) {
 	file_t f;
 	int len;
-	
+
 	/* Open the S3M file from the romdisk */
 	f = fs_open("/rd/cyboman.s3m", O_RDONLY);
 

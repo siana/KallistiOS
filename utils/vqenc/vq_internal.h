@@ -42,7 +42,7 @@ static void INLINE add_quad(fquad_t *out, fquad_t *in) {
 
 static void INLINE sub_quad(fquad_t *out, fquad_t *a, fquad_t *b) {
 	int i;
-	
+
 	for (i=0; i<4; i++) {
 		out->p[i].a = a->p[i].a - b->p[i].a;
 		out->p[i].r = a->p[i].r - b->p[i].r;

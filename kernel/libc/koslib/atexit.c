@@ -20,14 +20,14 @@ int atexit(void (*func)(void)) {
 
 	if (!func)
 		return -1;
-	
+
 	new_handler = malloc(sizeof(struct arch_atexit_handler));
 	if (!new_handler)
 		return -1; /* TODO: error handling? */
-	
+
 	new_handler->handler = func;
 	new_handler->next = arch_atexit_handlers;
-	
+
 	arch_atexit_handlers = new_handler;
 
 	return 0;
@@ -41,7 +41,7 @@ void _atexit_call_all() {
 	while (exit_handler) {
 		if (exit_handler->handler)
 			exit_handler->handler();
-		
+
 		exit_handler = exit_handler->next;
 		free(arch_atexit_handlers);
 		arch_atexit_handlers = exit_handler;

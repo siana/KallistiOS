@@ -142,7 +142,7 @@ extern vuint32 jiffies;
 /* Blocks the calling thread and performs a reschedule as if a context
    switch timer had been executed. This is useful for, e.g., blocking
    on sync primitives. The param 'mycxt' should point to the calling
-   thread's context block. This is implemented in arch-specific code. 
+   thread's context block. This is implemented in arch-specific code.
    The meaningfulness of the return value depends on whether the
    unblocker set a return value or not. */
 int thd_block_now(irq_context_t * mycxt);
@@ -165,7 +165,7 @@ void thd_add_to_runnable(kthread_t *t, int front_of_line);
 
 /* Removes a thread from the runnable queue, if it's there. */
 int thd_remove_from_runnable(kthread_t *thd);
-   
+
 /* New thread function; given a routine address, it will create a
    new kernel thread with a default stack. When the routine
    returns, the thread will exit. Returns the new thread id. */

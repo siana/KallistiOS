@@ -11,7 +11,7 @@
 /*
 Various notes
 
-In Linux, accessing the /dev device on a single-session CD puts the 
+In Linux, accessing the /dev device on a single-session CD puts the
 "bootstrap" zone at offset 0x8000, and the begin of the CD data itself at
 0x8800.
 
@@ -34,13 +34,13 @@ static int cdrom_read_sectors(char *buffer, uint32 sector, uint32 cnt) {
 
 	/* Subtract out DC's LBA offset */
 	sector -= 150;
-	
+
 	f = fopen("/dev/scd0", "r");
 	if (!f) return -1;
-	
+
 	fseek(f, sector*2048, SEEK_SET);
 	fread(buffer, cnt*2048, 1, f);
-	
+
 	fclose(f);
 	return 0;
 }
@@ -125,7 +125,7 @@ static uint32 iso_733(uint8 *from) { return htohl_32(from); }
 
 
 /********************************************************************************/
-/* Low-level block cacheing routines. This implements a simple queue-based 
+/* Low-level block cacheing routines. This implements a simple queue-based
    LRU/MRU cacheing system. Whenever a block is requested, it will be placed
    on the MRU end of the queue. As more blocks are loaded than can fit in
    the cache, blocks are deleted from the LRU end. */
@@ -149,7 +149,7 @@ static thd_mutex_t cache_mutex;
 /* Clears all cache blocks */
 static void bclear() {
 	int i;
-	
+
 	thd_mutex_lock(&cache_mutex);
 	for (i=0; i<NUM_CACHE_BLOCKS; i++)
 		cache[i]->sector = -1;
@@ -160,10 +160,10 @@ static void bclear() {
 static void bgrad(int block) {
 	int		i;
 	cache_block_t	*tmp;
-	
+
 	/* Don't try it with the end block */
 	if (block < 0 || block >= (NUM_CACHE_BLOCKS-1)) return;
-	
+
 	/* Make a copy and scoot everything down */
 	tmp = cache[block];
 	for (i=block; i<(NUM_CACHE_BLOCKS - 1); i++)
@@ -176,7 +176,7 @@ static void bgrad(int block) {
    cache, in which case it just returns the containing block. */
 static int bread(uint32 sector) {
 	int i, rv = -1;
-	
+
 	thd_mutex_lock(&cache_mutex);
 
 	/* Look for a pre-existing cache block */
@@ -187,22 +187,22 @@ static int bread(uint32 sector) {
 			goto bread_exit;
 		}
 	}
-	
+
 	/* If not, look for an open cache slot; if we find one, use it */
 	for (i=0; i<NUM_CACHE_BLOCKS; i++) {
 		if (cache[i]->sector == -1) break;
 	}
-	
+
 	/* If we didn't find one, kick an LRU block out of cache */
 	if (i >= NUM_CACHE_BLOCKS) { i = 0; }
-	
+
 	/* Load the requested block */
 	if (cdrom_read_sectors(cache[i]->data, sector + 150, 1) < 0) {
 		rv = -1;
 		goto bread_exit;
 	}
 	cache[i]->sector = sector;
-	
+
 	/* Move it to the most-recently-used position */
 	bgrad(i);
 	rv = NUM_CACHE_BLOCKS - 1;
@@ -232,10 +232,10 @@ static iso_dirent_t root_dirent;
 static int init_percd() {
 	int		i;
 	CDROM_TOC	toc;
-	
+
 	/* Start off with no cached blocks */
 	bclear();
-	
+
 	/* Locate the root session */
 	if ((i = cdrom_reinit()) != 0)
 		return i;
@@ -244,7 +244,7 @@ static int init_percd() {
 	if (!(session_base = cdrom_locate_data_track(&toc)))
 		return -1;
 
-	/* Grab and check the volume descriptor */	
+	/* Grab and check the volume descriptor */
 	i = bread(session_base + 16 - 150);
 	if (i < 0) return i;
 	if (memcmp((char*)cache[i]->data, "\01CD001", 6)) {
@@ -256,7 +256,7 @@ static int init_percd() {
 	memcpy(&root_dirent, cache[i]->data+156, sizeof(iso_dirent_t));
 	root_extent = iso_733(root_dirent.extent);
 	root_size = iso_733(root_dirent.size);
-	
+
 	return 0;
 }
 
@@ -270,18 +270,18 @@ static int fncompare(const char *isofn, int isosize, const char *normalfn) {
 		if (tolower(isofn[i]) != tolower(normalfn[i]))
 			return -1;
 	}
-	
+
 	return 0;
 }
 
 /* Locate an ISO9660 object in the given directory; this can be a directory or
    a file, it works fine for either one. Pass in:
-   
+
    fn:		object filename (relative to the passed directory)
    dir:		0 if looking for a file, 1 if looking for a dir
    dir_extent:	directory extent to start with
    dir_size:	directory size (in bytes)
-   
+
    It will return a pointer to a transient dirent buffer (i.e., don't
    expect this buffer to stay around much longer than the call itself).
  */
@@ -290,29 +290,29 @@ static iso_dirent_t *find_object(const char *fn, int dir,
 	int		i;
 	char		*p1;
 	iso_dirent_t	*de;
-	
+
 	while (dir_size > 0) {
 		int c = bread(dir_extent);
 		if (c < 0) return NULL;
-		
+
 		for (i=0; i<2048 && i<dir_size; ) {
 			/* Locate the current dirent */
 			de = (iso_dirent_t *)(cache[c]->data + i);
 			if (!de->length) break;
-			
+
 			/* Check the filename against the requested one */
 			if (!fncompare(de->name, de->name_len, fn)) {
 				if (!((dir << 1) ^ de->flags))
 					return de;
 			}
-			
+
 			i += de->length;
 		}
-		
+
 		dir_extent++;
 		dir_size -= 2048;
 	}
-	
+
 	return NULL;
 }
 
@@ -324,7 +324,7 @@ static iso_dirent_t *find_object(const char *fn, int dir,
    dir:		0 if looking for a file, 1 if looking for a dir
    dir_extent:	directory extent to start with
    dir_size:	directory size (in bytes)
-   
+
    It will return a pointer to a transient dirent buffer (i.e., don't
    expect this buffer to stay around much longer than the call itself).
  */
@@ -380,7 +380,7 @@ uint32 iso_open(const char *fn, int mode) {
 	/* Make sure they don't want to open things as writeable */
 	if ((mode & O_MODE_MASK) != O_RDONLY)
 		return 0;
-	
+
 	/* Find a free file handle */
 	thd_mutex_lock(&fh_mutex);
 	for (fd=0; fd<MAX_ISO_FILES; fd++)
@@ -391,22 +391,22 @@ uint32 iso_open(const char *fn, int mode) {
 	thd_mutex_unlock(&fh_mutex);
 	if (fd >= MAX_ISO_FILES)
 		return 0;
-		
+
 	/* For now we always do this, but it should eventually be set
 	   up to detect the CD tray having been opened. */
 	if (init_percd() < 0)
 		return 0;
-	
+
 	/* Find the file we want */
 	de = find_object_path(fn, (mode & O_DIR)?1:0, &root_dirent);
 	if (!de) return 0;
-	
+
 	/* Fill in the file handle and return the fd */
 	fh[fd].first_extent = iso_733(de->extent);
 	fh[fd].dir = (mode & O_DIR)?1:0;
 	fh[fd].ptr = 0;
 	fh[fd].size = iso_733(de->size);
-	
+
 	return fd;
 }
 
@@ -426,30 +426,30 @@ ssize_t iso_read(uint32 fd, void *buf, size_t bytes) {
 	/* Check that the fd is valid */
 	if (fd >= MAX_ISO_FILES || fh[fd].first_extent == 0)
 		return -1;
-	
+
 	/* Read zero or more sectors into the buffer from the current pos */
 	while (bytes > 0) {
 		/* Figure out how much we still need to read */
 		toread = (bytes > (fh[fd].size - fh[fd].ptr)) ?
 			fh[fd].size - fh[fd].ptr : bytes;
 		if (toread == 0) break;
-		
+
 		/* How much more can we read in the current sector? */
 		thissect = 2048 - (fh[fd].ptr%2048);
 		toread = (toread > thissect) ? thissect : toread;
-		
+
 		/* Do the read */
 		c = bread(fh[fd].first_extent + fh[fd].ptr/2048);
 		if (c < 0) return -1;
 		memcpy(buf, cache[c]->data + (fh[fd].ptr%2048), toread);
-		
+
 		/* Adjust pointers */
 		buf += toread;
 		fh[fd].ptr += toread;
 		bytes -= toread;
 		rv += toread;
 	}
-	
+
 	return rv;
 }
 
@@ -470,11 +470,11 @@ off_t iso_seek(uint32 fd, off_t offset, int whence) {
 		default:
 			return -1;
 	}
-	
+
 	/* Check bounds */
 	if (fh[fd].ptr < 0) fh[fd].ptr = 0;
 	if (fh[fd].ptr > fh[fd].size) fh[fd].ptr = fh[fd].size;
-	
+
 	return fh[fd].ptr;
 }
 
@@ -518,7 +518,7 @@ dirent_t *iso_readdir(uint32 fd) {
 		/* Get the current dirent block */
 		c = bread(fh[fd].first_extent + fh[fd].ptr/2048);
 		if (c < 0) return NULL;
-	
+
 		de = (iso_dirent_t *)(cache[c]->data + (fh[fd].ptr%2048));
 		if (de->length) break;
 
@@ -526,7 +526,7 @@ dirent_t *iso_readdir(uint32 fd) {
 		fh[fd].ptr += 2048 - (fh[fd].ptr%2048);
 	}
 	if (fh[fd].ptr >= fh[fd].size) return NULL;
-	
+
 	/* If we're at the first, skip the two blank entries */
 	if (!de->name[0]) {
 		fh[fd].ptr += de->length;
@@ -544,9 +544,9 @@ dirent_t *iso_readdir(uint32 fd) {
 		fh[fd].dirent.size = -1;
 	else
 		fh[fd].dirent.size = iso_733(de->size);
-	
+
 	fh[fd].ptr += de->length;
-	
+
 	return &fh[fd].dirent;
 }
 
@@ -571,10 +571,10 @@ int fs_iso9660_init() {
 
 	/* Reset fd's */
 	memset(fh, 0, sizeof(fh));
-	
+
 	/* Mark the first as active so we can have an error FD of zero */
 	fh[0].first_extent = -1;
-	
+
 	/* Init thread mutexes */
 	thd_mutex_reset(&cache_mutex);
 	thd_mutex_reset(&fh_mutex);
@@ -592,11 +592,11 @@ int fs_iso9660_init() {
 /* De-init the file system */
 int fs_iso9660_shutdown() {
 	int i;
-	
+
 	/* Dealloc cache block space */
 	for (i=0; i<NUM_CACHE_BLOCKS; i++)
 		free(cache[i]);
-	
+
 	return fs_handler_remove(&vh);
 }
 
@@ -610,11 +610,11 @@ void read_dir(uint32 extent, uint32 size) {
 	int		i;
 	iso_dirent_t	*de;
 	char		fn[32];
-	
+
 	while (size > 0) {
 		int c = bread(extent);
 		if (c < 0) return;
-		
+
 		for (i=0; i<2048 && i<size; ) {
 			de = (iso_dirent_t*)(cache[c]->data + i);
 			if (!de->length) break;
@@ -624,10 +624,10 @@ void read_dir(uint32 extent, uint32 size) {
 				printf("%s\t\t<DIR>\n", fn);
 			else
 				printf("%s\t\t%d\n", fn, iso_733(de->size));
-			
+
 			i += de->length;
 		}
-		
+
 		extent++;
 		size -= 2048;
 	}
@@ -636,7 +636,7 @@ void read_dir(uint32 extent, uint32 size) {
 
 void main() {
 	fs_iso9660_init();
-	
+
 	/*
 	{
 	uint32	fd, size, t;
@@ -650,7 +650,7 @@ void main() {
 	}
 	size = iso_total(fd);
 	printf("fd is %d, size is %08lx\n", fd, size);
-	
+
 	while (size > 0) {
 		int r;
 		r = iso_read(fd, buf, 666);
@@ -671,14 +671,14 @@ void main() {
 	{
 		uint32		fd, t;
 		dirent_t	*de;
-		
+
 		printf("Opening /demos");
 		fd = iso_open("/music/mc2/entries/rookie", O_RDONLY | O_DIR);
 		if (fd == 0) {
 			printf("Couldn't open file\n");
 			return;
 		}
-		
+
 		printf("Scanning dir:\n");
 		while ( (de = iso_readdir(fd)) ) {
 			printf("%s\t%d\n", de->name, de->size);
@@ -686,7 +686,7 @@ void main() {
 				t = 0;
 			}
 		}
-		
+
 		iso_close(fd);
 	}
 }

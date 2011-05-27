@@ -63,7 +63,7 @@ typedef struct {
 
 /* Our more civilized structure. Note that there are some fairly
    significant differences in value interpretations here between
-   this struct and the old one: 
+   this struct and the old one:
 
    - "buttons" is zero based: a 1-bit means the button is PRESSED.
    - "joyx", "joyy", "joy2x", and "joy2y" are all zero based: zero

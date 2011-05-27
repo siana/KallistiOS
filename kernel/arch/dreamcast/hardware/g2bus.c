@@ -60,7 +60,7 @@ uint8 g2_read_8(uint32 address) {
 	G2_LOCK(old1, old2);
 	out = *((vuint8*)address);
 	G2_UNLOCK(old1, old2);
-	
+
 	return out;
 }
 

@@ -61,7 +61,7 @@ static void twiddle(image_t * src, uint16 * output) {
 	uint16 * pixels = (uint16 *)src->data;
 	uint16 * vtex = output;
 	int x, y, yout;
-	
+
 	for (y=0; y<h; y++) {
 		// yout = ((h - 1) - y);
 		yout = y;
@@ -148,11 +148,11 @@ static int save(const char *filename, image_t *img) {
 		fprintf(stderr, "FATAL: can't write KMG data to %s\n", filename);
 		goto loser;
 	}
-	
+
 	free(tmp);
 	fclose(fp);
 	return 0;
-	
+
 loser:
 	if (tmp)
 		free(tmp);
@@ -178,24 +178,24 @@ static void banner(const char *progname) {
 static int valid_size(int x) {
 	if (x < 2 || x > 1024)
 		return 0;
-		
+
 	while (x) {
 		int bit = (x & 1);
 		x >>= 1;
-		
+
 		if (x && bit) {
 			/* more than one bit in image */
 			return 0;
 		}
 	}
-	
+
 	return 1;
 }
 
 static const char *figure_outfilename(const char *f, const char *newext) {
 	char *newname;
 	char *ext;
-	
+
 	ext = strrchr(f, '.');
 	if (ext == NULL) {
 		newname = (char *)malloc(strlen(f) + strlen(newext) + 2);
@@ -204,7 +204,7 @@ static const char *figure_outfilename(const char *f, const char *newext) {
 		}
 	} else {
 		int len;
-		
+
 		len = (ext - f) + strlen(newext) + 2;
 		newname = (char *)malloc(len);
 		if (newname) {
@@ -213,7 +213,7 @@ static const char *figure_outfilename(const char *f, const char *newext) {
 			strcpy(ext, newext);
 		}
 	}
-	
+
 	return newname;
 }
 
@@ -228,11 +228,11 @@ static int encode(const char *infile) {
 	int		ok;
 	image_t		image;
 	const char 	*outfile;
-	
+
 	if (use_verbose) {
 		printf("encoding %s.. ", infile);
 	}
-	
+
 	if (get_image(infile, &image) < 0) {
 		fprintf(stderr, "failed reading %s\n", infile);
 		return -EINVAL;
@@ -255,7 +255,7 @@ static int encode(const char *infile) {
 
 	/* Save it */
 	ok = save(outfile, &image);
-	
+
 	destroy_image(&image);
 
 	printf("\n");
@@ -277,7 +277,7 @@ static int process_long_options(char *arg) {
 		use_alpha = 1;
 	else
 		return -EINVAL;
-		
+
 	return 0;
 }
 
@@ -286,23 +286,23 @@ static int process_option(char *arg) {
 	arg++;
 
 	switch(*arg) {
-	
+
 		/* case 'm':
 			use_mipmap = 1;
 			return 0; */
-			
+
 		/* case 't':
 			use_twiddle = 1;
 			return 0; */
-			
+
 		case 'v':
 			use_verbose = 1;
 			return 0;
-			
+
 		case 'd':
 			use_debug = 1;
 			return 0;
-			
+
 		/* case 'q':
 			use_hq = 1;
 			return 0; */
@@ -316,17 +316,17 @@ static int process_option(char *arg) {
 			else
 				return -EINVAL;
 			return 0;
-			
+
 		case '-':
 			return process_long_options(arg+1);
 	}
-	
-	return -EINVAL;	
+
+	return -EINVAL;
 }
 
 static int process(int argc, char *argv[]) {
 	int arg;
-	
+
 	arg = 1;
 	while (arg < argc) {
 		if (argv[arg][0] == '-') {
@@ -334,20 +334,20 @@ static int process(int argc, char *argv[]) {
 				fprintf(stderr, "invalid option %s\n", argv[arg]);
 				return -EINVAL;
 			}
-			
+
 			arg++;
 			continue;
 		}
-		
+
 		/* found a filename */
 		break;
 	}
-	
+
 	if (arg >= argc) {
 		fprintf(stderr, "no files to encode\n");
 		return -EINVAL;
 	}
-	
+
 	while (arg < argc) {
 		/* ordinary image */
 		encode(argv[arg]);
@@ -359,11 +359,11 @@ static int process(int argc, char *argv[]) {
 
 int main(int argc, char *argv[]) {
 	setbuf(stdout, 0);
-	
+
 	if (argc < 2) {
 		banner(argv[0]);
 		return 0;
 	}
-	
+
 	return process(argc, argv);
 }

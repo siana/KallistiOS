@@ -82,14 +82,14 @@ static void vbl_chk_subdevs(int p, uint8 newmask) {
 }
 
 /* Handles autodetection of hotswapping; basically every periodic
-   interrupt, we choose a new port/unit pair and probe it for 
+   interrupt, we choose a new port/unit pair and probe it for
    device info. If the same thing is plugged in there, we assume
    that nothing has changed. Otherwise, some device (un/re)binding has
    to occur.
 
    Note that we could actually set this up as a maple device driver,
    but that might complicate things if we're swapping device structures
-   around in the middle of a list traversal, so we do it here as a 
+   around in the middle of a list traversal, so we do it here as a
    special case instead. */
 static void vbl_autodet_callback(maple_frame_t * frm) {
 	maple_response_t	*resp;

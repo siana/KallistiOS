@@ -47,7 +47,7 @@ void vga_scroll(uint32 ystart, uint32 numrows) {
 }
 
 void vga_print_at(uint32 x, uint32 y, uint32 f, uint32 b, const char * string) {
-	char	*output = (char *)(scrn_mem + y*160 + x*2);	
+	char	*output = (char *)(scrn_mem + y*160 + x*2);
 	int8	attr = (b << 4) | f;
 
 	while (*string) {
@@ -126,7 +126,7 @@ int vga_shutdown() {
 
 ///////////////////////////////////////////////////////////////////////
 
-/* This redirect is here to allow you to hook the debug output in your 
+/* This redirect is here to allow you to hook the debug output in your
    program if you want to do that. */
 dbgio_printk_func dbgio_printk = dbgio_null_write;
 

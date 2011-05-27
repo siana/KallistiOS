@@ -1,5 +1,5 @@
 /* KallistiOS ##version##
-   
+
    kos/netcfg.h
    Copyright (C)2003 Dan Potter
 

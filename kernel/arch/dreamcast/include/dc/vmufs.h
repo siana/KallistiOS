@@ -145,7 +145,7 @@ int vmufs_dir_blocks(vmu_root_t * root_buf);
 int vmufs_fat_blocks(vmu_root_t * root_buf);
 
 /** \brief  Given a selected VMU's root block, read its directory.
- 
+
     This function reads the directory of a given VMU root block. It assumes the
     mutex is held. There must be at least the number of bytes returned by
     vmufs_dir_blocks() available in the buffer for this to succeed.
@@ -283,9 +283,9 @@ int vmufs_fat_free(vmu_root_t * root, uint16 * fat);
 int vmufs_dir_free(vmu_root_t * root, vmu_dir_t * dir);
 
 /** \brief  Lock the vmufs mutex.
- 
+
     This should be done before you attempt any low-level ops.
- 
+
     \retval 0               On success (no error conditions defined).
 */
 int vmufs_mutex_lock();
@@ -306,7 +306,7 @@ int vmufs_mutex_unlock();
     The output buffer will be allocated for you using malloc(), and the number
     of entries will be returned. On failure, outbuf will not contain a dangling
     buffer that needs to be freed (no further action required).
- 
+
     \param  dev             The VMU to read from.
     \param  outbuf          A buffer that will be allocated where the directory
                             data will be placed.

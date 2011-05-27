@@ -32,7 +32,7 @@ __BEGIN_DECLS
 #define PS2LOAD_LINK		5
 #define PS2LOAD_UNLINK		6
 #define PS2LOAD_CHDIR		7
-#define PS2LOAD_CHMOD		8 
+#define PS2LOAD_CHMOD		8
 #define PS2LOAD_LSEEK		9
 #define PS2LOAD_FSTAT		10
 #define PS2LOAD_TIME		11
@@ -58,7 +58,7 @@ typedef struct ps2load_dirent ps2load_dirent_t;
 
 /* ps2load stat */
 
-struct  ps2load_stat { 
+struct  ps2load_stat {
   unsigned short st_dev;
   unsigned short st_ino;
   int st_mode;

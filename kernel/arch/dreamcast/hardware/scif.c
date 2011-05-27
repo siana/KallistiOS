@@ -194,7 +194,7 @@ int scif_init() {
 
 	/* int fifo = 1; */
 
-	/*	If dcload-serial is active, then do nothing here, or we'll 
+	/*	If dcload-serial is active, then do nothing here, or we'll
 		screw that up. */
 	if (dcload_type == DCLOAD_TYPE_SER)
 		return 0;
@@ -235,16 +235,16 @@ int scif_init() {
 
 	/* Unreset, enable hardware flow control, triggers on 8 bytes */
 	SCFCR2 = 0x48;
-	
+
 	/* Disable manual pin control */
 	SCSPTR2 = 0;
-	
+
 	/* Clear status */
 	(void)SCFSR2;
 	SCFSR2 = 0x60;
 	(void)SCLSR2;
 	SCLSR2 = 0;
-	
+
 	/* Enable transmit/receive */
 	SCSCR2 = 0x30;
 
@@ -300,7 +300,7 @@ int scif_write(int c) {
 		errno = EIO;
 		return -1;
 	}
-	
+
 	/* Wait until the transmit buffer has space. Too long of a failure
 	   is indicative of no serial cable. */
 	while (!(SCFSR2 & 0x20) && timeout > 0)
@@ -310,10 +310,10 @@ int scif_write(int c) {
 		errno = EIO;
 		return -1;
 	}
-	
+
 	/* Send the char */
 	SCFTDR2 = c;
-	
+
 	/* Clear status */
 	SCFSR2 &= 0xff9f;
 

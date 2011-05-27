@@ -2,7 +2,7 @@
 
    navi/flash.h
    Copyright (C) 2002 Dan Potter
-   
+
 */
 
 /** \file   navi/flash.h

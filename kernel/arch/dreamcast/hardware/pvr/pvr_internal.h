@@ -1,5 +1,5 @@
 /* KallistiOS ##version##
-       
+
    pvr_internal.h
    Copyright (C)2002,2003,2004 Dan Potter
 
@@ -41,7 +41,7 @@
    As the TA collects data, the buffers may start to overflow if you have
    a lot of polygons, and that's what the grow space is about. It is
    initially using a fairly small amount of PVR RAM to hold the data
-   structures, but as it overflows the bins for each tile, it must 
+   structures, but as it overflows the bins for each tile, it must
    allocate a new block.
 
    3D processing proceeds in a pipeline fashion. There are four functional
@@ -172,7 +172,7 @@ typedef struct {
 	int		ta_busy;			// >0 if a DMA is in progress and the TA hasn't signaled completion
 	int		render_busy;			// >0 if a render is in progress
 	int		render_completed;		// >1 if a render has recently finished
-	
+
 	// Memory pointers / buffers
 	pvr_dma_buffers_t	dma_buffers[2];		// DMA buffers (if any)
 	pvr_ta_buffers_t	ta_buffers[2];		// TA buffers
@@ -188,7 +188,7 @@ typedef struct {
 	uint32		pclip_top, pclip_bottom;	// Y pixel clip constants
 	uint32		pclip_x, pclip_y;		// Composited clip constants
 	uint32		bg_color;			// Background color in ARGB format
-	
+
 	/* Running statistics on the PVR system. All vars are in terms
 	   of milliseconds. */
 	uint32		vbl_count;			// VBlank counter for animations and such
@@ -288,7 +288,7 @@ void pvr_blank_polyhdr(int type);
 
 /* Same as above, but generates into a buffer instead of submitting. */
 void pvr_blank_polyhdr_buf(int type, pvr_poly_hdr_t * buf);
-   
+
 
 /**** pvr_irq.c *******************************************************/
 

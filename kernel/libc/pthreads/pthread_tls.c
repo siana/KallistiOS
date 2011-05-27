@@ -12,7 +12,7 @@ int pthread_key_create(pthread_key_t *key, void (*destructor)( void * )) {
 	return kthread_key_create(key, destructor);
 }
 
-/* Thread-Specific Data Management, P1003.1c/Draft 10, p. 165 */   
+/* Thread-Specific Data Management, P1003.1c/Draft 10, p. 165 */
 
 int pthread_setspecific(pthread_key_t key, const void *value) {
 	return kthread_setspecific(key, value);

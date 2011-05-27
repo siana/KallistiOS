@@ -112,7 +112,7 @@ const u_long crctab[] = {
 u_long crcval;
 u_int step;
 
-void 
+void
 crc_start()
 {
 	crcval = step = 0;

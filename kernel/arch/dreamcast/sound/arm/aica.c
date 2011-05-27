@@ -13,10 +13,10 @@ extern volatile aica_channel_t *chans;
 
 void aica_init() {
 	int i, j;
-	
-	/* Initialize AICA channels */	
+
+	/* Initialize AICA channels */
 	SNDREG32(0x2800) = 0x0000;
-	
+
 	for (i=0; i<64; i++) {
 		CHNREG32(i,0) = 0x8000;
 		for (j=4; j<0x80; j+=4)
@@ -68,7 +68,7 @@ static inline int calc_aica_pan(int x) {
 /* Sets up a sound channel completely. This is generally good if you want
    a quick and dirty way to play notes. If you want a more comprehensive
    set of routines (more like PC wavetable cards) see below.
-   
+
    ch is the channel to play on (0 - 63)
    smpptr is the pointer to the sound data; if you're running off the
      SH4, then this ought to be (ptr - 0xa0800000); otherwise it's just
@@ -79,7 +79,7 @@ static inline int calc_aica_pan(int x) {
    vol is the volume, 0 to 0xff (0xff is louder)
    pan is a panning constant -- 0 is left, 128 is center, 255 is right.
 
-   This routine (and the similar ones) owe a lot to Marcus' sound example -- 
+   This routine (and the similar ones) owe a lot to Marcus' sound example --
    I hadn't gotten quite this far into dissecting the individual regs yet. */
 void aica_play(int ch, int delay) {
 	unsigned long smpptr	= chans[ch].base;
@@ -97,7 +97,7 @@ void aica_play(int ch, int delay) {
 
 	/* Stop the channel (if it's already playing) */
 	aica_stop(ch);
-	
+
 	/* Need to convert frequency to floating point format
 	   (freq_hi is exponent, freq_lo is mantissa)
 	   Formula is freq = 44100*2^freq_hi*(1+freq_lo/1024) */
@@ -106,7 +106,7 @@ void aica_play(int ch, int delay) {
 		--freq_hi;
 	}
 	freq_lo = (freq<<10) / freq_base;
-	
+
 	/* Envelope setup. The first of these is the loop point,
 	   e.g., where the sample starts over when it loops. The second
 	   is the loop end. This is the full length of the sample when
@@ -115,10 +115,10 @@ void aica_play(int ch, int delay) {
 	   volume enveloping). */
 	CHNREG32(ch, 8) = loopst & 0xffff;
 	CHNREG32(ch, 12) = loopend & 0xffff;
-	
+
 	/* Write resulting values */
 	CHNREG32(ch, 24) = (freq_hi << 11) | (freq_lo & 1023);
-	
+
 	/* Set volume, pan */
 	CHNREG8(ch, 36) = calc_aica_pan(pan);
 	CHNREG8(ch, 37) = 0xf;
@@ -136,8 +136,8 @@ void aica_play(int ch, int delay) {
 	CHNREG32(ch, 16) = 0xf010;
 	*/
 	CHNREG32(ch, 16) = 0x1f;	/* No volume envelope */
-	
-	
+
+
 	/* Set sample format, buffer address, and looping control. If
 	   0x0200 mask is set on reg 0, the sample loops infinitely. If
 	   it's not set, the sample plays once and terminates. We'll
@@ -145,7 +145,7 @@ void aica_play(int ch, int delay) {
 	CHNREG32(ch, 4) = smpptr & 0xffff;
 	playCont = (mode<<7) | (smpptr >> 16);
 	vol = calc_aica_vol(vol);
-	
+
 	if (loopflag)
 		playCont |= 0x0200;
 
@@ -154,7 +154,7 @@ void aica_play(int ch, int delay) {
 		CHNREG8(ch, 41) = vol;
 	} else {
 		CHNREG32(ch, 0) = 0xc000 | playCont;	/* key on */
-	
+
 		/* ramp up the volume */
 		for (i=0xff; i>=vol; i--)
 			CHNREG8(ch, 41) = i;
@@ -180,7 +180,7 @@ void aica_stop(int ch) {
 
 /* The rest of these routines can change the channel in mid-stride so you
    can do things like vibrato and panning effects. */
-   
+
 /* Set channel volume */
 void aica_vol(int ch) {
 	CHNREG8(ch, 41) = calc_aica_vol(chans[ch].vol);
@@ -214,9 +214,9 @@ int aica_get_pos(int ch) {
 
 	/* Wait a while */
 	for (i = 0; i < 20; i++);
-	
+
 	/* Update position counters */
 	chans[ch].pos = SNDREG32(0x2814) & 0xffff;
-	
+
 	return chans[ch].pos;
 }

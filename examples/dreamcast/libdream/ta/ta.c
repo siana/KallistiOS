@@ -39,15 +39,15 @@ polyplace_t polys[12] = {
 	{ 16.0f, 0.0f, 10.0f, 3.0f, 5.0f },	/* Top */
 	{ 300.0f, 0.0f, 11.0f, 0.0f, 6.0f },
 	{ 624.0f, 0.0f, 12.0f, -3.0f, 7.0f },
-	
+
 	{ 24.0f, 300.0f, 13.0f, 3.0f, -7.0f },	/* Bottom */
 	{ 340.0f, 300.0f, 14.0f, 0.0f, -6.0f },
 	{ 616.0f, 300.0f, 15.0f, -3.0f, -5.0f },
-	
+
 	{ 0.0f, 16.0f, 16.0f, 5.0f, 3.0f },	/* Left */
 	{ 0.0f, 220.0f, 17.0f, 6.0f, 0.0f },
 	{ 0.0f, 364.0f, 18.0f, 7.0f, -3.0f },
-	
+
 	{ 480.0f, 24.0f, 19.0f, -7.0f, 3.0f },	/* Right */
 	{ 480.0f, 260.0f, 20.0f, -6.0f, 0.0f },
 	{ 480.0f, 356.0f, 21.0f, -5.0f, -3.0f },
@@ -57,10 +57,10 @@ polyplace_t polys[12] = {
 void move_polys() {
 	int i;
 	polyplace_t *p;
-	
+
 	for (i=0; i<12; i++) {
 		p = polys+i;
-		
+
 		p->x += p->dx;
 		if (p->x < 0 || p->x > 580.0f) {
 			p->dx = -p->dx;
@@ -79,7 +79,7 @@ void move_polys() {
 void draw_one_poly(polyplace_t *p) {
 	/* Opaque Colored vertex */
 	pvr_vertex_t vert;
-	
+
 	vert.flags = PVR_CMD_VERTEX;
 	vert.x = p->x + 0.0f;
 	vert.y = p->y + 200.0f;
@@ -138,7 +138,7 @@ void draw_frame() {
 
 	/* Finish the frame */
 	pvr_scene_finish();
-	
+
 	/* Move all polygons */
 	move_polys();
 }
@@ -158,7 +158,7 @@ int main(int argc, char **argv) {
 
 	/* Shutdown isn't technically neccessary, but is possible */
 	pvr_shutdown();
-		
+
 	return 0;
 }
 

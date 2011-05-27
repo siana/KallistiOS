@@ -26,7 +26,7 @@ typedef struct memctl {
 	uint32		size;
 	tid_t		thread;
 	uint32		addr;
-	int		inuse, damaged;	
+	int		inuse, damaged;
 	uint32		*post;
 	const char	*type;
 	struct memctl	*next;
@@ -124,7 +124,7 @@ void *memalign(size_t alignment, size_t amt) {
 	}
 
 	rv = malloc(amt);
-	
+
 	ctl = get_memctl(rv);
 	ctl->addr = pr;
 	ctl->type = "memalign";
@@ -138,7 +138,7 @@ void * realloc(void *ptr, size_t newsize) {
 	void *nb;
 
 	printf("realloc: real address for the following is %08x\n   ", pr);
-	
+
 	/* Don't realloc if we don't need to */
 	ctl = get_memctl(ptr);
 	if (newsize == ctl->size)
@@ -164,7 +164,7 @@ void free(void *block) {
 	memctl_t *ctl;
 	uint32 *nt1, *nt2, pr = arch_get_ret_addr();
 	int i;
-	
+
 	spinlock_lock(&mutex);
 
 	printf("Thread %d/%08x freeing block @ %08x\n",
@@ -211,7 +211,7 @@ void free(void *block) {
 void malloc_stats() {
 	memctl_t *ctl;
 	int dmgcnt, leaked, leakedcnt;
-	
+
 	if (!first) {
 		printf("NO MEMORY ALLOCATED\n");
 		return;

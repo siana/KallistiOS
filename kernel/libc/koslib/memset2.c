@@ -7,7 +7,7 @@
 
 #include <string.h>
 
-/* This variant was added by Dan Potter for its usefulness in 
+/* This variant was added by Dan Potter for its usefulness in
    working with GBA external hardware. */
 void * memset2(void *s, unsigned short c, size_t count)
 {

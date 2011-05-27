@@ -2,7 +2,7 @@
 
    arch/gba/include/irq.h
    (c)2000-2001 Dan Potter
-  
+
 */
 
 #ifndef __ARCH_IRQ_H

@@ -19,7 +19,7 @@ int mm_init() {
 	int base = (int)(&end);
 	base = (base/4)*4 + 4;		/* longword align */
 	sbrk_base = (void*)base;
-	
+
 	return 0;
 }
 
@@ -34,7 +34,7 @@ void* sbrk(unsigned long increment) {
 	if ( ((uint32)sbrk_base) >= (0x02040000 - 4096) ) {
 		panic("out of memory; about to run over kernel stack");
 	}
-	
+
 	return base;
 }
 

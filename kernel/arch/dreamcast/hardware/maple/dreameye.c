@@ -195,7 +195,7 @@ static int dreameye_send_get_image(maple_device_t *dev,
     maple_frame_init(&dev->frame);
     send_buf = (uint32 *)dev->frame.recv_buf;
     send_buf[0] = MAPLE_FUNC_CAMERA;
-    send_buf[1] = DREAMEYE_SUBCOMMAND_IMAGEREQ | (state->img_number << 8) | 
+    send_buf[1] = DREAMEYE_SUBCOMMAND_IMAGEREQ | (state->img_number << 8) |
         (req << 16) | (cnt << 24);
     dev->frame.cmd = MAPLE_COMMAND_CAMCONTROL;
     dev->frame.dst_port = dev->port;

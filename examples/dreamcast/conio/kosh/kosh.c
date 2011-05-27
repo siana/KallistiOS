@@ -21,7 +21,7 @@ KOS_INIT_FLAGS(INIT_DEFAULT | INIT_MALLOCSTATS);
 
 void test_builtin(int argc, char **argv) {
 	int i;
-	
+
 	conio_printf("You passed %d args:\n", argc);
 	for (i=0; i<argc; i++)
 		conio_printf("%s\n", argv[i]);

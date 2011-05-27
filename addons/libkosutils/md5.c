@@ -54,7 +54,7 @@ int main(int argc, char *argv[]) {
 
     printf("static const uint32 md5tab[64] = {");
 
-    for(i = 0; i < 64; ++i) {        
+    for(i = 0; i < 64; ++i) {
         if((i % 4) == 0)
             printf("\n   ");
 

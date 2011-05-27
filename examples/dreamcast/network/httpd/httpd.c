@@ -8,7 +8,7 @@
 #include <lwip/lwip.h>
 #include <lwip/sockets.h>
 #include <sys/queue.h>
-      
+
 struct http_state;
 typedef TAILQ_HEAD(http_state_list, http_state) http_state_list_t;
 

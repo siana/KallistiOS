@@ -11,7 +11,7 @@
 /*
 
   Global variables internal to the PVR module go here.
- 
+
 */
 
 /* Our global state -- by default it's initialized to zeros, so the

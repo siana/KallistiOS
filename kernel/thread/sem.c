@@ -66,7 +66,7 @@ void sem_destroy(semaphore_t *sm) {
 
 int sem_wait(semaphore_t *sm) {
 	int old, rv = 0;
-	
+
 	if (irq_inside_int()) {
 		dbglog(DBG_WARNING, "sem_wait: called inside interrupt\n");
 		errno = EPERM;
@@ -161,10 +161,10 @@ int sem_trywait(semaphore_t *sm) {
 	return succeeded;
 }
 
-/* Signal a semaphore */ 
+/* Signal a semaphore */
 void sem_signal(semaphore_t *sm) {
 	int		old = 0, woken;
-	
+
 	old = irq_disable();
 
 	/* Is there anyone waiting? If so, pass off to them */

@@ -116,7 +116,7 @@ struct elf_sym_t {
 	uint32		value;
 	uint32		size;
 	uint8		info;		/* type == info & 0x0f */
-	uint8		other;		
+	uint8		other;
 	uint16		shndx;		/* Section index */
 };
 #define ELF32_ST_BIND(info)	((info) >> 4)

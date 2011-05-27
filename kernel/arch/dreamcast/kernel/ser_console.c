@@ -13,7 +13,7 @@
 #include <kos/sem.h>
 
 /* This is a little thing I ported over from KOS-MMU which turned out
-   to be extremely useful during debugging. It basically sets up a 
+   to be extremely useful during debugging. It basically sets up a
    simple serial console on the DC serial port which you can use
    to view process listings, etc. It has to be manually enabled,
    though, and it will interfere with dc-load-serial, so don't try
@@ -30,13 +30,13 @@ int thd_pslist();
 static void ser_irq(irq_t source, irq_context_t *context) {
 	*SCSCR2 &= ~(1 << 6);
 	*SCSCR2 |= (1 << 6);
-	
+
 	sem_signal(chr_ready);
 }
 
 static char *read_line() {
 	int q = 0, ch;
-	
+
 	while(1) {
 		while ( (ch = dbgio_read()) == -1)
 			/* sem_wait(chr_ready); */
@@ -46,13 +46,13 @@ static char *read_line() {
 			dbgio_write_str("\n");
 			return buffer;
 		}
-		
+
 		if (ch == '\x08') {
 			q--;
 			dbgio_write_str("\x08 \x08");
 			continue;
 		}
-		
+
 		buffer[q++] = ch;
 		dbgio_write(ch);
 	}
@@ -79,7 +79,7 @@ static void interact() {
 			cnt++;
 			continue;
 		}
-					
+
 		if (!strcmp(buf, "quit") || !strcmp(buf, "exit")) {
 			break;
 		} else if (!strcmp(buf, "die")) {
@@ -93,14 +93,14 @@ static void interact() {
 		} else {
 			dbgio_write_str("commands: die quit/exit reboot menu ps\n");
 		}
-		
+
 		cnt++;
 	}
 }
 
 static void real_start(void *param) {
 	dbgio_printk_func old;
-	
+
 	/* Set debug output to the serial console again */
 	old = dbgio_set_printk(dbgio_write_str);
 

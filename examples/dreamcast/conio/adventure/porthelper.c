@@ -1,6 +1,6 @@
 /* KallistiOS ##version##
 
-   porthelper.c 
+   porthelper.c
 
    (c)2002 Dan Potter
 
@@ -13,7 +13,7 @@ static int have_buffer = 0, bufptr = -1, buflen = -1;
 
 int getchar() {
 	int rv;
-	
+
 	if (!have_buffer) {
 		conio_input_getline(-1, buffer, 256);
 		bufptr = 0;

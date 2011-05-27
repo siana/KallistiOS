@@ -1,6 +1,6 @@
 /* KallistiOS ##version##
 
-   general_threading_test.c 
+   general_threading_test.c
 
    (c)2000-2002 Dan Potter
 
@@ -47,7 +47,7 @@ void *thd_1(void *v) {
 /* This routine will be started as thread #2 */
 void *thd_2(void *v) {
 	int i;
-	
+
 	thd_sleep(50);
 	for (i=0; i<29; i++) {
 		sem_wait(sem);
@@ -101,7 +101,7 @@ int main(int argc, char **argv) {
 	cont_btn_callback(0, CONT_START | CONT_A | CONT_B | CONT_X | CONT_Y,
 	                  (cont_btn_callback_t)arch_exit);
 
-	/* Print a banner */	
+	/* Print a banner */
 	printf("KOS 1.1.x thread program:\n");
 
 	/* Create two threads, but don't start them yet. Note that at this
@@ -171,7 +171,7 @@ int main(int argc, char **argv) {
 	}
 	thd_sleep(100);
 	printf("  (might not be the full 10)\n");
-	
+
 	printf("\nBroadcast test:\n");
 	mutex_lock(mut);
 	cv_ready = 1;

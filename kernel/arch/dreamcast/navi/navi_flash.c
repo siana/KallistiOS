@@ -45,7 +45,7 @@
   8     06000h-07FFFh
   8     04000h-05FFFh
   16    00000h-03FFFh
-  
+
 */
 
 /* These defines are from Linux's AMD MTD driver */
@@ -97,7 +97,7 @@ static int nvflash_busy(uint32 addr) {
 /* Wait until the flash is ready, with timeout */
 static int nvflash_wait_ready(uint32 addr, int timeout) {
 	int wait = 0;
-	
+
 	if (timeout < 0) {
 		timeout = -timeout;
 		wait = 1;
@@ -110,7 +110,7 @@ static int nvflash_wait_ready(uint32 addr, int timeout) {
 		printf("nvflash_wait_ready: writing to flash timed out\n");
 		return -1;
 	}
-	
+
 	return 0;
 }
 
@@ -174,7 +174,7 @@ int nvflash_erase_block(uint32 addr) {
 int nvflash_erase_all() {
 	send_cmd(CMD_SECTOR_ERASE_UNLOCK_DATA);
 	send_cmd(CMD_ERASE_ALL);
-	
+
 	if (nvflash_wait_ready(0, -20000) < 0) {
 		printf("nvflash_erase_all: failed erasing full chip\n");
 		return -1;
@@ -191,12 +191,12 @@ int nvflash_erase_all() {
 /* Return 0 if we successfully detect a compatible device */
 int nvflash_detect() {
 	uint16		mfr_id, dev_id;
-	
+
 	if (nvflash_read(0) == 0xff && nvflash_read(2) == 0x28) {
 		printf("flash_detect: normal DC BIOS detected\n");
 		return -1;
 	}
-	
+
 	/* Reset and ask for manufacturer code */
 	send_cmd(CMD_RESET_DATA);
 	send_cmd(CMD_MANUFACTURER_UNLOCK_DATA);

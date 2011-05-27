@@ -119,7 +119,7 @@ __BEGIN_DECLS
 #define RT_TX_SIZE_MASK     0x00001fff  /**< \brief Descriptor size mask */
 /** @} */
 
-/** \defgroup bba_rbits RTL8139C receive status bits 
+/** \defgroup bba_rbits RTL8139C receive status bits
     @{
 */
 #define RT_RX_MULTICAST     0x00008000  /**< \brief Multicast packet */

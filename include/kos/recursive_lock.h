@@ -1,8 +1,8 @@
 /* KallistiOS ##version##
- 
+
    include/kos/recursive_lock.h
    Copyright (C) 2008, 2010 Lawrence Sebald
- 
+
 */
 
 /** \file   kos/recursive_lock.h

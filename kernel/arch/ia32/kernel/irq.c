@@ -3,7 +3,7 @@
    arch/ia32/kernel/irq.c
    Copyright (c)2003 Dan Potter
 */
-      
+
 #include <errno.h>
 #include <string.h>
 #include <arch/irq.h>
@@ -137,7 +137,7 @@ int _irq_set_handler(kprocess_t * proc, irq_t src, irq_handler hnd) {
 	irq_handlers_procs[src] = proc;
 
 	irq_restore(old);
-	
+
 	return 0;
 }
 

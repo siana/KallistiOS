@@ -186,4 +186,4 @@ void maple_frame_unlock(maple_frame_t *frame) {
 	assert(frame->state == MAPLE_FRAME_RESPONDED);
 	frame->state = MAPLE_FRAME_VACANT;
 }
-   
+

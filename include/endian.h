@@ -1,7 +1,7 @@
-/*   
- * This module was ported from the BSD 4.5 libc by Dan Potter. Please   
- * see "README.BSD" in "docs" for more information.   
- *   
+/*
+ * This module was ported from the BSD 4.5 libc by Dan Potter. Please
+ * see "README.BSD" in "docs" for more information.
+ *
  */
 
 /*

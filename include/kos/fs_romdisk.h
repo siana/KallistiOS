@@ -49,7 +49,7 @@ int fs_romdisk_shutdown();
 /** \brief  Mount a ROMFS image as a new filesystem.
 
     This function will mount a ROMFS image that has been loaded into memory to
-    the specified mountpoint. 
+    the specified mountpoint.
 
     \param  mountpoint      The directory to mount this romdisk on
     \param  img             The ROMFS image

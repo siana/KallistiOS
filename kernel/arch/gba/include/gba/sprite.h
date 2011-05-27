@@ -2,7 +2,7 @@
 
    gba/sprite.h
    (c)2001 Dan Potter
-   
+
 */
 
 /* Thanks to Dovoto's tutorial for these numbers */

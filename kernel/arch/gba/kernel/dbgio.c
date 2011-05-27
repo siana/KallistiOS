@@ -64,6 +64,6 @@ int dbgio_printf(const char *fmt, ...) {
 	return 0;
 }
 
-void dbgio_printk(const char *buf) { 
+void dbgio_printk(const char *buf) {
 }
 

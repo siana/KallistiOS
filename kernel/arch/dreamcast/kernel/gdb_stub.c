@@ -1,12 +1,12 @@
 /* sh-stub.c -- debugging stub for the Hitachi-SH.
 
- NOTE!! This code has to be compiled with optimization, otherwise the 
+ NOTE!! This code has to be compiled with optimization, otherwise the
  function inlining which generates the exception handlers won't work.
 
 */
 
 /*   This is originally based on an m68k software stub written by Glenn
-     Engel at HP, but has changed quite a bit. 
+     Engel at HP, but has changed quite a bit.
 
      Modifications for the SH by Ben Lee and Steve Chamberlain
 
@@ -40,7 +40,7 @@
 	'$' or '#'.  If <data> starts with two characters followed by
 	':', then the existing stubs interpret this as a sequence number.
 
-	CSUM1 and CSUM2 are ascii hex representation of an 8-bit 
+	CSUM1 and CSUM2 are ascii hex representation of an 8-bit
 	checksum of <data>, the most significant nibble is sent first.
 	the hex digits 0-9,a-f are used.
 
@@ -140,10 +140,10 @@
 	Responses can be run-length encoded to save space.  A '*' means that
 	the next character is an ASCII encoding giving a repeat count which
 	stands for that many repititions of the character preceding the '*'.
-	The encoding is n+29, yielding a printable character where n >=3 
-	(which is where rle starts to win).  Don't use an n > 126. 
+	The encoding is n+29, yielding a printable character where n >=3
+	(which is where rle starts to win).  Don't use an n > 126.
 
-	So 
+	So
 	"0* " means the same as "0000".  */
 
 #include <dc/scif.h>
@@ -473,11 +473,11 @@ putpacket (register char *buffer)
 	  int runlen;
 
 	  /* Do run length encoding */
-	  for (runlen = 0; runlen < 100; runlen ++) 
+	  for (runlen = 0; runlen < 100; runlen ++)
 	    {
 	      if (src[0] != src[runlen] || runlen == 99)
 		{
-		  if (runlen > 3) 
+		  if (runlen > 3)
 		    {
 		      int encode;
 		      /* Got a useful amount */

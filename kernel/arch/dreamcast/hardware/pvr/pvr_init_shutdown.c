@@ -44,7 +44,7 @@ int pvr_init_defaults() {
 
 /* Initialize the PVR chip to ready status, enabling the specified lists
    and using the specified parameters; note that bins and vertex buffers
-   come from the texture memory pool! Expects that a 2D mode was 
+   come from the texture memory pool! Expects that a 2D mode was
    initialized already using the vid_* API. */
 int pvr_init(pvr_init_params_t *params) {
 	/* If we're already initialized, fail */
@@ -94,7 +94,7 @@ int pvr_init(pvr_init_params_t *params) {
 	pvr_state.ram_target = 0;
 	pvr_state.ta_target = 0;
 	pvr_state.view_target = 0;
-	
+
 	pvr_state.list_reg_open = -1;
 
 	// Sync all the hardware registers with our pipeline state.
@@ -186,14 +186,14 @@ int pvr_init(pvr_init_params_t *params) {
 int pvr_shutdown() {
 	if (!pvr_state.valid)
 		return -1;
-		
+
 	/* Set us invalid */
 	pvr_state.valid = 0;
 
 	/* Stop anything that might be going on */
 	PVR_SET(PVR_RESET, PVR_RESET_ALL);
 	PVR_SET(PVR_RESET, PVR_RESET_NONE);
-		
+
 	/* Unhook any int handlers */
 	vblank_handler_remove(pvr_state.vbl_handle);
 	asic_evt_set_handler(ASIC_EVT_PVR_OPAQUEDONE, NULL);		asic_evt_disable(ASIC_EVT_PVR_OPAQUEDONE, ASIC_IRQ_DEFAULT);
@@ -215,7 +215,7 @@ int pvr_shutdown() {
 
 	/* Clear video memory */
 	vid_empty();
-				
+
 	/* Reset the frame buffer offset */
 	vid_waitvbl();
 	vid_set_start(0);

@@ -7,7 +7,7 @@
 
 #include <string.h>
 
-/* This variant was added by Dan Potter for its usefulness in 
+/* This variant was added by Dan Potter for its usefulness in
    working with Dreamcast external hardware. */
 void * memcpy4(void *dest, const void *src, size_t count)
 {

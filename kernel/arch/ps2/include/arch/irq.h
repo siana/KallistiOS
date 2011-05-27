@@ -2,7 +2,7 @@
 
    arch/ps2/include/irq.h
    (c)2000-2002 Dan Potter
-  
+
 */
 
 #ifndef __ARCH_IRQ_H

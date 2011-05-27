@@ -148,11 +148,11 @@ int main(int argc, char **argv) {
 		/* Check controller/key status */
 		if ((caddr = maple_enum_type(0, MAPLE_FUNC_CONTROLLER)) == NULL)
 			break;
-		
+
 		cont = (cont_state_t *)maple_dev_status(caddr);
 		if ((cont->buttons & CONT_START))
 			break;
-		
+
 		if ((cont->buttons & CONT_DPAD_UP))
 			z -= 0.3f;
 		if ((cont->buttons & CONT_DPAD_DOWN))
@@ -163,7 +163,7 @@ int main(int argc, char **argv) {
 		}
 		if (!(cont->buttons & CONT_A))
 			a_pressed = false;
-		
+
 		rx+=((float)cont->joyy)/100.0f;
 		ry+=((float)cont->joyx)/100.0f;
 
@@ -188,7 +188,7 @@ int main(int argc, char **argv) {
 		glDisable(GL_KOS_NEARZ_CLIPPING);
 
 		glPopMatrix();
-		
+
 		/* Finish the frame */
 		glKosFinishFrame();
 	}

@@ -6,27 +6,27 @@ void mouse_test() {
 	mouse_state_t *mstate;
 	int c = 'M', x = 20, y = 20;
 
-	printf("Now doing mouse test\n");	
+	printf("Now doing mouse test\n");
 	while (1) {
 		cont = maple_enum_type(0, MAPLE_FUNC_CONTROLLER);
 		if (!cont) continue;
 		mouse = maple_enum_type(0, MAPLE_FUNC_MOUSE);
 		if (!mouse) continue;
-		
+
 		/* Check for start on the controller */
 		cstate = (cont_state_t *)maple_dev_status(cont);
 		if (!cstate) {
 			printf("Error getting controller status\n");
 			return;
 		}
-		
+
 		if (cstate->buttons & CONT_START) {
 			printf("Pressed start\n");
 			return;
 		}
-		
+
 		thd_sleep(10);
-		
+
 		/* Check for mouse input */
 		mstate = (mouse_state_t *)maple_dev_status(mouse);
 		if (!mstate)

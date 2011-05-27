@@ -2,7 +2,7 @@
 
    gba/sound.h
    (c)2002 Gil Megidish
-   
+
 */
 
 #ifndef __GBA_SOUND_H

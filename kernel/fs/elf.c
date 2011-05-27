@@ -51,7 +51,7 @@ static int find_sym(char *name, struct elf_sym_t* table, int tablelen) {
    documented by Intel.. I hope that this works for future compilers. */
 int elf_load(const char * fn, klibrary_t * shell, elf_prog_t * out) {
 	uint8			*img, *imgout;
-	int			sz, i, j, sect; 
+	int			sz, i, j, sect;
 	struct elf_hdr_t	*hdr;
 	struct elf_shdr_t	*shdrs, *symtabhdr;
 	struct elf_sym_t	*symtab;
@@ -225,7 +225,7 @@ int elf_load(const char * fn, klibrary_t * shell, elf_prog_t * out) {
 		case SHT_RELA:
 			relatab = (struct elf_rela_t *)(img + shdrs[i].offset);
 			reltabsize = shdrs[i].size / sizeof(struct elf_rela_t);
-		
+
 			for (j=0; j<reltabsize; j++) {
 				int sym;
 
@@ -267,7 +267,7 @@ int elf_load(const char * fn, klibrary_t * shell, elf_prog_t * out) {
 		case SHT_REL:
 			reltab = (struct elf_rel_t *)(img + shdrs[i].offset);
 			reltabsize = shdrs[i].size / sizeof(struct elf_rel_t);
-		
+
 			for (j=0; j<reltabsize; j++) {
 				int sym, info, pcrel;
 
@@ -311,7 +311,7 @@ int elf_load(const char * fn, klibrary_t * shell, elf_prog_t * out) {
 					}
 					if (pcrel)
 						value -= vma + shdrs[sect].addr + reltab[j].offset;
-					
+
 					*((uint32*)(imgout
 						+ shdrs[sect].addr
 						+ reltab[j].offset))
@@ -323,7 +323,7 @@ int elf_load(const char * fn, klibrary_t * shell, elf_prog_t * out) {
 				}
 			}
 			break;
-		
+
 		}
 	}
 	if (reltab == NULL && relatab == NULL) {
@@ -353,7 +353,7 @@ int elf_load(const char * fn, klibrary_t * shell, elf_prog_t * out) {
 
 	free(img);
 	DBG(("elf_load final ELF stats: memory image at %p, size %08lx\n\tentry pt %p\n", out->data, out->size, out->start));
-	
+
 	/* Flush the icache for that zone */
 	icache_flush_range((uint32)out->data, out->size);
 

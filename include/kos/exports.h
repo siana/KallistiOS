@@ -55,7 +55,7 @@ typedef struct symtab_handler {
 } symtab_handler_t;
 #endif
 
-/** \brief  Setup initial kernel exports. 
+/** \brief  Setup initial kernel exports.
     \retval 0               On success
     \retval -1              On error
 */

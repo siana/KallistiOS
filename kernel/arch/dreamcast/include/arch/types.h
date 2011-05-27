@@ -2,7 +2,7 @@
 
    arch/dreamcast/include/types.h
    (c)2000-2001 Dan Potter
-   
+
 */
 
 /** \file   arch/types.h

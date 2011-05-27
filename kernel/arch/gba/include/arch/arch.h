@@ -2,7 +2,7 @@
 
    arch/gba/arch.h
    (c)2001 Dan Potter
-   
+
 */
 
 #ifndef __ARCH_ARCH_H

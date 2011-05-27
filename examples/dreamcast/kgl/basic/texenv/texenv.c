@@ -10,9 +10,9 @@
 #include <pcx/pcx.h>
 #include <tga/tga.h>
 
-/* Really simple KGL example to demonstrate the various glTexEnv modes. 
+/* Really simple KGL example to demonstrate the various glTexEnv modes.
 
-   The top row shows what happens with a texture without any alpha 
+   The top row shows what happens with a texture without any alpha
    components (RGB565 in this case). The bottom row shows the same thing
    but with a texture that includes alpha information (ARGB4444).
 

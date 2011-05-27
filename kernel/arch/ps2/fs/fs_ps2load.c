@@ -9,7 +9,7 @@
 /*
 
 This is a rewrite of Dan Potter's fs_serconsole to use the dcload / dc-tool
-fileserver and console. 
+fileserver and console.
 
 printf goes to the dc-tool console
 /pc corresponds to / on the system running dc-tool
@@ -62,12 +62,12 @@ uint32 ps2load_open(vfs_handler_t * vfs, const char *fn, int mode) {
     int hnd = 0;
     uint32 h;
     int ps2load_mode = 0;
-    
+
     /* if (lwip_dclsc && irq_inside_int())
 	return 0; */
 
     spinlock_lock(&mutex);
-    
+
     if (mode & O_DIR) {
         if (fn[0] == '\0') {
             fn = "/";
@@ -99,7 +99,7 @@ uint32 ps2load_open(vfs_handler_t * vfs, const char *fn, int mode) {
 	hnd = ps2lip_syscall(PS2LOAD_OPEN, fn, ps2load_mode, 0644);
 	hnd++; /* KOS uses 0 for error, not -1 */
     }
-    
+
     h = hnd;
 
     spinlock_unlock(&mutex);
@@ -111,7 +111,7 @@ void ps2load_close(uint32 hnd) {
 	return; */
 
     spinlock_lock(&mutex);
-    
+
     if (hnd) {
 	if (hnd > 100) /* hack */
 	    ps2lip_syscall(PS2LOAD_CLOSEDIR, hnd);
@@ -125,29 +125,29 @@ void ps2load_close(uint32 hnd) {
 
 ssize_t ps2load_read(uint32 hnd, void *buf, size_t cnt) {
     ssize_t ret = -1;
-    
+
     /* if (lwip_dclsc && irq_inside_int())
 	return 0; */
 
     spinlock_lock(&mutex);
-    
+
     if (hnd) {
 	hnd--; /* KOS uses 0 for error, not -1 */
 	ret = ps2lip_syscall(PS2LOAD_READ, hnd, buf, cnt);
     }
-    
+
     spinlock_unlock(&mutex);
     return ret;
 }
 
 ssize_t ps2load_write(uint32 hnd, const void *buf, size_t cnt) {
     ssize_t ret = -1;
-    	
+
     /* if (lwip_dclsc && irq_inside_int())
 	return 0; */
 
     spinlock_lock(&mutex);
-    
+
     if (hnd) {
 	hnd--; /* KOS uses 0 for error, not -1 */
 	ret = ps2lip_syscall(PS2LOAD_WRITE, hnd, buf, cnt);
@@ -176,7 +176,7 @@ off_t ps2load_seek(uint32 hnd, off_t offset, int whence) {
 
 off_t ps2load_tell(uint32 hnd) {
     off_t ret = -1;
-    
+
     /* if (lwip_dclsc && irq_inside_int())
 	return 0; */
 
@@ -194,19 +194,19 @@ off_t ps2load_tell(uint32 hnd) {
 size_t ps2load_total(uint32 hnd) {
     size_t ret = -1;
     size_t cur;
-	
+
     /* if (lwip_dclsc && irq_inside_int())
 	return 0; */
 
     spinlock_lock(&mutex);
-	
+
     if (hnd) {
 	hnd--; /* KOS uses 0 for error, not -1 */
 	cur = ps2lip_syscall(PS2LOAD_LSEEK, hnd, 0, SEEK_CUR);
 	ret = ps2lip_syscall(PS2LOAD_LSEEK, hnd, 0, SEEK_END);
 	ps2lip_syscall(PS2LOAD_LSEEK, hnd, cur, SEEK_SET);
     }
-	
+
     spinlock_unlock(&mutex);
     return ret;
 }
@@ -227,7 +227,7 @@ dirent_t *ps2load_readdir(uint32 hnd) {
     spinlock_lock(&mutex);
 
     dcld = (ps2load_dirent_t *)ps2lip_syscall(PS2LOAD_READDIR, hnd);
-    
+
     if (dcld) {
 	rv = &dirent;
 	strcpy(rv->name, dcld->d_name);
@@ -245,12 +245,12 @@ dirent_t *ps2load_readdir(uint32 hnd) {
 	    else
 		rv->size = filestat.st_size;
 	    rv->time = filestat.st_mtime;
-	    
+
 	}
-	
+
 	free(fn);
     }
-    
+
     spinlock_unlock(&mutex);
     return rv;
 }
@@ -294,7 +294,7 @@ static vfs_handler_t vh = {
     0, 0,		/* In-kernel, no cacheing */
     NULL,               /* privdata */
     VFS_LIST_INIT,      /* linked list pointer */
-    ps2load_open, 
+    ps2load_open,
     ps2load_close,
     ps2load_read,
     ps2load_write,

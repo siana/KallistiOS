@@ -181,7 +181,7 @@ int cond_wait_timed_recursive(condvar_t *cv, recursive_lock_t *l, int timeout);
 void cond_signal(condvar_t *cv);
 
 /** \brief  Signal all threads waiting on the condition variable.
- 
+
     This function will wake up all threads that are waiting on the condition.
     The calling thread should be holding the associated mutex or recursive lock
     before calling this to guarantee sane behavior.

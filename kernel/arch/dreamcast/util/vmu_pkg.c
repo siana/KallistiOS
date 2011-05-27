@@ -23,7 +23,7 @@ Thanks to Marcus Comstedt for this information.
 /* CRC calculation: calculates the CRC on a VMU file to be written out */
 static int vmu_pkg_crc(const uint8 * buf, int size) {
 	int	i, c, n;
-	
+
 	for (i=0, n=0; i<size; i++) {
 		n ^= (buf[i] << 8);
 		for (c=0; c<8; c++) {
@@ -87,10 +87,10 @@ int vmu_pkg_build(vmu_pkg_t *src, uint8 ** dst, int * dst_size) {
 	hdr->data_len = src->data_len;
 	memcpy(hdr->icon_pal, src->icon_pal, sizeof(src->icon_pal));
 	out += sizeof(vmu_hdr_t);
-	
+
 	memcpy(out, src->icon_data, 512 * src->icon_cnt);
 	out += 512 * src->icon_cnt;
-	
+
 	memcpy(out, src->eyecatch_data, ec_size);
 	out += ec_size;
 
@@ -107,7 +107,7 @@ int vmu_pkg_build(vmu_pkg_t *src, uint8 ** dst, int * dst_size) {
 	return 0;
 }
 
-/* Parse an array of uint8's (i.e. a VMU data file) into a 
+/* Parse an array of uint8's (i.e. a VMU data file) into a
  * vmu_pkg_t package structure. */
 int vmu_pkg_parse(uint8 *data, vmu_pkg_t *pkg) {
 	uint16 crc, crc_save;
@@ -150,6 +150,6 @@ int vmu_pkg_parse(uint8 *data, vmu_pkg_t *pkg) {
 	*(pkg->desc_short + sizeof(hdr->desc_short)) = '\0';
 	*(pkg->desc_long  + sizeof(hdr->desc_long))  = '\0';
 	*(pkg->app_id     + sizeof(hdr->app_id))     = '\0';
-	
+
 	return 0;
 }

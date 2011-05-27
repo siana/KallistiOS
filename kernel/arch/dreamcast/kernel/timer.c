@@ -39,14 +39,14 @@ int timer_prime(int which, uint32 speed, int interrupts) {
 		TIMER16(tcrs[which]) = 32 | 2;
 	else
 		TIMER16(tcrs[which]) = 2;
-		
+
 	/* Initialize counters; formula is P0/(tps*64) */
 	TIMER32(tcnts[which]) = 50000000 / (speed*64);
 	TIMER32(tcors[which]) = 50000000 / (speed*64);
-	
+
 	if (interrupts)
 		timer_enable_ints(which);
-	
+
 	return 0;
 }
 
@@ -66,10 +66,10 @@ static int timer_prime_wait(int which, uint32 millis, int interrupts) {
 	/* Initialize counters */
 	TIMER32(tcnts[which]) = cd;
 	TIMER32(tcors[which]) = cd;
-	
+
 	if (interrupts)
 		timer_enable_ints(which);
-	
+
 	return 0;
 }
 
@@ -82,7 +82,7 @@ int timer_start(int which) {
 /* Stop a timer -- and disables its interrupt */
 int timer_stop(int which) {
 	timer_disable_ints(which);
-	
+
 	/* Stop timer */
 	TIMER8(TSTR) &= ~(1 << which);
 
@@ -98,7 +98,7 @@ uint32 timer_count(int which) {
 int timer_clear(int which) {
 	uint16 value = TIMER16(tcrs[which]);
 	TIMER16(tcrs[which]) &= ~0x100;
-	
+
 	return (value & 0x100) ? 1 : 0;
 }
 
@@ -217,7 +217,7 @@ static void tp_handler(irq_t src, irq_context_t * cxt) {
 		   re-enable them of course. */
 		timer_stop(TMU0);
 		timer_disable_ints(TMU0);
-		
+
 		/* Call the callback, if any */
 		if (tp_callback)
 			tp_callback(cxt);
@@ -239,7 +239,7 @@ static void tp_handler(irq_t src, irq_context_t * cxt) {
 static void timer_primary_init() {
 	/* Clear out our vars */
 	tp_callback = NULL;
-	
+
 	/* Clear out TMU0 and get ready for wakeups */
 	irq_set_handler(EXC_TMU0_TUNI0, tp_handler);
 	timer_clear(TMU0);
@@ -288,7 +288,7 @@ void timer_primary_wakeup(uint32 millis) {
 int timer_init() {
 	/* Disable all timers */
 	TIMER8(TSTR) = 0;
-	
+
 	/* Set to internal clock source */
 	TIMER8(TOCR) = 0;
 

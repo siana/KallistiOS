@@ -25,7 +25,7 @@ static void process_broadcast(unsigned char *pkt, int len)
     unsigned int ip = htonl(dcln_our_ip);
 
     if (ether_header->type[1] != 0x06) /* ARP */
-	return;    
+	return;
 
     /* hardware address space = ethernet */
     if (arp_header->hw_addr_space != 0x0100)
@@ -70,7 +70,7 @@ static void process_icmp(ether_header_t *ether, ip_header_t *ip, icmp_header_t *
   icmp->checksum = dcln_checksum((unsigned short *)dcln_pkt_buf, (ntohs(ip->length)+1)/2 - 2*(ip->version_ihl & 0x0f));
   if (i != icmp->checksum)
     return;
-  
+
   if (icmp->type == 8) { /* echo request */
     icmp->type = 0; /* echo reply */
     /* swap src and dest hw addresses */
@@ -145,7 +145,7 @@ static void process_udp(ether_header_t *ether, ip_header_t *ip, udp_header_t *ud
   if (!memcmp(command->id, DCLN_CMD_LOADBIN, 4)) {
       dcln_cmd_loadbin(ip, udp, command);
   }
-  
+
   if (!memcmp(command->id, DCLN_CMD_PARTBIN, 4)) {
       dcln_cmd_partbin(ip, udp, command);
   }
@@ -184,7 +184,7 @@ static void process_mine(unsigned char *pkt, int len)
     /* ip_udp_pseudo_header_t *ip_udp_pseudo_header;
     unsigned char tmp[6]; */
     int i;
-    
+
     if (ether_header->type[1] != 0x00)
 	return;
 
@@ -192,7 +192,7 @@ static void process_mine(unsigned char *pkt, int len)
 
     if (ntohs(ip_header->flags_frag_offset) & 0x3fff)
 	return;
-    
+
     /* check ip header checksum */
     i = ip_header->checksum;
     ip_header->checksum = 0;

@@ -2,7 +2,7 @@
 
    arch/ps2/include/asmregs.h
    (c)2002 Dan Potter
-   
+
 */
 
 #ifndef __PS2_ASMREGS_H

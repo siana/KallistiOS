@@ -44,7 +44,7 @@ int arch_auto_init() {
 	timer_init();			/* Timers */
 	irq_init();			/* IRQs */
 	syscall_init();			/* System call interface */
-#if 0	
+#if 0
 	hardware_init();		/* DC Hardware init */
 #endif
 
@@ -148,7 +148,7 @@ void arch_shutdown() {
 
 	/* Turn off UBC breakpoints, if any */
 	// ubc_disable_all();
-	
+
 	/* Do auto-shutdown... or use the "light weight" version underneath */
 #if 1
 	arch_auto_shutdown();
@@ -196,7 +196,7 @@ void arch_exit() {
 void arch_return() {
 	/* Shut down */
 	arch_shutdown();
-	
+
 	/* Jump back to the boot loader */
 	arch_real_exit();
 }
@@ -206,7 +206,7 @@ void arch_return() {
 void arch_abort() {
 	/* Turn off UBC breakpoints, if any */
 	// ubc_disable_all();
-	
+
 	dbglog(DBG_CRITICAL, "arch: aborting the system\n");
 
 #if 0
@@ -220,7 +220,7 @@ void arch_abort() {
 	/* Sound disable (nothing weird done in here) */
 	spu_disable();
 
-	/* Turn off any IRQs */	
+	/* Turn off any IRQs */
 	irq_disable();
 #endif
 

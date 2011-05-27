@@ -249,7 +249,7 @@ int adpcm2wav(const char *infile,const char *outfile)
 		return -1;
 	}
 	fread(&wavhdr, 1, sizeof(wavhdr), in);
-	
+
 	if(memcmp(wavhdr.hdr1,"RIFF",4)
 	|| memcmp(wavhdr.hdr2,"WAVEfmt ",8)
 	|| memcmp(wavhdr.hdr3,"data",4)

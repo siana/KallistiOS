@@ -11,7 +11,7 @@
 #include <GL/glu.h>
 #include <pcx/pcx.h>
 
-/* Simple KGL example to demonstrate texturing. 
+/* Simple KGL example to demonstrate texturing.
 
    Essentially the same thing as NeHe's lesson06 code.
    To learn more, go to http://nehe.gamedev.net/.

@@ -73,7 +73,7 @@ int net_thd_add_callback(void (*cb)(void *), void *data, uint64 timeout) {
     old = irq_disable();
     TAILQ_INSERT_TAIL(&cbs, newcb, thds);
     irq_restore(old);
-    
+
     return newcb->cbid;
 }
 

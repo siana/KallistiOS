@@ -46,7 +46,7 @@
    it for the RTL design later on, because you can imagine the system load
    to do that while trying to process 3D graphics and such...
 
-   This driver is really simplistic, but this should form the basis with 
+   This driver is really simplistic, but this should form the basis with
    which a better one can be written if neccessary. It was developed using
    KOS CVS (1.1.5+).
 
@@ -60,14 +60,14 @@
 
 */
 
-/* 
+/*
    Register names. The first set of register names is always valid; the
-   second depends on which bank you have selected. During normal 
+   second depends on which bank you have selected. During normal
    operation, the last bank will be selected (the one containing the
    BMPR regs). Source: Fujitsu PDF.
 */
 
-/* Bank-agnostic registers; the bank for these is specified as -1 so 
+/* Bank-agnostic registers; the bank for these is specified as -1 so
    that the register access function will ignore it */
 #define DLCR0R	0
 #define DLCR0	DLCR0R,-1	/* Transmit Status Register */
@@ -225,7 +225,7 @@ static void la_irq_hnd(uint32 code);
 /* Set the current bank */
 static void la_set_bank(int bank) {
 	int i;
-	
+
 	if (la_bank == bank)
 		return;
 
@@ -247,7 +247,7 @@ static void la_write(int reg, int bank, int value) {
 		la_set_bank(bank);
 	g2_write_8(REGLOC(reg), value);
 }
-	
+
 /* This is based on the JLI EEPROM reader from FreeBSD. EEPROM in the
    Sega adapter is a bit simpler than what is described in the Fujitsu
    manual -- it appears to contain only the MAC address and not a base
@@ -311,7 +311,7 @@ static int la_detect() {
 	int type;
 
 	assert_msg(la_started == LA_NOT_STARTED, "la_detect called out of sequence");
-	
+
 	/* Reset the interface */
 	g2_write_8(G2_8BP_RST, 0);
 	g2_write_8(G2_8BP_RST, 1);
@@ -337,7 +337,7 @@ static int la_hw_init() {
 	int i;
 
 	assert_msg(la_started == LA_DETECTED, "la_hw_init called out of sequence");
-		
+
 	/* Clear interrupt status */
 	la_write(DLCR0, DLCR0_CLEARALL);
 	la_write(DLCR1, DLCR0_CLEARALL);
@@ -389,7 +389,7 @@ static int la_hw_init() {
 
 	/* Enable receive interrupt */
 	la_write(DLCR3, DLCR1_PKTRDY);
-	
+
 	/* Enable transmitter / receiver */
 	la_write(DLCR6, (la_read(DLCR6) & ~DLCR6_DLCRST));
 
@@ -409,7 +409,7 @@ static void la_start() {
 /* Temporarily stop lan adapter */
 static void la_stop() {
 	int timeout = 50;
-	
+
 	assert_msg(la_started == LA_RUNNING, "la_stop called out of sequence");
 
 	/* Make sure we aren't transmitting currently */
@@ -439,7 +439,7 @@ static void la_hw_shutdown() {
 static int total_pkts_rx = 0, total_pkts_tx = 0;
 
 /* Transmit a packet */
-/* Note that it's technically possible to queue up more than one packet 
+/* Note that it's technically possible to queue up more than one packet
    at a time for transmission, but this is the simple way. */
 static int la_tx(const uint8 * pkt, int len, int blocking) {
 	int	i, timeout;
@@ -521,7 +521,7 @@ static int la_rx() {
 
 static void la_irq_hnd(uint32 code) {
 	int intr_rx, intr_tx, hnd = 0;
-	
+
 	/* Acknowledge Lan Adapter interrupt(s) */
 	intr_tx = la_read(DLCR0);
 	la_write(DLCR0, intr_tx);
@@ -588,7 +588,7 @@ static int la_if_shutdown(netif_t * self) {
 		return 0;
 
 	la_hw_shutdown();
-	
+
 	self->flags &= ~(NETIF_DETECTED | NETIF_INITIALIZED | NETIF_RUNNING);
 	return 0;
 }
@@ -710,7 +710,7 @@ static void la_set_ispcfg() {
 int la_init() {
 	/* Initialize our state */
 	la_started = LA_NOT_STARTED;
-	
+
 	/* Setup the netcore structure */
 	la_if.name = "la";
 	la_if.descr = "Lan Adapter (HIT-0300)";

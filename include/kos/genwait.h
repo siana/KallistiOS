@@ -104,7 +104,7 @@ int genwait_init();
 /* Shut down the genwait system */
 void genwait_shutdown();
 /** \endcond */
-         
+
 
 __END_DECLS
 

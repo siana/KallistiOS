@@ -2,7 +2,7 @@
 
    dc/asic.h
    Copyright (C) 2001-2002 Dan Potter
-  
+
 */
 
 /** \file   dc/asic.h
@@ -174,7 +174,7 @@ void asic_evt_disable_all();
 
     \param  code            The ASIC event code to unhook (see
                             \ref asic_events).
-    \param  irqlevel        The IRQ level it was hooked on (see 
+    \param  irqlevel        The IRQ level it was hooked on (see
                             \ref asic_irq_lv).
 */
 void asic_evt_disable(uint32 code, int irqlevel);

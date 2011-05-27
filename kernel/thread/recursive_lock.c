@@ -1,5 +1,5 @@
 /* KallistiOS ##version##
- 
+
    recursive_lock.c
    Copyright (C) 2008, 2009 Lawrence Sebald
 */

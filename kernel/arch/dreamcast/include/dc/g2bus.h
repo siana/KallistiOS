@@ -33,20 +33,20 @@ __BEGIN_DECLS
 
 #include <arch/types.h>
 
-/* DMA copy from SH-4 RAM to G2 bus (dir = 0) or the opposite; 
+/* DMA copy from SH-4 RAM to G2 bus (dir = 0) or the opposite;
    length must be a multiple of 32,
    and the source and destination addresses must be aligned on 32-byte
    boundaries. If block is non-zero, this function won't return until
    the transfer is complete. If callback is non-NULL, it will be called
-   upon completion (in an interrupt context!). Returns <0 on error. 
+   upon completion (in an interrupt context!). Returns <0 on error.
 
    Known working combination :
-   
+
    g2chn = 0, sh4chn = 3 --> mode = 5 (but many other value seems OK ?)
    g2chn = 1, sh4chn = 1 --> mode = 0 (or 4 better ?)
    g2chn = 1, sh4chn = 0 --> mode = 3
-   
-   It seems that g2chn is not important when choosing mode, so this mode parameter is probably 
+
+   It seems that g2chn is not important when choosing mode, so this mode parameter is probably
    how we actually connect the sh4chn to the g2chn.
 
    Update : looks like there is a formula, mode = 3 + shchn
@@ -54,7 +54,7 @@ __BEGIN_DECLS
 */
 
 /* We use sh channel 3 here to avoid conflicts with the PVR. */
-#define SPU_DMA_MODE   6 /* should we use 6 instead, so that the formula is 3+shchn ? 
+#define SPU_DMA_MODE   6 /* should we use 6 instead, so that the formula is 3+shchn ?
 			    6 works too, so ... */
 #define SPU_DMA_G2CHN  0
 #define SPU_DMA_SHCHN  3
@@ -73,7 +73,7 @@ __BEGIN_DECLS
 
 typedef void (*g2_dma_callback_t)(ptr_t data);
 int g2_dma_transfer(void *from, void * dest, uint32 length, int block,
-	g2_dma_callback_t callback, ptr_t cbdata, 
+	g2_dma_callback_t callback, ptr_t cbdata,
 	uint32 dir, uint32 mode, uint32 g2chn, uint32 sh4chn);
 
 /** \brief  Read one byte from G2.

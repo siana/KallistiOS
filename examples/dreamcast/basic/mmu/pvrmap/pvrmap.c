@@ -17,7 +17,7 @@ int main(int argc, char **argv) {
 	mmucontext_t * cxt;
 	uint16 * vr;
 	int x, y, done = 0;
-	
+
 	/* Initialize MMU support */
 	mmu_init();
 

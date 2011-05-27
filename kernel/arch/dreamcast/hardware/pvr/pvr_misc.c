@@ -35,7 +35,7 @@ int pvr_get_vbl_count() {
 }
 
 /* Fill in a statistics structure (above) from current data. This
-   is a super-set of frame count. */                        
+   is a super-set of frame count. */
 int pvr_get_stats(pvr_stats_t *stat) {
 	if (!pvr_state.valid)
 		return -1;
@@ -166,7 +166,7 @@ void pvr_begin_queued_render() {
 	   the length of the background plane list in dwords
 	   shifted up by 4. */
 	vert_end = 0x01000000 | ((PVR_GET(PVR_TA_VERTBUF_POS) - tbuf->vertex) << 1);
-	
+
 	/* Throw the background data on the end of the TA's list */
 	bkg.flags1 = 0x90800000;	/* These are from libdream.. ought to figure out */
 	bkg.flags2 = 0x20800440;	/*   what they mean for sure... heh =) */

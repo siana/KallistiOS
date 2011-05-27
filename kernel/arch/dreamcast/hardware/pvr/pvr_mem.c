@@ -22,7 +22,7 @@ I was originally going to make a totally seperate thing that could be used
 to generically manage any memory pool, but then I realized what a gruelling
 and thankless task that would be when starting with dlmalloc, so we have this
 instead. ^_^;
- 
+
 */
 
 /* Uncomment this line to enable leak checking */
@@ -69,7 +69,7 @@ static pvr_ptr_t pvr_mem_base = NULL;
 /* Used in pvr_mem_core.c */
 void * pvr_int_sbrk(size_t amt) {
 	uint32 old, n;
-	
+
 	/* Are we valid? */
 	CHECK_MEM_BASE;
 
@@ -94,7 +94,7 @@ pvr_ptr_t pvr_mem_malloc(size_t size) {
 	uint32		ra = arch_get_ret_addr();
 	memctl_t 	* ctl;
 #endif	/* KM_DBG */
-	
+
 	CHECK_MEM_BASE;
 
 	rv32 = (uint32)pvr_int_malloc(size);
@@ -135,7 +135,7 @@ void pvr_mem_free(pvr_ptr_t chunk) {
 
 #ifdef KM_DBG
 	found = 0;
-	
+
 	LIST_FOREACH(ctl, &block_list, list) {
 		if (ctl->block == chunk) {
 			LIST_REMOVE(ctl, list);
@@ -150,7 +150,7 @@ void pvr_mem_free(pvr_ptr_t chunk) {
 			(uint32)chunk, thd_current->tid, ra);
 	}
 #endif	/* KM_DBG */
-		
+
 	pvr_int_free((void *)chunk);
 }
 

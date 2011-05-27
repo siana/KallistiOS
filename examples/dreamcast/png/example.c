@@ -31,10 +31,10 @@ void font_init()
 {
     int i,x,y,c;
     unsigned short * temp_tex;
-    
+
     font_tex = pvr_mem_malloc(256*256*2);
     temp_tex = (unsigned short *)malloc(256*128*2);
-    
+
     c = 0;
     for(y = 0; y < 128 ; y+=16)
         for(x = 0; x < 256 ; x+=8) {
@@ -64,7 +64,7 @@ void text_init()
   gzread(f, data, length);
   data[length] = 0;
   gzclose(f);
-    
+
   printf("length [%d]\n", length);
 }
 
@@ -79,31 +79,31 @@ void draw_back(void)
     pvr_poly_compile(&hdr, &cxt);
     pvr_prim(&hdr, sizeof(hdr));
 
-    vert.argb = PVR_PACK_COLOR(1.0f, 1.0f, 1.0f, 1.0f);    
+    vert.argb = PVR_PACK_COLOR(1.0f, 1.0f, 1.0f, 1.0f);
     vert.oargb = 0;
     vert.flags = PVR_CMD_VERTEX;
-    
+
     vert.x = 1;
     vert.y = 1;
     vert.z = 1;
     vert.u = 0.0;
     vert.v = 0.0;
     pvr_prim(&vert, sizeof(vert));
-    
+
     vert.x = 640;
     vert.y = 1;
     vert.z = 1;
     vert.u = 1.0;
     vert.v = 0.0;
     pvr_prim(&vert, sizeof(vert));
-    
+
     vert.x = 1;
     vert.y = 480;
     vert.z = 1;
     vert.u = 0.0;
     vert.v = 1.0;
     pvr_prim(&vert, sizeof(vert));
-    
+
     vert.x = 640;
     vert.y = 480;
     vert.z = 1;
@@ -119,14 +119,14 @@ void draw_char(float x1, float y1, float z1, float a, float r, float g, float b,
     pvr_vertex_t    vert;
     int             ix, iy;
     float           u1, v1, u2, v2;
-    
+
     ix = (c % 32) * 8;
     iy = (c / 32) * 16;
     u1 = (ix + 0.5f) * 1.0f / 256.0f;
     v1 = (iy + 0.5f) * 1.0f / 256.0f;
     u2 = (ix+7.5f) * 1.0f / 256.0f;
     v2 = (iy+15.5f) * 1.0f / 256.0f;
-    
+
     vert.flags = PVR_CMD_VERTEX;
     vert.x = x1;
     vert.y = y1 + 16.0f * ys;
@@ -136,19 +136,19 @@ void draw_char(float x1, float y1, float z1, float a, float r, float g, float b,
     vert.argb = PVR_PACK_COLOR(a,r,g,b);
     vert.oargb = 0;
     pvr_prim(&vert, sizeof(vert));
-    
+
     vert.x = x1;
     vert.y = y1;
     vert.u = u1;
     vert.v = v1;
     pvr_prim(&vert, sizeof(vert));
-    
+
     vert.x = x1 + 8.0f * xs;
     vert.y = y1 + 16.0f * ys;
     vert.u = u2;
     vert.v = v2;
     pvr_prim(&vert, sizeof(vert));
-    
+
     vert.flags = PVR_CMD_VERTEX_EOL;
     vert.x = x1 + 8.0f * xs;
     vert.y = y1;
@@ -166,7 +166,7 @@ void draw_string(float x, float y, float z, float a, float r, float g, float b, 
   pvr_poly_cxt_txr(&cxt, PVR_LIST_TR_POLY, PVR_TXRFMT_ARGB4444, 256, 256, font_tex, PVR_FILTER_BILINEAR);
   pvr_poly_compile(&hdr, &cxt);
   pvr_prim(&hdr, sizeof(hdr));
-  
+
   while (*str) {
     if (*str == '\n')
     {
@@ -188,7 +188,7 @@ void draw_frame(void)
 {
     pvr_wait_ready();
     pvr_scene_begin();
-    
+
     pvr_list_begin(PVR_LIST_OP_POLY);
     draw_back();
     pvr_list_finish();
@@ -201,7 +201,7 @@ void draw_frame(void)
      * 480 is the height of the screen (starts the text at the bottom)
      */
     draw_string(0, y % 1720 + 440, 3, 1, 1,1,1, data, 2, 2);
-    
+
     pvr_list_finish();
     pvr_scene_finish();
 
@@ -218,16 +218,16 @@ int main(void)
 
     /* init kos  */
     pvr_init_defaults();
-    
+
     /* init font */
     font_init();
-    
+
     /* init background */
     back_init();
 
     /* init text */
     text_init();
-    
+
     /* keep drawing frames until start is pressed */
     while(!done) {
         MAPLE_FOREACH_BEGIN(MAPLE_FUNC_CONTROLLER, cont_state_t, st)

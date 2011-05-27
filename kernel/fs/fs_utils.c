@@ -65,8 +65,8 @@ ssize_t fs_copy(const char * src, const char * dst) {
 
 /* Opens a file, allocates enough RAM to hold the whole thing,
    reads it into RAM, and closes it. The caller owns the allocated
-   memory (and must free it). The file size is returned, or -1  
-   on failure; on success, out_ptr is filled with the address    
+   memory (and must free it). The file size is returned, or -1
+   on failure; on success, out_ptr is filled with the address
    of the loaded buffer. */
 ssize_t fs_load(const char * src, void ** out_ptr) {
 	file_t	f;

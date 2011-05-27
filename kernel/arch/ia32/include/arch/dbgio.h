@@ -2,7 +2,7 @@
 
    arch/dreamcast/include/dbgio.h
    (c)2000 Dan Potter
-  
+
 */
 
 #ifndef __ARCH_DBGIO_H
@@ -20,7 +20,7 @@ dbgio_printk_func dbgio_set_printk(dbgio_printk_func func);
 extern dbgio_printk_func dbgio_printk;
 
 
-/* Set serial parameters; this is not platform independent like I want   
+/* Set serial parameters; this is not platform independent like I want
    it to be, but it should be generic enough to be useful. */
 void dbgio_set_parameters(int baud, int fifo);
 

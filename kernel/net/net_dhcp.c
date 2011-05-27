@@ -432,13 +432,13 @@ static void net_dhcp_bind(dhcp_pkt_t *pkt, int len) {
         net_default_dev->broadcast[3] = (tmp >>  0) & 0xFF;
     }
     else {
-        net_default_dev->broadcast[0] = 
+        net_default_dev->broadcast[0] =
             net_default_dev->ip_addr[0] | (~net_default_dev->netmask[0]);
-        net_default_dev->broadcast[1] = 
+        net_default_dev->broadcast[1] =
             net_default_dev->ip_addr[1] | (~net_default_dev->netmask[1]);
-        net_default_dev->broadcast[2] = 
+        net_default_dev->broadcast[2] =
             net_default_dev->ip_addr[2] | (~net_default_dev->netmask[2]);
-        net_default_dev->broadcast[3] = 
+        net_default_dev->broadcast[3] =
             net_default_dev->ip_addr[3] | (~net_default_dev->netmask[3]);
     }
 
@@ -595,7 +595,7 @@ static void net_dhcp_thd(void *obj __attribute__((unused))) {
             }
         }
     }
-            
+
     /* Send any packets that need to be sent. */
     STAILQ_FOREACH(qpkt, &dhcp_pkts, pkt_queue) {
         if(qpkt->next_send <= now) {

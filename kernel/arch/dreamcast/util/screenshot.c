@@ -1,5 +1,5 @@
 /* KallistiOS ##version##
-  
+
    screenshot.c
    (c)2002 Dan Potter
    (c)2008 Donald Haase
@@ -95,7 +95,7 @@ int vid_screen_shot(const char *destfn) {
 			free(buffer);
 			return -1;
 		}
-	}	
+	}
 
 	irq_restore(save);
 

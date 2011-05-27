@@ -8,17 +8,17 @@
 
 /* get_image() is merely a copy of Andrew's jpeg_to_texture routine */
 int get_image_jpg(const char *filename, image_t *image)
-{	
+{
 	FILE *infile;
 	int i;
-	
+
 	/* This struct contains the JPEG decompression parameters and pointers to
 	 * working space (which is allocated as needed by the JPEG library).
 	 */
 	struct jpeg_decompress_struct cinfo;
-    
+
 	struct jpeg_error_mgr jerr;
-    
+
 	/* More stuff */
 	JSAMPARRAY buffer;	/* Output row buffer */
 
@@ -27,23 +27,23 @@ int get_image_jpg(const char *filename, image_t *image)
 	 * VERY IMPORTANT: use "b" option to fopen() if you are on a machine that
 	 * requires it in order to read binary files.
 	 */
-	 
+
 	infile = fopen(filename, "rb");
 	if (infile == NULL) {
 		return -errno;
 	}
-        
+
 	/* Step 1: allocate and initialize JPEG decompression object */
-    
+
 	/* We set up the normal JPEG error routines */
 	cinfo.err = jpeg_std_error(&jerr);
-    
+
 	/* Now we can initialize the JPEG decompression object. */
 	jpeg_create_decompress(&cinfo);
-    
+
 	/* Step 2: specify data source (eg, a file) */
 	jpeg_stdio_src(&cinfo, (FILE*)infile);
-    
+
 	/* Step 3: read file parameters with jpeg_read_header() */
 	(void)jpeg_read_header(&cinfo, TRUE);
 	/* We can ignore the return value from jpeg_read_header since
@@ -51,7 +51,7 @@ int get_image_jpg(const char *filename, image_t *image)
 	 *   (b) we passed TRUE to reject a tables-only JPEG file as an error.
 	 * See libjpeg.doc for more info.
 	 */
-	 
+
 	(void)jpeg_start_decompress(&cinfo);
 
 	/* Allocate the output buffers */
@@ -65,7 +65,7 @@ int get_image_jpg(const char *filename, image_t *image)
 		fclose(infile);
 		return -ENOMEM;
 	}
-    
+
 	/* Step 4: set parameters for decompression */
 	cinfo.scale_denom = 1; /* must be 1, 2, 4, or 8 */
 
@@ -74,16 +74,16 @@ int get_image_jpg(const char *filename, image_t *image)
 	 * output image dimensions available, as well as the output colormap
 	 * if we asked for color quantization.
 	 * In this example, we need to make an output work buffer of the right size.
-	 */ 
+	 */
 	/* JSAMPLEs per row in output buffer */
 
 	/* Make a one-row-high sample array that will go away when done with image */
 	buffer = (*cinfo.mem->alloc_sarray)
 		((j_common_ptr) &cinfo, JPOOL_IMAGE, image->stride, 1);
-    
+
 	/* Step 6: while (scan lines remain to be read) */
 	/*           jpeg_read_scanlines(...); */
-    
+
 	/* Here we use the library's state variable cinfo.output_scanline as the
 	 * loop counter, so that we don't have to keep track ourselves.
 	 */
@@ -103,17 +103,17 @@ int get_image_jpg(const char *filename, image_t *image)
 		}
 		// memcpy(image->data + (cinfo.output_scanline-1) * image->stride, buffer[0], image->stride);
 	}
-	
+
 	/* Step 7: Finish decompression */
 	(void)jpeg_finish_decompress(&cinfo);
 	/* We can ignore the return value since suspension is not possible
 	 * with the stdio data source.
 	 */
-    
+
 	/* Step 8: Release JPEG decompression object */
 	/* This is an important step since it will release a good deal of memory. */
 	jpeg_destroy_decompress(&cinfo);
-    
+
 	/* At this point you may want to check to see whether any corrupt-data
 	 * warnings occurred (test whether jerr.pub.num_warnings is nonzero).
 	 */

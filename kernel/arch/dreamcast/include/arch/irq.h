@@ -2,7 +2,7 @@
 
    arch/dreamcast/include/irq.h
    Copyright (C) 2000-2001 Dan Potter
-  
+
 */
 
 /** \file   arch/irq.h

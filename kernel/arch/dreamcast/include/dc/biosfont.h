@@ -86,7 +86,7 @@ void bfont_set_encoding(int enc);
 uint8 *bfont_find_char(int ch);
 
 /** \brief  Find an full-width Japanese character in the font.
- 
+
     This function retrieves a pointer to the font data for the specified
     character in the font, if its available. Generally, you will not have to
     use this function, use one of the bfont_draw_* functions instead.
@@ -126,7 +126,7 @@ uint8 *bfont_find_char_jp_half(int ch);
 void bfont_draw(void *buffer, int bufwidth, int opaque, int c);
 
 /** \brief  Draw a single thin character to a buffer.
- 
+
     This function draws a single character in the set encoding to the given
     buffer. This only works with ISO-8859-1 characters and half-width kana.
 

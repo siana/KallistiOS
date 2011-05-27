@@ -2,7 +2,7 @@
 
    arch/ia32/include/arch.h
    Copyright (C)2001,2003 Dan Potter
-   
+
 */
 
 #ifndef __ARCH_ARCH_H

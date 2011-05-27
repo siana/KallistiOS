@@ -76,11 +76,11 @@ typedef struct {
 } romdisk_file_t;
 
 
-/* Util function to reverse the byte order of a uint32 */                       
-static uint32 ntohl_32(const void *data) {                                      
-	const uint8 *d = (const uint8*)data;                                    
-	return (d[0] << 24) | (d[1] << 16) | (d[2] << 8) | (d[3] << 0);         
-}                                                                               
+/* Util function to reverse the byte order of a uint32 */
+static uint32 ntohl_32(const void *data) {
+	const uint8 *d = (const uint8*)data;
+	return (d[0] << 24) | (d[1] << 16) | (d[2] << 8) | (d[3] << 0);
+}
 
 /* Pointer to the ROMFS image created by the host PC */
 static uint8 *romdisk_image = NULL;
@@ -138,13 +138,13 @@ static uint32 romdisk_find_object(const char *fn, int fnlen, int dir, uint32 off
 					continue;
 			}
 		}
-		
+
 		/* Check filename */
 		if (!strncmp(fhdr->filename, fn, fnlen)) {
 			/* Match: return this index */
 			return i;
 		}
-		
+
 		i = ni;
 	} while (i != 0);
 
@@ -196,7 +196,7 @@ static uint32 romdisk_find(const char *fn, int dir) {
 static uint32 romdisk_find(const char *fn) {
 	uint32		i, ni, type;
 	romdisk_file_t	*fhdr;
-	
+
 	i = romdisk_files;
 	do {
 		/* Locate the file, next pointer, and type info */
@@ -204,23 +204,23 @@ static uint32 romdisk_find(const char *fn) {
 		ni = ntohl_32(&fhdr->next_header);
 		type = ni & 0x0f;
 		ni = ni & 0xfffffff0;
-		
+
 		/* Ignore non-files */
 		if (type != 2) {
 			i = ni;
 			continue;
 		}
-		
+
 		/* Check filename */
 		if (!strcmp(fhdr->filename, fn)) {
 			/* Match: return this index */
 			return i;
 		}
-		
+
 		/* Nope, continue on */
 		i = ni;
 	} while (i != 0);
-	
+
 	/* Didn't find it */
 	return 0;
 }
@@ -235,7 +235,7 @@ uint32 romdisk_open(const char *fn, int mode) {
 	/* Make sure they don't want to open things as writeable */
 	if ((mode & O_MODE_MASK) != O_RDONLY)
 		return 0;
-	
+
 	/* Make sure we're not trying to open a directory (not supported yet) */
 	if (mode & O_DIR)
 		return 0;
@@ -255,14 +255,14 @@ uint32 romdisk_open(const char *fn, int mode) {
 	thd_mutex_unlock(&fh_mutex);
 	if (fd >= MAX_RD_FILES)
 		return 0;
-	
+
 	/* Fill the fd structure */
 	fhdr = (romdisk_file_t *)(romdisk_image + filehdr);
 	fh[fd].index = filehdr + sizeof(romdisk_file_t) + (strlen(fhdr->filename)/16)*16;
 	fh[fd].dir = 0;
 	fh[fd].ptr = 0;
 	fh[fd].size = ntohl_32(&fhdr->size);
-	
+
 	return fd;
 }
 
@@ -286,11 +286,11 @@ ssize_t romdisk_read(uint32 fd, void *buf, size_t bytes) {
 	/* Is there enough left? */
 	if ((fh[fd].ptr + bytes) > fh[fd].size)
 		bytes = fh[fd].size - fh[fd].ptr;
-	
+
 	/* Copy out the requested amount */
 	memcpy(buf, romdisk_image + fh[fd].index + fh[fd].ptr, bytes);
 	fh[fd].ptr += bytes;
-	
+
 	return bytes;
 }
 
@@ -311,11 +311,11 @@ off_t romdisk_seek(uint32 fd, off_t offset, int whence) {
 		default:
 			return -1;
 	}
-	
+
 	/* Check bounds */
 	if (fh[fd].ptr < 0) fh[fd].ptr = 0;
 	if (fh[fd].ptr > fh[fd].size) fh[fd].ptr = fh[fd].size;
-	
+
 	return fh[fd].ptr;
 }
 
@@ -365,10 +365,10 @@ static vfs_handler vh = {
 int fs_romdisk_init(uint8 *img) {
 	int i, ni;
 	romdisk_file_t *fhdr;
-	
+
 	/* Set the ROMFS image */
 	romdisk_image = img;
-	
+
 	/* Check and print some info about it */
 	romdisk_hdr = (romdisk_hdr_t *)romdisk_image;
 	if (strncmp(romdisk_image, "-rom1fs-", 8)) {
@@ -391,7 +391,7 @@ int fs_romdisk_init(uint8 *img) {
 	i = romdisk_files;
 	do {
 		printf("0x%x: ", i);
-		
+
 		fhdr = (romdisk_file_t*)(romdisk_image + i);
 		ni = ntohl_32(&fhdr->next_header);
 		printf("next=%x, ", ni & 0xfffffff0);
@@ -404,16 +404,16 @@ int fs_romdisk_init(uint8 *img) {
 		printf("  File data starts at %x\r\n",
 			i + sizeof(romdisk_file_t)
 			+ (strlen(fhdr->filename) / 16) * 16);
-		
+
 		i = ni;
 	} while (i != 0);
 
 	/* Reset fd's */
 	memset(fh, 0, sizeof(fh));
-	
+
 	/* Mark the first as active so we can have an error FD of zero */
 	fh[0].index = -1;
-	
+
 	/* Init thread mutexes */
 	thd_mutex_reset(&fh_mutex);
 
@@ -436,21 +436,21 @@ void init() {
 	char *img;
 	FILE *f;
 	int  size;
-	
+
 	f = fopen("romdisk2.img", "r");
 	if (!f) return;
-	
+
 	fseek(f, 0, SEEK_END); size = ftell(f); fseek(f, 0, SEEK_SET);
 	img = malloc(size);
 	fread(img, size, 1, f);
 	fclose(f);
-	
+
 	fs_romdisk_init(img);
 }
 
 int main() {
 	init();
-	
+
 	{
 	uint32	fd, size;
 	char	buf[667];
@@ -463,7 +463,7 @@ int main() {
 	}
 	size = romdisk_total(fd);
 	printf("fd is %d, size is %08lx\n", fd, size);
-	
+
 	while (size > 0) {
 		int r;
 		r = romdisk_read(fd, buf, 666);
@@ -482,14 +482,14 @@ int main() {
 	/* {
 		uint32		fd, t;
 		dirent_t	*de;
-		
+
 		printf("Opening /demos");
 		fd = iso_open("/music/mc2/entries/rookie", O_RDONLY | O_DIR);
 		if (fd == 0) {
 			printf("Couldn't open file\n");
 			return;
 		}
-		
+
 		printf("Scanning dir:\n");
 		while ( (de = iso_readdir(fd)) ) {
 			printf("%s\t%d\n", de->name, de->size);
@@ -497,10 +497,10 @@ int main() {
 				t = 0;
 			}
 		}
-		
+
 		iso_close(fd);
 	} */
-	
+
 	return 0;
 }
 

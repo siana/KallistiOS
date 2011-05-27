@@ -21,7 +21,7 @@ long bitrateold,bitratenew;
 KOS_INIT_FLAGS(INIT_DEFAULT | INIT_MALLOCSTATS);
 KOS_INIT_ROMDISK(romdisk);
 
-int main(int argc, char **argv) 
+int main(int argc, char **argv)
 {
 	maple_device_t *cont;
 	cont_state_t *state;
@@ -31,14 +31,14 @@ int main(int argc, char **argv)
 	snd_stream_init();
 	sndoggvorbis_init();
 	print_d("sndoggvorbis_init();  called...\n");
-	
+
 	sndoggvorbis_start("/rd/test.ogg",0);
 	print_d("sndoggvorbis_start(\"/rd/test.ogg\",0);  called...\n\n");
-	
+
 	printf("main: Vorbisfile artist=%s\r\n",sndoggvorbis_getartist());
 	printf("main: Vorbisfile title=%s\r\n",sndoggvorbis_gettitle());
 
-	
+
 	print_d("The OggVorbis File now plays within a thread !\n\n");
 	print_d("Press START to exit and (Y) to re-start playing...");
 
@@ -68,7 +68,7 @@ int main(int argc, char **argv)
 				bitrateold = bitratenew;
 			}
 		}
-		
+
 	}
 	sndoggvorbis_stop();
 	sndoggvorbis_shutdown();

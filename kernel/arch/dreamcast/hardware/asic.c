@@ -4,7 +4,7 @@
    Copyright (c)2000,2001,2002,2003 Dan Potter
 */
 
-/* 
+/*
    This module contains low-level ASIC handling. Right now this is just for
    ASIC interrupts, but it will eventually include DMA as well.
 
@@ -107,17 +107,17 @@ static asic_evt_handler asic_evt_handlers[0x4][0x20];
 /* Set a handler, or remove a handler */
 int asic_evt_set_handler(uint32 code, asic_evt_handler hnd) {
 	uint32 evtreg, evt;
-	
+
 	evtreg = (code >> 8) & 0xff;
 	evt = code & 0xff;
-	
+
 	if (evtreg > 0x4)
 		return -1;
 	if (evt > 0x20)
 		return -1;
 
 	asic_evt_handlers[evtreg][evt] = hnd;
-	
+
 	return 0;
 }
 
@@ -132,7 +132,7 @@ static void handler_irq9(irq_t source, irq_context_t *context) {
 	for (reg=0; reg<3; reg++) {
 		/* Read the event mask and clear pending */
 		mask = asicack[reg]; asicack[reg] = mask;
-		
+
 		/* Search for relevant handlers */
 		for (i=0; i<32; i++) {
 			if (mask & (1 << i)) {
@@ -165,7 +165,7 @@ void asic_evt_disable(uint32 code, int irqlevel) {
 	/* Did the user choose an IRQ level? If not, give them 9 by default */
 	if (irqlevel == ASIC_IRQ_DEFAULT)
 		irqlevel = ASIC_IRQ9;
-	
+
 	asicen = (vuint32*)(0xa05f6900 + irqlevel*0x10);
 	asicen[((code >> 8) & 0xff)] &= ~(1 << (code & 0xff));
 }
@@ -177,7 +177,7 @@ void asic_evt_enable(uint32 code, int irqlevel) {
 	/* Did the user choose an IRQ level? If not, give them 9 by default */
 	if (irqlevel == ASIC_IRQ_DEFAULT)
 		irqlevel = ASIC_IRQ9;
-	
+
 	asicen = (vuint32*)(0xa05f6900 + irqlevel*0x10);
 	asicen[((code >> 8) & 0xff)] |= (1 << (code & 0xff));
 }
@@ -189,10 +189,10 @@ static void asic_evt_init() {
 	ASIC_ACK_A = 0xffffffff;
 	ASIC_ACK_B = 0xffffffff;
 	ASIC_ACK_C = 0xffffffff;
-	
+
 	/* Clear out the event table */
 	memset(asic_evt_handlers, 0, sizeof(asic_evt_handlers));
-	
+
 	/* Hook IRQ9,B,D */
 	irq_set_handler(EXC_IRQ9, handler_irq9);
 	irq_set_handler(EXC_IRQB, handler_irq9);
@@ -203,7 +203,7 @@ static void asic_evt_init() {
 static void asic_evt_shutdown() {
 	/* Disable all events */
 	asic_evt_disable_all();
-	
+
 	/* Unhook handlers */
 	irq_set_handler(EXC_IRQ9, NULL);
 	irq_set_handler(EXC_IRQB, NULL);

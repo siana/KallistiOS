@@ -4,7 +4,7 @@
    (c)2002 Dan Potter
 */
 
-/* This simple example shows how to use the vmu_pkg_* functions to write 
+/* This simple example shows how to use the vmu_pkg_* functions to write
    a file to a VMU with a DC-compatible header so it can be managed like
    any other VMU file from the BIOS menus. */
 
@@ -38,7 +38,7 @@ int dev_checked = 0;
 void new_vmu() {
 	maple_device_t * dev;
 
-	dev = maple_enum_dev(0, 1); 
+	dev = maple_enum_dev(0, 1);
 	if (dev == NULL) {
 		if (dev_checked) {
 			memset4(vram_s + 88 * 640, 0, 640*(480 - 64)*2);

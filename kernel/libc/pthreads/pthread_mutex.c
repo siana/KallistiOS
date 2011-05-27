@@ -13,7 +13,7 @@
 // XXX Recursive mutexes are not supported ... this could cause deadlocks
 // in code expecting it. Where do you set that!?
 
-/* Mutex Initialization Attributes, P1003.1c/Draft 10, p. 81 */   
+/* Mutex Initialization Attributes, P1003.1c/Draft 10, p. 81 */
 
 int pthread_mutexattr_init(pthread_mutexattr_t *attr) {
 	return 0;

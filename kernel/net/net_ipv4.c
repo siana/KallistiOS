@@ -110,7 +110,7 @@ int net_ipv4_send_packet(netif_t *net, ip_hdr_t *hdr, const uint8 *data,
         memcpy(pkt + 4 * (hdr->version_ihl & 0x0f), data, size);
 
         ++ipv4_stats.pkt_sent;
-        
+
         /* Send it "away" */
         net_ipv4_input(NULL, pkt, 4 * (hdr->version_ihl & 0x0f) + size);
 
@@ -237,7 +237,7 @@ int net_ipv4_input_proto(netif_t *src, ip_hdr_t *ip, const uint8 *data) {
     switch(ip->protocol) {
         case IPPROTO_ICMP:
             ++ipv4_stats.pkt_recv;
-            return net_icmp_input(src, ip, data, ntohs(ip->length) - hdrlen);           
+            return net_icmp_input(src, ip, data, ntohs(ip->length) - hdrlen);
 
         case IPPROTO_UDP:
             ++ipv4_stats.pkt_recv;

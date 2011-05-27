@@ -84,7 +84,7 @@ void do_frame() {
 		z = rand() % 100 + 1;
 		size = rand() % 50;
 		col = rand () % 256;
-	
+
 		vert.flags = PVR_CMD_VERTEX;
 		vert.x = x - size;
 		vert.y = y + size;
@@ -143,7 +143,7 @@ void check_switch() {
 		case PHASE_DECR:
 			if (avgfps < 55) {
 				switch_tests(polycnt - 200);
-			} else { 
+			} else {
 				printf("  Entering PHASE_FINAL\n");
 				phase = PHASE_FINAL;
 			}

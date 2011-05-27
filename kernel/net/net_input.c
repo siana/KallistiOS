@@ -13,7 +13,7 @@
 /*
 
   Main packet input system
- 
+
 */
 
 static int net_default_input(netif_t *nif, const uint8 *data, int len) {

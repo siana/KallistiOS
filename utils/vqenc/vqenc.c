@@ -47,7 +47,7 @@ static void reset_code(code_t *c) {
 static void reset_codebook(context_t *cb) {
 	int i;
 	code_t *e;
-	
+
 	e = cb->codes;
 	for (i=0; i<cb->in_use; i++) {
 		reset_code(e);
@@ -59,7 +59,7 @@ static void reset_codebook(context_t *cb) {
 static double quad_length(fquad_t *q) {
 	int i;
 	float total;
-	
+
 	total = 0.0;
 	for (i=0; i<4; i++) {
 		total += (q->p[i].a * q->p[i].a);
@@ -67,20 +67,20 @@ static double quad_length(fquad_t *q) {
 		total += (q->p[i].g * q->p[i].g);
 		total += (q->p[i].b * q->p[i].b);
 	}
-	
+
 	return sqrt(total);
 }
 
 static int map_width(int res) {
 	int width;
-	
+
 	width = (1 << (res + 1));
 	return width;
 }
 
 static int quads_in_map(int res) {
 	int across;
-	
+
 	across = (1 << (res + 1));
 	return (across * across) >> 2;
 }
@@ -89,7 +89,7 @@ static double delta_e(fquad_t *a, fquad_t *b) {
 	int i;
 	fquad_t sub;
 	double total;
-	
+
 	total = 0.0;
 	sub_quad(&sub, a, b);
 
@@ -99,7 +99,7 @@ static double delta_e(fquad_t *a, fquad_t *b) {
 		total += (sub.p[i].g * sub.p[i].g);
 		total += (sub.p[i].b * sub.p[i].b);
 	}
-	
+
 	return sqrt(total);
 }
 
@@ -107,28 +107,28 @@ static double delta_e(fquad_t *a, fquad_t *b) {
 static int find(context_t *cb, fquad_t *q) {
 	int code, close_entry;
 	double close_dist;
-	
+
 	close_entry = 0;
 	close_dist = delta_e(&cb->codes[0].value, q);
-	
+
 	for (code=1; code<cb->in_use; code++) {
-	
+
 		/* hope not to get sued for this variable's name */
 		double d;
-		
+
 		d = delta_e(&cb->codes[code].value, q);
 		if (d < close_dist) {
 			close_entry = code;
 			close_dist = d;
-			
+
 			if (d < 0.0001) {
 				/* close enough */
 				return close_entry;
 			}
 		}
-		
+
 	}
-	
+
 	return close_entry;
 }
 
@@ -137,7 +137,7 @@ static void place(context_t *cb, fquad_t *quads, int nquads) {
 	code_t *e;
 	double dist;
 	fquad_t *that;
-	
+
 	that = quads;
 	for (i=0; i<nquads; i++) {
 		/* find averages of all codebook entries */
@@ -146,14 +146,14 @@ static void place(context_t *cb, fquad_t *quads, int nquads) {
 
 		add_quad(&e->pos_sum, that);
 		e->pos_count++;
-		
+
 		/* see if we have something better in hand */
 		dist = delta_e(&e->value, that);
 		if (dist > e->max_dist) {
 			e->max_dist = dist;
 			copy_quad(&e->max_dist_vec, that);
 		}
-		
+
 		that++;
 	}
 }
@@ -161,7 +161,7 @@ static void place(context_t *cb, fquad_t *quads, int nquads) {
 static void clean_codebook(context_t *cb) {
 	int i;
 	code_t * e;
-	
+
 	e = cb->codes;
 	for (i=0; i<cb->in_use; i++) {
 		if (e->pos_count > 0) {
@@ -172,7 +172,7 @@ static void clean_codebook(context_t *cb) {
 		} else {
 			/* never been used */
 			*e = cb->codes[cb->in_use - 1];
-			cb->in_use--; 
+			cb->in_use--;
 			e++;
 		}
 	}
@@ -181,11 +181,11 @@ static void clean_codebook(context_t *cb) {
 /* add new quad to codebook */
 static int add_to_codebook(context_t *cb, fquad_t *q) {
 	int index;
-	
+
 	index = cb->in_use;
 	reset_code(&cb->codes[index]);
 	copy_quad(&cb->codes[index].value, q);
-	
+
 	cb->codes[index].index = index;
 
 	/* update sequencial id */
@@ -199,23 +199,23 @@ static void split(context_t *cb)
 	int 	i, elements;
 	code_t 	*e;
 	fquad_t new_element;
-	
+
 	e = cb->codes;
 	elements = cb->in_use;
-	
+
 	for (i=0; i<elements; i++) {
 		if (e->pos_count > 1) {
-		
+
 			fquad_t diff;
 			float len;
-			
+
 			sub_quad(&diff, &e->max_dist_vec, &e->value);
 			len = quad_length(&diff) * 256.0f;
 			div_quad(&diff, len);
-			
+
 			copy_quad(&new_element, &e->value);
 			add_quad(&new_element, &diff);
-			
+
 			sub_quad(&e->value, &e->value, &diff);
 		} else {
 			/* some elements were not used, so we'll
@@ -225,7 +225,7 @@ static void split(context_t *cb)
 			copy_quad(&new_element, &e->value);
 			div_quad(&new_element, 2.0);
 		}
-		
+
 		add_to_codebook(cb, &new_element);
 		/* fixme: remove those that are <= 0 */
 		e++;
@@ -236,7 +236,7 @@ static int new_context(context_t *cb) {
 	reset_code(&cb->codes[0]);
 	clear_quad(&cb->codes[0].value);
 	cb->codes[0].index = 0;
-	
+
 	/* only one color supported, and it's black */
 	cb->in_use = 1;
 	return 0;
@@ -244,7 +244,7 @@ static int new_context(context_t *cb) {
 
 static uint16 pack(fcolor_t *c) {
 	int a, r, g, b;
-	
+
 	a = LIMIT(c->a, 0, 255);
 	r = LIMIT(c->r, 0, 255);
 	g = LIMIT(c->g, 0, 255);
@@ -272,7 +272,7 @@ static int INLINE le16(int x) {
 static void copy_codebook(context_t *cb, uint16 *codebook) {
 	int 	i;
 	code_t 	*e;
-	
+
 	e = cb->codes;
 	for (i=0; i<cb->in_use; i++) {
 		/* even the codebook is twiddled! */
@@ -282,8 +282,8 @@ static void copy_codebook(context_t *cb, uint16 *codebook) {
 		*codebook++ = le16(pack(&e->value.p[3]));
 		e++;
 	}
-	
-	/* fill up what's left */	
+
+	/* fill up what's left */
 	while (i < 256) {
 		*codebook++ = 0;
 		*codebook++ = 0;
@@ -302,7 +302,7 @@ static int divide(int *ptr, int stride, int x, int y, int blocksize, int seq) {
 			/* cant divide anymore */
 			ptr[seq++] = y * stride + x;
 			break;
-			
+
 		default:
 			blocksize = blocksize >> 1;
 			seq += divide(ptr, stride, x, y, blocksize, seq);
@@ -311,31 +311,31 @@ static int divide(int *ptr, int stride, int x, int y, int blocksize, int seq) {
 			seq += divide(ptr, stride, x + blocksize, y + blocksize, blocksize, seq);
 			break;
 	}
-	
+
 	return (seq - before);
 }
 
 static int *twiddle_twiddle(int length) {
 	/* divide and conquer */
 	int *ptr = (int *)malloc(sizeof(int) * length * length);
-	
+
 	if (ptr == NULL)
 		return NULL;
-	
+
 	divide(ptr, length, 0, 0, length, 0);
 	return ptr;
 }
 
 static int write_linear(FILE *out, context_t *cb, mipmap_t *m, int res) {
 	int i, nquads;
-	
+
 	nquads = quads_in_map(res);
 	for (i=0; i<nquads; i++) {
 		uint8 c = find(cb, &m->map[res][i]);
 		if (fputc(c, out) == EOF)
 			return -1;
 	}
-	
+
 	return 0;
 }
 
@@ -343,40 +343,40 @@ static int write_twiddled(FILE *out, context_t *cb, mipmap_t *m, int res) {
 	int	*twididx, *twiddled;
 	int	i, width, nquads;
 	fquad_t *map;
-	
+
 	width = map_width(res);
 	nquads = quads_in_map(res);
-				
+
 	twiddled = twiddle_twiddle(width / 2);
 	twididx = twiddled;
 	map = m->map[res];
-	
+
 	for (i=0; i<nquads; i++) {
 		uint8 c = find(cb, &map[*twididx++]);
 		if (fputc(c, out) == EOF)
 			return -1;
 	}
-				
+
 	free(twiddled);
 	return 0;
 }
 
 static int save_codebook(FILE *out, context_t *cb) {
 	uint16 codebook[256 * 4];
-	
+
 	copy_codebook(cb, codebook);
 	if (fwrite(codebook, sizeof(codebook), 1, out) != 1) {
 		/* bummer */
 		return -errno;
 	}
-	
+
 	return 0;
 }
 
 static int save(const char *filename, context_t *cb, mipmap_t *m, image_t *img) {
 	int	ok, res;
 	FILE	*fp;
-	
+
 	fp = fopen(filename, "wb");
 	if (fp == NULL) {
 		fprintf(stderr, "FATAL: cannot create %s\n", filename);
@@ -409,12 +409,12 @@ static int save(const char *filename, context_t *cb, mipmap_t *m, image_t *img) 
 			goto loser;
 		}
 	}
-	
+
 	if (save_codebook(fp, cb) < 0) {
 		fprintf(stderr, "FATAL: failed writing codebook to %s\n", filename);
 		goto loser;
 	}
-	
+
 	/* dummy byte (0) must be included in square mipmaps */
 	if (use_mipmap) {
 		if (fputc('\0', fp) == EOF) {
@@ -422,27 +422,27 @@ static int save(const char *filename, context_t *cb, mipmap_t *m, image_t *img) 
 			goto loser;
 		}
 	}
-	
+
 	for (res=0; res<MAX_MIPMAP; res++) {
 		/* write each valid map down, if output is required
 		 * as twiddled, mess it up before saving to disk
-		 */	
+		 */
 		if (m->map[res] != NULL) {
 			if (use_twiddle)
 				ok = write_twiddled(fp, cb, m, res);
 			else
 				ok = write_linear(fp, cb, m, res);
-			
+
 			if (ok < 0) {
 				fprintf(stderr, "FATAL: error writing index data to %s\n", filename);
 				goto loser;
 			}
 		}
 	}
-	
+
 	fclose(fp);
 	return 0;
-	
+
 loser:
 	fclose(fp);
 	unlink(filename);
@@ -465,35 +465,35 @@ static void banner(const char *progname) {
 
 static int mipmap_index(int s) {
 	int mip;
-	
+
 	/* already assuming size is valid, so no funky business */
 	mip = 0;
-	
+
 	/* no 1x1 bitmaps */
 	s >>= 2;
-	
+
 	while (s) {
 		s >>= 1;
 		mip++;
 	}
-	
+
 	return mip;
 }
 
 static int valid_size(int x) {
 	if (x < 2 || x > 1024)
 		return 0;
-		
+
 	while (x) {
 		int bit = (x & 1);
 		x >>= 1;
-		
+
 		if (x && bit) {
 			/* more than one bit in image */
 			return 0;
 		}
 	}
-	
+
 	return 1;
 }
 
@@ -501,11 +501,11 @@ static fquad_t *create_map(int res, image_t *im) {
 	int	x, y;
 	int	nquads;
 	fquad_t *q, *qt;
-	
+
 	if (use_debug) {
 		printf("create_map(%d)\n", res);
 	}
-	
+
 	nquads = quads_in_map(res);
 	q = (fquad_t *)malloc(nquads * sizeof(fquad_t));
 	if (q == NULL)
@@ -522,13 +522,13 @@ static fquad_t *create_map(int res, image_t *im) {
 			qt++;
 		}
 	}
-	
+
 	return q;
 }
 
 static void destroy_mipmap(mipmap_t *m) {
 	int i;
-	
+
 	for (i=0; i<MAX_MIPMAP; i++) {
 		if (m->map[i]) {
 			free(m->map[i]);
@@ -540,12 +540,12 @@ static void destroy_mipmap(mipmap_t *m) {
 static fquad_t *create_downscaled_map(int res, fquad_t *oneup) {
 	int	y, x, nquads, qw;
 	fquad_t *q, *larger, tmp;
-	
+
 	if (use_debug) {
 		printf("create_downscaled_map(%d %x)\n", res, (unsigned)oneup);
 	}
-	
-	/* each quad in the lower resolution is an average of 
+
+	/* each quad in the lower resolution is an average of
 	 * four quads in the higher resolution map.
 	 */
 
@@ -554,7 +554,7 @@ static fquad_t *create_downscaled_map(int res, fquad_t *oneup) {
 	q = (fquad_t *)malloc(sizeof(fquad_t) * nquads);
 	if (q == NULL)
 		return NULL;
-		
+
 	for (y=0; y<qw; y++) {
 		for (x=0; x<qw; x++) {
 			/* clear temporary quad */
@@ -598,20 +598,20 @@ static fquad_t *create_downscaled_map(int res, fquad_t *oneup) {
 static int build_mipmap(mipmap_t *m, image_t *i) {
 	int size;
 	int image_res;
-	
+
 	if (use_verbose) {
 		printf("o");
 	}
 
-	/* paranoia, so later you can use destory_mipmap safely */	
+	/* paranoia, so later you can use destory_mipmap safely */
 	memset(m, '\0', sizeof(*m));
-	
+
 	image_res = mipmap_index(i->w);
-	
+
 	m->map[image_res] = create_map(image_res, i);
 	if (m->map[image_res] == NULL)
 		return -ENOMEM;
-		
+
 	if (use_mipmap) {
 		/* create maps in lower resolution */
 		size = image_res - 1;
@@ -620,9 +620,9 @@ static int build_mipmap(mipmap_t *m, image_t *i) {
 			size--;
 		}
 	}
-	
+
 	return 0;
-}	
+}
 
 static void place_quads(context_t *cb, mipmap_t *m) {
 	int i, j, quads;
@@ -653,7 +653,7 @@ static void place_quads(context_t *cb, mipmap_t *m) {
 static const char *figure_outfilename(const char *f, const char *newext) {
 	char *newname;
 	char *ext;
-	
+
 	ext = strrchr(f, '.');
 	if (ext == NULL) {
 		newname = (char *)malloc(strlen(f) + strlen(newext) + 2);
@@ -662,7 +662,7 @@ static const char *figure_outfilename(const char *f, const char *newext) {
 		}
 	} else {
 		int len;
-		
+
 		len = (ext - f) + strlen(newext) + 2;
 		newname = (char *)malloc(len);
 		if (newname) {
@@ -671,7 +671,7 @@ static const char *figure_outfilename(const char *f, const char *newext) {
 			strcpy(ext, newext);
 		}
 	}
-	
+
 	return newname;
 }
 
@@ -688,11 +688,11 @@ static int encode(const char *infile) {
 	mipmap_t 	mipmap;
 	context_t	context;
 	const char 	*outfile;
-	
+
 	if (use_verbose) {
 		printf("encoding %s.. ", infile);
 	}
-	
+
 	if (get_image(infile, &image) < 0) {
 		fprintf(stderr, "failed reading %s\n", infile);
 		return -EINVAL;
@@ -703,7 +703,7 @@ static int encode(const char *infile) {
 		destroy_image(&image);
 		return -EINVAL;
 	} */
-	
+
 	if (image.w != image.h) {
 		fprintf(stderr, "%s is not a square image\n", infile);
 		destroy_image(&image);
@@ -724,31 +724,31 @@ static int encode(const char *infile) {
 		fprintf(stderr, "memory allocation failed for %s\n", infile);
 		return -ENOMEM;
 	}
-	
+
 	new_context(&context);
 	build_mipmap(&mipmap, &image);
-	
+
 	/* feed all quads (all resolutions) */
 	place_quads(&context, &mipmap);
-	
+
 	/* starting with one codebook entry, split 7 times */
 	for (i=1; i<=7; i++) {
 		if (use_verbose) {
 			printf("o");
 		}
-		
+
 		split(&context);
 		place_quads(&context, &mipmap);
 	}
-	
+
 	split(&context);
-	
+
 	if (use_verbose) {
 		printf("\n");
 	}
-	
+
 	ok = save(outfile, &context, &mipmap, &image);
-	
+
 	destroy_mipmap(&mipmap);
 	destroy_image(&image);
 	return ok;
@@ -771,7 +771,7 @@ static int process_long_options(char *arg) {
 		use_alpha = 1;
 	else
 		return -EINVAL;
-		
+
 	return 0;
 }
 
@@ -780,23 +780,23 @@ static int process_option(char *arg) {
 	arg++;
 
 	switch(*arg) {
-	
+
 		case 'm':
 			use_mipmap = 1;
 			return 0;
-			
+
 		case 't':
 			use_twiddle = 1;
 			return 0;
-			
+
 		case 'v':
 			use_verbose = 1;
 			return 0;
-			
+
 		case 'd':
 			use_debug = 1;
 			return 0;
-			
+
 		case 'q':
 			use_hq = 1;
 			return 0;
@@ -808,17 +808,17 @@ static int process_option(char *arg) {
 		case 'a':
 			use_alpha = 1;
 			return 0;
-			
+
 		case '-':
 			return process_long_options(arg+1);
 	}
-	
-	return -EINVAL;	
+
+	return -EINVAL;
 }
 
 static int process(int argc, char *argv[]) {
 	int arg;
-	
+
 	arg = 1;
 	while (arg < argc) {
 		if (argv[arg][0] == '-') {
@@ -826,20 +826,20 @@ static int process(int argc, char *argv[]) {
 				fprintf(stderr, "invalid option %s\n", argv[arg]);
 				return -EINVAL;
 			}
-			
+
 			arg++;
 			continue;
 		}
-		
+
 		/* found a filename */
 		break;
 	}
-	
+
 	if (arg >= argc) {
 		fprintf(stderr, "no files to encode\n");
 		return -EINVAL;
 	}
-	
+
 	while (arg < argc) {
 		/* ordinary image */
 		encode(argv[arg]);
@@ -851,11 +851,11 @@ static int process(int argc, char *argv[]) {
 
 int main(int argc, char *argv[]) {
 	setbuf(stdout, 0);
-	
+
 	if (argc < 2) {
 		banner(argv[0]);
 		return 0;
 	}
-	
+
 	return process(argc, argv);
 }

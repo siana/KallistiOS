@@ -38,7 +38,7 @@ void *thd_func(void *param UNUSED) {
 
     printf("Thd %d: Reading key 1\n", cur->tid);
     data = kthread_getspecific(key1);
-    printf("Thd %d: kthread_getspecific returned %p (should be NULL)\n", 
+    printf("Thd %d: kthread_getspecific returned %p (should be NULL)\n",
            cur->tid, data);
 
     printf("Thd %d: Will create key 2, if its not created\n", cur->tid);

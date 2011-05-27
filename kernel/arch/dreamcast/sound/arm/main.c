@@ -2,7 +2,7 @@
 
    main.c
    (c)2000-2002 Dan Potter
-   
+
    Generic sound driver with streaming capabilities
 
    This slightly more complicated version allows for sound effect channels,
@@ -35,7 +35,7 @@ void * memcpy(void *dest, const void *src, size_t count) {
 		*tmp++ = *s++;
 
 	return dest;
-}                                                        
+}
 
 /****************** Main Program ************************************/
 
@@ -102,7 +102,7 @@ uint32 process_one(uint32 tail) {
 		if ((uint32)src >= (q_cmd->data + q_cmd->size))
 			src = (volatile uint32 *)q_cmd->data;
 	}
-	
+
 	/* Figure out what type of packet it is */
 	switch (pkt->cmd) {
 	case AICA_CMD_NONE:

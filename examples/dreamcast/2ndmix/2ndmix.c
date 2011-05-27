@@ -5,7 +5,7 @@
 
 */
 
-/* 
+/*
 
 The good ol' 2ndmix example that just won't die ^_^
 
@@ -48,7 +48,7 @@ void play_s3m(char *fn) {
 		printf("Can't open file %s\r\n", fn);
 		return;
 	}
-	
+
 	idx = 0x10000;
 	/* Load 2048 bytes at a time */
 	while ( (r=fs_read(fd, buffer, 2048)) > 0) {
@@ -56,18 +56,18 @@ void play_s3m(char *fn) {
 		idx += r;
 	}
 	fs_close(fd);
-	
+
 	/* Switch channels to mono if holding down A */
 	/*if (check_for_btn(BTN_A)) {
 		snd_dbg[1] = 1;
 	} else {
 		snd_dbg[1] = 0;
 	}*/
-	
+
 	//dc_serial_printf("Load OK, starting ARM\r\n");
 	printf("Loading ARM program\r\n");
 	spu_memload(0, s3mplay, sizeof(s3mplay));
-	
+
 	printf("Start\r\n");
 	spu_enable();
 
@@ -76,7 +76,7 @@ void play_s3m(char *fn) {
 
 	while (*snd_dbg == 3)
 		;
-		
+
 	printf("Done\r\n");
 }
 
@@ -121,7 +121,7 @@ void stars_init() {
 /* Draws a point using a triangle strip */
 void poly_pnt(int x, int y, float z, float size, int color) {
 	pvr_vertex_t vert;
-	
+
 	vert.flags = PVR_CMD_VERTEX;
 	vert.x = x;
 	vert.y = y + size;
@@ -130,10 +130,10 @@ void poly_pnt(int x, int y, float z, float size, int color) {
 	vert.argb = PVR_PACK_COLOR(1.0f, color / 256.0f, color / 256.0f, color / 256.0f);
 	vert.oargb = 0;
 	pvr_prim(&vert, sizeof(vert));
-	
+
 	vert.y = y;
 	pvr_prim(&vert, sizeof(vert));
-	
+
 	vert.flags = PVR_CMD_VERTEX_EOL;
 	vert.x = x + size;
 	vert.y = y + size;
@@ -195,7 +195,7 @@ int cube_points[] = {
 	-1, -1,  1,
 	 1, -1, -1,
 	 1, -1,  1,
-	
+
 	-1,  1,  1,	/* Bottom plane */
 	-1,  1, -1,
 	 1,  1,  1,
@@ -224,7 +224,7 @@ void draw_cube(int which) {
 	ra = (rotang*2) % 256;
 	ra = (ra + 42*which) % 256;	/* heh */
 	ra2 = (rotang/2);
-	
+
 	/* If the current parameters don't make you motion sick,
 	   then try setting *32 on ytrans to something higher =) */
 	xtrans = mcos(ra) * 220;
@@ -239,7 +239,7 @@ void draw_cube(int which) {
 		tx = (mcos(ra)*x - msin(ra)*y);
 		ty = (mcos(ra)*y + msin(ra)*x);
 		x = tx; y = ty;
-		
+
 		tz = (mcos(ra2)*z - msin(ra2)*y);
 		ty = (mcos(ra2)*y + msin(ra2)*z);
 		y = ty; z = tz;
@@ -247,7 +247,7 @@ void draw_cube(int which) {
 		tx = (mcos(ra)*x - msin(ra)*z);
 		tz = (mcos(ra)*z + msin(ra)*x);
 		x = tx; z = tz;
-		
+
 		z += ztrans;
 
 		xt = (x*zkonst) / (zkonst+z+mult);
@@ -320,13 +320,13 @@ pvr_poly_hdr_t cubes_header;
 
 void cubes_one_frame() {
 	pvr_poly_cxt_t tmp;
-	
+
 	if (!cubes_have_header) {
 		pvr_poly_cxt_col(&tmp, PVR_LIST_TR_POLY);
 		pvr_poly_compile(&cubes_header, &tmp);
 		cubes_have_header = 1;
 	}
-	
+
 	/* Send polygon header to the TA using store queues */
 	pvr_prim(&cubes_header, sizeof(cubes_header));
 
@@ -526,13 +526,13 @@ void font_draw_char(int x1, int y1, float color, int ch) {
 	vert.argb = PVR_PACK_COLOR(color, 0.0f, 0.75f, 1.0f);
 	vert.oargb = 0;
 	pvr_prim(&vert, sizeof(vert));
-	
+
 	vert.x = x1;
 	vert.y = y1;
 	vert.u = u1;
 	vert.v = v1;
 	pvr_prim(&vert, sizeof(vert));
-	
+
 	vert.x = x1 + FONT_WIDTH*FONT_DOUBLE;
 	vert.y = y1 + FONT_HEIGHT*FONT_DOUBLE;
 	vert.u = u2;
@@ -557,7 +557,7 @@ void font_draw_string(int x1, int y1, float color, char *str) {
 void font_next_screen() {
 	int width;
 	int y, y1, x;
-	
+
 	if (!scrollypos)
 		scrollypos = scrolly;
 
@@ -578,7 +578,7 @@ void font_next_screen() {
 		y1 += (int)(FONT_HEIGHT*FONT_DOUBLE+4);
 		y++;
 	}
-	
+
 	if (*scrollypos == '\a') {
 		scrollypos = scrolly;
 	}
@@ -591,7 +591,7 @@ void font_next_screen() {
 /* Debug code to draw the font texture */
 void blit_font_texture() {
 	vertex_ot_t vert;
-	
+
 	vert.flags = TA_VERTEX_NORMAL;
 	vert.x = 50.0f;
 	vert.y = 50.0f + 512.0f;
@@ -620,7 +620,7 @@ void blit_font_texture() {
 	vert.u = 1.0f;
 	vert.v = 0.0f;
 	ta_commit_vertex(&vert, sizeof(vert));
-	
+
 	return;
 }
 #endif
@@ -631,7 +631,7 @@ void font_one_frame() {
 	int		done, y, actrows;
 
 	actrows = 0;
-	
+
 	/* Start a textured polygon set (with the font texture) */
 	pvr_prim(&font_header, sizeof(font_header));
 
@@ -695,7 +695,7 @@ void font_init() {
 	charmap = malloc(256);
 	image = malloc(FONT_PIC_WIDTH * FONT_PIC_HEIGHT);
 	pcxpal = pcxpall;
-	
+
 	if (!load_pcx(FONT_NAME)) {
 		printf("Couldn't load PCX of font image\r\n");
 		return;
@@ -713,7 +713,7 @@ void font_init() {
 			*vtex++ = val;
 		}
 	}
-	
+
 	for (c=0; c<255; c++)
 		charmap[c] = -1;
 	for (c=0; c<strlen(font_map); c++) {
@@ -723,11 +723,11 @@ void font_init() {
 #endif
 	}
 	charmap[' '] = -1;
-		
+
 	memset(font_rows, 0, sizeof(font_rows));
 
 	font_next_screen();
-	
+
 	free(image);
 
 	/* Make a polygon header */
@@ -757,11 +757,11 @@ void draw_one_frame() {
 
 	/* Draw scrolly */
 	font_one_frame();
-	
+
 	/* Finish up */
 	pvr_list_finish();
 	pvr_scene_finish();
-	
+
 	framecnt++;
 }
 

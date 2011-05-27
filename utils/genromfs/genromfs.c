@@ -212,7 +212,7 @@ int findalign(struct filenode *node)
 {
 	struct aligns *pa;
 	int i;
-	
+
 	if (S_ISREG(node->modes)) i = align;
 	else i = 16;
 
@@ -522,7 +522,7 @@ int spaceneeded(struct filenode *node)
 int alignnode(struct filenode *node, int curroffset, int extraspace)
 {
 	int align = findalign(node), d;
-			
+
 	d = ((curroffset + extraspace) & (align - 1));
 	if (d) {
 		align -= d;
@@ -610,7 +610,7 @@ int processdir(int level, const char *base, const char *dirname, struct stat *sb
 				char      type;
 				int       major;
 				int       minor;
-						
+
 				if (sscanf(n->name, "@%[a-zA-Z0-9],%c,%d,%d",
 					   devname, &type, &major, &minor) == 4 ) {
 					strcpy(n->name, devname);
@@ -805,7 +805,7 @@ int main(int argc, char *argv[])
 		perror(outf);
 		exit(1);
 	}
-	
+
 	realbase = strlen(dir);
 	root = newnode(dir, volname, 0);
 	root->parent = root;

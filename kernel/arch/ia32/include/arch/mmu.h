@@ -2,7 +2,7 @@
 
    arch/dreamcast/include/arch/mmu.h
    (c)2001 Dan Potter
-   
+
 */
 
 #ifndef __ARCH_MMU_H
@@ -98,7 +98,7 @@ mmucontext_t *mmu_context_create(int asid);
 /* Destroy an MMU context when a process is being destroyed. */
 void mmu_context_destroy(mmucontext_t *context);
 
-/* Using the given page tables, translate the virtual page ID to a 
+/* Using the given page tables, translate the virtual page ID to a
    physical page ID. Return -1 on failure. */
 int mmu_virt_to_phys(mmucontext_t *context, int virtpage);
 

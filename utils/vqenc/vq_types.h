@@ -31,13 +31,13 @@ typedef struct code_t {
 	/* sum of quads using this code */
 	fquad_t pos_sum;
 	int pos_count;
-	
+
 	float max_dist;
 	fquad_t max_dist_vec;
-	
+
 	/* position in codebook index */
 	uint8 index;
-	
+
 	/* value of this codebook entry */
 	fquad_t value;
 } code_t;

@@ -11,10 +11,10 @@ int main(int argc, char **argv) {
 
 	/* Bother us with output only if something died */
 	dbglog_set_level(DBG_DEAD);
-	
+
 	/* Set the video mode */
 	vid_set_mode(DM_640x480, PM_RGB565);
-	
+
 	for (y=0; y<480; y++)
 		for (x=0; x<640; x++) {
 			int c = (x ^ y) & 255;

@@ -19,7 +19,7 @@
    There is no lighting yet in KGL, so it has not been included.
 
    DPAD controls the cube rotation, button A & B control the depth
-   of the cube, button X toggles filtering, and button Y toggles alpha 
+   of the cube, button X toggles filtering, and button Y toggles alpha
    blending.
 */
 

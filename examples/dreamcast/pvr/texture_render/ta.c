@@ -27,10 +27,10 @@ polyplace_t polys[6] = {
 void move_polys() {
 	int i;
 	polyplace_t *p;
-	
+
 	for (i=0; i<6; i++) {
 		p = polys+i;
-		
+
 		p->x += p->dx;
 		if (p->x < 0 || p->x > 580.0f) {
 			p->dx = -p->dx;
@@ -49,7 +49,7 @@ void move_polys() {
 void draw_one_poly(polyplace_t *p) {
 	/* Opaque Colored vertex */
 	pvr_vertex_t vert;
-	
+
 	vert.flags = PVR_CMD_VERTEX;
 	vert.x = p->x + 0.0f;
 	vert.y = p->y + 240.0f;
@@ -78,7 +78,7 @@ void draw_one_poly(polyplace_t *p) {
 void draw_one_textured_poly(polyplace_t *p) {
 	/* Opaque Textured vertex */
 	pvr_vertex_t vert;
-	
+
 	vert.flags = PVR_CMD_VERTEX;
 	vert.x = p->x + 0.0f;
 	vert.y = p->y + 240.0f;
@@ -88,17 +88,17 @@ void draw_one_textured_poly(polyplace_t *p) {
 	vert.argb = 0xffffffff;
 	vert.oargb = 0;
 	pvr_prim(&vert, sizeof(vert));
-	
+
 	vert.y = p->y + 0.0f;
 	vert.v = 0.0f;
 	pvr_prim(&vert, sizeof(vert));
-	
+
 	vert.x = p->x + 320.0f;
 	vert.y = p->y + 240.0f;
 	vert.u = 640.0f / 1024.0f;
 	vert.v = 480.0f / 512.0f;
 	pvr_prim(&vert, sizeof(vert));
-	
+
 	vert.flags = PVR_CMD_VERTEX_EOL;
 	vert.y = p->y + 0.0f;
 	vert.v = 0.0f;
@@ -234,7 +234,7 @@ int main(int argc, char **argv) {
 
 	/* Shutdown isn't technically neccessary, but is possible */
 	pvr_shutdown();
-		
+
 	return 0;
 }
 

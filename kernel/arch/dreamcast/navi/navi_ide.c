@@ -235,7 +235,7 @@ uint32 ide_num_sectors() {
 /* Initialize the device */
 int ide_init() {
 	int dd_off;
-	
+
         dbglog(DBG_INFO, "ide_init: initializing\n");
 
 	/* Reset */

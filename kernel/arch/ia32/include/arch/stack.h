@@ -2,7 +2,7 @@
 
    arch/dreamcast/include/arch/stack.h
    (c)2002 Dan Potter
-   
+
 */
 
 #ifndef __ARCH_STACK_H

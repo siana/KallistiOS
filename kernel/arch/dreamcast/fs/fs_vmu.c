@@ -22,13 +22,13 @@
 
 This is the vmu filesystem module.  Because there are no directories on vmu's
 it's pretty simple, however the filesystem uses a seperate directory for each
-of the vmu slots, so if vmufs were mounted on /vmu, /vmu/a1/ is the dir for 
+of the vmu slots, so if vmufs were mounted on /vmu, /vmu/a1/ is the dir for
 slot 1 on port a, and /vmu/c2 is slot 2 on port c, etc.
 
 At the moment this FS is kind of a hack because of the simplicity (and weirdness)
 of the VMU file system. For one, all files must be pretty small, so it loads
 and caches the entire file on open. For two, all files are a multiple of 512
-bytes in size (no way around this one). On top of it all, files may have an 
+bytes in size (no way around this one). On top of it all, files may have an
 obnoxious header and you can't just read and write them with abandon like
 a normal file system. We'll have to find ways around this later on, but for
 now it gives the file data to you raw.
@@ -69,7 +69,7 @@ typedef struct vmu_dh_str {
 	dirent_t	dirent;			/* Dirent to pass back */
 	vmu_dir_t	* dirblocks;		/* Copy of all directory blocks */
 	uint16		entry;			/* Current dirent */
-	uint16		dircnt;			/* Count of dir entries */	
+	uint16		dircnt;			/* Count of dir entries */
 	maple_device_t	* dev;			/* VMU address */
 } vmu_dh_t;
 
@@ -88,7 +88,7 @@ static maple_device_t * vmu_path_to_addr(const char *p) {
 	port = p[1] | 32;				/* Lowercase the port */
 	if (port < 'a' || port > 'd') return NULL;	/* Unit A-D, device 0-5 */
 	if (p[2] < '0' || p[2] > '5') return NULL;
-	
+
 	return maple_enum_dev(port - 'a', p[2] - '0');
 }
 
@@ -161,7 +161,7 @@ static vmu_fh_t *vmu_open_dir(maple_device_t * dev) {
 	dh->entry = 0;
 	dh->dircnt = dircnt;
 	dh->dev = dev;
-	
+
 	return (vmu_fh_t *)dh;
 }
 
@@ -216,7 +216,7 @@ static vmu_fh_t *vmu_open_file(maple_device_t * dev, const char *path, int mode)
 		free(fd);
 		return NULL;
 	}
-	
+
 	return fd;
 }
 
@@ -259,7 +259,7 @@ static int vmu_verify_hnd(void * hnd, int type) {
 	int		rv;
 
 	rv = 0;
-	
+
 	mutex_lock(fh_mutex);
 	TAILQ_FOREACH(cur, &vmu_fh, listent) {
 		if ((void *)cur == hnd) {
@@ -268,7 +268,7 @@ static int vmu_verify_hnd(void * hnd, int type) {
 		}
 	}
 	mutex_unlock(fh_mutex);
-	
+
 	if (rv)
 		return type == VMU_ANY ? 1 : (cur->strtype == type);
 	else
@@ -309,7 +309,7 @@ static void vmu_close(void * hnd) {
 		}
 		free(fh->data);
 		break;
-	
+
 	}
 	/* Look for the one to get rid of */
 	mutex_lock(fh_mutex);
@@ -344,7 +344,7 @@ static ssize_t vmu_read(void * hnd, void *buffer, size_t cnt) {
 	/* Copy out the data */
 	memcpy(buffer, fh->data+fh->loc, cnt);
 	fh->loc += cnt;
-	
+
 	return cnt;
 }
 
@@ -375,7 +375,7 @@ static ssize_t vmu_write(void * hnd, const void *buffer, size_t cnt) {
 #ifdef VMUFS_DEBUG
 		dbglog(DBG_KDEBUG, "VMUFS: extending file's filesize by %d\n", n);
 #endif
-		
+
 		/* We alloc another 512*n bytes for the file */
 		tmp = realloc(fh->data, (fh->filesize + n) * 512);
 		if (!tmp) {
@@ -432,11 +432,11 @@ static off_t vmu_seek(void * hnd, off_t offset, int whence) {
 		default:
 			return -1;
 	}
-	
+
 	/* Check bounds; allow seek past EOF. */
 	if (offset < 0) offset = 0;
 	fh->loc = offset;
-	
+
 	return fh->loc;
 }
 
@@ -476,9 +476,9 @@ static dirent_t *vmu_readdir(void * fd) {
 	/* Check if we have any entries left */
 	if (dh->entry >= dh->dircnt)
 		return NULL;
-	
+
 	/* printf("VMUFS: reading non-null entry %d\n", dh->entry); */
-		
+
 	/* Ok, extract it and fill the dirent struct */
 	dir = dh->dirblocks + dh->entry;
 	if (dh->rootdir) {
@@ -521,7 +521,7 @@ static int vmu_stat(vfs_handler_t * vfs, const char * fn, stat_t * rv) {
 		dbglog(DBG_ERROR, "vmu_stat: null output pointer\n");
 		return -1;
 	}
-	
+
 	/* The only thing we can stat right now is full VMUs, and what that
 	   will get you is a count of free blocks in "size". */
 	dev = vmu_path_to_addr(fn);
@@ -553,7 +553,7 @@ static vfs_handler_t vh = {
 		NMMGR_LIST_INIT
 	},
 	0, NULL,	/* In-kernel, privdata */
-	
+
 	vmu_open,
 	vmu_close,
 	vmu_read,
@@ -564,7 +564,7 @@ static vfs_handler_t vh = {
 	vmu_readdir,	/* readdir */
 	NULL,		/* ioctl */
 	NULL,		/* rename/move */
-	vmu_unlink,	/* unlink */		
+	vmu_unlink,	/* unlink */
 	vmu_mmap,	/* mmap */
 	NULL,		/* complete */
 	vmu_stat,	/* stat */
@@ -584,7 +584,7 @@ int fs_vmu_shutdown() {
 	c = TAILQ_FIRST(&vmu_fh);
 	while (c) {
 		n = TAILQ_NEXT(c, listent);
-		
+
 		switch (c->strtype) {
 		case VMU_DIR: {
 			vmu_dh_t * dir = (vmu_dh_t *)c;
@@ -605,11 +605,11 @@ int fs_vmu_shutdown() {
 		free(c);
 		c = n;
 	}
-	
+
 	if (fh_mutex != NULL)
 		mutex_destroy(fh_mutex);
 	fh_mutex = NULL;
-	
+
 	return nmmgr_handler_remove(&vh.nmmgr);
 }
 

@@ -2,7 +2,7 @@
 
    arch/dreamcast/include/arch/exec.h
    (c)2002 Dan Potter
-   
+
 */
 
 #ifndef __ARCH_EXEC_H

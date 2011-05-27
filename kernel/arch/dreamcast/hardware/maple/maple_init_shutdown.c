@@ -98,7 +98,7 @@ int maple_hw_init() {
 void maple_hw_shutdown() {
 	int	p, u, cnt;
 	uint32	ptr;
-	
+
 	/* Unhook interrupts */
 	vblank_handler_remove(maple_state.vbl_handle);
 	asic_evt_set_handler(ASIC_EVT_MAPLE_DMA, NULL);		asic_evt_disable(ASIC_EVT_MAPLE_DMA, ASIC_IRQ_DEFAULT);
@@ -134,7 +134,7 @@ void maple_hw_shutdown() {
 		cnt, maple_state.vbl_cntr, maple_state.dma_cntr);
 }
 
-/* Wait for the initial bus scan to complete */     
+/* Wait for the initial bus scan to complete */
 void maple_wait_scan() {
 	int		p, u;
 	maple_device_t	*dev;

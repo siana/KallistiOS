@@ -2,7 +2,7 @@
 
    gba/dma.h
    (c)2002 Gil Megidish
-   
+
 */
 
 #ifndef __GBA_DMA_H

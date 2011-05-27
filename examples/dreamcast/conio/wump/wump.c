@@ -161,7 +161,7 @@ main(argc, argv)
 
 	/* If the user hits start, bail */
 	cont_btn_callback(0, CONT_START, (cont_btn_callback_t)arch_exit);
-                
+
 	pvr_init_defaults();
 	conio_init(CONIO_TTY_PVR, CONIO_INPUT_LINE);
 

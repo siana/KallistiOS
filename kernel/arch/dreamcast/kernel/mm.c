@@ -30,7 +30,7 @@ int mm_init() {
 	int base = (int)(&end);
 	base = (base/4)*4 + 4;		/* longword align */
 	sbrk_base = (void*)base;
-	
+
 	return 0;
 }
 
@@ -52,7 +52,7 @@ void* mm_sbrk(unsigned long increment) {
 	}
 
 	irq_restore(old);
-	
+
 	return base;
 }
 

@@ -14,7 +14,7 @@
     in this way here.
 
     This driver is largely based off of information provided by Kamjin on the
-    DCEmulation forums. See 
+    DCEmulation forums. See
     http://dcemulation.org/phpBB/viewtopic.php?f=29&t=48462 if you're interested
     in the original documentation.
 

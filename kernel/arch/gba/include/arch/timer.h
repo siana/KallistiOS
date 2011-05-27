@@ -12,7 +12,7 @@
 #include <arch/irq.h>
 
 /* Does the same as timer_ms_gettime(), but it merges both values
-   into a single 64-bit millisecond counter. May be more handy  
+   into a single 64-bit millisecond counter. May be more handy
    in some situations. */
 uint64 timer_ms_gettime64();
 
@@ -23,7 +23,7 @@ typedef void (*timer_primary_callback_t)(irq_context_t *);
 timer_primary_callback_t timer_primary_set_callback(timer_primary_callback_t callback);
 
 /* Request a wakeup in approximately N milliseconds. You only get one
-   simultaneous wakeup. Any subsequent calls here will replace any 
+   simultaneous wakeup. Any subsequent calls here will replace any
    pending wakeup. */
 void timer_primary_wakeup(uint32 millis);
 

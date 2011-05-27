@@ -107,7 +107,7 @@ static void sphere( float radius, int slices, int stacks ) {
 			vert->argb = PVR_PACK_COLOR(0.5f, 0.0f, g, b);
 			vert->oargb = 0xff000000;
 			pvr_dr_commit(vert);				/* Prefetch the SQ */
-                
+
 			/* x, y */
 			x = radius * fcos( yaw ) * fcos( pitch );
 			y = radius * fsin( pitch );
@@ -224,7 +224,7 @@ void do_sphere_test() {
 			sphere_frame_opaque();
 		else
 			sphere_frame_trans();
-	
+
 		cont = maple_enum_type(0, MAPLE_FUNC_CONTROLLER);
 		if (!cont)
 			continue;
@@ -259,11 +259,11 @@ void do_sphere_test() {
 pvr_init_params_t params = {
 	/* Enable opaque and translucent polygons with size 16 */
 	{ PVR_BINSIZE_16, PVR_BINSIZE_0, PVR_BINSIZE_16, PVR_BINSIZE_0, PVR_BINSIZE_0 },
-	
+
 	/* Vertex buffer size 512K */
 	512*1024
 };
-	
+
 int main(int argc, char **argv) {
 	/* Init PVR API */
 	if (pvr_init(&params) < 0)

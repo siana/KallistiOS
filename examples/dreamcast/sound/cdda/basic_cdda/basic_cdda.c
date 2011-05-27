@@ -24,7 +24,7 @@ int main(int argc, char **argv) {
 	int		i;
 	int		done;
 	int		lvol, rvol, lpan, rpan;
-	
+
 	/* Start the CDDA playing. Loop tracks 1-3, 4 times, and then stop */
 	cdrom_cdda_play(1, 3, 4, CDDA_TRACKS);
 
@@ -69,7 +69,7 @@ int main(int argc, char **argv) {
 			if (lvol > 15) lvol = 15;
 			if (lpan < -16) lpan = -16;
 			if (lpan > 31) lpan = 31;
-			
+
 			if (rvol < 0) rvol = 0;
 			if (rvol > 15) rvol = 15;
 			if (rpan < -16) rpan = -16;
@@ -89,7 +89,7 @@ int main(int argc, char **argv) {
 
 	/* Spin down the CD */
 	cdrom_spin_down();
-	
+
 	return 0;
 }
 

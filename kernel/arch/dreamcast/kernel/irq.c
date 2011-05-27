@@ -40,10 +40,10 @@ int irq_inside_int() {
 int irq_set_handler(irq_t code, irq_handler hnd) {
 	/* Make sure they don't do something crackheaded */
 	if (code >= 0x1000 || (code & 0x000f)) return -1;
-	
+
 	code = code >> 4;
 	irq_handlers[code] = hnd;
-	
+
 	return 0;
 }
 
@@ -51,7 +51,7 @@ int irq_set_handler(irq_t code, irq_handler hnd) {
 irq_handler irq_get_handler(irq_t code) {
 	/* Make sure they don't do something crackheaded */
 	if (code >= 0x1000 || (code & 0x000f)) return NULL;
-	
+
 	code = code >> 4;
 	return irq_handlers[code];
 }
@@ -108,10 +108,10 @@ void irq_handle_exception(int code) {
 
 	/* If it's a code 0, well, we shouldn't be here. */
 	if (code == 0) panic("spurious RESET exception");
-	
+
 	/* If it's a code 1 or 2, grab the event from expevt. */
 	if (code == 1 || code == 2) evt = *expevt;
-	
+
 	/* If it's a code 3, grab the event from intevt. */
 	if (code == 3) evt = *intevt;
 
@@ -180,7 +180,7 @@ void irq_handle_trapa(irq_t code, irq_context_t *context) {
 
 	/* Get the trapa vector */
 	vec = (*tra) >> 2;
-	
+
 	/* Check for handler and call if present */
 	hnd = trapa_handlers[vec];
 	if (hnd != NULL)
@@ -192,9 +192,9 @@ extern void irq_vma_table();
 
 /* Switches register banks; call this outside of exception handling
    (but make sure interrupts are off!!) to change where registers will
-   go to, or call it inside an exception handler to switch contexts. 
+   go to, or call it inside an exception handler to switch contexts.
    Make sure you have at least REG_BYTE_CNT bytes available. DO NOT
-   ALLOW ANY INTERRUPTS TO HAPPEN UNTIL THIS HAS BEEN CALLED AT 
+   ALLOW ANY INTERRUPTS TO HAPPEN UNTIL THIS HAS BEEN CALLED AT
    LEAST ONCE! */
 void irq_set_context(irq_context_t *regbank) {
 	irq_srt_addr = regbank;
@@ -207,7 +207,7 @@ irq_context_t *irq_get_context() {
 
 /* Fill a newly allocated context block for usage with supervisor/kernel
    or user mode. The given parameters will be passed to the called routine (up
-   to the architecture maximum). */   
+   to the architecture maximum). */
 void irq_create_context(irq_context_t *context, uint32 stkpntr,
 		uint32 routine, uint32 *args, int usermode) {
 	int i;
@@ -307,7 +307,7 @@ int irq_init() {
 	"_after_vbr:\n");
 
 	initted = 1;
-	
+
 	return 0;
 }
 
@@ -315,7 +315,7 @@ int irq_init() {
 void irq_shutdown() {
 	if (!initted)
 		return;
-		
+
 	/* Restore SR and VBR */
 	asm("mov.l	%0,r0\n"
 	    "ldc	r0,sr" : : "m"(pre_sr));

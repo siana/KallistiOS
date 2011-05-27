@@ -6,7 +6,7 @@
    Definitions for the SH-4/AICA interface. This file is meant to be
    included from both the ARM and SH-4 sides of the fence.
 */
-         
+
 #ifndef __ARM_AICA_CMD_IFACE_H
 #define __ARM_AICA_CMD_IFACE_H
 

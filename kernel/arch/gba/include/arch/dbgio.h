@@ -2,7 +2,7 @@
 
    arch/gba/include/dbgio.h
    (c)2000 Dan Potter
-  
+
 */
 
 #ifndef __ARCH_DBGIO_H

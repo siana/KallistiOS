@@ -12,7 +12,7 @@
 
 /* The simplest KGL example ever!
 
-   Essentially the same thing as NeHe's lesson02 code. 
+   Essentially the same thing as NeHe's lesson02 code.
    To learn more, go to http://nehe.gamedev.net/.
 */
 

@@ -262,7 +262,7 @@ int vmufs_file_read(maple_device_t * dev, uint16 * fat, vmu_dir_t * dirent, void
 				fn, dev->port+'A', dev->unit+'0');
 			return -1;
 		}
-		
+
 		/* Read the block */
 		rv = vmu_block_read(dev, curblk, (uint8 *)out);
 		if (rv != 0) {
@@ -772,7 +772,7 @@ int vmufs_delete(maple_device_t * dev, const char * fn) {
 	/* Looks like everything was good */
 ex:
 	vmufs_teardown(dir, fat);
-	return rv;	
+	return rv;
 }
 
 int vmufs_free_blocks(maple_device_t * dev) {
@@ -787,7 +787,7 @@ int vmufs_free_blocks(maple_device_t * dev) {
 	rv = vmufs_fat_free(&root, fat);
 
 	vmufs_teardown(NULL, fat);
-	return rv;	
+	return rv;
 }
 
 

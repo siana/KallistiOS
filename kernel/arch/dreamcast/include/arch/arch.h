@@ -2,7 +2,7 @@
 
    arch/dreamcast/include/arch.h
    Copyright (C) 2001 Dan Potter
-   
+
 */
 
 /** \file   arch/arch.h
@@ -76,7 +76,7 @@ int arch_main();
                                     arch_exit()
 
     @{
-*/  
+*/
 #define ARCH_EXIT_RETURN    1   /**< \brief Return to loader */
 #define ARCH_EXIT_MENU      2   /**< \brief Return to system menu */
 #define ARCH_EXIT_REBOOT    3   /**< \brief Reboot the machine */

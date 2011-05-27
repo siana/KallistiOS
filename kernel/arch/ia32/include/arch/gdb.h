@@ -2,7 +2,7 @@
 
    arch/dreamcast/include/arch/gdb.h
    (c)2002 Dan Potter
-   
+
 */
 
 #ifndef __ARCH_GDB_H

@@ -1,5 +1,5 @@
 /* KallistiOS ##version##
-  
+
    pvr_dma.c
    Copyright (C)2002 Roger Cattermole
    Copyright (C)2004 Dan Potter
@@ -58,7 +58,7 @@ static void pvr_dma_irq_hnd(uint32 code) {
 
 		cb(d);
 	}
-	
+
 	// Signal the calling thread to continue, if any.
 	if (dma_blocking) {
 		sem_signal(dma_done);
@@ -71,7 +71,7 @@ int pvr_dma_transfer(void * src, uint32 dest, uint32 count, int type,
 	int block, pvr_dma_callback_t callback, ptr_t cbdata)
 {
 	uint32 val;
-	uint32 src_addr = ((uint32)src); 
+	uint32 src_addr = ((uint32)src);
 	uint32 dest_addr;
 
 	// Send the data to the right place
@@ -81,7 +81,7 @@ int pvr_dma_transfer(void * src, uint32 dest, uint32 count, int type,
 		dest_addr = (((unsigned long)dest) & 0xFFFFFF) | 0x11000000;
 
 	// Make sure we're not already DMA'ing
-	if (pvrdma[PVR_DST] != 0) { 
+	if (pvrdma[PVR_DST] != 0) {
 		dbglog(DBG_ERROR, "pvr_dma: PVR_DST != 0\n");
 		errno = EINPROGRESS;
 		return -1;
@@ -93,7 +93,7 @@ int pvr_dma_transfer(void * src, uint32 dest, uint32 count, int type,
 		shdma[DMAC_CHCR2] = val | 0x1;
 	if (val & 0x2) /* TE bit set so we must clear it */
 		shdma[DMAC_CHCR2] = val | 0x2;
-	
+
 	/* Check for 32-byte alignment */
 	if (src_addr & 0x1F)
 		dbglog(DBG_WARNING, "pvr_dma: src is not 32-byte aligned\n");
@@ -104,7 +104,7 @@ int pvr_dma_transfer(void * src, uint32 dest, uint32 count, int type,
 		errno = EFAULT;
 		return -1;
 	}
-	
+
 	shdma[DMAC_SAR2] = src_addr;
 	shdma[DMAC_DMATCR2] = count/32;
 	shdma[DMAC_CHCR2] = 0x12c1;

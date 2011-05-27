@@ -30,7 +30,7 @@ KOS_INIT_FLAGS(INIT_DEFAULT | INIT_MALLOCSTATS);
 int main(int argc, char **argv) {
 	uint8 * b;
 	int i;
-	
+
 	/* The requisite line */
 	printf("\nHello world!\n\n");
 

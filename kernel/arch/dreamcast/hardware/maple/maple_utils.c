@@ -153,7 +153,7 @@ void maple_sentinel_setup(void * buffer, int bufsize) {
 void maple_sentinel_verify(const char * bufname, void * buffer, int bufsize) {
 	int i;
 	uint32 *b32;
-	
+
 	assert( bufsize % 4 == 0 );
 
 	b32 = ((uint32 *)buffer) - 512/4;

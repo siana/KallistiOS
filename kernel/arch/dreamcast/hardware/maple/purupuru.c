@@ -17,20 +17,20 @@
 static void purupuru_rumble_cb(maple_frame_t *frame)	{
 	/* Unlock the frame */
 	maple_frame_unlock(frame);
-	
+
 	/* Wake up! */
 	genwait_wake_all(frame);
 }
 
 int purupuru_rumble_raw(maple_device_t *dev, uint32 effect)	{
 	uint32 *send_buf;
-    
+
 	assert( dev != NULL );
-    
+
 	/* Lock the frame */
 	if(maple_frame_lock(&dev->frame) < 0)
 		return MAPLE_EAGAIN;
-    
+
 	/* Reset the frame */
 	maple_frame_init(&dev->frame);
 	send_buf = (uint32 *)dev->frame.recv_buf;
@@ -43,7 +43,7 @@ int purupuru_rumble_raw(maple_device_t *dev, uint32 effect)	{
 	dev->frame.callback = purupuru_rumble_cb;
 	dev->frame.send_buf = send_buf;
 	maple_queue_frame(&dev->frame);
-    
+
 	/* Wait for the purupuru to accept it */
 	if(genwait_wait(&dev->frame, "purupuru_rumble_raw", 500, NULL) < 0) {
 		if(dev->frame.state != MAPLE_FRAME_VACANT)	{
@@ -54,7 +54,7 @@ int purupuru_rumble_raw(maple_device_t *dev, uint32 effect)	{
 			return MAPLE_ETIMEOUT;
 		}
 	}
-    
+
 	return MAPLE_EOK;
 }
 
@@ -98,7 +98,7 @@ int purupuru_rumble(maple_device_t *dev, purupuru_effect_t *effect) {
 
 	return MAPLE_EOK;
 }
-    
+
 
 static void purupuru_periodic(maple_driver_t *drv) {
 }

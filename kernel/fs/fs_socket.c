@@ -151,7 +151,7 @@ int fs_socket_shutdown() {
     rlock_lock(proto_rlock);
     i = TAILQ_FIRST(&protocols);
     while(i != NULL) {
-        j = TAILQ_NEXT(i, entry);        
+        j = TAILQ_NEXT(i, entry);
         free(i);
         i = j;
     }

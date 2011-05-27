@@ -58,7 +58,7 @@
    own dcload syscalls emulation.*/
 #define TX_SEMA
 
-/* If this is defined, the dma buffer will be located in P2 area, and no call to 
+/* If this is defined, the dma buffer will be located in P2 area, and no call to
    dcache_inval_range need to be done before receiving data.
    TODO : make some benchmark to see which method is faster */
 //#define USE_P2_AREA
@@ -183,7 +183,7 @@ void bba_set_rx_callback(eth_rx_callback_t cb) {
 
 /*
   Initializes the BBA
-  
+
   Returns 0 for success or -1 for failure.
  */
 static int bba_hw_init() {
@@ -199,7 +199,7 @@ static int bba_hw_init() {
 
 	/* Soft-reset the chip */
 	g2_write_8(NIC(RT_CHIPCMD), RT_CMD_RESET);
-	
+
 	/* Wait for it to come back */
 	i = 100;
 	while ((g2_read_8(NIC(RT_CHIPCMD)) & RT_CMD_RESET) && i > 0) {
@@ -213,14 +213,14 @@ static int bba_hw_init() {
 
 	/* Reset CONFIG1 */
 	g2_write_8(NIC(RT_CONFIG1), 0);
-	
+
 	/* Enable auto-negotiation and restart that process */
 	/* NIC16(RT_MII_BMCR) = 0x1200; */
 	g2_write_16(NIC(RT_MII_BMCR), 0x9200);
-	
+
 	/* Do another reset */
 	g2_write_8(NIC(RT_CHIPCMD), RT_CMD_RESET);
-	
+
 	/* Wait for it to come back */
 	i = 100;
 	while ((g2_read_8(NIC(RT_CHIPCMD)) & RT_CMD_RESET) && i > 0) {
@@ -234,7 +234,7 @@ static int bba_hw_init() {
 
 	/* Enable writing to the config registers */
 	g2_write_8(NIC(RT_CFG9346), 0xc0);
-	
+
 	/* Read MAC address */
 	tmp = g2_read_32(NIC(RT_IDR0));
 	rtl.mac[0] = tmp & 0xff;
@@ -258,19 +258,19 @@ static int bba_hw_init() {
 /*  	g2_write_32(NIC(RT_RXCONFIG), 0x0000c600); */
 	//g2_write_32(NIC(RT_RXCONFIG), 0x00000e00);
 	g2_write_32(NIC(RT_RXCONFIG), RX_CONFIG);
-	
+
 	/* Set Tx 1024 byte DMA burst */
 	g2_write_32(NIC(RT_TXCONFIG), TX_CONFIG);
 
 	/* Turn off lan-wake and set the driver-loaded bit */
 	g2_write_8(NIC(RT_CONFIG1), (g2_read_8(NIC(RT_CONFIG1)) & ~0x30) | 0x20);
-	
+
 	/* Enable FIFO auto-clear */
 	g2_write_8(NIC(RT_CONFIG4), g2_read_8(NIC(RT_CONFIG4)) | 0x80);
-	
+
 	/* Switch back to normal operation mode */
 	g2_write_8(NIC(RT_CFG9346), 0);
-	
+
 	/* Setup RX/TX buffers */
 	g2_write_32(NIC(RT_RXBUF), RTL_MEM);
 
@@ -281,14 +281,14 @@ static int bba_hw_init() {
 
 	/* Reset RXMISSED counter */
 	g2_write_32(NIC(RT_RXMISSED), 0);
-	
+
 	/* Enable receiving broadcast and physical match packets */
 	g2_write_32(NIC(RT_RXCONFIG), g2_read_32(NIC(RT_RXCONFIG)) | 0x0000000a);
-	
+
 	/* Filter out all multicast packets */
 	g2_write_32(NIC(RT_MAR0 + 0), 0);
 	g2_write_32(NIC(RT_MAR0 + 4), 0);
-	
+
 	/* Disable all multi-interrupts */
 	g2_write_16(NIC(RT_MULTIINTR), 0);
 
@@ -364,7 +364,7 @@ static void bba_hw_shutdown() {
 
 #if 0
 
-/* this version stores also CHCR1 state and stop it, doesn't seem to make 
+/* this version stores also CHCR1 state and stop it, doesn't seem to make
    any difference so I removed it for now */
 #define G2_LOCK(OLD1, OLD2) \
 	do { \
@@ -410,7 +410,7 @@ static void g2_read_block_8(uint8 *dst, uint8 *src, int len) {
 		return;
 
 	uint32 old1, old2;
-  
+
 	G2_LOCK(old1, old2);
 
   /* This is in case dst is not multiple of 4, which never happens here */
@@ -423,15 +423,15 @@ static void g2_read_block_8(uint8 *dst, uint8 *src, int len) {
 	uint32 * d = (uint32 *) dst;
 	uint32 * s = (uint32 *) src;
 	len = (len+3) >> 2;
-  
+
 	while ( len&7 ) {
 		*d++ = *s++;
 		--len;
 	}
-  
+
 	if (!len)
 		return;
-  
+
 	len >>= 3;
 	do {
 		d[0] = *s++;
@@ -444,7 +444,7 @@ static void g2_read_block_8(uint8 *dst, uint8 *src, int len) {
 		d[7] = *s++;
 		d += 8;
 	} while(--len);
-  
+
 	G2_UNLOCK(old1, old2);
 }
 #endif
@@ -616,7 +616,7 @@ static int bba_tx(const uint8 * pkt, int len, int wait)
 {
 	/*
 	   int i;
-	
+
 	printf("Transmitting packet:\r\n"); for (i=0; i<len; i++) { printf("%02x ", pkt[i]); if (i
 	   && !(i % 16)) printf("\r\n"); } printf("\r\n");
 	*/
@@ -811,7 +811,7 @@ static void bba_irq_hnd(uint32 code) {
 			bmsr &= ~(RT_MII_LINK | RT_MII_AN_COMPLETE);
 			dbglog(DBG_INFO, "bba: initial link change, redoing auto-neg\n");
 		}
-		
+
 		// This should really be a bit more complete, but this
 		// should be sufficient.
 
@@ -838,7 +838,7 @@ static void bba_irq_hnd(uint32 code) {
 
 		// We've done our initial link interrupt now.
 		link_initial = 1;
-		
+
 		hnd = 1;
 	}
 	if (intr & RT_INT_RXBUF_OVERFLOW) {
@@ -909,7 +909,7 @@ static int bba_if_shutdown(netif_t *self) {
 		return 0;
 
 	bba_hw_shutdown();
-	
+
 	bba_if.flags &= ~(NETIF_INITIALIZED | NETIF_RUNNING);
 	return 0;
 }
@@ -971,7 +971,7 @@ static int bba_if_stop(netif_t *self) {
 static int bba_if_tx(netif_t *self, const uint8 *data, int len, int blocking) {
 	if (!(bba_if.flags & NETIF_RUNNING))
 		return -1;
-		
+
 	if (bba_tx(data, len, blocking) != BBA_TX_OK)
 		return -1;
 

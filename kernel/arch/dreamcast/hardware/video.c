@@ -5,7 +5,7 @@
    (c)2001 Anders Clerwall (scav)
    Parts (c)2000-2001 Dan Potter
  */
- 
+
 #include <dc/video.h>
 #include <dc/sq.h>
 #include <string.h>
@@ -420,17 +420,17 @@ uint32	 	*vram_l;
      1 == (nothing)
      2 == RGB
      3 == Composite
-   
+
    This is a direct port of Marcus' assembly function of the
    same name.
-   
+
    [This is the old KOS function by Dan.]
 */
 int vid_check_cable() {
 	uint32 * porta = (uint32 *)0xff80002c;
-	
+
 	*porta = (*porta & 0xfff0ffff) | 0x000a0000;
-	
+
 	/* Read port8 and port9 */
 	return (*((uint16*)(porta + 1)) >> 8) & 3;
 }
@@ -476,13 +476,13 @@ void vid_set_mode(int dm, int pm) {
 		dbglog(DBG_ERROR, "vid_set_mode: invalid mode specifier %04x\n", dm);
 		return;
 	}
-	
+
 	/* We set this here so actual mode is bit-depth independent.. */
 	mode.pm = pm;
-		
+
 	/* This is also to be generic */
 	mode.cable_type = ct;
-		
+
 	/* This will make a private copy of our "mode" */
 	vid_set_mode_ex(&mode);
 }
@@ -492,8 +492,8 @@ void vid_set_mode_ex(vid_mode_t *mode) {
 	static uint8 bpp[4] = { 2, 2, 0, 4 };
 	uint16 ct;
 	uint32 data;
-	
-	
+
+
 	/* Verify cable type for video mode. */
 	ct = vid_check_cable();
 	if (mode->cable_type != CT_ANY) {
@@ -521,9 +521,9 @@ void vid_set_mode_ex(vid_mode_t *mode) {
 		(mode->flags & VID_INTERLACE) ? "IL" : "",
 		(mode->flags & VID_PAL) ? "PAL" : "NTSC",
 		(mode->generic & DM_MULTIBUFFER) ? " multi-buffered" : "");
-	
+
 	vid_border_color(0, 0, 0);
-	
+
 	/* Pixelformat */
 	data = (mode->pm << 2);
 	if (ct == CT_VGA) {
@@ -532,7 +532,7 @@ void vid_set_mode_ex(vid_mode_t *mode) {
 			data |= 2;
 	}
 	regs[0x11] = data;
-	
+
 	/* Linestride */
 	regs[0x13] = (mode->width * bpp[mode->pm]) / 8;
 
@@ -552,7 +552,7 @@ void vid_set_mode_ex(vid_mode_t *mode) {
 	} else {
 		regs[0x33] = (mode->scanint1 << 16) | mode->scanint2;
 	}
-	
+
 	/* Interlace stuff */
 	data = 0x100;
 	if (mode->flags & VID_INTERLACE) {
@@ -564,21 +564,21 @@ void vid_set_mode_ex(vid_mode_t *mode) {
 		}
 	}
 	regs[0x34] = data;
-	
+
 	/* Border window */
 	regs[0x35] = (mode->borderx1 << 16) | mode->borderx2;
 	regs[0x37] = (mode->bordery1 << 16) | mode->bordery2;
-	
+
 	/* Scanlines and clocks. */
 	regs[0x36] = (mode->scanlines << 16) | mode->clocks;
-	
+
 	/* Horizontal pixel doubling */
 	if (mode->flags & VID_PIXELDOUBLE) {
 		regs[0x3A] |= 0x100;
 	} else {
 		regs[0x3A] &= ~0x100;
 	}
-	
+
 	/* Bitmap window */
 	regs[0x3B] = mode->bitmapx;
 	data = mode->bitmapy;
@@ -587,11 +587,11 @@ void vid_set_mode_ex(vid_mode_t *mode) {
 	}
 	data = (data << 16) | mode->bitmapy;
 	regs[0x3C] = data;
-	
+
 	/* Everything is ok */
 	memcpy(&currmode, mode, sizeof(vid_mode_t));
 	vid_mode = &currmode;
-	
+
 	/* Set up the framebuffer */
 	vid_mode->fb_curr = -1;
 	vid_flip(0);
@@ -615,7 +615,7 @@ void vid_set_start(uint32 base) {
 	/* Set vram base of current framebuffer */
 	base &= 0x007FFFFF;
 	regs[0x14] = base;
-	
+
 	/* These are nice to have. */
 	vram_s = (uint16*)(0xA5000000|base);
 	vram_l = (uint32*)(0xA5000000|base);
@@ -666,7 +666,7 @@ void vid_border_color(int r, int g, int b) {
 void vid_clear(int r, int g, int b) {
 	uint16 pixel16;
 	uint32 pixel32;
-	
+
 	switch (vid_mode->pm) {
 		case PM_RGB555:
 			pixel16 = ((r >> 3) << 10)
@@ -702,9 +702,9 @@ void vid_empty() {
 /* Waits for a vertical refresh to start. This is the period between
    when the scan beam reaches the bottom of the picture, and when it
    starts again at the top.
-   
+
    Thanks to HeroZero for this info.
-   
+
    [This is the old KOS function by Dan.]
 */
 void vid_waitvbl() {

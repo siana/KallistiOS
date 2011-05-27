@@ -70,7 +70,7 @@ int main(int argc, char **argv) {
 		plx_vert_ifp(PLX_VERT, xoffs, 0.0f, 1.0f, 0xffffffff, 0.0f, 0.0f);
 		plx_vert_ifp(PLX_VERT, 640.0f-xoffs, y, 1.0f, 0xffffffff, 1.0f, y/480.0f);
 		plx_vert_ifp(PLX_VERT_EOS, 640.0f-xoffs, 0.0f, 1.0f, 0xffffffff, 1.0f, 0.0f);
-		
+
 		plx_vert_ifp(PLX_VERT, xoffs, 480.0f, 1.0f, 0xffffffff, 0.0f, y/480.0f);
 		plx_vert_ifp(PLX_VERT, xoffs, y, 1.0f, 0xffffffff, 0.0f, y/480.0f);
 		plx_vert_ifp(PLX_VERT, 640.0f-xoffs, 480.0f, 1.0f, 0xffffffff, 1.0f, y/480.0f);

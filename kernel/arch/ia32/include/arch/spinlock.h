@@ -2,7 +2,7 @@
 
    arch/dreamcast/include/spinlock.h
    (c)2001 Dan Potter
-   
+
 */
 
 #ifndef __ARCH_SPINLOCK_H

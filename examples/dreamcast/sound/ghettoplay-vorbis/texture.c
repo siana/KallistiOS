@@ -17,7 +17,7 @@ void setup_util_texture() {
 	util_texture = pvr_mem_malloc(256*256*2);
 	printf("util_texture at %08x\n", util_texture);
 	vram = (uint16 *)util_texture;
-	
+
 	/* First dump in the mouse cursor */
 	for (y=0; y<16; y++) {
 		for (x=0; x<10; x++) {
@@ -31,13 +31,13 @@ void setup_util_texture() {
 		}
 		vram += 256 - 10;
 	}
-	
+
 	/* Now add the rest as ASCII characters */
 	vram = (uint16 *)util_texture;
 	for (y=0; y<8; y++) {
 		for (x=0; x<16; x++) {
 			/* Skip the first (it's a mouse pointer) */
-			if (x != 0 || y != 0) 
+			if (x != 0 || y != 0)
 				bfont_draw(vram, 256, 0, y*16+x);
 			vram += 16;
 		}

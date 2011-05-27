@@ -2,7 +2,7 @@
 
    arch/ps2/include/arch.h
    (c)2001-2002 Dan Potter
-   
+
 */
 
 #ifndef __ARCH_ARCH_H

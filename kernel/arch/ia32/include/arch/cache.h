@@ -2,7 +2,7 @@
 
    arch/ia32/include/cache.h
    (c)2001 Dan Potter
-   
+
 */
 
 #ifndef __ARCH_CACHE_H

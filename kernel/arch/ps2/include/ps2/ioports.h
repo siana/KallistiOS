@@ -2,7 +2,7 @@
 
    arch/ps2/include/ioports.h
    (c)2002 Dan Potter
-   
+
 */
 
 #ifndef __PS2_IOPORTS_H

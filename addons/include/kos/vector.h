@@ -1,5 +1,5 @@
 /* KallistiOS ##version##
-   
+
    kos/vector.h
    (c)2002 Dan Potter
 

@@ -15,7 +15,7 @@ static float horizon = 340.0f;
 void bkg_setup() {
 	int x, y;
 	uint16 *texture;
-	
+
 	chktexture = pvr_mem_malloc(64*64*2);
 	texture = (uint16*)chktexture;
 	for (y=0; y<64; y++)
@@ -23,7 +23,7 @@ void bkg_setup() {
 			int v = ((x*4)^(y*4)) & 255;
 			*texture++ = ((v >> 3) << 11)
 				| ((v >> 2) << 5)
-				| ((v >> 3) << 0); 
+				| ((v >> 3) << 0);
 		}
 }
 
@@ -73,7 +73,7 @@ static void draw_wall_poly() {
 	vertc.argb = PVR_PACK_COLOR(1.0f, 0.5f, 0.3f, 1.0f);
 	vertc.oargb = 0;
 	pvr_prim(&vertc, sizeof(vertc));
-	
+
 	vertc.x = 0.0f; vertc.y = 0.0f; vertc.z = 64.0f;
 	vertc.argb = PVR_PACK_COLOR(1.0f, 0.0f, 0.0f, 0.0f);
 	pvr_prim(&vertc, sizeof(vertc));
@@ -81,7 +81,7 @@ static void draw_wall_poly() {
 	vertc.x = 640.0f; vertc.y = horizon; vertc.z = 64.0f;
 	vertc.argb = PVR_PACK_COLOR(1.0f, 0.5f, 0.3f, 1.0f);
 	pvr_prim(&vertc, sizeof(vertc));
-	
+
 	vertc.flags = PVR_CMD_VERTEX_EOL;
 	vertc.x = 640.0f; vertc.y = 0.0f; vertc.z = 64.0f;
 	vertc.argb = PVR_PACK_COLOR(1.0f, 0.0f, 0.0f, 0.0f);
@@ -91,7 +91,7 @@ static void draw_wall_poly() {
 void bkg_render() {
 	pvr_poly_cxt_t cxt;
 	pvr_poly_hdr_t poly;
-	
+
 	/* "floor" polygon */
 	pvr_poly_cxt_txr(&cxt, PVR_LIST_OP_POLY, PVR_TXRFMT_RGB565 | PVR_TXRFMT_NONTWIDDLED,
 		64, 64, chktexture, PVR_FILTER_BILINEAR);
@@ -99,14 +99,14 @@ void bkg_render() {
 	pvr_prim(&poly, sizeof(poly));
 
 	draw_floor_poly();
-	
+
 	/* "wall" polygon */
 	pvr_poly_cxt_col(&cxt, PVR_LIST_OP_POLY);
 	pvr_poly_compile(&poly, &cxt);
 	pvr_prim(&poly, sizeof(poly));
-	
+
 	draw_wall_poly();
-	
+
 	ang = (ang-1) & 255;
 }
 

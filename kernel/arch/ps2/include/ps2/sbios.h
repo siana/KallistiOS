@@ -2,7 +2,7 @@
 
    arch/ps2/include/sbios.h
    (c)2002 Dan Potter
-   
+
 */
 
 #ifndef __PS2_SBIOS_H
@@ -69,7 +69,7 @@ typedef struct ps2_rtc {
 	uint8	year;	/* <-- Y2K/Y2.1K non-compliant!! */
 } ps2_rtc_t;
 
-/* System configuration values; used below in the sysconf member. 
+/* System configuration values; used below in the sysconf member.
    I suppose that somewhere something describes what exactly these
    members mean... about the only thing I can guess at is "spdif",
    which is probably non-zero if using SPDIF audio output. Other
@@ -97,12 +97,12 @@ typedef struct ps2_bootinfo {
 	ps2_sysconf_t	sysconf;		/* System config settings */
 
 	/* "old" bootinfo struct stops here */
-	
+
 	uint32		magic;			/* Should be "P2LB" */
 	int32		size;			/* Size of the bootinfo struct */
 	uint32		sbios_base;		/* Base of the SBIOS structs */
 	uint32		memsize;		/* Size of available memory (?) */
-	
+
 	/* Version strings */
 	uint32		ver_stringsize;		/* Size of the total version string buffer */
 	char 		* ver_string;		/* Pointer to the total version string buffer */
@@ -152,13 +152,13 @@ enum {
 	PS2_SB_PUTCHAR,
 	PS2_SB_GETCHAR,
 	PS2_SB_SETGSCRT,
-	
+
 	PS2_SB_SIFINIT = 0x10,
 	PS2_SB_SIFEXIT,
 	PS2_SB_SIFSETDMA,
 	PS2_SB_SIFDMASTART,
 	PS2_SB_SIFSETDCHAIN,
-	
+
 	PS2_SB_SIFINITCMD = 0x20,
 	PS2_SB_SIFEXITCMD,
 	PS2_SB_SIFSENDCMD,

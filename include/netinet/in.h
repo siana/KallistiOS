@@ -98,16 +98,16 @@ struct sockaddr_in {
 struct sockaddr_in6 {
     /** \brief  Family for the socket. Must be AF_INET6. */
     sa_family_t     sin6_family;
-    
+
     /** \brief  Port for the socket. Must be in network byte order. */
     in_port_t       sin6_port;
 
     /** \brief  Traffic class and flow information. */
     uint32_t        sin6_flowinfo;
-    
+
     /** \brief  Address for the socket. Must be in network byte order. */
     struct in6_addr sin6_addr;
-    
+
     /** \brief  Set of interfaces for a scope. */
     uint32_t        sin6_scope_id;
 };
@@ -134,7 +134,7 @@ struct sockaddr_in6 {
 #define INADDR_NONE      0xFFFFFFFF
 
 /** \brief  Initialize an IPv6 local host address.
- 
+
     This macro can be used to initialize a struct in6_addr to any lcoal address.
     It functions similarly to INADDR_ANY for IPv4.
 */
@@ -150,13 +150,13 @@ struct sockaddr_in6 {
                                   0, 0, 0, 0, 0, 0, 0, 1 }}}
 
 /** \brief  IPv6 local host address.
- 
+
     This constant variable contains the IPv6 local host address.
 */
 extern const struct in6_addr in6addr_any;
 
 /** \brief  IPv6 loopback address.
- 
+
     This constant variable contains the IPv6 loopback address.
 */
 extern const struct in6_addr in6addr_loopback;
@@ -197,7 +197,7 @@ extern const struct in6_addr in6addr_loopback;
      (a)->__s6_addr.__s6_addr32[3] == 0)
 
 /** \brief  Test if an IPv6 Address is a loopback address.
- 
+
     This macro tests whether an IPv6 address (struct in6_addr *) is a
     loopback address.
 

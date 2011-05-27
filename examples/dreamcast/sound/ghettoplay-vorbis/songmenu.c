@@ -84,7 +84,7 @@ static void draw_wave() {
 	if (takeframes != 0 && sndbuffer_cnt != 0) {
 		plx_dr_state_t dr; plx_dr_init(&dr);
 		cnt = sndbuffer_cnt * takeframes / 60;
-		
+
 		plx_vert_ind(&dr, PLX_VERT, 0.0f, 240.0f, z, 0xffffffff);
 		plx_vert_ind(&dr, PLX_VERT, 0.0f, 235.0f, z, 0xffffffff);
 		for (x = 20.0f, p = 0.0f; x < 620.0f; x += 4.0f, p+=4.0f/(620.0f - 20.0f)) {
@@ -152,7 +152,7 @@ static void draw_listing() {
 
 //	printf("DEBUG: List size %d\r\n",lst_size);
 
-	/* Draw all the song titles */	
+	/* Draw all the song titles */
 //	for (i=0; i<14 && (top+i)<num_entries; i++) {
 	for (i=0; i<10 && (top+i)<num_entries; i++) {
 		int li;
@@ -171,29 +171,29 @@ static void draw_listing() {
 			strcat(workstring,curdir);
 			strcat(workstring,"/");
 			strcat(workstring,entries[top+i].fn);
-	
+
 //			printf("%s =? %s \r\n",workstring,lst_entries[li].fn);
 
 			if(!(strcmp(workstring,lst_entries[li].fn)))
 			{
 				draw_poly_strf(36.0f+32.0f+360.0f, y, 100.0f, 1.0f, 1.0f, 1.0f, 1.0f, "%2d", li+1);
-			}				
+			}
 			if(!(strcmp(workstring,lst_entries[lst_playing].fn)))
 			{
 				draw_poly_box  (31.0f, y - 1.0f,
 						609.0f, y + 25.0f, 90.0f,
-						throb, 0.0f, 0.2f, 0.2f, 
+						throb, 0.0f, 0.2f, 0.2f,
 						throb, 0.0f, throb, 0.2f);
 
 			}
-			
+
 			workstring[0]=0;
-		}		
-		
-		
+		}
+
+
 		y += 24.0f;
 	}
-	
+
 	/* Put a highlight bar under one of them */
 	esel = (selected - top);
 	draw_poly_box(31.0f, 92.0f+esel*24.0f - 1.0f,
@@ -207,7 +207,7 @@ static void draw_listing() {
 		esel = (iplaying - top);
 		draw_poly_box(31.0f, 92.0f+esel*24.0f - 1.0f,
 			609.0f, 92.0f+esel*24.0f + 25.0f, 90.0f,
-			throb, 0.0f, 0.2f, 0.2f, 
+			throb, 0.0f, 0.2f, 0.2f,
 			throb, 0.0f, throb, 0.2f);
 	}
 
@@ -311,13 +311,13 @@ void check_controller() {
 		{
 		strcat(workstring,curdir);
 		strcat(workstring,"/");
-		strcat(workstring,entries[selected].fn);		
+		strcat(workstring,entries[selected].fn);
 		strcpy(lst_entries[lst_size].fn,workstring);
-		
+
 		printf("DEBUG: Entry %d : %s\r\n",lst_size,lst_entries[lst_size].fn);
 
 		workstring[0]=0;
-		
+
 		lst_size++;
 
 		}
@@ -367,7 +367,7 @@ void check_controller() {
 							curdir[i] = 0;
 						}
 					}
-				} 
+				}
 				else
 				{
 					if (strcmp(curdir, "/"))
@@ -401,9 +401,9 @@ void song_menu_render() {
 	}
 
 	/* Draw a background box */
-	draw_poly_box(30.0f, 80.0f, 610.0f, 440.0f-96.0f, 90.0f, 
+	draw_poly_box(30.0f, 80.0f, 610.0f, 440.0f-96.0f, 90.0f,
 		0.2f, 0.8f, 0.5f, 0.0f, 0.2f, 0.8f, 0.8f, 0.2f);
-		
+
 	/* If we don't have a file listing, get it now */
 	if (num_entries == 0 && !load_queued) {
 		load_queued = 1;
@@ -413,22 +413,22 @@ void song_menu_render() {
 	/* if (load_queued)
 		draw_poly_strf(32.0f, 82.0f, 100.0f, 1.0f, 1.0f, 1.0f, 1.0f,
 			"Scanning Directory..."); */
-	
+
 	/* Draw the song listing */
 	mutex_lock(mut);
 	draw_listing();
 	mutex_unlock(mut);
-	
+
 	/* Adjust the throbber */
 	throb += dthrob;
 	if (throb < 0.2f || throb > 0.8f) {
 		dthrob = -dthrob;
 		throb += dthrob;
 	}
-	
+
 	/* Check maple inputs */
 	check_inputs();
-	
+
 	framecnt++;
 }
 

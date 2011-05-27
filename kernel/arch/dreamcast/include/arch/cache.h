@@ -2,7 +2,7 @@
 
    arch/dreamcast/include/cache.h
    (c)2001 Dan Potter
-   
+
 */
 
 /** \file   arch/cache.h

@@ -1,5 +1,5 @@
 /* KallistiOS ##version##
-  
+
    spu.c
    (c)2000-2001 Dan Potter
  */

@@ -80,7 +80,7 @@ void do_frame() {
 		z = rand() % 100 + 1;
 		size = rand() % 50 + 1;
 		col = (rand () % 255)*0.00391f;
-	
+
 		glColor3f(col, col, col);
 		glVertex3f(x-size, y-size, z);
 		glVertex3f(x+size, y-size, z);
@@ -128,7 +128,7 @@ void check_switch() {
 		case PHASE_DECR:
 			if (avgfps < 55) {
 				switch_tests(polycnt - 30);
-			} else { 
+			} else {
 				printf("  Entering PHASE_FINAL\n");
 				phase = PHASE_FINAL;
 			}

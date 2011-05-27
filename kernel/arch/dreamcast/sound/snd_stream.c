@@ -248,7 +248,7 @@ snd_stream_hnd_t snd_stream_alloc(snd_stream_callback_t cb, int bufsize) {
 
 	/* Start off with queueing disabled */
 	streams[hnd].queueing = 0;
-	
+
 	/* Setup the callback */
 	snd_stream_set_callback(hnd, cb);
 
@@ -272,7 +272,7 @@ int snd_stream_reinit(snd_stream_hnd_t hnd, snd_stream_callback_t cb) {
 
 	/* Start off with queueing disabled */
 	streams[hnd].queueing = 0;
-	
+
 	/* Setup the callback */
 	snd_stream_set_callback(hnd, cb);
 
@@ -335,7 +335,7 @@ void snd_stream_start(snd_stream_hnd_t hnd, uint32 freq, int st) {
 	AICA_CMDSTR_CHANNEL(tmp, cmd, chan);
 
 	CHECK_HND(hnd);
-	
+
 	if (!streams[hnd].get_data) return;
 
 	streams[hnd].stereo = st;
@@ -343,7 +343,7 @@ void snd_stream_start(snd_stream_hnd_t hnd, uint32 freq, int st) {
 
 	/* Make sure these are sync'd (and/or delayed) */
 	snd_sh4_to_aica_stop();
-	
+
 	/* Prefill buffers */
 	snd_stream_prefill(hnd);
 
@@ -375,7 +375,7 @@ void snd_stream_start(snd_stream_hnd_t hnd, uint32 freq, int st) {
 			(1 << streams[hnd].ch[1]);
 	chan->cmd = AICA_CH_CMD_START | AICA_CH_START_SYNC;
 	snd_sh4_to_aica(tmp, cmd->size);
-	
+
 	/* Process the changes */
 	if (!streams[hnd].queueing)
 		snd_sh4_to_aica_start();
@@ -392,7 +392,7 @@ void snd_stream_stop(snd_stream_hnd_t hnd) {
 	AICA_CMDSTR_CHANNEL(tmp, cmd, chan);
 
 	CHECK_HND(hnd);
-	
+
 	if (!streams[hnd].get_data) return;
 
 	/* Stop stream */
@@ -436,7 +436,7 @@ int snd_stream_poll(snd_stream_hnd_t hnd) {
 		dbglog(DBG_ERROR, "snd_stream_poll: chan0(%d).pos = %ld (%08lx)\n", streams[hnd].ch[0], ch0pos, ch0pos);
 		return -1;
 	}
-	
+
 	realbuffer = !((ch0pos < (streams[hnd].buffer_size/4)) && (ch1pos < (streams[hnd].buffer_size/4)));
 
 	current_play_pos = (ch0pos < ch1pos)?(ch0pos):(ch1pos);

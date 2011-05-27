@@ -16,7 +16,7 @@
 
 /* Morphing Points!
 
-   Essentially the same thing as NeHe's lesson26 code. 
+   Essentially the same thing as NeHe's lesson26 code.
    To learn more, go to http://nehe.gamedev.net/.
 
    Buttons A X Y B are used to choose the sphere, torus, tube, and random
@@ -90,7 +90,7 @@ void objload( char *name, object *k ) {
 	float rx, ry, rz;  /* Hold Vertex X, Y & Z Position          */
 	FILE *filein;      /* Filename To Open                       */
 	int i;             /* Simple loop variable                   */
-    
+
 	printf("  [objload] file: %s\n", name);
 
 	/* Opens The File For Reading */
@@ -101,7 +101,7 @@ void objload( char *name, object *k ) {
 	k->verts = ver;
 	/* Jumps To Code That Allocates Ram To Hold The Object */
 	objallocate( k,ver );
-    
+
 	/* Loops Through The Vertices */
 	for ( i = 0; i < ver; i++ ) {
 		/* Reads the next three verts */
@@ -133,7 +133,7 @@ vertex calculate( int i ) {
 	a.z = ( sour->points[i].z - dest->points[i].z ) / steps;
 
 	return a;
-} 
+}
 
 /* general OpenGL initialization function */
 int initGL( GLvoid ) {
@@ -175,7 +175,7 @@ int initGL( GLvoid ) {
 
 	/* Enables Smooth Color Shading */
 	glShadeModel( GL_SMOOTH );
-    
+
 	/* Sets Max Vertices To 0 By Default */
 	maxver = 0;
 	/* Load The First Object Into morph1 From File sphere.txt */
@@ -205,7 +205,7 @@ int initGL( GLvoid ) {
 }
 
 void draw_gl(void) {
-    
+
 	GLfloat tx, ty, tz; /* Temp X, Y & Z Variables                     */
 	vertex q;       /* Holds Returned Calculated Values For One Vertex */
 	int i;          /* Simple Looping Variable                         */
@@ -281,7 +281,7 @@ void draw_gl(void) {
 	 * Otherwise Set Morphing To False, Make Source=Destination And
 	 * Set The Step Counter Back To Zero.
 	 */
-	
+
 	if( morph && step <= steps ) {
 		step++;
 	}
@@ -372,7 +372,7 @@ int main(int argc, char **argv) {
 		/* Draw the "scene" */
 		glKosFinishList();
 		draw_gl();
-		
+
 		/* Finish the frame */
 		glKosFinishFrame();
 	}

@@ -2,7 +2,7 @@
 
    arch/gba/include/types.h
    (c)2000-2001 Dan Potter
-   
+
 */
 
 #ifndef __ARCH_TYPES_H

@@ -7,7 +7,7 @@
    Copyright (C)2001 Andrew Kieschnick, imported
    from the GPL'd dc-load-ip sources to a BSD-compatible
    license with permission.
-   
+
 */
 
 
@@ -122,7 +122,7 @@ static int dcln_input(netif_t * src, uint8 * pkt, int pktsize) {
 void dcln_tx(uint8 * pkt, int len) {
 #ifdef DEBUG
 	int i;
-	
+
 	printf("transmitting a packet of len %d:\n", len);
 #ifdef DEBUG_VERBOSE
 	for (i=0; i<len; i++) {
@@ -133,7 +133,7 @@ void dcln_tx(uint8 * pkt, int len) {
 	printf("\n");
 #endif
 #endif
-	
+
 	outdev->if_tx(outdev, pkt, len, NETIF_BLOCK);
 }
 
@@ -142,7 +142,7 @@ void dcln_tx(uint8 * pkt, int len) {
    some code at some point. */
 void dcln_rx_loop() {
 	int old, i;
-	
+
 	while (!dcln_escape_loop) {
 		/* Wait for some data to arrive */
 #ifdef DEBUG
@@ -203,7 +203,7 @@ uint32 dclnative_open(vfs_handler_t * vfs, const char *fn, int mode) {
     int dcload_mode = 0;
 
     mutex_lock(mutex);
-    
+
     if (mode & O_DIR) {
         if (fn[0] == '\0') {
             fn = "/";
@@ -235,7 +235,7 @@ uint32 dclnative_open(vfs_handler_t * vfs, const char *fn, int mode) {
 	hnd = dcln_open(fn, dcload_mode, 0644);
 	hnd++; /* KOS uses 0 for error, not -1 */
     }
-    
+
     h = hnd;
 
     mutex_unlock(mutex);
@@ -244,7 +244,7 @@ uint32 dclnative_open(vfs_handler_t * vfs, const char *fn, int mode) {
 
 void dclnative_close(uint32 hnd) {
     mutex_lock(mutex);
-    
+
     if (hnd) {
 	if (hnd > 100) /* hack */
 	    dcln_closedir(hnd);
@@ -258,14 +258,14 @@ void dclnative_close(uint32 hnd) {
 
 ssize_t dclnative_read(uint32 hnd, void *buf, size_t cnt) {
     ssize_t ret = -1;
-    
+
     mutex_lock(mutex);
-    
+
     if (hnd) {
 	hnd--; /* KOS uses 0 for error, not -1 */
 	ret = dcln_read(hnd, buf, cnt);
     }
-    
+
     mutex_unlock(mutex);
 
     return ret;
@@ -273,9 +273,9 @@ ssize_t dclnative_read(uint32 hnd, void *buf, size_t cnt) {
 
 ssize_t dclnative_write(uint32 hnd, const void *buf, size_t cnt) {
     ssize_t ret = -1;
-    	
+
     mutex_lock(mutex);
-    
+
     if (hnd) {
 	hnd--; /* KOS uses 0 for error, not -1 */
 	ret = dcln_write(hnd, buf, cnt);
@@ -301,7 +301,7 @@ off_t dclnative_seek(uint32 hnd, off_t offset, int whence) {
 
 off_t dclnative_tell(uint32 hnd) {
     off_t ret = -1;
-    
+
     mutex_lock(mutex);
 
     if (hnd) {
@@ -316,16 +316,16 @@ off_t dclnative_tell(uint32 hnd) {
 size_t dclnative_total(uint32 hnd) {
     size_t ret = -1;
     size_t cur;
-	
+
     mutex_lock(mutex);
-	
+
     if (hnd) {
 	hnd--; /* KOS uses 0 for error, not -1 */
 	cur = dcln_lseek(hnd, 0, SEEK_CUR);
 	ret = dcln_lseek(hnd, 0, SEEK_END);
 	dcln_lseek(hnd, cur, SEEK_SET);
     }
-	
+
     mutex_unlock(mutex);
     return ret;
 }
@@ -343,7 +343,7 @@ dirent_t *dclnative_readdir(uint32 hnd) {
     mutex_lock(mutex);
 
     dcld = (dcload_dirent_t *)dcln_readdir(hnd);
-    
+
     if (dcld) {
 	rv = &dirent;
 	strcpy(rv->name, dcld->d_name);
@@ -361,12 +361,12 @@ dirent_t *dclnative_readdir(uint32 hnd) {
 	    else
 		rv->size = filestat.st_size;
 	    rv->time = filestat.st_mtime;
-	    
+
 	}
-	
+
 	free(fn);
     }
-    
+
     mutex_unlock(mutex);
     return rv;
 }
@@ -404,7 +404,7 @@ static vfs_handler_t vh = {
     0, 0,		/* In-kernel, no cacheing */
     NULL,               /* privdata */
     VFS_LIST_INIT,      /* linked list pointer */
-    dclnative_open, 
+    dclnative_open,
     dclnative_close,
     dclnative_read,
     dclnative_write,
@@ -493,7 +493,7 @@ int fs_dclnative_shutdown() {
 	dbgio_set_printk(old_printk);
 
 	net_input_set_target(ni_old);
-	
+
 	for (i=0; i<PKT_BUF_CNT; i++)
 		free(pkt_bufs[i]);
 

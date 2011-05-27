@@ -35,12 +35,12 @@ void pvr_init_tile_matrix(int which) {
 
 	matbase = buf->tile_matrix;
 	opbbase = buf->opb;
-	
+
 	/* Header of zeros */
 	vr += buf->tile_matrix/4;
 	for (x=0; x<0x48; x+=4)
 		*vr++ = 0;
-		
+
 	/* Initial init tile */
 	vr[0] = 0x10000000;
 	vr[1] = 0x80000000;
@@ -49,7 +49,7 @@ void pvr_init_tile_matrix(int which) {
 	vr[4] = 0x80000000;
 	vr[5] = 0x80000000;
 	vr += 6;
-	
+
 	/* Now the main tile matrix */
 #if 0
 	dbglog(DBG_KDEBUG, "  Using poly buffers %08lx/%08lx/%08lx/%08lx/%08lx\r\n",
@@ -66,16 +66,16 @@ void pvr_init_tile_matrix(int which) {
 
 			/* Opaque poly buffer */
 			vr[1] = buf->opb_type[0] + opbs[0]*pvr_state.tw*y + opbs[0]*x;
-			
+
 			/* Opaque volume mod buffer */
 			vr[2] = buf->opb_type[1] + opbs[1]*pvr_state.tw*y + opbs[1]*x;
-			
+
 			/* Translucent poly buffer */
 			vr[3] = buf->opb_type[2] + opbs[2]*pvr_state.tw*y + opbs[2]*x;
-			
+
 			/* Translucent volume mod buffer */
 			vr[4] = buf->opb_type[3] + opbs[3]*pvr_state.tw*y + opbs[3]*x;
-			
+
 			/* Punch-thru poly buffer */
 			vr[5] = buf->opb_type[4] + opbs[4]*pvr_state.tw*y + opbs[4]*x;
 			vr += 6;
@@ -130,7 +130,7 @@ void pvr_allocate_buffers(pvr_init_params_t *params) {
 		pvr_state.h = (pvr_state.h + 32) & ~31;
 		pvr_state.th++;
 	}
-	
+
 	pvr_state.tsize_const = ((pvr_state.th - 1) << 16)
 		| ((pvr_state.tw - 1) << 0);
 
@@ -140,7 +140,7 @@ void pvr_allocate_buffers(pvr_init_params_t *params) {
 	pvr_state.pclip_top = 0;	pvr_state.pclip_bottom = vid_mode->height - 1;
 	pvr_state.pclip_x = (pvr_state.pclip_right << 16) | (pvr_state.pclip_left);
 	pvr_state.pclip_y = (pvr_state.pclip_bottom << 16) | (pvr_state.pclip_top);
-	
+
 	/* Look at active lists and figure out how much to allocate
 	   for each poly type */
 	polybuf = 0;
@@ -163,7 +163,7 @@ void pvr_allocate_buffers(pvr_init_params_t *params) {
 			pvr_state.list_reg_mask |= sconst << (4 * i);
 		}
 	}
-	
+
 	/* Initialize each buffer set */
 	for (i=0; i<2; i++) {
 		/* Frame 0 goes at 0, Frame 1 goes at 0x400000 (half way) */
@@ -177,17 +177,17 @@ void pvr_allocate_buffers(pvr_init_params_t *params) {
 		   buffers except that it's handy to do it all in one place. */
 		buf = pvr_state.ta_buffers + i;
 		fbuf = pvr_state.frame_buffers + i;
-	
+
 		/* Vertex buffer */
 		buf->vertex = outaddr;
 		buf->vertex_size = params->vertex_buf_size;
 		outaddr += buf->vertex_size;
-	
+
 		/* N-byte align */
 		outaddr = (outaddr + BUF_ALIGN_MASK) & ~BUF_ALIGN_MASK;
 
 		/* Object Pointer Buffers */
-		/* XXX What the heck is this 0x50580 magic value?? All I 
+		/* XXX What the heck is this 0x50580 magic value?? All I
 		   remember about it is that removing it makes it fail. */
 		buf->opb_size = 0x50580 + polybuf;
 		outaddr += buf->opb_size;
@@ -203,7 +203,7 @@ void pvr_allocate_buffers(pvr_init_params_t *params) {
 			}
 		}
 		outaddr += buf->opb_size;	/* Do we _really_ need this twice? */
-	
+
 		/* N-byte align */
 		outaddr = (outaddr + BUF_ALIGN_MASK) & ~BUF_ALIGN_MASK;
 
@@ -211,15 +211,15 @@ void pvr_allocate_buffers(pvr_init_params_t *params) {
 		buf->tile_matrix = outaddr;
 		buf->tile_matrix_size = (18 + 6 * pvr_state.tw * pvr_state.th) * 4;
 		outaddr += buf->tile_matrix_size;
-	
+
 		/* N-byte align */
 		outaddr = (outaddr + BUF_ALIGN_MASK) & ~BUF_ALIGN_MASK;
-		
+
 		/* Output buffer */
 		fbuf->frame = outaddr;
 		fbuf->frame_size = pvr_state.w * pvr_state.h * 2;
 		outaddr += fbuf->frame_size;
-		
+
 		/* N-byte align */
 		outaddr = (outaddr + BUF_ALIGN_MASK) & ~BUF_ALIGN_MASK;
 	}
@@ -230,7 +230,7 @@ void pvr_allocate_buffers(pvr_init_params_t *params) {
 #if 0
 	dbglog(DBG_KDEBUG, "pvr: initialized PVR buffers:\n");
 	dbglog(DBG_KDEBUG, "  texture RAM begins at %08lx\n", pvr_state.texture_base);
-	for (i=0; i<2; i++) {		
+	for (i=0; i<2; i++) {
 		buf = pvr_state.ta_buffers+i;
 		fbuf = pvr_state.frame_buffers+i;
 		dbglog(DBG_KDEBUG, "  vertex/vertex_size: %08lx/%08lx\n", buf->vertex, buf->vertex_size);
@@ -244,7 +244,7 @@ void pvr_allocate_buffers(pvr_init_params_t *params) {
 		dbglog(DBG_KDEBUG, "  tile_matrix/tile_matrix_size: %08lx/%08lx\n", buf->tile_matrix, buf->tile_matrix_size);
 		dbglog(DBG_KDEBUG, "  frame/frame_size: %08lx/%08lx\n", fbuf->frame, fbuf->frame_size);
 	}
-	
+
 	dbglog(DBG_KDEBUG, "  list_mask %08lx\n", pvr_state.list_reg_mask);
 	dbglog(DBG_KDEBUG, "  opb sizes per type: %08lx/%08lx/%08lx/%08lx/%08lx\n",
 		pvr_state.opb_ind[0],

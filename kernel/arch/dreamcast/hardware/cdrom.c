@@ -16,7 +16,7 @@ This module contains low-level primitives for accessing the CD-Rom (I
 refer to it as a CD-Rom and not a GD-Rom, because this code will not
 access the GD area, by design). Whenever a file is accessed and a new
 disc is inserted, it reads the TOC for the disc in the drive and
-gets everything situated. After that it will read raw sectors from 
+gets everything situated. After that it will read raw sectors from
 the data track on a standard DC bootable CDR (one audio track plus
 one data track in xa1 format).
 
@@ -25,7 +25,7 @@ Marcus Comstedt. Thanks to Maiwe for the verbose command names and
 also for the CDDA playback routines.
 
 Note that these functions may be affected by changing compiler options...
-they require their parameters to be in certain registers, which is 
+they require their parameters to be in certain registers, which is
 normally the case with the default options. If in doubt, decompile the
 output and look to make sure.
 
@@ -76,7 +76,7 @@ static int sector_size = 2048;   /*default 2048, 2352 for raw data reading*/
 void cdrom_set_sector_size(int size) {
 	sector_size = size;
 	cdrom_reinit();
-} 
+}
 
 /* Command execution sequence */
 int cdrom_exec_cmd(int cmd, void *param) {
@@ -195,13 +195,13 @@ int cdrom_read_toc(CDROM_TOC *toc_buffer, int session) {
 		void	*buffer;
 	} params;
 	int rv;
-	
+
 	mutex_lock(mutex);
-	
+
 	params.session = session;
 	params.buffer = toc_buffer;
 	rv = cdrom_exec_cmd(CMD_GETTOC2, &params);
-	
+
 	mutex_unlock(mutex);
 	return rv;
 }
@@ -216,13 +216,13 @@ int cdrom_read_sectors(void *buffer, int sector, int cnt) {
 	int rv;
 
 	mutex_lock(mutex);
-	
+
 	params.sec = sector;	/* Starting sector */
 	params.num = cnt;	/* Number of sectors */
 	params.buffer = buffer;	/* Output buffer */
 	params.dunno = 0;	/* ? */
 	rv = cdrom_exec_cmd(CMD_PIOREAD, &params);
-	
+
 	mutex_unlock(mutex);
 	return rv;
 }
@@ -230,19 +230,19 @@ int cdrom_read_sectors(void *buffer, int sector, int cnt) {
 /* Locate the LBA sector of the data track; use after reading TOC */
 uint32 cdrom_locate_data_track(CDROM_TOC *toc) {
 	int i, first, last;
-	
+
 	first = TOC_TRACK(toc->first);
 	last = TOC_TRACK(toc->last);
-	
+
 	if (first < 1 || last > 99 || first > last)
 		return 0;
-	
+
 	/* Find the last track which as a CTRL of 4 */
 	for (i=last; i>=first; i--) {
 		if (TOC_CTRL(toc->entry[i - 1]) == 4)
 			return TOC_LBA(toc->entry[i - 1]);
 	}
-	
+
 	return 0;
 }
 
@@ -333,7 +333,7 @@ int cdrom_init() {
 
 	/* Do an initial initialization */
 	cdrom_reinit();
-	
+
 	return 0;
 }
 

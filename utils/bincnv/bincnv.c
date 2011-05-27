@@ -2,7 +2,7 @@
 
    bincnv.c
    (c)2000 Dan Potter
-  
+
    Test ELF to BIN convertor.. loads to VMA 0x8c010000. This is an
    exact functional duplicate of the routine in process/elf.c and is
    used for testing new changes first.
@@ -107,7 +107,7 @@ struct elf_sym_t {
 	uint32		value;
 	uint32		size;
 	uint8		info;		/* type == info & 0x0f */
-	uint8		other;		
+	uint8		other;
 	uint16		shndx;		/* Section index */
 };
 
@@ -134,7 +134,7 @@ int find_sym(char *name, struct elf_sym_t* table, int tablelen) {
    documented by Intel.. I hope that this works for future compilers. */
 void *elf_load(FILE *f, uint32 vma, int* outsz) {
 	char			*img, *imgout;
-	int			sz, i, j, sect; 
+	int			sz, i, j, sect;
 	struct elf_hdr_t	*hdr;
 	struct elf_shdr_t	*shdrs, *symtabhdr;
 	struct elf_sym_t	*symtab;
@@ -273,9 +273,9 @@ void *elf_load(FILE *f, uint32 vma, int* outsz) {
 		reltab = (struct elf_rela_t *)(img + shdrs[i].offset);
 		reltabsize = shdrs[i].size / sizeof(struct elf_rela_t);
 		sect = shdrs[i].info;
-		
+
 		printf("Relocating on section %d\r\n", sect);
-		
+
 		for (j=0; j<reltabsize; j++) {
 			int sym;
 

@@ -50,7 +50,7 @@ class Menu {
 	void add(int min, int max, int amt, int* pval, char *pformat);
 
 	void add(float min, float max, float amt, float* pval, char *pformat);
-	
+
 	void next();
 
 	void prev();

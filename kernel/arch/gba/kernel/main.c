@@ -19,7 +19,7 @@ int arch_auto_init() {
 	if (__kos_romdisk != NULL) {
 		fs_romdisk_mount("/rd", __kos_romdisk, 0);
 	}
-	
+
 	return 0;
 }
 
@@ -28,7 +28,7 @@ int arch_main() {
 
 	if (mm_init() < 0)
 		return 0;
-		
+
 	arch_auto_init();
 
 	return main(0, NULL);

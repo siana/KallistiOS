@@ -65,7 +65,7 @@ void * sq_cpy(void *dest, void *src, int n);
 void * sq_set(void *s, uint32 c, int n);
 
 /** \brief  Set a block of memory to a 16-bit value.
- 
+
     This function is similar to calling memset2(), but uses the store queues to
     do its work.
 

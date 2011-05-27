@@ -1,5 +1,5 @@
 /* KallistiOS ##version##
-  
+
    spudma.c
    Copyright (C)2001,2002,2004 Dan Potter
  */
@@ -30,7 +30,7 @@ to fix that by going to another channel.
 XXX: This ought to be abstracted out to allow usage with the parallel
 port as well.
 
-VP : Generalized the code to allow configurable g2 dma channel and sh dma channel. 
+VP : Generalized the code to allow configurable g2 dma channel and sh dma channel.
 It is now possible to perform several g2 dma transfer at a time. Some things are still
 a bit mysterious, like the mode parameter, which I set empirically depending
 on the combination of dma channels.
@@ -41,11 +41,11 @@ g2chn = 0, sh4chn = 3 --> mode = 5 (but many other values seem OK ?)
 g2chn = 1, sh4chn = 1 --> mode = 0 (or 4 better ?)
 g2chn = 1, sh4chn = 0 --> mode = 3
 
-It seems that g2chn is not important when choosing mode, so this mode parameter is probably 
+It seems that g2chn is not important when choosing mode, so this mode parameter is probably
 how we actually connect the sh4chn to the g2chn.
 
 Update : looks like there is a formula, mode = 3 + shchn
-   
+
 */
 
 typedef struct {
@@ -144,13 +144,13 @@ static void g2_dma_irq(uint32 code) {
 // XXX: Write (and check here) spu_dma_ready()
 // VP : extended for any g2 dma, configurable sh dma channel and g2 channel
 /* The mode parameter is quite mysterious. A value of 5 or 0 or 1 or 6 but not 2 or 10 or 18,
-   are working with g2chn==0 and sh4chn==3 (used for spu, but could as well be used for the bba). 
-   On the other hand , if g2chn is 1 and sh4chn is 1 (that's what I'm using for the BBA), 
+   are working with g2chn==0 and sh4chn==3 (used for spu, but could as well be used for the bba).
+   On the other hand , if g2chn is 1 and sh4chn is 1 (that's what I'm using for the BBA),
    then it's better to set mode to 0, and not 1 or 2 and probably many other values but
    I got tired of rebooting my console ;)
 */
 int g2_dma_transfer(void *from, void * dest, uint32 length, int block,
-	g2_dma_callback_t callback, ptr_t cbdata, 
+	g2_dma_callback_t callback, ptr_t cbdata,
 	uint32 dir, uint32 mode, uint32 g2chn, uint32 sh4chn)
 {
 	uint32 val;
@@ -208,7 +208,7 @@ int g2_dma_transfer(void *from, void * dest, uint32 length, int block,
 	extdma->dma[g2chn].sh4_addr = ((uint32)from) & 0x1fffffe0;
 	extdma->dma[g2chn].size = (length & ~31) | 0x80000000;
 	extdma->dma[g2chn].dir = dir;
-	extdma->dma[g2chn].mode = mode;	
+	extdma->dma[g2chn].mode = mode;
 	extdma->dma[g2chn].ctrl1 = 1;
 	extdma->dma[g2chn].ctrl2 = 1;
 
@@ -225,7 +225,7 @@ int spu_dma_transfer(void *from, uint32 dest, uint32 length, int block,
 	/* Adjust destination to SPU RAM */
 	dest += 0x00800000;
 
-	return g2_dma_transfer(from, (void *) dest, length, block, callback, cbdata, 0, 
+	return g2_dma_transfer(from, (void *) dest, length, block, callback, cbdata, 0,
 		SPU_DMA_MODE, SPU_DMA_G2CHN, SPU_DMA_SHCHN);
 }
 
@@ -271,7 +271,7 @@ void spu_dma_shutdown() {
 		/* Unhook the G2 interrupt */
 		asic_evt_disable(ASIC_EVT_SPU_DMA+i, ASIC_IRQ);
 		asic_evt_set_handler(ASIC_EVT_SPU_DMA+i, NULL);
-	  
+
 		/* Destroy the semaphore */
 		sem_destroy(dma_done[i]);
 

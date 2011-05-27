@@ -2,7 +2,7 @@
 
    arch/dreamcast/include/arch/mmu.h
    Copyright (C) 2001 Dan Potter
-   
+
 */
 
 /** \file   arch/mmu.h
@@ -195,7 +195,7 @@ extern mmucontext_t *mmu_cxt_current;
 void mmu_use_table(mmucontext_t *context);
 
 /** \brief  Allocate a new MMU context.
- 
+
     Each process should have exactly one of these, and these should not exist
     without a process. Since KOS doesn't actually have a process model of its
     own, that means you will only ever have one of these, if any.
@@ -213,7 +213,7 @@ mmucontext_t *mmu_context_create(int asid);
 */
 void mmu_context_destroy(mmucontext_t *context);
 
-/** \brief  Using the given page tables, translate the virtual page ID to a 
+/** \brief  Using the given page tables, translate the virtual page ID to a
             physical page ID.
 
     \param  context         The context to look in.

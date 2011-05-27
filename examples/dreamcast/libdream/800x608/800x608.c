@@ -5,7 +5,7 @@
    Still needs some tweaking.
 
    In here I also demonstrate how to use the bfont BIOS font routines, and
-   how to initialize only selected parts of KOS (resulting in a much 
+   how to initialize only selected parts of KOS (resulting in a much
    smaller and less polluted binary).
 
  */
@@ -20,7 +20,7 @@ int main(int argc, char **argv) {
 
 	/* Set video mode */
 	vid_set_mode(DM_800x608, PM_RGB565);
-	
+
 	for (y=0; y<H; y++)
 		for (x=0; x<W; x++) {
 			int c = (x ^ y) & 255;

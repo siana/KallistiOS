@@ -8,7 +8,7 @@
 #include <math.h>
 
 /*
-   Simple plasma effect from Stars 
+   Simple plasma effect from Stars
 
    We use a little trick here to make the PVR do the dirty  work for
    what used to be an impossibly slow task. Basically the plasma
@@ -48,7 +48,7 @@ void hsv_spectrum(float w, float * r, float * g, float * b) {
 #define TWIDTAB(x) ( (x&1)|((x&2)<<1)|((x&4)<<2)|((x&8)<<3)|((x&16)<<4)| \
         ((x&32)<<5)|((x&64)<<6)|((x&128)<<7)|((x&256)<<8)|((x&512)<<9) )
 #define TWIDOUT(x, y) ( TWIDTAB((y)) | (TWIDTAB((x)) << 1) )
-        
+
 short pcos[512], psin[512];
 short xang, yang, xamp, yamp;
 float hsv;
@@ -60,7 +60,7 @@ int txr_cur;
 
 void plasma_init() {
 	int i;
-	
+
 	xang = yang = 0;
 	xamp = yamp = 256;
 	hsv = 0.0f;
@@ -129,7 +129,7 @@ void pvr_setup() {
 void do_frame() {
 	pvr_vertex_t vert;
 	float r, g, b;
-	
+
 	vid_border_color(255, 0, 0);
 	pvr_wait_ready();
 	vid_border_color(0, 255, 0);
@@ -163,10 +163,10 @@ void do_frame() {
 	vert.y = 0.0f;
 	vert.v = 0.0f;
 	pvr_prim(&vert, sizeof(vert));
-	
+
 	pvr_list_finish();
 	pvr_scene_finish();
-	
+
 	vid_border_color(255, 255, 0);
 
 	plasma_drawtex();

@@ -6,7 +6,7 @@
    Based on Jeff's png_load_texture routine, but loads into a
    KOS plat-independent image.
 */
-            
+
 #include <assert.h>
 #include <png.h>
 #include <stdlib.h>
@@ -23,11 +23,11 @@ void _png_copy_texture(uint8 *buffer, uint8 *temp_tex,
   uint32 i,j;
   uint8 *ourbuffer;
   uint8 *pRow;
-  
+
   for(i = 0; i < h; i++) {
     pRow = &buffer[i*stride];
     ourbuffer = &temp_tex[i*w*4];
-    
+
     if (channels == 3) {
       for (j=0; j<w; j++) {
         ourbuffer[j*4+0] = 0xff;

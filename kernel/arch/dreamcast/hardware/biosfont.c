@@ -74,7 +74,7 @@ asm(
 "	mov.l	@r0,r0\n"
 "	jmp	@r0\n"
 "	mov	#0,r1\n"
-"\n"  
+"\n"
 "	.align 4\n"
 "syscall_b4:\n"
 "	.long	0x8c0000b4\n"
@@ -109,15 +109,15 @@ unsigned int euc2jis(unsigned int euc) {
 uint8 *bfont_find_char(int ch) {
 	int	index = -1;
 	uint8	*fa = get_font_address();
-	
+
 	/* 33-126 in ASCII are 1-94 in the font */
 	if (ch >= 33 && ch <= 126)
 		index = ch - 32;
-	
+
 	/* 160-255 in ASCII are 96-161 in the font */
 	if (ch >= 160 && ch <= 255)
 		index = ch - (160 - 96);
-	
+
 	/* Map anything else to a space */
 	if (index == -1)
 		index = 72 << 2;
@@ -143,7 +143,7 @@ uint8 *bfont_find_char_jp(int ch) {
 	default:
 		assert_msg( 0, "Unknown bfont encoding mode" );
 	}
-	
+
 	if (ch > 0) {
 		ku = ((ch >> 8) & 0x7F);
 		ten = (ch & 0x7F);
@@ -302,7 +302,7 @@ void bfont_draw_wide(void *b, int bufwidth, int opaque, int c) {
 				}
 				buffer++;
 			}
-			
+
 			word = ( (((uint16)ch[1]) << 8) & 0xf00 ) | ch[2];
 			for (x=0; x<12; x++) {
 				if (word & (0x0800 >> x))
@@ -315,7 +315,7 @@ void bfont_draw_wide(void *b, int bufwidth, int opaque, int c) {
 			}
 			buffer += bufwidth - 24;
 			y++;
-			
+
 			ch += 3;
 		}
 	}
@@ -352,7 +352,7 @@ void bfont_draw_str(void *b, int width, int opaque, char *str) {
 			default:
 				assert_msg( 0, "Unknown bfont encoding mode" );
 			}
-			
+
 			if (nFlag == 1) {
 				str++;
 				nChr = (nChr << 8) | (*str & 0xff);

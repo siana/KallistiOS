@@ -124,14 +124,14 @@ static uint32 romdisk_find_object(rd_image_t * mnt, const char *fn, int fnlen, i
 					continue;
 			}
 		}
-		
+
 		/* Check filename */
 		if ((strlen(fhdr->filename) == fnlen) && (!strncasecmp(fhdr->filename, fn, fnlen))) {
 
 			/* Match: return this index */
 			return i;
 		}
-		
+
 		i = ni;
 	} while (i != 0);
 
@@ -189,7 +189,7 @@ static void * romdisk_open(vfs_handler_t * vfs, const char *fn, int mode) {
 		errno = EPERM;
 		return NULL;
 	}
-	
+
 	/* No blank filenames */
 	if (fn[0] == 0)
 		fn = "";
@@ -213,7 +213,7 @@ static void * romdisk_open(vfs_handler_t * vfs, const char *fn, int mode) {
 		errno = ENFILE;
 		return NULL;
 	}
-	
+
 	/* Fill the fd structure */
 	fhdr = (const romdisk_file_t *)(mnt->image + filehdr);
 	fh[fd].index = filehdr + sizeof(romdisk_file_t) + (strlen(fhdr->filename)/16)*16;
@@ -221,7 +221,7 @@ static void * romdisk_open(vfs_handler_t * vfs, const char *fn, int mode) {
 	fh[fd].ptr = 0;
 	fh[fd].size = ntohl_32(&fhdr->size);
 	fh[fd].mnt = mnt;
-	
+
 	return (void *)fd;
 }
 
@@ -280,11 +280,11 @@ static off_t romdisk_seek(void * h, off_t offset, int whence) {
 		default:
 			return -1;
 	}
-	
+
 	/* Check bounds */
 	if (fh[fd].ptr < 0) fh[fd].ptr = 0;
 	if (fh[fd].ptr > fh[fd].size) fh[fd].ptr = fh[fd].size;
-	
+
 	return fh[fd].ptr;
 }
 
@@ -317,7 +317,7 @@ static dirent_t *romdisk_readdir(void * h) {
 	romdisk_file_t	*fhdr;
 	int		type;
 	file_t		fd = (file_t)h;
-	
+
 	if (fd>=MAX_RD_FILES || fh[fd].index==0 || !fh[fd].dir) {
 		errno = EINVAL;
 		return NULL;
@@ -374,7 +374,7 @@ static vfs_handler_t vh = {
 	},
 
 	0, NULL,		/* no cacheing, privdata */
-	
+
 	romdisk_open,
 	romdisk_close,
 	romdisk_read,
@@ -402,10 +402,10 @@ int fs_romdisk_init() {
 
 	/* Reset fd's */
 	memset(fh, 0, sizeof(fh));
-	
+
 	/* Mark the first as active so we can have an error FD of zero */
 	fh[0].index = -1;
-	
+
 	/* Init thread mutexes */
 	fh_mutex = mutex_create();
 
@@ -437,7 +437,7 @@ int fs_romdisk_shutdown() {
 		nmmgr_handler_remove(&c->vfsh->nmmgr);
 		free(c->vfsh);
 		free(c);
-		
+
 		c = n;
 	}
 

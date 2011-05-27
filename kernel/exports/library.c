@@ -62,7 +62,7 @@ int library_print_list(int (*pf)(const char *fmt, ...)) {
 
 	pf("All libraries (may not be deterministic):\n");
 	pf("libid\tflags\t\tbase\t\tname\n");
-	
+
 	LIST_FOREACH(cur, &library_list, list) {
 		pf("%d\t", cur->libid);
 		pf("%08lx\t", cur->flags);
@@ -229,7 +229,7 @@ klibrary_t * library_open(const char * name, const char * fn) {
 			// Open the lib.
 			if (lib->lib_open(lib) < 0)
 				return NULL;
-			
+
 			return lib;
 		}
 	}
@@ -288,7 +288,7 @@ int library_close(klibrary_t * lib) {
 	// Call down and "close" the lib.
 	if (lib->lib_close(lib) < 0)
 		return -1;
-	
+
 	// If the refcount is down to zero, unload this lib.
 	if (lib->refcnt <= 0)
 		library_destroy(lib);

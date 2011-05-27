@@ -130,9 +130,9 @@ void irq_handle_exception() {
 
 /* Switches register banks; call this outside of exception handling
    (but make sure interrupts are off!!) to change where registers will
-   go to, or call it inside an exception handler to switch contexts. 
+   go to, or call it inside an exception handler to switch contexts.
    Make sure you have at least REG_BYTE_CNT bytes available. DO NOT
-   ALLOW ANY INTERRUPTS TO HAPPEN UNTIL THIS HAS BEEN CALLED AT 
+   ALLOW ANY INTERRUPTS TO HAPPEN UNTIL THIS HAS BEEN CALLED AT
    LEAST ONCE! */
 void irq_set_context(irq_context_t *regbank) {
 	irq_srt_addr = regbank;

@@ -26,8 +26,8 @@
 /*
 
 This module supports thread scheduling in KOS. The timer interrupt is used
-to re-schedule the processor HZ times per second in pre-emptive mode. 
-This is a fairly simplistic scheduler, though it does employ some 
+to re-schedule the processor HZ times per second in pre-emptive mode.
+This is a fairly simplistic scheduler, though it does employ some
 standard advanced OS tactics like priority scheduling and semaphores.
 
 Some of this code ought to look familiar to BSD-heads; I studied the
@@ -257,7 +257,7 @@ void thd_exit(void *rv) {
 
 /* Enqueue a process in the runnable queue; adds it right after the
    process group of the same priority (front_of_line==0) or
-   right before the process group of the same priority (front_of_line!=0). 
+   right before the process group of the same priority (front_of_line!=0).
    See thd_schedule for why this is helpful. */
 void thd_add_to_runnable(kthread_t *t, int front_of_line) {
     kthread_t *i;
@@ -270,7 +270,7 @@ void thd_add_to_runnable(kthread_t *t, int front_of_line) {
 
     if (!front_of_line) {
         /* Look for a thread of lower priority and insert
-           before it. If there is nothing on the run queue, we'll 
+           before it. If there is nothing on the run queue, we'll
            fall through to the bottom. */
         TAILQ_FOREACH(i, &run_queue, thdq) {
             if (i->prio > t->prio) {
@@ -433,9 +433,9 @@ int thd_set_prio(kthread_t *thd, prio_t prio) {
 /*****************************************************************************/
 /* Scheduling routines */
 
-/* Thread scheduler; this function will find a new thread to run when a 
+/* Thread scheduler; this function will find a new thread to run when a
    context switch is requested. No work is done in here except to change
-   out the thd_current variable contents. Assumed that we are in an 
+   out the thd_current variable contents. Assumed that we are in an
    interrupt context.
 
    In the normal operation mode, the current thread is pushed back onto
@@ -697,7 +697,7 @@ int thd_detach(kthread_t *thd) {
 
 
 /*****************************************************************************/
-/* Retrive / set thread label */                     
+/* Retrive / set thread label */
 const char *thd_get_label(kthread_t *thd) {
     return thd->label;
 }
@@ -711,7 +711,7 @@ kthread_t *thd_get_current() {
     return thd_current;
 }
 
-/* Retrieve / set thread pwd */   
+/* Retrieve / set thread pwd */
 const char *thd_get_pwd(kthread_t *thd) {
     return thd->pwd;
 }

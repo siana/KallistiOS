@@ -50,7 +50,7 @@ static int percd_done;
 /* Joliet UCS is big endian */
 static void utf2ucs(uint8 * ucs, const uint8 * utf) {
 	int c;
-	
+
 	do {
 		c = *utf++;
 		if (c <= 0x7f) {
@@ -69,7 +69,7 @@ static void utf2ucs(uint8 * ucs, const uint8 * utf) {
 
 static void ucs2utfn(uint8 * utf, const uint8 * ucs, size_t len) {
 	int c;
-	
+
 	len = len / 2;
 	while (len) {
 		len--;
@@ -166,7 +166,7 @@ static uint32 iso_733(const uint8 *from) { return htohl_32(from); }
 
 
 /********************************************************************************/
-/* Low-level block cacheing routines. This implements a simple queue-based 
+/* Low-level block cacheing routines. This implements a simple queue-based
    LRU/MRU cacheing system. Whenever a block is requested, it will be placed
    on the MRU end of the queue. As more blocks are loaded than can fit in
    the cache, blocks are deleted from the LRU end. */
@@ -191,7 +191,7 @@ static mutex_t * cache_mutex;
 /* Clears all cache blocks */
 static void bclear_cache(cache_block_t **cache) {
 	int i;
-	
+
 	mutex_lock(cache_mutex);
 	for (i=0; i<NUM_CACHE_BLOCKS; i++)
 		cache[i]->sector = -1;
@@ -202,10 +202,10 @@ static void bclear_cache(cache_block_t **cache) {
 static void bgrad_cache(cache_block_t **cache, int block) {
 	int		i;
 	cache_block_t	*tmp;
-	
+
 	/* Don't try it with the end block */
 	if (block < 0 || block >= (NUM_CACHE_BLOCKS-1)) return;
-	
+
 	/* Make a copy and scoot everything down */
 	tmp = cache[block];
 	for (i=block; i<(NUM_CACHE_BLOCKS - 1); i++)
@@ -220,7 +220,7 @@ static void iso_break_all();
 static int bread_cache(cache_block_t **cache, uint32 sector) {
 	int i, j, rv;
 
-	rv = -1;	
+	rv = -1;
 	mutex_lock(cache_mutex);
 
 	/* Look for a pre-existing cache block */
@@ -231,15 +231,15 @@ static int bread_cache(cache_block_t **cache, uint32 sector) {
 			goto bread_exit;
 		}
 	}
-	
+
 	/* If not, look for an open cache slot; if we find one, use it */
 	for (i=0; i<NUM_CACHE_BLOCKS; i++) {
 		if (cache[i]->sector == -1) break;
 	}
-	
+
 	/* If we didn't find one, kick an LRU block out of cache */
 	if (i >= NUM_CACHE_BLOCKS) { i = 0; }
-	
+
 	/* Load the requested block */
 	j = cdrom_read_sectors(cache[i]->data, sector + 150, 1);
 	if (j < 0) {
@@ -252,7 +252,7 @@ static int bread_cache(cache_block_t **cache, uint32 sector) {
 		goto bread_exit;
 	}
 	cache[i]->sector = sector;
-	
+
 	/* Move it to the most-recently-used position */
 	bgrad_cache(cache, i);
 	rv = NUM_CACHE_BLOCKS - 1;
@@ -299,10 +299,10 @@ static int init_percd() {
 	CDROM_TOC	toc;
 
 	dbglog(DBG_NOTICE, "fs_iso9660: disc change detected\n");
-	
+
 	/* Start off with no cached blocks and no open files*/
 	iso_reset();
-	
+
 	/* Locate the root session */
 	if ((i = cdrom_reinit()) != 0) {
 		dbglog(DBG_ERROR, "fs_iso9660:init_percd: cdrom_reinit returned %d\n", i);
@@ -327,7 +327,7 @@ static int init_percd() {
 
 	/* If that failed, go after standard/RockRidge ISO */
 	if (!joliet) {
-		/* Grab and check the volume descriptor */	
+		/* Grab and check the volume descriptor */
 		blk = biread(session_base + 16 - 150);
 		if (blk < 0) return i;
 		if (memcmp((char*)icache[blk]->data, "\01CD001", 6)) {
@@ -340,7 +340,7 @@ static int init_percd() {
 	memcpy(&root_dirent, icache[blk]->data+156, sizeof(iso_dirent_t));
 	root_extent = iso_733(root_dirent.extent);
 	root_size = iso_733(root_dirent.size);
-	
+
 	return 0;
 }
 
@@ -375,12 +375,12 @@ static int fncompare(const char *isofn, int isosize, const char *normalfn) {
 
 /* Locate an ISO9660 object in the given directory; this can be a directory or
    a file, it works fine for either one. Pass in:
-   
+
    fn:		object filename (relative to the passed directory)
    dir:		0 if looking for a file, 1 if looking for a dir
    dir_extent:	directory extent to start with
    dir_size:	directory size (in bytes)
-   
+
    It will return a pointer to a transient dirent buffer (i.e., don't
    expect this buffer to stay around much longer than the call itself).
  */
@@ -405,11 +405,11 @@ static iso_dirent_t *find_object(const char *fn, int dir,
 	/* If this is a Joliet CD, then UCSify the name */
 	if (joliet)
 		utf2ucs(ucsname, (uint8 *)fn);
-	
+
 	while (size_left > 0) {
 		c = biread(dir_extent);
 		if (c < 0) return NULL;
-		
+
 		for (i=0; i<2048 && i<size_left; ) {
 			/* Locate the current dirent */
 			de = (iso_dirent_t *)(icache[c]->data + i);
@@ -424,7 +424,7 @@ static iso_dirent_t *find_object(const char *fn, int dir,
 			} else {
 				/* Assume no Rock Ridge name */
 				rrnamelen = 0;
-		
+
 				/* Check for Rock Ridge NM extension */
 				len = de->length - sizeof(iso_dirent_t)
 					+ sizeof(de->name) - de->name_len;
@@ -442,17 +442,17 @@ static iso_dirent_t *find_object(const char *fn, int dir,
 					len -= pnt[2];
 					pnt += pnt[2];
 				}
-			
+
 				/* Check the filename against the requested one */
 				if (rrnamelen > 0) {
 					char *p = strchr(fn, '/');
 					int fnlen;
-				
+
 					if (p)
 						fnlen = p - fn;
 					else
 						fnlen = strlen(fn);
-				
+
 					if (!strnicmp(rrname, fn, fnlen) && ! *(rrname + fnlen)) {
 						if (!((dir << 1) ^ de->flags))
 							return de;
@@ -464,14 +464,14 @@ static iso_dirent_t *find_object(const char *fn, int dir,
 					}
 				}
 			}
-			
+
 			i += de->length;
 		}
-		
+
 		dir_extent++;
 		size_left -= 2048;
 	}
-	
+
 	return NULL;
 }
 
@@ -483,7 +483,7 @@ static iso_dirent_t *find_object(const char *fn, int dir,
    dir:		0 if looking for a file, 1 if looking for a dir
    dir_extent:	directory extent to start with
    dir_size:	directory size (in bytes)
-   
+
    It will return a pointer to a transient dirent buffer (i.e., don't
    expect this buffer to stay around much longer than the call itself).
  */
@@ -553,7 +553,7 @@ static void * iso_open(vfs_handler_t * vfs, const char *fn, int mode) {
 	/* Make sure they don't want to open things as writeable */
 	if ((mode & O_MODE_MASK) != O_RDONLY)
 		return 0;
-	
+
 	/* Do this only when we need to (this is still imperfect) */
 	if (!percd_done && init_percd() < 0)
 		return 0;
@@ -562,7 +562,7 @@ static void * iso_open(vfs_handler_t * vfs, const char *fn, int mode) {
 	/* Find the file we want */
 	de = find_object_path(fn, (mode & O_DIR)?1:0, &root_dirent);
 	if (!de) return 0;
-	
+
 	/* Find a free file handle */
 	mutex_lock(fh_mutex);
 	for (fd=0; fd<MAX_ISO_FILES; fd++)
@@ -580,7 +580,7 @@ static void * iso_open(vfs_handler_t * vfs, const char *fn, int mode) {
 	fh[fd].ptr = 0;
 	fh[fd].size = iso_733(de->size);
 	fh[fd].broken = 0;
-	
+
 	return (void *)fd;
 }
 
@@ -644,20 +644,20 @@ static ssize_t iso_read(void * h, void *buf, size_t bytes) {
 			}
 		} else { */
 			toread = (toread > thissect) ? thissect : toread;
-		
+
 			/* Do the read */
 			c = bdread(fh[fd].first_extent + fh[fd].ptr/2048);
 			if (c < 0) return -1;
 			memcpy(outbuf, dcache[c]->data + (fh[fd].ptr%2048), toread);
 		/* } */
-		
+
 		/* Adjust pointers */
 		outbuf += toread;
 		fh[fd].ptr += toread;
 		bytes -= toread;
 		rv += toread;
 	}
-	
+
 	return rv;
 }
 
@@ -683,11 +683,11 @@ static off_t iso_seek(void * h, off_t offset, int whence) {
 		default:
 			return -1;
 	}
-	
+
 	/* Check bounds */
 	if (fh[fd].ptr < 0) fh[fd].ptr = 0;
 	if (fh[fd].ptr > fh[fd].size) fh[fd].ptr = fh[fd].size;
-	
+
 	return fh[fd].ptr;
 }
 
@@ -749,7 +749,7 @@ static dirent_t *iso_readdir(void * h) {
 		/* Get the current dirent block */
 		c = biread(fh[fd].first_extent + fh[fd].ptr/2048);
 		if (c < 0) return NULL;
-	
+
 		de = (iso_dirent_t *)(icache[c]->data + (fh[fd].ptr%2048));
 		if (de->length) break;
 
@@ -757,7 +757,7 @@ static dirent_t *iso_readdir(void * h) {
 		fh[fd].ptr += 2048 - (fh[fd].ptr%2048);
 	}
 	if (fh[fd].ptr >= fh[fd].size) return NULL;
-	
+
 	/* If we're at the first, skip the two blank entries */
 	if (!de->name[0] && de->name_len == 1) {
 		fh[fd].ptr += de->length;
@@ -800,7 +800,7 @@ static dirent_t *iso_readdir(void * h) {
 	}
 
 	fh[fd].ptr += de->length;
-	
+
 	return &fh[fd].dirent;
 }
 
@@ -853,7 +853,7 @@ static vfs_handler_t vh = {
 	},
 
 	0, NULL,	/* no cacheing, privdata */
-	
+
 	iso_open,
 	iso_close,
 	iso_read,
@@ -874,10 +874,10 @@ int fs_iso9660_init() {
 
 	/* Reset fd's */
 	memset(fh, 0, sizeof(fh));
-	
+
 	/* Mark the first as active so we can have an error FD of zero */
 	fh[0].first_extent = -1;
-	
+
 	/* Init thread mutexes */
 	cache_mutex = mutex_create();
 	fh_mutex = mutex_create();
@@ -906,7 +906,7 @@ int fs_iso9660_shutdown() {
 
 	/* De-register with vblank */
 	vblank_handler_remove(iso_vblank_hnd);
-	
+
 	/* Dealloc cache block space */
 	for (i=0; i<NUM_CACHE_BLOCKS; i++) {
 		free(icache[i]);
@@ -919,6 +919,6 @@ int fs_iso9660_shutdown() {
 	if (fh_mutex != NULL)
 		mutex_destroy(fh_mutex);
 	cache_mutex = fh_mutex = NULL;
-	
+
 	return nmmgr_handler_remove(&vh.nmmgr);
 }

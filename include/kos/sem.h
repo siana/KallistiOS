@@ -53,7 +53,7 @@ LIST_HEAD(semlist, semaphore);
 /** \endcond */
 
 /** \brief  Allocate a new semaphore.
- 
+
     This function allocates and initializes a new semaphore for use.
 
     \param  value           The initial count of the semaphore (the number of

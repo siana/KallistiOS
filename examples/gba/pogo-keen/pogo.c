@@ -10,7 +10,7 @@
 
 This is an inefficient example of how to get your KOS GBA code kicking; it
 shows Commander Keen (animation by Blackeye Software,) jumping around with
-his pogo stick. 
+his pogo stick.
 
 Absolutely not the way to write games; but this is just to show basic
 guidelines of initializing and using the romdisk filesystem with the gba,
@@ -31,7 +31,7 @@ static uint16 pogo_bitmaps[7][48*48];
 
 static uint16 *get_pogo_bitmap(int index) {
 	return pogo_bitmaps[index];
-}	
+}
 
 void gba_setmode(int mode, int bg) {
 	REG_DISPCNT = mode | (1 << (bg + 8));
@@ -52,9 +52,9 @@ static void draw_bitmap(uint16 *rgb) {
 	uint16 *ptr;
 	int direction;
 	int i, j;
-	
+
 	ptr = (uint16*)PTR_VID_0 + (pogo_y * 240) + pogo_x;
-	
+
 	if (pogo_dir == 0)
 		direction = 1;
 	else {
@@ -62,13 +62,13 @@ static void draw_bitmap(uint16 *rgb) {
 		direction = -1;
 		ptr = ptr + 48;
 	}
-		
+
 	for (j=0; j<48; j++) {
 		for (i=0; i<48; i++) {
 			color = *rgb++;
 			if (color == RGB16(0xff, 0, 0xff))
 				color = 0;
-				
+
 			*ptr = color;
 			ptr = ptr + direction;
 		}
@@ -79,14 +79,14 @@ static void draw_bitmap(uint16 *rgb) {
 
 static void animate() {
 	uint16 *bitmap;
-	
+
 	bitmap = get_pogo_bitmap(sequence);
 	draw_bitmap(bitmap);
 }
 
 static void wait() {
 	volatile uint32 *status;
-	
+
 	/* wait for a full vsync */
 	status = (uint32*)0x4000004;
 	while ((*status & 1) == 0);
@@ -102,16 +102,16 @@ static void sleep(int n) {
 
 static void check_keys() {
 	int keys;
-	
+
 	keys = REG_KEYS;
 	if ((keys & KEY_LEFT) == 0) {
 		/* left */
 		--pogo_x;
-		if (pogo_x < 0) 
+		if (pogo_x < 0)
 			pogo_x = 0;
 		pogo_dir = 0;
 	}
-	
+
 	if ((keys & KEY_RIGHT) == 0) {
 		/* right */
 		++pogo_x;
@@ -138,7 +138,7 @@ static void check_keys() {
 static void prepare() {
 	int w, h;
 
-	/* load all 7 bitmaps */	
+	/* load all 7 bitmaps */
 	pcx_load_flat("/rd/1.pcx", &w, &h, get_pogo_bitmap(0));
 	pcx_load_flat("/rd/2.pcx", &w, &h, get_pogo_bitmap(1));
 	pcx_load_flat("/rd/3.pcx", &w, &h, get_pogo_bitmap(2));
@@ -153,34 +153,34 @@ KOS_INIT_ROMDISK(romdisk_boot);
 
 int main() {
 	/* initialize romdisk filesystem */
-	
+
 	/* initialize video mode (raw, 16 bit) */
 	gba_setmode(3, 2);
-	
-	memset(PTR_VID_0, 0, 240*160);	
-	
+
+	memset(PTR_VID_0, 0, 240*160);
+
 	/* preload pogo animation */
 	prepare();
-	
+
 	/* main loop */
 	sequence = 0;
 	while (REG_KEYS & KEY_A) {
-	
+
 		/* show current frame of animation, and sleep for some period */
 		animate();
 		sleep(2);
-		
+
 		/* next frame in animation (only 7 pictures in set) */
 		sequence++;
 		sequence = sequence % 7;
-		
+
 		/* probe keypad */
 		check_keys();
 	}
-	
+
 	/* go back to neverever land */
 	arch_reboot();
-	
+
 	/* keep compiler happy(R) */
 	return 0;
 }
