@@ -23,23 +23,6 @@ __BEGIN_DECLS
 #define PRIO_MAX 4096
 #define PRIO_DEFAULT 10
 
-/* Thread-local storage key-value pair. */
-typedef struct kthread_tls_kv {
-	/* List handle. */
-	LIST_ENTRY(kthread_tls_kv) kv_list;
-
-	/* The key associated with this data. */
-	kthread_key_t key;
-
-	/* The value of the data. */
-	void *data;
-
-	/* Optional destructor for the key. */
-	void (*destructor)(void *);
-} kthread_tls_kv_t;
-
-LIST_HEAD(kthread_tls_kv_list, kthread_tls_kv);
-
 /* Pre-define list/queue types */
 struct kthread;
 TAILQ_HEAD(ktqueue, kthread);

@@ -76,6 +76,25 @@ static inline void ubc_break_data_write(uint32 address) {
 	ubc_pause();
 }
 
+/** \brief  Set a UBC instruction access breakpoint at the given address.
+    \param  address         The address to set the breakpoint at
+*/
+static inline void ubc_break_inst(uint32 address, int use_dbr) {
+    BASRA = 0;      /* ASID = 0 */
+    BARA = address; /* Break address */
+    BAMRA = 4;      /* Mask the ASID */
+
+    if(use_dbr) {
+        BRCR = 1;   /* Use the DBR as the base for the IRQ */
+    }
+    else {
+        BRCR = 0;
+    }
+
+    BBRA = 0x1C;    /* Instruction cycle, no size constraint */
+    ubc_pause();
+}
+
 /* More to come.... */
 
 __END_DECLS

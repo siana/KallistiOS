@@ -231,7 +231,7 @@ int cdrom_read_sectors(void *buffer, int sector, int cnt);
 
 /** \brief  Locate the sector of the data track.
 
-    This function will search the toc for the first entry that has a CTRL value
+    This function will search the toc for the last entry that has a CTRL value
     of 4, and return its FAD address.
 
     \param  toc             The TOC to search through.

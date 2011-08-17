@@ -21,8 +21,37 @@
 
 __BEGIN_DECLS
 
+#include <sys/queue.h>
+
 /** \brief  Thread-local storage key type. */
 typedef int kthread_key_t;
+
+/** \brief  Thread-local storage key-value pair.
+
+    This is the structure that is actually used to store the specific value for
+    a thread for a single TLS key.
+
+    You will not end up using these directly at all in programs, as they are
+    only used internally.
+*/
+typedef struct kthread_tls_kv {
+    /** \brief  List handle -- NOT a function. */
+    LIST_ENTRY(kthread_tls_kv) kv_list;
+
+    /** \brief  The key associated with this data. */
+    kthread_key_t key;
+
+    /** \brief  The value of the data. */
+    void *data;
+
+    /** \brief  Optional destructor for the value (set per key). */
+    void (*destructor)(void *);
+} kthread_tls_kv_t;
+
+/** \cond */
+/* TLS Key-Value pair list type. */
+LIST_HEAD(kthread_tls_kv_list, kthread_tls_kv);
+/** \endcond */
 
 /** \cond */
 /* Retrieve the next key value (i.e, what key the next kthread_key_create will
