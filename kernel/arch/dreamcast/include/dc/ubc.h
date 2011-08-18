@@ -77,7 +77,8 @@ static inline void ubc_break_data_write(uint32 address) {
 }
 
 /** \brief  Set a UBC instruction access breakpoint at the given address.
-    \param  address         The address to set the breakpoint at
+    \param  address         The address to set the breakpoint at.
+    \param  use_dbr         Use the DBR register as the base for the exception.
 */
 static inline void ubc_break_inst(uint32 address, int use_dbr) {
     BASRA = 0;      /* ASID = 0 */
