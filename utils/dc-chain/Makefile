@@ -28,7 +28,7 @@ arm_prefix := /opt/toolchains/dc/$(arm_target)
 kos_root=$(CURDIR)/../../..
 # kos_base: equivalent of KOS_BASE (contains include/ and kernel/)
 kos_base=$(kos_root)/kos
-binutils_ver=2.21
+binutils_ver=2.22
 gcc_ver=4.5.2
 newlib_ver=1.19.0
 gdb_ver=6.7.1
