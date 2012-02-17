@@ -266,7 +266,11 @@ void * fs_get_handle(file_t fd) {
 
 file_t fs_dup(file_t oldfd) {
 	/* Make sure it exists */
-	if (!fd_table[oldfd]) {
+	if (oldfd < 0 || oldfd >= FD_SETSIZE) {
+		errno = EBADF;
+		return -1;
+	}
+	else if (!fd_table[oldfd]) {
 		errno = EBADF;
 		return -1;
 	}
@@ -275,7 +279,12 @@ file_t fs_dup(file_t oldfd) {
 }
 
 file_t fs_dup2(file_t oldfd, file_t newfd) {
-	if (!fd_table[oldfd]) {
+	/* Make sure the descriptors are valid */
+	if (oldfd < 0 || oldfd >= FD_SETSIZE || newfd < 0 || newfd >= FD_SETSIZE) {
+		errno = EBADF;
+		return -1;
+	}
+	else if (!fd_table[oldfd]) {
 		errno = EBADF;
 		return -1;
 	}
