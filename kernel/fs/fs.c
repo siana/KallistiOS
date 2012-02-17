@@ -134,7 +134,7 @@ static fs_hnd_t * fs_hnd_open(const char *fn, int mode) {
 	/* Invoke the handler */
 	if (cur->open == NULL) {
 		errno = ENOSYS;
-		return 0;
+		return NULL;
 	}
 	h = cur->open(cur, cname, mode);
 	if (h == NULL) return NULL;
