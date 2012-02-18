@@ -1,14 +1,28 @@
 KallistiOS ##version##
-Copyright (C)2002,2003 Dan Potter
+Copyright (C) 2002, 2003 Dan Potter
+Copyright (C) 2012 Lawrence Sebald
 
-RELEASE NOTES for 1.3.0
+RELEASE NOTES for 2.0.0
 -----------------------
-This tree was branched from the 1.2.x tree somewhat slightly before the 1.2.1
-release, so everything in that entry applies to this one as well.
+This release has been a long time coming, to say the least. Pretty much every
+part of KOS has been modified in some way since 1.2.0 and many things have
+undergone a complete overhaul. After almost a decade of living exclusively in
+the source repository things have finally settled to a point where a release is
+possible and a good idea.
+
+All of the various platform targets for KOS other than the Dreamcast target are
+considered deprecated unless someone else steps up to maintain them. If nobody
+steps up, these will be removed at a later date. I somewhat doubt that any of
+the other platforms can be built successfully anymore at this point.
 
 Several libc standards compliance things were fixed, so stdlib.h no longer
 includes assert.h for you. This will break some code that assumes that
 assert() is available when stdlib.h (or kos.h) is included.
+
+Speaking of libc-related standards compliance stuff, the built-in libc has been
+removed entirely in favor of using Newlib directly. You must build a patched
+Newlib for use with KOS. The patches needed for various versions of Newlib are
+included in the utils directory of the KOS source.
 
 The build system (including environ.sh) has seen some overhauling. You'll
 need to build a new environ.sh from a sample again. Additionally, your
@@ -24,9 +38,6 @@ for an example.
 The dbgio functions have changed. It now implements a full debug-friendly
 console system. See include/kos/dbgio.h for more info.
 
-
-RELEASE NOTES for 1.2.1
------------------------
 There is a new build system for addons/ports which is quite a bit more
 automated than the old way, and is arch-centric. Now to build a new addon
 you downloaded, just extract it into addons/ and it will be built for
@@ -39,6 +50,39 @@ separately).
 Several incorrectly placed pieces were moved from kernel/ into their own
 addon (libkosutils). If you use the bspline or kos_img_* functions, you'll
 need to add -lkosutils to your link line somewhere.
+
+KOS now has a built-in network stack in the kernel/net directory. This is only
+usable at the moment with the Broadband Adapter or the Lan Adapter for the
+Dreamcast. Also, right now it only supports UDP. You also have an almost
+complete set of sockets functions so that you can use the networking support
+just like you would on any other OS. Add INIT_NET to your KOS_INIT_FLAGS to
+initialize the network support on startup.
+
+If you are using the networking support on the Dreamcast, it is now possible to
+use dcload debugging through KOS' network stack. This is automatically set up
+for you if you initialize the network at startup time (through the
+KOS_INIT_FLAGS).
+
+The old Maple API (that was deprecated in 1.1.8) has been removed entirely from
+the source tree. Please update any code that may still be using it to the "new"
+API that has been around since 1.1.8.
+
+There are a few new Maple drivers included with this release that were not
+around previously. There is now support for the PuruPuru pack, the Dreameye
+camera, and the Sound Input Peripheral. See the appropriate header files for
+more information about how to use each of these.
+
+All of the KOS header files have had Doxygen comments added to them. From now
+on, anything to be added to KOS should be documented before it is included in
+the main tree.
+
+A lot of cobwebs have built up over the years in the KOS source, and its quite
+possible that there are parts of the code that do not work properly anymore.
+Please, if you find anything that doesn't work properly anymore, report an issue
+on the Sourceforge bug tracker!
+
+There's probably a whole bunch of other stuff that should be mentioned in here,
+but its been so long since anyone has updated this document...
 
 
 RELEASE NOTES for 1.2.0
