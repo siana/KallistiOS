@@ -19,6 +19,20 @@
 
 // Need a local copy of this because the default one is buggy.
 
+/** \file   pthread.h
+    \brief  POSIX-compatibile (sorta) threading support.
+
+    This file was imported (with a few changes) from Newlib. If you really want
+    to know about the functions in here, you should probably consult the Single
+    Unix Specification and the POSIX specification. Here's a link to that:
+    http://pubs.opengroup.org/onlinepubs/007904875/basedefs/pthread.h.html
+
+    The rest of this file will remain undocumented, as it isn't really a part of
+    KOS proper... Also, doxygen tends to mangle this whole thing anyway...
+*/
+
+/** \cond */
+
 #ifndef __PTHREAD_h
 #define __PTHREAD_h
 
@@ -299,4 +313,5 @@ int	_EXFUN(pthread_attr_getcputime,
 #endif
 
 #endif
+/** \endcond */
 /* end of include file */
