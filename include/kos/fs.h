@@ -38,10 +38,10 @@ __BEGIN_DECLS
     \headerfile kos/fs.h
 */
 typedef struct kos_dirent {
-	int	size;
-	char	name[MAX_FN_LEN];
-	time_t	time;
-	uint32	attr;
+    int size;               /**< \brief Size of the file in bytes. */
+    char name[MAX_FN_LEN];  /**< \brief Name of the file. */
+    time_t time;            /**< \brief Last access/mod/change time (depends on VFS) */
+    uint32 attr;            /**< \brief Attributes of the file. */
 } dirent_t;
 
 /* Forward declaration */
@@ -55,13 +55,13 @@ struct vfs_handler;
 
     \headerfile kos/fs.h.
 */
-typedef struct  {
-    struct  vfs_handler	*dev;   /**< \brief The VFS handler for this file/dir */
-    uint32  unique;             /**< \brief A unique identifier on the VFS for this file/dir */
-    uint32  type;               /**< \brief File/Dir type */
-    uint32  attr;               /**< \brief Attributes */
-    off_t   size;               /**< \brief Total file size, if applicable */
-    time_t  time;               /**< \brief Last access/mod/change time (depends on VFS) */
+typedef struct {
+    struct vfs_handler *dev;    /**< \brief The VFS handler for this file/dir */
+    uint32 unique;              /**< \brief A unique identifier on the VFS for this file/dir */
+    uint32 type;                /**< \brief File/Dir type */
+    uint32 attr;                /**< \brief Attributes */
+    off_t size;                 /**< \brief Total file size, if applicable */
+    time_t time;                /**< \brief Last access/mod/change time (depends on VFS) */
 } stat_t;
 
 /* stat_t.unique */
