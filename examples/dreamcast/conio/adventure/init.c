@@ -60,7 +60,7 @@ int setbit[16] = {1,2,4,010,020,040,0100,0200,0400,01000,02000,04000,
 static void linkdata (void);
 
 void
-init()                                  /* everything for 1st time run  */
+my_init()                               /* everything for 1st time run  */
 {
 	rdata();                        /* read data from orig. file    */
 	linkdata();

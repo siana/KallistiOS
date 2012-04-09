@@ -4,9 +4,9 @@
    Copyright (C)2003 Dan Potter
 */
 
-#include <kos.h>
 #include <lwip/lwip.h>
 #include <lwip/sockets.h>
+#include <stdio.h>
 #include <sys/queue.h>
 
 struct http_state;

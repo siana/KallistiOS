@@ -80,7 +80,7 @@ main(int argc, char **argv)
 	setgid(getgid());
 #endif
 
-	init();         /* Initialize everything */
+	my_init();      /* Initialize everything */
 	/* signal(SIGINT,trapdel); */
 
 #if 0

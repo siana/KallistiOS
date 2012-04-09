@@ -185,7 +185,7 @@ int fdwarf (void);
 int forced (int locc);
 void getin (char **wrd1, char **wrd2);
 int here (int objj);
-void init (void);
+void my_init (void);
 void juggle (int);
 int liq (void);
 int liqloc (int locc);

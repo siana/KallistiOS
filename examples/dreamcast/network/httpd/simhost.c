@@ -1,9 +1,14 @@
-#include <kos.h>
 #include <lwip/lwip.h>
-#include <unistd.h>
+
+#include <kos/thread.h>
+#include <dc/video.h>
+#include <dc/biosfont.h>
+#include <dc/maple.h>
+#include <dc/maple/controller.h>
 
 extern uint8 romdisk[];
 KOS_INIT_ROMDISK(romdisk);
+KOS_INIT_FLAGS(INIT_DEFAULT | INIT_NET);
 
 void httpd();
 void *do_httpd(void * foo) {
@@ -12,7 +17,6 @@ void *do_httpd(void * foo) {
 }
 
 int main(int argc, char **argv) {
-	net_init();
 	lwip_kos_init();
 	thd_create(1, do_httpd, NULL);
 
