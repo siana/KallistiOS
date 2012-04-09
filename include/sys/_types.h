@@ -88,7 +88,18 @@ typedef void *_iconv_t;
 
 // This part inserted to fix newlib brokenness.
 /** \brief  Size of an fd_set. */
-#define FD_SETSIZE 1024
+#define FD_SETSIZE      1024
+
+/* The architecture should define the macro BYTE_ORDER in <arch/types.h> to
+   equal one of these macros for code that looks for these BSD-style macros. */
+/** \brief  Little Endian test macro */
+#define LITTLE_ENDIAN   1234
+
+/** \brief  Big Endian test macro */
+#define BIG_ENDIAN      4321
+
+/** \brief  PDP Endian test macro */
+#define PDP_ENDIAN      3412
 
 // And this is for old KOS source compatability.
 #include <arch/types.h>
