@@ -7,7 +7,7 @@
 
 # Use for other systems
 CFLAGS = -O2 -Wall -DINLINE=inline #-g#
-LDFLAGS = -lpng -ljpeg -lz #-s -g
+LDFLAGS = -lpng -ljpeg -lz -lm #-s -g
 
 all: vqenc
 
