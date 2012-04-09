@@ -1,5 +1,7 @@
 KallistiOS ##version##
-README Copyright (C)2000-2003 Dan Potter
+README
+Copyright (C) 2000-2003 Dan Potter
+Copyright (C) 2012 Lawrence Sebald
 
 OVERVIEW
 --------
@@ -65,7 +67,7 @@ As an aside, if you are interested in a skeleton version of KOS that uses
 the MMU and memory protection, a real process model, etc, check out
 KOS-MMU. It's not being worked on any more but it has some interesting
 code in it and is a clean example of a simple OS. Most of the interesting
-code from KOS-MMU was merged into KOS 1.1.x, 1.2.x, and 1.3.x.
+code from KOS-MMU was merged into KOS 1.1.x, 1.2.x, and 2.0.0.
 
 
 LICENSING
@@ -97,25 +99,34 @@ Building KallistiOS from source entirely requires two things:
   version notes.
 - GNU Binutils / GCC / GNU Make for your host platform
 
-If you don't have any of the above, please see this site for some more
-instructions and a build script that may help you:
+For the Dreamcast version, a Makefile is provided to build the requisite
+GCC, Binutils, and Newlib versions in the utils/dc-chain directory.
 
-DC:  http://www.boob.co.uk/
+If you don't have any of the above, please see one of the following sites
+for some more instructions (and perhaps a build script that may help you):
+
+DC:  http://dcemulation.org/
 GBA: http://www.gbadev.org/
-PS2: http://ps2dev.sf.net/
+PS2: http://wiki.ps2dev.org/
 
-On the DC, you'll want GCC 3.0.4. It's far better than the 2.9x series at
-this point and even compiles nicely with -O2, unlike previous versions. The
-default optimization setting in the enclosed environ files is -O2. If you
-want to build SPU programs then you will also need an ARM tool chain.
-Precompiled binaries are included for the ARM code that is used by the
-addons, however.
+On the Dreamcast, the 4.x series of GCC works pretty well. Look at the patches
+provided in utils/dc-chain/patches to see what versions have been tested and
+are known to work. In addition, many people still use earlier versions of GCC,
+such as 3.4.6 and 3.0.4. There are often strange bugs with GCC for SuperH, so
+if you deviate from these suggested versions, you're on your own (for instance,
+pretty much the entire 3.1.x, 3.2.x, and 3.3.x branches of GCC were broken for
+SuperH). Basically, if you use a newer version of GCC and find that it works
+perfectly, great -- let us know and give us the patches needed to make it work.
+However, if you find that it doesn't work, you're on your own to try to figure
+out why.
 
-DO NOT use a version of GCC beyond 3.0.4 for DC development. Let me repeat
-that just to make sure... DO NOT use a version of GCC beyond 3.0.4. It has
-a very small and well known set of bugs which are worked around with
-compiler flags. There is unfortunately at least one major bug in every
-known version of GCC past 3.0.4 for the SH-4 platform.
+If you wish to work with the sound processor on the Dreamcast, you'll need an
+ARM toolchain as well. ARM support is maintained pretty well in GCC, so most
+versions should "just work". The ARM processor in the sound unit is fairly old
+and doesn't support Thumb mode at all, so keep that in mind when building GCC.
+You do not necessarily need an ARM version of GCC to build KOS for the DC, as
+precompiled binaries are provided of the necessary code. As long as you don't
+intend to modify the sound driver, you don't need the ARM tools.
 
 On the GBA, any fairly new GCC 3.0.x and above works fine. It includes the
 new ARM-supplied backend for that CPU target. It also provides a compiler
@@ -127,7 +138,7 @@ what Sony provided and no one has managed to fully update to the latest
 versions AFAIK. YMMV, there may be a new one by now. Note that the PS2 port
 currently only builds for the RTE sub-arch, which is the loader DVD used
 with the PS2 Linux Kit. So using KOS for PS2 currently requires that you
-have a Linux Kit. You can buy one here:
+have a Linux Kit. You used to be able to buy one here:
 
 http://us.playstation.com/hardware/more/SCPH-97047.asp
 
@@ -146,15 +157,14 @@ specific pieces have been pulled out so that you don't have to deal with
 them anymore.
 
 After you have a working environ script, run it with 'source environ.sh'
-and run your make program. For BSD people this will be 'gmake', otherwise
+and run your make program. For BSD people this may be 'gmake', otherwise
 it will probably be just 'make'. It should be done after a few minutes. If
 something goes wrong, please check the FAQ; if that fails, email one of us
 and we'll see what we can do. I recommend putting the 'source' line above
 into your shell's .rc/.login.
 
-This process should work (and has been tested) under Linux, BSD, and
-Cygwin. It is very doubtful that it will work in any non-Unix
-environment, though some success has been reported using Mingwin.
+This process should work (and has been tested) under Linux, BSD, Cygwin and
+MinGW/MSYS. It is very doubtful that it will work in any non-*nix environment.
 
 
 VERSION CODES
@@ -200,7 +210,7 @@ OS MODE IS GONE FOR GOOD
 ------------------------
 
 All the interesting and maintainable pieces of the KOS 1.0.x "os mode" have
-been fully integrated back into the mainline KOS 1.3.x tree. It is now used
+been fully integrated back into the mainline KOS 2.0.x tree. It is now used
 for dynamic module loading and does not include process support, etc. This
 is unlikely to be revived again in the future.
 
@@ -219,7 +229,10 @@ Dreamcast*
 
 Gameboy Advance*
 
-- This port is now being maintained by Gil Megidish.
+- This port is was being maintained by Gil Megidish, however it appears
+  that is no longer the case. If someone wants to maintain it, please let
+  me know! Otherwise, this port will probably be removed from the tree in
+  the not-too-distant future.
 - There is not a lot of hardware support yet. IRQs aren't even supported,
   so don't even think about trying to use threads yet =). This port is
   somewhat immature however, so I expect the support to improve over
@@ -240,6 +253,9 @@ PlayStation 2*
   the raw PS2 as well, I'd be happy to accept any help.
 - It is designed to be used with ps2-load-ip as a loader.
 - There is basically no hardware support yet, just a CPU/kernel-core port.
+- This port is pretty much unmaintained at this point. Unless someone steps
+  up to maintain it, it will probably be cut from the tree sometime in the
+  future.
 
 Intel* IA32
 
@@ -248,6 +264,8 @@ Intel* IA32
   embedded MP3 players.
 - It was written using the very old KOS 1.3.x snapshot, so it probably
   doesn't compile right now. But it could probably be fixed pretty easily.
+- If nobody is interested in this port, it will likely be removed from the
+  tree in the nearish future as well.
 
 END
 ---

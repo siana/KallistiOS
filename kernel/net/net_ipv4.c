@@ -104,7 +104,7 @@ int net_ipv4_send_packet(netif_t *net, ip_hdr_t *hdr, const uint8 *data,
     net_ipv4_parse_address(ntohl(hdr->dest), dest_ip);
 
     /* Is this a loopback address (127/8)? */
-    if((dest_ip[0] & 0xFF) == 0x7F) {
+    if(dest_ip[0] == 0x7F) {
         /* Put the IP header / data into our packet */
         memcpy(pkt, hdr, 4 * (hdr->version_ihl & 0x0f));
         memcpy(pkt + 4 * (hdr->version_ihl & 0x0f), data, size);

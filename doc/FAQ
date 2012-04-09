@@ -1,5 +1,6 @@
 KallistiOS ##version## FAQ
-Copyright (c)2001 Dan Potter
+Copyright (C) 2001 Dan Potter
+Copyright (C) 2012 Lawrence Sebald
 
 Here you may find some answers to some common questions we hear
 regarding the usage of KOS. We will be adding more to this file over
@@ -224,14 +225,6 @@ Q) What VFS modules are available?
 
 A) Presently there are six:
 
-- Builtin -- mounts on /bi, and reads files from an internal array built
-into the kernel (thus the name). This lets you embed bootstrap userland
-code into the kernel, data files, etc. It's also non-permanent (like a
-CDR) so if you are uploading test images you can put test files here. A
-little known trick of /bi is that you can put an arbitrary pointer into
-the table and tweak both the pointer and the file size at runtime, thus
-providing proc-like functionality.
-
 - ISO9660 -- mounts on /cd, and is a decent implementation of the
 ISO9660 file system standard used on CDs. Note that because of the
 simple nature of KOS's block devices right now, ISO9660 is bound
@@ -258,6 +251,11 @@ time goes on I will be working on this to make it more fully functional.
 - Ramdisk -- mounts on /ram. Works exactly as you expect -- putting files
 here eats up core RAM, deleting them recovers it. Otherwise it works
 exactly like a normal file system.
+
+- Sockets -- mounts on /sock. This one is not exactly a filesystem so to speak.
+It is used to allow network sockets to use the normal VFS functions (write(),
+read(), close()) for its operation. There are never any visible files on this
+VFS, so you can't use open() to access it.
 
 
 1.5
@@ -318,8 +316,10 @@ Q) Does KOS have any kind of TCP/IP stack? Network support at all?
 
 A) Yes. There is a very primitive and rudimentary driver for the Sega
 broadband adapter (an RTL8193C based 10/100 card) and the Lan Adapter on
-the DC; and for TCP/IP there is a port of Adam Dunkel's lwIP embedded
-stack. 
+the DC. With regards to TCP/IP and friends, there are two choices: either
+you can use the built-in network stack or you can use lwIP, which is in
+the kos-ports tree. Note though that currently the built-in network stack
+does not actually support TCP (UDP is there though).
 
 
 3.2
