@@ -791,6 +791,10 @@ int fs_dclsocket_shutdown() {
 
     dbglog(DBG_INFO, "fs_dclsocket: About to disable console\n");
 
+    /* Disable the console first of all */
+    if(!strcmp(dbgio_dev_get(), "fs_dclsocket"))
+        dbgio_dev_select("null");
+
     /* Send dc-tool an exit packet */
     memcpy(cmd.id, "DC00", 4);
 
@@ -800,10 +804,6 @@ int fs_dclsocket_shutdown() {
     send(dcls_socket, &cmd, sizeof(command_t), 0);
 
     old = irq_disable();
-
-    /* Disable the console first of all */
-    if(strcmp(dbgio_dev_get(), "fs_dclsocket"))
-        dbgio_dev_select("null");
 
     /* Destroy our mutex, and set us as uninitted */
     mutex_destroy(mutex);
