@@ -748,12 +748,13 @@ int fs_dclsocket_init() {
     if(dcls_socket == -1)
         return -1;
 
+    memset(&addr, 0, sizeof(struct sockaddr_in));
     addr.sin_family = AF_INET;
     addr.sin_port = htons(DCLOAD_PORT);
     addr.sin_addr.s_addr = INADDR_ANY;
-    memset(addr.sin_zero, 0, 8);
 
-    err = bind(dcls_socket, (struct sockaddr *)&addr, sizeof(struct sockaddr));
+    err = bind(dcls_socket, (struct sockaddr *)&addr,
+               sizeof(struct sockaddr_in));
 
     if(err == -1)
         goto error;
@@ -762,7 +763,7 @@ int fs_dclsocket_init() {
     addr.sin_addr.s_addr = htonl(ip);
 
     err = connect(dcls_socket, (struct sockaddr *)&addr,
-                  sizeof(struct sockaddr));
+                  sizeof(struct sockaddr_in));
 
     if(err == -1)
         goto error;
