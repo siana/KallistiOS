@@ -60,7 +60,7 @@ int main(int argc, char *argv[]) {
     printf("PING6 %s --> %s\n", str1, str2);
 
     /* Send out 10 pings, waiting 250ms between attempts. */
-    for(i = 0; i < 2; ++i) {
+    for(i = 0; i < 10; ++i) {
         net_icmp6_send_echo(net_default_dev, &addr, 0, i, data, DATA_SIZE);
         thd_sleep(250);
     }
