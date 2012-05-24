@@ -82,43 +82,75 @@ int dbgio_init() {
 }
 
 int dbgio_set_irq_usage(int mode) {
-	assert( dbgio );
-	return dbgio->set_irq_usage(mode);
+    if(dbgio_enabled) {
+        assert( dbgio );
+        return dbgio->set_irq_usage(mode);
+    }
+
+    return -1;
 }
 
 int dbgio_read() {
-	assert( dbgio );
-	return dbgio->read();
+    if(dbgio_enabled) {
+        assert( dbgio );
+        return dbgio->read();
+    }
+
+    return -1;
 }
 
 int dbgio_write(int c) {
-	assert( dbgio );
-	return dbgio->write(c);
+    if(dbgio_enabled) {
+        assert( dbgio );
+        return dbgio->write(c);
+    }
+
+    return -1;
 }
 
 int dbgio_flush() {
-	assert( dbgio );
-	return dbgio->flush();
+    if(dbgio_enabled) {
+        assert( dbgio );
+        return dbgio->flush();
+    }
+
+    return -1;
 }
 
 int dbgio_write_buffer(const uint8 *data, int len) {
-	assert( dbgio );
-	return dbgio->write_buffer(data, len, 0);
+    if(dbgio_enabled) {
+        assert( dbgio );
+        return dbgio->write_buffer(data, len, 0);
+    }
+
+    return -1;
 }
 
 int dbgio_read_buffer(uint8 *data, int len) {
-	assert( dbgio );
-	return dbgio->read_buffer(data, len);
+    if(dbgio_enabled) {
+        assert( dbgio );
+        return dbgio->read_buffer(data, len);
+    }
+
+    return -1;
 }
 
 int dbgio_write_buffer_xlat(const uint8 *data, int len) {
-	assert( dbgio );
-	return dbgio->write_buffer(data, len, 1);
+    if(dbgio_enabled) {
+        assert( dbgio );
+        return dbgio->write_buffer(data, len, 1);
+    }
+
+    return -1;
 }
 
 int dbgio_write_str(const char *str) {
-	assert( dbgio );
-	return dbgio_write_buffer_xlat((const uint8*)str, strlen(str));
+    if(dbgio_enabled) {
+        assert( dbgio );
+        return dbgio_write_buffer_xlat((const uint8*)str, strlen(str));
+    }
+
+    return -1;
 }
 
 // Not re-entrant
