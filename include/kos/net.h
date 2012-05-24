@@ -2,7 +2,7 @@
 
    include/kos/net.h
    Copyright (C) 2002 Dan Potter
-   Copyright (C) 2005, 2006, 2007, 2008, 2009, 2010 Lawrence Sebald
+   Copyright (C) 2005, 2006, 2007, 2008, 2009, 2010, 2012 Lawrence Sebald
 
 */
 
@@ -638,6 +638,16 @@ int net_udp_init();
 
 /** \brief  Shutdown UDP. */
 void net_udp_shutdown();
+
+/***** net_tcp.c **********************************************************/
+
+/** \brief  Init TCP.
+    \retval 0               On success (no error conditions defined).
+*/
+int net_tcp_init();
+
+/** \brief  Shutdown TCP. */
+void net_tcp_shutdown();
 
 /***** net_crc.c **********************************************************/
 

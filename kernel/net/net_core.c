@@ -49,50 +49,50 @@ netif_t *net_default_dev = NULL;
 
 /* Register a network device */
 int net_reg_device(netif_t *device) {
-	/* Make sure it's not already registered */
-	if (device->flags & NETIF_REGISTERED) {
-		dbglog(DBG_WARNING, "net_reg_device: '%s' is already registered\n",
-			device->name);
-		return -1;
-	}
+    /* Make sure it's not already registered */
+    if (device->flags & NETIF_REGISTERED) {
+        dbglog(DBG_WARNING, "net_reg_device: '%s' is already registered\n",
+              device->name);
+        return -1;
+    }
 
-	/* Insert it into the interface list */
-	LIST_INSERT_HEAD(&net_if_list, device, if_list);
+    /* Insert it into the interface list */
+    LIST_INSERT_HEAD(&net_if_list, device, if_list);
 
-	/* Mark it as registered */
-	device->flags |= NETIF_REGISTERED;
+    /* Mark it as registered */
+    device->flags |= NETIF_REGISTERED;
 
-	/* We need to do more processing in here eventually like looking for
-	   duplicate device IDs and assigning new indeces, but that can
-	   wait until we're actually supporting a box with the possibility
-	   of more than one network interface... which probably won't happen
-	   any time soon... */
+    /* We need to do more processing in here eventually like looking for
+       duplicate device IDs and assigning new indeces, but that can
+       wait until we're actually supporting a box with the possibility
+       of more than one network interface... which probably won't happen
+       any time soon... */
 
-	/* Success */
-	return 0;
+    /* Success */
+    return 0;
 }
 
 /* Unregister a network device */
 int net_unreg_device(netif_t *device) {
-	/* Make sure it really was registered */
-	if (!(device->flags & NETIF_REGISTERED)) {
-		dbglog(DBG_WARNING, "net_unreg_device: '%s' isn't registered\n",
-			device->name);
-		return -1;
-	}
+    /* Make sure it really was registered */
+    if (!(device->flags & NETIF_REGISTERED)) {
+        dbglog(DBG_WARNING, "net_unreg_device: '%s' isn't registered\n",
+               device->name);
+        return -1;
+    }
 
-	/* Remove it from the list */
-	LIST_REMOVE(device, if_list);
+    /* Remove it from the list */
+    LIST_REMOVE(device, if_list);
 
-	/* Mark it as unregistered */
-	device->flags &= ~NETIF_REGISTERED;
+    /* Mark it as unregistered */
+    device->flags &= ~NETIF_REGISTERED;
 
-	/* Success */
-	return 0;
+    /* Success */
+    return 0;
 }
 
 struct netif_list * net_get_if_list() {
-	return &net_if_list;
+    return &net_if_list;
 }
 
 /*****************************************************************************/
@@ -100,139 +100,141 @@ struct netif_list * net_get_if_list() {
 
 /* Set default */
 netif_t *net_set_default(netif_t *n)	{
-	netif_t *olddev = net_default_dev;
+    netif_t *olddev = net_default_dev;
 
-	net_default_dev = n;
+    net_default_dev = n;
 
-	return olddev;
+    return olddev;
 }
 
 /* Device detect / init */
 int net_dev_init() {
-	int detected = 0;
-	netif_t *cur;
+    int detected = 0;
+    netif_t *cur;
 
-	LIST_FOREACH(cur, &net_if_list, if_list) {
-		/* Make sure we have one */
-		if (cur->if_detect(cur) < 0)
-			continue;
+    LIST_FOREACH(cur, &net_if_list, if_list) {
+        /* Make sure we have one */
+        if (cur->if_detect(cur) < 0)
+            continue;
 
-		/* Ok, we do -- initialize it */
-		if (cur->if_init(cur) < 0)
-			continue;
+        /* Ok, we do -- initialize it */
+        if (cur->if_init(cur) < 0)
+            continue;
 
-		/* It's initialized, so now enable it */
-		if (cur->if_start(cur) < 0) {
-			cur->if_shutdown(cur);
-			continue;
-		}
+        /* It's initialized, so now enable it */
+        if (cur->if_start(cur) < 0) {
+            cur->if_shutdown(cur);
+            continue;
+        }
 
-		/* Set the first detected device to be the default */
-		if(net_default_dev == NULL)
-			net_set_default(cur);
+        /* Set the first detected device to be the default */
+        if(net_default_dev == NULL)
+            net_set_default(cur);
 
-		detected++;
-	}
+        detected++;
+    }
 
-	dbglog(DBG_DEBUG, "net_dev_init: detected %d usable network device(s)\n", detected);
+    dbglog(DBG_DEBUG, "net_dev_init: detected %d usable network device(s)\n", detected);
 
-	return 0;
+    return 0;
 }
 
 /* Init */
 int net_init() {
-	int rv = 0;
+    int rv = 0;
 
-	/* Make sure we haven't already done this */
-	if(net_initted)
-		return 0;
+    /* Make sure we haven't already done this */
+    if(net_initted)
+        return 0;
 
-	/* Detect and potentially initialize devices */
-	if (net_dev_init() < 0)
-		return -1;
+    /* Detect and potentially initialize devices */
+    if (net_dev_init() < 0)
+        return -1;
 
-	/* Initialize the network thread. */
-	net_thd_init();
+    /* Initialize the network thread. */
+    net_thd_init();
 
-	/* Initialize the ARP cache */
-	net_arp_init();
+    /* Initialize the ARP cache */
+    net_arp_init();
 
-	/* Initialize the NDP cache */
-	net_ndp_init();
+    /* Initialize the NDP cache */
+    net_ndp_init();
 
-	/* Initialize IPv4 fragmentation support */
-	net_ipv4_frag_init();
+    /* Initialize IPv4 fragmentation support */
+    net_ipv4_frag_init();
 
     /* Initialize multicast support */
     net_multicast_init();
 
-	/* Initialize IPv6 support */
-	net_ipv6_init();
+    /* Initialize IPv6 support */
+    net_ipv6_init();
 
-	/* Initialize the sockets-like interface */
-	fs_socket_init();
+    /* Initialize the sockets-like interface */
+    fs_socket_init();
 
-	/* Initialize the UDP system */
-	net_udp_init();
+    /* Initialize the UDP/TCP systems */
+    net_udp_init();
+    net_tcp_init();
 
-	/* Initialize the DHCP system */
-	net_dhcp_init();
+    /* Initialize the DHCP system */
+    net_dhcp_init();
 
-	if(net_default_dev && !net_default_dev->ip_addr[0]) {
-		rv = net_dhcp_request();
-	}
+    if(net_default_dev && !net_default_dev->ip_addr[0]) {
+        rv = net_dhcp_request();
+    }
 
-	net_initted = 1;
+    net_initted = 1;
 
-	return rv;
+    return rv;
 }
 
 /* Shutdown */
 void net_shutdown() {
-	netif_t *cur;
+    netif_t *cur;
 
-	/* Make sure we actually initialized the net stuff to begin with */
-	if(!net_initted)
-		return;
+    /* Make sure we actually initialized the net stuff to begin with */
+    if(!net_initted)
+        return;
 
-	/* Shut down DHCP */
-	net_dhcp_shutdown();
+    /* Shut down DHCP */
+    net_dhcp_shutdown();
 
-	/* Shut down the UDP system */
-	net_udp_shutdown();
+    /* Shut down the UDP/TCP systems */
+    net_tcp_shutdown();
+    net_udp_shutdown();
 
-	/* Shut down the sockets-like interface */
-	fs_socket_shutdown();
+    /* Shut down the sockets-like interface */
+    fs_socket_shutdown();
 
-	/* Shut down IPv6 support */
-	net_ipv6_shutdown();
+    /* Shut down IPv6 support */
+    net_ipv6_shutdown();
 
     /* Shut down multicast support */
     net_multicast_shutdown();
 
-	/* Shut down IPv4 fragmentation support */
-	net_ipv4_frag_shutdown();
+    /* Shut down IPv4 fragmentation support */
+    net_ipv4_frag_shutdown();
 
-	/* Shut down the NDP cache */
-	net_ndp_shutdown();
+    /* Shut down the NDP cache */
+    net_ndp_shutdown();
 
-	/* Shut down the ARP cache */
-	net_arp_shutdown();
+    /* Shut down the ARP cache */
+    net_arp_shutdown();
 
-	/* Shut down the network thread */
-	net_thd_shutdown();
+    /* Shut down the network thread */
+    net_thd_shutdown();
 
-	/* Shut down all activated network devices */
-	LIST_FOREACH(cur, &net_if_list, if_list) {
-		if (cur->flags & NETIF_RUNNING && cur->if_stop)
-			cur->if_stop(cur);
-		if (cur->flags & NETIF_INITIALIZED && cur->if_shutdown)
-			cur->if_shutdown(cur);
-		cur->flags &= ~NETIF_REGISTERED;
-	}
+    /* Shut down all activated network devices */
+    LIST_FOREACH(cur, &net_if_list, if_list) {
+        if (cur->flags & NETIF_RUNNING && cur->if_stop)
+            cur->if_stop(cur);
+        if (cur->flags & NETIF_INITIALIZED && cur->if_shutdown)
+            cur->if_shutdown(cur);
+        cur->flags &= ~NETIF_REGISTERED;
+    }
 
-	/* Blank out the list */
-	LIST_INIT(&net_if_list);
+    /* Blank out the list */
+    LIST_INIT(&net_if_list);
 
-	net_initted = 0;
+    net_initted = 0;
 }
