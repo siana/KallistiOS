@@ -131,6 +131,16 @@ int net_ipv6_send(netif_t *net, const uint8 *data, int data_size, int hop_limit,
         }
     }
 
+    /* Set up the hop limit. We need to do this here, in case we end up passing
+       this off to the IPv4 code, otherwise we could end up with a 0 down there
+       for the ttl, which would be bad. */
+    if(!hop_limit) {
+        if(net->hop_limit)
+            hop_limit = net->hop_limit;
+        else
+            hop_limit = 255;
+    }
+
     /* If this is actually going both to and from an IPv4 address, use the IPv4
        send function to do the rest. Note that only V4-mapped addresses are
        supported here (::ffff:x.y.z.w) */
@@ -149,17 +159,7 @@ int net_ipv6_send(netif_t *net, const uint8 *data, int data_size, int hop_limit,
     hdr.lclass = 0;
     hdr.length = ntohs(data_size);
     hdr.next_header = proto;
-
-    if(hop_limit) {
-        hdr.hop_limit = hop_limit;
-    }
-    else if(net->hop_limit) {
-        hdr.hop_limit = net->hop_limit;
-    }
-    else {
-        hdr.hop_limit = 255;
-    }
-
+    hdr.hop_limit = hop_limit;
     hdr.src_addr = *src;
     hdr.dst_addr = *dst;
 
