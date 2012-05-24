@@ -121,7 +121,7 @@ int arch_auto_init() {
         /* Check if the dcload-ip console is up, and if so, disable it,
            otherwise we'll crash when we attempt to bring up the BBA */
 		if(!(__kos_init_flags & INIT_NO_DCLOAD) && dcload_type == DCLOAD_TYPE_IP) {
-			dbgio_dev_select("scif");
+			dbgio_disable();
 		}
 
 		net_init();		/* Enable networking (and drivers) */
@@ -130,6 +130,7 @@ int arch_auto_init() {
 			fs_dclsocket_init_console();
 			if(!fs_dclsocket_init()) {
 				dbgio_dev_select("fs_dclsocket");
+				dbgio_enable();
 				dbglog(DBG_INFO, "fs_dclsocket console support enabled\n");
 			}
 		}

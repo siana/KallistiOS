@@ -793,7 +793,7 @@ int fs_dclsocket_shutdown() {
 
     /* Disable the console first of all */
     if(!strcmp(dbgio_dev_get(), "fs_dclsocket"))
-        dbgio_dev_select("null");
+        dbgio_disable();
 
     /* Send dc-tool an exit packet */
     memcpy(cmd.id, "DC00", 4);
