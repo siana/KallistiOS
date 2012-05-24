@@ -1,7 +1,7 @@
 /* KallistiOS ##version##
 
    kernel/net/net_udp.c
-   Copyright (C) 2005, 2006, 2007, 2008, 2009 Lawrence Sebald
+   Copyright (C) 2005, 2006, 2007, 2008, 2009, 2012 Lawrence Sebald
 
 */
 
@@ -20,7 +20,6 @@
 
 #include "net_ipv4.h"
 #include "net_ipv6.h"
-#include "net_udp.h"
 
 #define packed __attribute__((packed))
 typedef struct {
@@ -33,7 +32,7 @@ typedef struct {
 
 struct udp_pkt {
     TAILQ_ENTRY(udp_pkt) pkt_queue;
-    struct sockaddr_in from;
+    struct sockaddr_in6 from;
     uint8 *data;
     uint16 datasize;
 };
@@ -42,10 +41,11 @@ TAILQ_HEAD(udp_pkt_queue, udp_pkt);
 
 struct udp_sock {
     LIST_ENTRY(udp_sock) sock_list;
-    struct sockaddr_in local_addr;
-    struct sockaddr_in remote_addr;
+    struct sockaddr_in6 local_addr;
+    struct sockaddr_in6 remote_addr;
 
-    int flags;
+    uint32 flags;
+    int domain;
 
     struct udp_pkt_queue packets;
 };
@@ -56,8 +56,8 @@ static struct udp_sock_list net_udp_sockets = LIST_HEAD_INITIALIZER(0);
 static mutex_t *udp_mutex = NULL;
 static net_udp_stats_t udp_stats = { 0 };
 
-static int net_udp_send_raw(netif_t *net, uint32 src_ip, uint16 src_port,
-                            uint32 dst_ip, uint16 dst_port, const uint8 *data,
+static int net_udp_send_raw(netif_t *net, const struct sockaddr_in6 *src,
+                            const struct sockaddr_in6 *dst, const uint8 *data,
                             int size, int flags);
 
 static int net_udp_accept(net_socket_t *hnd, struct sockaddr *addr,
@@ -69,21 +69,51 @@ static int net_udp_accept(net_socket_t *hnd, struct sockaddr *addr,
 static int net_udp_bind(net_socket_t *hnd, const struct sockaddr *addr,
                         socklen_t addr_len) {
     struct udp_sock *udpsock, *iter;
-    struct sockaddr_in *realaddr;
+    struct sockaddr_in *realaddr4;
+    struct sockaddr_in6 realaddr6;
 
     /* Verify the parameters sent in first */
     if(addr == NULL) {
-        errno = EFAULT;
+        errno = EDESTADDRREQ;
         return -1;
     }
 
-    if(addr->sa_family != AF_INET) {
-        errno = EAFNOSUPPORT;
-        return -1;
-    }
+    switch(addr->sa_family) {
+        case AF_INET:
+            if(addr_len != sizeof(struct sockaddr_in)) {
+                errno = EINVAL;
+                return -1;
+            }
 
-    /* Get the sockaddr_in structure, rather than the sockaddr one */
-    realaddr = (struct sockaddr_in *) addr;
+            /* Grab the IPv4 address struct and convert it to IPv6 */
+            realaddr4 = (struct sockaddr_in *)addr;
+            memset(&realaddr6, 0, sizeof(struct sockaddr_in6));
+            realaddr6.sin6_family = AF_INET6;
+            realaddr6.sin6_port = realaddr4->sin_port;
+
+            if(realaddr4->sin_addr.s_addr != INADDR_ANY) {
+                realaddr6.sin6_addr.__s6_addr.__s6_addr16[5] = 0xFFFF;
+                realaddr6.sin6_addr.__s6_addr.__s6_addr32[3] =
+                    realaddr4->sin_addr.s_addr;
+            }
+            else {
+                realaddr6.sin6_addr = in6addr_any;
+            }
+            break;
+
+        case AF_INET6:
+            if(addr_len != sizeof(struct sockaddr_in6)) {
+                errno = EINVAL;
+                return -1;
+            }
+
+            realaddr6 = *((struct sockaddr_in6 *)addr);
+            break;
+
+        default:
+            errno = EAFNOSUPPORT;
+            return -1;
+    }
 
     if(irq_inside_int()) {
         if(mutex_trylock(udp_mutex) == -1) {
@@ -102,20 +132,27 @@ static int net_udp_bind(net_socket_t *hnd, const struct sockaddr *addr,
         return -1;
     }
 
+    /* Make sure the address family we're binding to matches that which is set
+       on the socket itself */
+    if(addr->sa_family != udpsock->domain) {
+        mutex_unlock(udp_mutex);
+        errno = EINVAL;
+        return -1;
+    }
+
     /* See if we requested a specific port or not */
-    if(realaddr->sin_port != 0) {
+    if(realaddr6.sin6_port != 0) {
         /* Make sure we don't already have a socket bound to the
            port specified */
-
         LIST_FOREACH(iter, &net_udp_sockets, sock_list) {
-            if(iter->local_addr.sin_port == realaddr->sin_port) {
+            if(iter->local_addr.sin6_port == realaddr6.sin6_port) {
                 mutex_unlock(udp_mutex);
                 errno = EADDRINUSE;
                 return -1;
             }
         }
 
-        udpsock->local_addr = *realaddr;
+        udpsock->local_addr = realaddr6;
     }
     else {
         uint16 port = 1024, tmp = 0;
@@ -125,15 +162,15 @@ static int net_udp_bind(net_socket_t *hnd, const struct sockaddr *addr,
             tmp = port;
 
             LIST_FOREACH(iter, &net_udp_sockets, sock_list) {
-                if(iter->local_addr.sin_port == port) {
+                if(iter->local_addr.sin6_port == port) {
                     ++port;
                     break;
                 }
             }
         }
 
-        udpsock->local_addr = *realaddr;
-        udpsock->local_addr.sin_port = htons(port);
+        udpsock->local_addr = realaddr6;
+        udpsock->local_addr.sin6_port = htons(port);
     }
 
     mutex_unlock(udp_mutex);
@@ -144,16 +181,49 @@ static int net_udp_bind(net_socket_t *hnd, const struct sockaddr *addr,
 static int net_udp_connect(net_socket_t *hnd, const struct sockaddr *addr,
                            socklen_t addr_len) {
     struct udp_sock *udpsock;
-    struct sockaddr_in *realaddr;
+    struct sockaddr_in *realaddr4;
+    struct sockaddr_in6 realaddr6;
 
     if(addr == NULL) {
-        errno = EFAULT;
+        errno = EDESTADDRREQ;
         return -1;
     }
 
-    if(addr->sa_family != AF_INET) {
-        errno = EAFNOSUPPORT;
-        return -1;
+    switch(addr->sa_family) {
+        case AF_INET:
+            if(addr_len != sizeof(struct sockaddr_in)) {
+                errno = EINVAL;
+                return -1;
+            }
+
+            /* Grab the IPv4 address struct and convert it to IPv6 */
+            realaddr4 = (struct sockaddr_in *)addr;
+
+            if(realaddr4->sin_addr.s_addr == INADDR_ANY) {
+                errno = EADDRNOTAVAIL;
+                return -1;
+            }
+
+            memset(&realaddr6, 0, sizeof(struct sockaddr_in6));
+            realaddr6.sin6_family = AF_INET6;
+            realaddr6.sin6_port = realaddr4->sin_port;
+            realaddr6.sin6_addr.__s6_addr.__s6_addr16[5] = 0xFFFF;
+            realaddr6.sin6_addr.__s6_addr.__s6_addr32[3] =
+                realaddr4->sin_addr.s_addr;
+            break;
+
+        case AF_INET6:
+            if(addr_len != sizeof(struct sockaddr_in6)) {
+                errno = EINVAL;
+                return -1;
+            }
+
+            realaddr6 = *((struct sockaddr_in6 *)addr);
+            break;
+
+        default:
+            errno = EAFNOSUPPORT;
+            return -1;
     }
 
     if(irq_inside_int()) {
@@ -173,21 +243,31 @@ static int net_udp_connect(net_socket_t *hnd, const struct sockaddr *addr,
         return -1;
     }
 
-    if(udpsock->remote_addr.sin_addr.s_addr != INADDR_ANY) {
+    /* Make sure the address family we're binding to matches that which is set
+       on the socket itself */
+    if(addr->sa_family != udpsock->domain) {
+        mutex_unlock(udp_mutex);
+        errno = EINVAL;
+        return -1;
+    }
+
+    /* Make sure the socket isn't already connected */
+    if(!IN6_IS_ADDR_UNSPECIFIED(&udpsock->remote_addr.sin6_addr)) {
         mutex_unlock(udp_mutex);
         errno = EISCONN;
         return -1;
     }
 
-    realaddr = (struct sockaddr_in *) addr;
-    if(realaddr->sin_port == 0 || realaddr->sin_addr.s_addr == INADDR_ANY) {
+    /* Make sure we have a valid address to connect to */
+    if(IN6_IS_ADDR_UNSPECIFIED(&realaddr6.sin6_addr) ||
+       realaddr6.sin6_port == 0) {
         mutex_unlock(udp_mutex);
         errno = EADDRNOTAVAIL;
         return -1;
     }
 
-    udpsock->remote_addr.sin_addr.s_addr = realaddr->sin_addr.s_addr;
-    udpsock->remote_addr.sin_port = realaddr->sin_port;
+    /* "Connect" to the specified address */
+    udpsock->remote_addr = realaddr6;
 
     mutex_unlock(udp_mutex);
 
@@ -222,7 +302,7 @@ static ssize_t net_udp_recvfrom(net_socket_t *hnd, void *buffer, size_t length,
         return -1;
     }
 
-    if(udpsock->flags & SHUT_RD) {
+    if(udpsock->flags & (SHUT_RD << 24)) {
         mutex_unlock(udp_mutex);
         return 0;
     }
@@ -233,8 +313,8 @@ static ssize_t net_udp_recvfrom(net_socket_t *hnd, void *buffer, size_t length,
         return -1;
     }
 
-    if(TAILQ_EMPTY(&udpsock->packets) && ((udpsock->flags & O_NONBLOCK) ||
-                                           irq_inside_int())) {
+    if(TAILQ_EMPTY(&udpsock->packets) &&
+       ((udpsock->flags & FS_SOCKET_NONBLOCK) || irq_inside_int())) {
         mutex_unlock(udp_mutex);
         errno = EWOULDBLOCK;
         return -1;
@@ -257,19 +337,38 @@ static ssize_t net_udp_recvfrom(net_socket_t *hnd, void *buffer, size_t length,
     }
 
     if(addr != NULL) {
-        struct sockaddr_in realaddr;
+        if(udpsock->domain == AF_INET) {
+            struct sockaddr_in realaddr;
 
-        realaddr.sin_family = AF_INET;
-        realaddr.sin_addr.s_addr = pkt->from.sin_addr.s_addr;
-        realaddr.sin_port = pkt->from.sin_port;
-        memset(realaddr.sin_zero, 0, 8);
+            memset(&realaddr, 0, sizeof(struct sockaddr_in));
+            realaddr.sin_family = AF_INET;
+            realaddr.sin_addr.s_addr =
+                pkt->from.sin6_addr.__s6_addr.__s6_addr32[3];
+            realaddr.sin_port = pkt->from.sin6_port;
 
-        if(*addr_len < sizeof(struct sockaddr_in)) {
-            memcpy(addr, &realaddr, *addr_len);
+            if(*addr_len < sizeof(struct sockaddr_in)) {
+                memcpy(addr, &realaddr, *addr_len);
+            }
+            else {
+                memcpy(addr, &realaddr, sizeof(struct sockaddr_in));
+                *addr_len = sizeof(struct sockaddr_in);
+            }
         }
-        else {
-            memcpy(addr, &realaddr, sizeof(struct sockaddr_in));
-            *addr_len = sizeof(struct sockaddr_in);
+        else if(udpsock->domain == AF_INET6) {
+            struct sockaddr_in6 realaddr6;
+
+            memset(&realaddr6, 0, sizeof(struct sockaddr_in6));
+            realaddr6.sin6_family = AF_INET6;
+            realaddr6.sin6_addr = pkt->from.sin6_addr;
+            realaddr6.sin6_port = pkt->from.sin6_port;
+
+            if(*addr_len < sizeof(struct sockaddr_in6)) {
+                memcpy(addr, &realaddr6, *addr_len);
+            }
+            else {
+                memcpy(addr, &realaddr6, sizeof(struct sockaddr_in6));
+                *addr_len = sizeof(struct sockaddr_in6);
+            }
         }
     }
 
@@ -287,6 +386,9 @@ static ssize_t net_udp_sendto(net_socket_t *hnd, const void *message,
                               const struct sockaddr *addr, socklen_t addr_len) {
     struct udp_sock *udpsock;
     struct sockaddr_in *realaddr;
+    struct sockaddr_in6 realaddr6;
+    uint32_t sflags;
+    struct sockaddr_in6 local_addr;
 
     if(irq_inside_int()) {
         if(mutex_trylock(udp_mutex) == -1) {
@@ -304,26 +406,54 @@ static ssize_t net_udp_sendto(net_socket_t *hnd, const void *message,
         goto err;
     }
 
-    if(udpsock->flags & SHUT_WR) {
+    if(udpsock->flags & (SHUT_WR << 24)) {
         errno = EPIPE;
         goto err;
     }
 
-    if(udpsock->remote_addr.sin_addr.s_addr != INADDR_ANY &&
-       udpsock->remote_addr.sin_port != 0) {
+    if(!IN6_IS_ADDR_UNSPECIFIED(&udpsock->remote_addr.sin6_addr) &&
+       udpsock->remote_addr.sin6_port != 0) {
         if(addr) {
             errno = EISCONN;
             goto err;
         }
 
-        realaddr = &udpsock->remote_addr;
+        realaddr6 = udpsock->remote_addr;
     }
     else if(addr == NULL) {
         errno = EDESTADDRREQ;
         goto err;
     }
-    else {
+    else if(addr->sa_family != udpsock->domain) {
+        errno = EAFNOSUPPORT;
+        goto err;
+    }
+    else if(udpsock->domain == AF_INET6) {
+        if(addr_len != sizeof(struct sockaddr_in6)) {
+            errno = EINVAL;
+            goto err;
+        }
+
+        realaddr6 = *((struct sockaddr_in6 *)addr);
+    }
+    else if(udpsock->domain == AF_INET) {
+        if(addr_len != sizeof(struct sockaddr_in)) {
+            errno = EINVAL;
+            goto err;
+        }
+
         realaddr = (struct sockaddr_in *)addr;
+        memset(&realaddr6, 0, sizeof(struct sockaddr_in6));
+        realaddr6.sin6_family = AF_INET6;
+        realaddr6.sin6_addr.__s6_addr.__s6_addr16[5] = 0xFFFF;
+        realaddr6.sin6_addr.__s6_addr.__s6_addr32[3] =
+            realaddr->sin_addr.s_addr;
+        realaddr6.sin6_port = realaddr->sin_port;
+    }
+    else {
+        /* Shouldn't be able to get here... */
+        errno = EBADF;
+        goto err;
     }
 
     if(message == NULL) {
@@ -331,7 +461,7 @@ static ssize_t net_udp_sendto(net_socket_t *hnd, const void *message,
         goto err;
     }
 
-    if(udpsock->local_addr.sin_port == 0) {
+    if(udpsock->local_addr.sin6_port == 0) {
         uint16 port = 1024, tmp = 0;
         struct udp_sock *iter;
 
@@ -340,22 +470,22 @@ static ssize_t net_udp_sendto(net_socket_t *hnd, const void *message,
             tmp = port;
 
             LIST_FOREACH(iter, &net_udp_sockets, sock_list) {
-                if(iter->local_addr.sin_port == port) {
+                if(iter->local_addr.sin6_port == port) {
                     ++port;
                     break;
                 }
             }
         }
 
-        udpsock->local_addr.sin_port = htons(port);
+        udpsock->local_addr.sin6_port = htons(port);
     }
 
+    local_addr = udpsock->local_addr;
+    sflags = udpsock->flags;
     mutex_unlock(udp_mutex);
 
-    return net_udp_send_raw(NULL, udpsock->local_addr.sin_addr.s_addr,
-                            udpsock->local_addr.sin_port,
-                            realaddr->sin_addr.s_addr, realaddr->sin_port,
-                            (uint8 *) message, length, udpsock->flags);
+    return net_udp_send_raw(NULL, &local_addr, &realaddr6,
+                            (const uint8 *)message, length, sflags);
 err:
     mutex_unlock(udp_mutex);
     return -1;
@@ -387,7 +517,7 @@ static int net_udp_shutdownsock(net_socket_t *hnd, int how) {
         return -1;
     }
 
-    udpsock->flags |= how;
+    udpsock->flags |= (how << 24);
 
     mutex_unlock(udp_mutex);
 
@@ -397,23 +527,15 @@ static int net_udp_shutdownsock(net_socket_t *hnd, int how) {
 static int net_udp_socket(net_socket_t *hnd, int domain, int type, int proto) {
     struct udp_sock *udpsock;
 
-    udpsock = (struct udp_sock *) malloc(sizeof(struct udp_sock));
+    udpsock = (struct udp_sock *)malloc(sizeof(struct udp_sock));
     if(udpsock == NULL) {
         errno = ENOMEM;
         return -1;
     }
 
-    udpsock->remote_addr.sin_family = AF_INET;
-    udpsock->remote_addr.sin_addr.s_addr = INADDR_ANY;
-    udpsock->remote_addr.sin_port = 0;
-
-    udpsock->local_addr.sin_family = AF_INET;
-    udpsock->local_addr.sin_addr.s_addr = INADDR_ANY;
-    udpsock->local_addr.sin_port = 0;
-
-    udpsock->flags = 0;
-
+    memset(udpsock, 0, sizeof(struct udp_sock));
     TAILQ_INIT(&udpsock->packets);
+    udpsock->domain = domain;
 
     if(irq_inside_int()) {
         if(mutex_trylock(udp_mutex) == -1) {
@@ -427,9 +549,8 @@ static int net_udp_socket(net_socket_t *hnd, int domain, int type, int proto) {
     }
 
     LIST_INSERT_HEAD(&net_udp_sockets, udpsock, sock_list);
-    mutex_unlock(udp_mutex);
-
     hnd->data = udpsock;
+    mutex_unlock(udp_mutex);
 
     return 0;
 }
@@ -467,7 +588,7 @@ static void net_udp_close(net_socket_t *hnd) {
     mutex_unlock(udp_mutex);
 }
 
-static int net_udp_setflags(net_socket_t *hnd, int flags) {
+static int net_udp_setflags(net_socket_t *hnd, uint32_t flags) {
     struct udp_sock *udpsock;
 
     if(irq_inside_int()) {
@@ -487,7 +608,7 @@ static int net_udp_setflags(net_socket_t *hnd, int flags) {
         return -1;
     }
 
-    if(flags & (~O_NONBLOCK)) {
+    if(flags & (~FS_SOCKET_NONBLOCK)) {
         mutex_unlock(udp_mutex);
         errno = EINVAL;
         return -1;
@@ -499,21 +620,25 @@ static int net_udp_setflags(net_socket_t *hnd, int flags) {
     return 0;
 }
 
-int net_udp_input(netif_t *src, ip_hdr_t *ip, const uint8 *data, int size) {
+static int net_udp_input4(netif_t *src, const ip_hdr_t *ip, const uint8 *data,
+                          int size) {
     udp_hdr_t *hdr = (udp_hdr_t *)data;
     uint16 cs;
     struct udp_sock *sock;
     struct udp_pkt *pkt;
 
-    if(size <= sizeof(udp_hdr_t))   {
+    if(!udp_mutex)
+        return -1;
+
+    if(size <= sizeof(udp_hdr_t)) {
         /* Discard the packet, since it is too short to be of any interest. */
         ++udp_stats.pkt_recv_bad_size;
         return -1;
     }
 
-    cs = net_ipv4_checksum_pseudo(ip->src, ip->dest, ip->protocol, size);
-
     if(hdr->checksum != 0) {
+        cs = net_ipv4_checksum_pseudo(ip->src, ip->dest, ip->protocol, size);
+
         /* If the checksum is right, we'll get zero back from the checksum
            function */
         if(net_ipv4_checksum(data, size, cs)) {
@@ -523,56 +648,90 @@ int net_udp_input(netif_t *src, ip_hdr_t *ip, const uint8 *data, int size) {
         }
     }
 
-    if(mutex_trylock(udp_mutex)) {
+    if(mutex_trylock(udp_mutex))
         /* Considering this function is usually called in an IRQ, if the
            mutex is locked, there isn't much that can be done. */
         return -1;
-    }
 
     LIST_FOREACH(sock, &net_udp_sockets, sock_list) {
-        /* See if we have a socket matching the description provided */
-        if(sock->local_addr.sin_port == hdr->dst_port &&
-           ((sock->remote_addr.sin_port == hdr->src_port &&
-             sock->remote_addr.sin_addr.s_addr == ip->src) ||
-            (sock->remote_addr.sin_port == 0 &&
-             sock->remote_addr.sin_addr.s_addr == INADDR_ANY))) {
-            pkt = (struct udp_pkt *) malloc(sizeof(struct udp_pkt));
+        /* Don't even bother looking at IPv6-only sockets */
+        if(sock->domain == AF_INET6 && (sock->flags & FS_SOCKET_V6ONLY))
+            continue;
 
-            pkt->datasize = size - sizeof(udp_hdr_t);
-            pkt->data = (uint8 *) malloc(pkt->datasize);
+        /* If the ports don't match, don't look any further */
+        if(sock->local_addr.sin6_port != hdr->dst_port)
+            continue;
 
-            pkt->from.sin_family = AF_INET;
-            pkt->from.sin_addr.s_addr = ip->src;
-            pkt->from.sin_port = hdr->src_port;
+        /* If the socket has a remote port set and it isn't the one that this
+           packet came from, bail */
+        if(sock->remote_addr.sin6_port != 0 &&
+           sock->remote_addr.sin6_port != hdr->src_port)
+            continue;
 
-            memcpy(pkt->data, data + sizeof(udp_hdr_t), pkt->datasize);
+        /* If we have a address specified, and its not v4-mapped or its not the
+           address this packet came from, bail out */
+        if(!IN6_IS_ADDR_UNSPECIFIED(&sock->remote_addr.sin6_addr) &&
+           (!IN6_IS_ADDR_V4MAPPED(&sock->remote_addr.sin6_addr) ||
+            sock->remote_addr.sin6_addr.__s6_addr.__s6_addr32[3] != ip->src))
+            continue;
 
-            TAILQ_INSERT_TAIL(&sock->packets, pkt, pkt_queue);
-
-            genwait_wake_one(sock);
-
+        if(!(pkt = (struct udp_pkt *)malloc(sizeof(struct udp_pkt)))) {
             mutex_unlock(udp_mutex);
-
-            ++udp_stats.pkt_recv;
-
-            return 0;
+            return -1;
         }
+
+        memset(pkt, 0, sizeof(struct udp_pkt));
+
+        pkt->datasize = size - sizeof(udp_hdr_t);
+        if(!(pkt->data = (uint8 *)malloc(pkt->datasize))) {
+            free(pkt);
+            mutex_unlock(udp_mutex);
+            return -1;
+        }
+
+        pkt->from.sin6_family = AF_INET6;
+        pkt->from.sin6_addr.__s6_addr.__s6_addr16[5] = 0xFFFF;
+        pkt->from.sin6_addr.__s6_addr.__s6_addr32[3] = ip->src;
+        pkt->from.sin6_port = hdr->src_port;
+
+        memcpy(pkt->data, data + sizeof(udp_hdr_t), pkt->datasize);
+
+        TAILQ_INSERT_TAIL(&sock->packets, pkt, pkt_queue);
+
+        ++udp_stats.pkt_recv;
+        genwait_wake_one(sock);
+        mutex_unlock(udp_mutex);
+
+        return 0;
     }
 
-    mutex_unlock(udp_mutex);
-
     ++udp_stats.pkt_recv_no_sock;
+    mutex_unlock(udp_mutex);
 
     return -1;
 }
 
-static int net_udp_send_raw(netif_t *net, uint32 src_ip, uint16 src_port,
-                            uint32 dst_ip, uint16 dst_port, const uint8 *data,
+static int net_udp_real_input(netif_t *src, int domain, const void *hdr,
+                              const uint8 *data, int size) {
+    if(!udp_mutex)
+        return -1;
+
+    switch(domain) {
+        case AF_INET:
+            return net_udp_input4(src, (const ip_hdr_t *)hdr, data, size);
+    }
+
+    return -1;
+}
+
+static int net_udp_send_raw(netif_t *net, const struct sockaddr_in6 *src,
+                            const struct sockaddr_in6 *dst, const uint8 *data,
                             int size, int flags) {
     uint8 buf[size + sizeof(udp_hdr_t)];
     udp_hdr_t *hdr = (udp_hdr_t *)buf;
     uint16 cs;
     int err;
+    struct in6_addr srcaddr = src->sin6_addr;
 
     if(!net) {
         net = net_default_dev;
@@ -584,28 +743,51 @@ static int net_udp_send_raw(netif_t *net, uint32 src_ip, uint16 src_port,
         }
     }
 
-    if(src_ip == INADDR_ANY) {
-        src_ip = htonl(net_ipv4_address(net->ip_addr));
+    if(IN6_IS_ADDR_UNSPECIFIED(&src->sin6_addr)) {
+        if(IN6_IS_ADDR_V4MAPPED(&dst->sin6_addr)) {
+            srcaddr.__s6_addr.__s6_addr16[5] = 0xFFFF;
+            srcaddr.__s6_addr.__s6_addr32[3] =
+                htonl(net_ipv4_address(net->ip_addr));
 
-        if(src_ip == INADDR_ANY) {
-            errno = ENETDOWN;
-            ++udp_stats.pkt_send_failed;
-            return -1;
+            if(srcaddr.__s6_addr.__s6_addr32[3] == INADDR_ANY) {
+                errno = ENETDOWN;
+                ++udp_stats.pkt_send_failed;
+                return -1;
+            }
+        }
+        else {
+            if(IN6_IS_ADDR_LOOPBACK(&dst->sin6_addr)) {
+                srcaddr = in6addr_loopback;
+            }
+            else if(IN6_IS_ADDR_LINKLOCAL(&dst->sin6_addr) ||
+                    IN6_IS_ADDR_MC_LINKLOCAL(&dst->sin6_addr)) {
+                srcaddr = net->ip6_lladdr;
+            }
+            else if(net->ip6_addr_count) {
+                /* Punt and pick the first non-link-local address */
+                srcaddr = net->ip6_addrs[0];
+            }
+            else {
+                errno = ENETDOWN;
+                ++udp_stats.pkt_send_failed;
+                return -1;
+            }
         }
     }
 
     memcpy(buf + sizeof(udp_hdr_t), data, size);
     size += sizeof(udp_hdr_t);
-    cs = net_ipv4_checksum_pseudo(src_ip, dst_ip, IPPROTO_UDP, size);
+    cs = net_ipv6_checksum_pseudo(&srcaddr, &dst->sin6_addr, IPPROTO_UDP, size);
 
-    hdr->src_port = src_port;
-    hdr->dst_port = dst_port;
-    hdr->length = size;
+    hdr->src_port = src->sin6_port;
+    hdr->dst_port = dst->sin6_port;
+    hdr->length = htons(size);
     hdr->checksum = 0;
     hdr->checksum = net_ipv4_checksum(buf, size, cs);
 
     /* Pass everything off to the network layer to do the rest. */
-    err = net_ipv4_send(net, buf, size, -1, 64, IPPROTO_UDP, src_ip, dst_ip);
+    err = net_ipv6_send(net, buf, size, 0, IPPROTO_UDP, &srcaddr,
+                        &dst->sin6_addr);
     if(err < 0) {
         ++udp_stats.pkt_send_failed;
         return -1;
@@ -623,7 +805,7 @@ net_udp_stats_t net_udp_get_stats() {
 /* Protocol handler for fs_socket. */
 static fs_socket_proto_t proto = {
     FS_SOCKET_PROTO_ENTRY,
-    PF_INET,                            /* domain */
+    PF_INET6,                           /* domain */
     SOCK_DGRAM,                         /* type */
     IPPROTO_UDP,                        /* protocol */
     net_udp_socket,
@@ -635,7 +817,8 @@ static fs_socket_proto_t proto = {
     net_udp_listen,
     net_udp_recvfrom,
     net_udp_sendto,
-    net_udp_shutdownsock
+    net_udp_shutdownsock,
+    net_udp_real_input
 };
 
 int net_udp_init() {

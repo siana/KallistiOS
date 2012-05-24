@@ -2,7 +2,7 @@
 
    kernel/net/net_ipv4.c
 
-   Copyright (C) 2005, 2006, 2007, 2008, 2009, 2010 Lawrence Sebald
+   Copyright (C) 2005, 2006, 2007, 2008, 2009, 2010, 2012 Lawrence Sebald
 
    Portions adapted from KOS' old net_icmp.c file:
    Copyright (c) 2002 Dan Potter
@@ -15,9 +15,10 @@
 #include <errno.h>
 #include <arpa/inet.h>
 #include <kos/net.h>
+#include <kos/fs_socket.h>
+
 #include "net_ipv4.h"
 #include "net_icmp.h"
-#include "net_udp.h"
 
 static net_ipv4_stats_t ipv4_stats = { 0 };
 
@@ -232,16 +233,20 @@ int net_ipv4_input(netif_t *src, const uint8 *pkt, int pktsize) {
 
 int net_ipv4_input_proto(netif_t *src, ip_hdr_t *ip, const uint8 *data) {
     int hdrlen = (ip->version_ihl & 0x0F) << 2;
+    int datalen = ntohs(ip->length) - hdrlen;
+    int rv;
 
     /* Send the packet along to the appropriate protocol. */
     switch(ip->protocol) {
         case IPPROTO_ICMP:
             ++ipv4_stats.pkt_recv;
-            return net_icmp_input(src, ip, data, ntohs(ip->length) - hdrlen);
+            return net_icmp_input(src, ip, data, datalen);
 
-        case IPPROTO_UDP:
-            ++ipv4_stats.pkt_recv;
-            return net_udp_input(src, ip, data, ntohs(ip->length) - hdrlen);
+        default:
+            rv = fs_socket_input(src, AF_INET, ip->protocol, ip, data, datalen);
+
+            if(rv > -2)
+                ++ipv4_stats.pkt_recv;
     }
 
     /* There's no handler for this packet type, send an ICMP Destination

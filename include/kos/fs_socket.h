@@ -1,7 +1,7 @@
 /* KallistiOS ##version##
 
    kos/fs_socket.h
-   Copyright (C) 2006, 2009, 2010 Lawrence Sebald
+   Copyright (C) 2006, 2009, 2010, 2012 Lawrence Sebald
 
 */
 
@@ -13,15 +13,10 @@
     doesn't export any files there, so that point is largely irrelevant. The
     filesystem is designed to be extensible, making it possible to add
     additional socket family handlers at runtime. Currently, the kernel only
-    implements UDP sockets over IPv4, but as mentioned, this can be extended in
-    a fairly straightforward manner. In general, as a user of KallistiOS
-    (someone not interested in adding additional socket family drivers), there's
-    very little in this file that will be of interest.
-
-    Also, note, that currently there is no way to get input into a network
-    protocol added with this functionality only. At some point, I will add
-    protocol registration with net_ipv4 for that, however, I haven't had the
-    time to do so just yet.
+    implements UDP sockets over IPv4 and IPv6, but as mentioned, this can be
+    extended in a fairly straightforward manner. In general, as a user of
+    KallistiOS (someone not interested in adding additional socket family
+    drivers), there's very little in this file that will be of interest.
 
     \author Lawrence Sebald
 */
@@ -36,8 +31,10 @@ __BEGIN_DECLS
 #include <arch/types.h>
 #include <kos/limits.h>
 #include <kos/fs.h>
+#include <kos/net.h>
 #include <sys/queue.h>
 #include <sys/socket.h>
+#include <stdint.h>
 
 struct fs_socket_proto;
 
@@ -154,7 +151,7 @@ typedef struct fs_socket_proto {
         \retval 0           On success
         \see    fs_socket_setflags
     */
-    int (*setflags)(net_socket_t *s, int flags);
+    int (*setflags)(net_socket_t *s, uint32_t flags);
 
     /** \brief  Accept a connection on a socket created with the protocol.
 
@@ -265,6 +262,26 @@ typedef struct fs_socket_proto {
         \retval 0           On success
     */
     int (*shutdownsock)(net_socket_t *s, int how);
+
+    /** \brief  Input a packet into a protocol.
+
+        This function should read in the packet specified by the arguments and
+        sort out what exactly to do with it. This usually involves checking if
+        there is an open socket with the source address and adding it to a
+        packet queue if there is.
+
+        \param  src         The interface the packet was input on
+        \param  domain      The low-level protocol used (AF_INET or AF_INET6)
+        \param  hdr         The low-level protocol header
+        \param  data        The packet itself, including any protcol headers,
+                            but not any from lower-level protocols
+        \param  size        The size of the packet, not including any lower-
+                            level protocol headers
+        \retval -1          On error (the packet is discarded)
+        \retval 0           On success
+    */
+    int (*input)(netif_t *src, int domain, const void *hdr, const uint8 *data,
+                 int size);
 } fs_socket_proto_t;
 
 /** \brief  Initializer for the entry field in the fs_socket_proto_t struct. */
@@ -276,26 +293,61 @@ int fs_socket_init();
 int fs_socket_shutdown();
 /* \endcond */
 
+/** \defgroup sock_flags                Socket flags
+
+    These are the available flags to set with the fs_socket_setflags() function.
+
+    Every flag after FS_SOCKET_FAM_MAX is for internal-use only, and should
+    never be passed into any functions.
+    @{
+*/
+#define FS_SOCKET_NONBLOCK  0x00000001  /** \brief Non-blocking operations */
+#define FS_SOCKET_V6ONLY    0x00000002  /** \brief IPv6 Only */
+
+#define FS_SOCKET_GEN_MAX   0x00008000  /** \brief Maximum generic flag */
+#define FS_SOCKET_FAM_MAX   0x00800000  /** \brief Maximum family flag */
+/** @} */
+
+/** \brief  Input a packet into some socket family handler.
+
+    This function is used by the lower-level network protocol handlers to input
+    packets for further processing by upper-level protocols. This will call the
+    input function on the family handler, if one is found.
+
+    \param  src         The network interface the packet came in on
+    \param  domain      The low-level protocol used (AF_INET or AF_INET6)
+    \param  protocol    The upper-level protocol that we're looking for
+    \param  hdr         The low-level protocol header
+    \param  data        The upper-level packet, without any lower-level protocol
+                        headers, but with the upper-level ones intact
+    \param  size        The size of the packet (the data parameter)
+    \retval -2          The protocol is not known
+    \retval -1          Protocol-level error processing packet
+    \retval 0           On success
+*/
+int fs_socket_input(netif_t *src, int domain, int protocol, const void *hdr,
+                    const uint8 *data, int size);
+
 /** \brief  Set flags on a socket file descriptor.
 
     This function can be used to set various flags on a socket file descriptor,
     similar to what one would use fcntl or ioctl on a normal system for. The
-    flags available for use here are largely protocol dependent, and for UDP
-    the only flag available is O_NONBLOCK.
+    flags available for use here are largely protocol dependent.
 
     \param  sock        The socket to operate on (returned from a call to the
                         function socket())
     \param  flags       The flags to set on the socket.
     \retval -1          On error, and sets errno as appropriate
     \retval 0           On success
+    \see                sock_flags
 
     \par    Error Conditions:
     \em     EWOULDBLOCK - if the function would block while inappropriate to \n
     \em     EBADF - if passed an invalid file descriptor \n
     \em     ENOTSOCK - if passed a file descriptor other than a socket \n
-    \em     EINVAL - if an invalid flag was passed in
+    \em     EINVAL - if an invalid flag (or combination) was passed in
 */
-int fs_socket_setflags(int sock, int flags);
+int fs_socket_setflags(int sock, uint32_t flags);
 
 /** \brief  Add a new protocol for use with fs_socket.
 
