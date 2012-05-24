@@ -8,6 +8,7 @@
 #include <string.h>
 #include <netinet/in.h>
 #include <kos/net.h>
+#include <kos/fs_socket.h>
 #include <errno.h>
 
 #include "net_ipv6.h"
@@ -170,7 +171,7 @@ int net_ipv6_send(netif_t *net, const uint8 *data, int data_size, int hop_limit,
 int net_ipv6_input(netif_t *src, const uint8 *pkt, int pktsize) {
     ipv6_hdr_t *ip;
     uint8 next_hdr;
-    int pos, len;
+    int pos, len, rv;
 
     if(pktsize < sizeof(ipv6_hdr_t)) {
         /* This is obviously a bad packet, drop it */
@@ -198,10 +199,20 @@ int net_ipv6_input(netif_t *src, const uint8 *pkt, int pktsize) {
             return net_icmp6_input(src, ip, pkt + sizeof(ipv6_hdr_t), len);
 
         default:
-            /* We don't know what to do with this packet, so send an ICMPv6
-               message indicating that. */
-            return net_icmp6_send_param_prob(src, ICMP6_PARAM_PROB_UNK_HEADER,
-                                             6, pkt, pktsize);
+            rv = fs_socket_input(src, AF_INET6, next_hdr, pkt,
+                                 pkt + sizeof(ipv6_hdr_t), len);
+
+            if(rv == -2) {
+                /* We don't know what to do with this packet, so send an ICMPv6
+                   message indicating that. */
+                ++ipv6_stats.pkt_recv_bad_proto;
+                return net_icmp6_send_param_prob(src,
+                                                 ICMP6_PARAM_PROB_UNK_HEADER, 6,
+                                                 pkt, pktsize);
+            }
+
+            ++ipv6_stats.pkt_recv;
+            return rv;
     }
 
     return 0;

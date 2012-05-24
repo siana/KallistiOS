@@ -711,6 +711,97 @@ static int net_udp_input4(netif_t *src, const ip_hdr_t *ip, const uint8 *data,
     return -1;
 }
 
+static int net_udp_input6(netif_t *src, const ipv6_hdr_t *ip, const uint8 *data,
+                          int size) {
+    udp_hdr_t *hdr = (udp_hdr_t *)data;
+    uint16 cs;
+    struct udp_sock *sock;
+    struct udp_pkt *pkt;
+
+    if(!udp_mutex)
+        return -1;
+
+    if(size <= sizeof(udp_hdr_t)) {
+        /* Discard the packet, since it is too short to be of any interest. */
+        ++udp_stats.pkt_recv_bad_size;
+        return -1;
+    }
+
+    if(hdr->checksum != 0) {
+        cs = net_ipv6_checksum_pseudo(&ip->src_addr, &ip->dst_addr,
+                                      IPPROTO_UDP, size);
+
+        /* If the checksum is right, we'll get zero back from the checksum
+           function */
+        if(net_ipv4_checksum(data, size, cs)) {
+            /* The checksum was wrong, bail out */
+            ++udp_stats.pkt_recv_bad_chksum;
+            return -1;
+        }
+    }
+
+    if(mutex_trylock(udp_mutex))
+    /* Considering this function is usually called in an IRQ, if the
+       mutex is locked, there isn't much that can be done. */
+        return -1;
+
+    LIST_FOREACH(sock, &net_udp_sockets, sock_list) {
+        /* Don't even bother looking at IPv4 sockets */
+        if(sock->domain == AF_INET)
+            continue;
+
+        /* If the ports don't match, don't look any further */
+        if(sock->local_addr.sin6_port != hdr->dst_port)
+            continue;
+
+        /* If the socket has a remote port set and it isn't the one that this
+           packet came from, bail */
+        if(sock->remote_addr.sin6_port != 0 &&
+           sock->remote_addr.sin6_port != hdr->src_port)
+            continue;
+
+        /* If we have a address specified and it is not the address this packet
+           came from, bail out */
+        if(!IN6_IS_ADDR_UNSPECIFIED(&sock->remote_addr.sin6_addr) &&
+           memcmp(&sock->remote_addr.sin6_addr, &ip->src_addr,
+                  sizeof(struct in6_addr)))
+            continue;
+
+        if(!(pkt = (struct udp_pkt *)malloc(sizeof(struct udp_pkt)))) {
+            mutex_unlock(udp_mutex);
+            return -1;
+        }
+
+        memset(pkt, 0, sizeof(struct udp_pkt));
+
+        pkt->datasize = size - sizeof(udp_hdr_t);
+        if(!(pkt->data = (uint8 *)malloc(pkt->datasize))) {
+            free(pkt);
+            mutex_unlock(udp_mutex);
+            return -1;
+        }
+
+        pkt->from.sin6_family = AF_INET6;
+        pkt->from.sin6_addr = ip->src_addr;
+        pkt->from.sin6_port = hdr->src_port;
+
+        memcpy(pkt->data, data + sizeof(udp_hdr_t), pkt->datasize);
+
+        TAILQ_INSERT_TAIL(&sock->packets, pkt, pkt_queue);
+
+        ++udp_stats.pkt_recv;
+        genwait_wake_one(sock);
+        mutex_unlock(udp_mutex);
+
+        return 0;
+    }
+
+    ++udp_stats.pkt_recv_no_sock;
+    mutex_unlock(udp_mutex);
+
+    return -1;
+}
+
 static int net_udp_real_input(netif_t *src, int domain, const void *hdr,
                               const uint8 *data, int size) {
     if(!udp_mutex)
@@ -719,6 +810,9 @@ static int net_udp_real_input(netif_t *src, int domain, const void *hdr,
     switch(domain) {
         case AF_INET:
             return net_udp_input4(src, (const ip_hdr_t *)hdr, data, size);
+
+        case AF_INET6:
+            return net_udp_input6(src, (const ipv6_hdr_t *)hdr, data, size);
     }
 
     return -1;
