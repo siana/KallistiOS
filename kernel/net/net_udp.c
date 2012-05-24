@@ -802,8 +802,8 @@ static int net_udp_input6(netif_t *src, const ipv6_hdr_t *ip, const uint8 *data,
     return -1;
 }
 
-static int net_udp_real_input(netif_t *src, int domain, const void *hdr,
-                              const uint8 *data, int size) {
+static int net_udp_input(netif_t *src, int domain, const void *hdr,
+                         const uint8 *data, int size) {
     if(!udp_mutex)
         return -1;
 
@@ -912,7 +912,7 @@ static fs_socket_proto_t proto = {
     net_udp_recvfrom,
     net_udp_sendto,
     net_udp_shutdownsock,
-    net_udp_real_input
+    net_udp_input
 };
 
 int net_udp_init() {

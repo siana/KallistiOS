@@ -81,18 +81,25 @@ struct sockaddr_storage {
 /** \brief  Datagram socket type.
 
     This socket type specifies that the socket in question transmits datagrams
-    that may or may not be reliably transmitted. With IPv4, this implies using
-    UDP as the underlying protocol.
+    that may or may not be reliably transmitted. With IP, this implies using UDP
+    as the underlying protocol.
 */
 #define SOCK_DGRAM  1
+
+/** \brief  Stream socket type.
+
+    This socket type specifies that the socket in question acts like a stream
+    or pipe between the two endpoints. Sockets of this type can be assumed to be
+    reliable -- unless an error is returned, all packets will be received at the
+    other end in the order they are sent. With IP, this implies using TCP as the
+    underlying protocol.
+*/
+#define SOCK_STREAM 2
 
 /** \brief  Internet domain sockets for use with IPv4 addresses. */
 #define AF_INET     1
 
-/** \brief  Internet domain sockets for use with IPv6 addresses.
-
-    Note, these are NOT supported just yet.
-*/
+/** \brief  Internet domain sockets for use with IPv6 addresses. */
 #define AF_INET6    2
 
 /** \brief  Protocol family for Internet domain sockets (IPv4). */
