@@ -245,8 +245,10 @@ int net_ipv4_input_proto(netif_t *src, ip_hdr_t *ip, const uint8 *data) {
         default:
             rv = fs_socket_input(src, AF_INET, ip->protocol, ip, data, datalen);
 
-            if(rv > -2)
+            if(rv > -2) {
                 ++ipv4_stats.pkt_recv;
+                return rv;
+            }
     }
 
     /* There's no handler for this packet type, send an ICMP Destination
