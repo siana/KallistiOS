@@ -31,7 +31,7 @@ GCCVER="`kos-cc -v 2>&1 | tail -1 | awk '{print $3}'`"
 
 case $GCCVER in
   4*)
-    export KOS_LDFLAGS="${KOS_LDFLAGS} -T${KOS_BASE}/utils/ldscripts/shlelf.xc -nodefaultlibs ${KOS_LIB_PATHS}" ;;
+    export KOS_LDFLAGS="${KOS_LDFLAGS} ${KOS_LD_SCRIPT} -nodefaultlibs ${KOS_LIB_PATHS}" ;;
   *)
     export KOS_LDFLAGS="${KOS_LDFLAGS} -nostartfiles -nostdlib ${KOS_LIB_PATHS}" ;;
 esac

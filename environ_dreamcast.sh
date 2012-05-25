@@ -4,6 +4,8 @@
 export KOS_CFLAGS="${KOS_CFLAGS} -ml -m4-single-only -fno-crossjumping"
 export KOS_AFLAGS="${KOS_AFLAGS} -little"
 export KOS_LDFLAGS="${KOS_LDFLAGS} -ml -m4-single-only -Wl,-Ttext=0x8c010000"
+# Needed for GCC >= 4
+export KOS_LD_SCRIPT="-T${KOS_BASE}/utils/ldscripts/shlelf.xc"
 
 # If we're building for DC, we need the ARM compiler paths as well.
 if [ x${KOS_ARCH} = xdreamcast ]; then
