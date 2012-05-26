@@ -117,6 +117,9 @@ struct sockaddr_storage {
 /** \brief  Disable further send and receive operations. */
 #define SHUT_RDWR (SHUT_RD | SHUT_WR)
 
+/** \brief  Maximum backlog for a listening socket. */
+#define SOMAXCONN   32
+
 /** \brief  Accept a new connection on a socket.
 
     This function extracts the first connection on the queue of connections of

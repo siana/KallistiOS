@@ -293,6 +293,24 @@ int fs_socket_init();
 int fs_socket_shutdown();
 /* \endcond */
 
+/** \brief  Open a socket without calling the protocol initializer.
+
+    This function creates a new socket, but does not call the protocol's
+    socket() function. This is meant to be used for things like accepting an
+    incoming connection, where calling the regular socket initializer could
+    cause issues. You shouldn't really have any need to call this function
+    unless you are implementing a new protocol handler.
+
+    \param  proto       The protocol to use for the socket.
+    \return             The newly created socket on success, NULL on failure.
+
+    \par    Error Conditions:
+    \em     EWOULDBLOCK - if the function would block in an IRQ \n
+    \em     ENOMEM - out of memory \n
+    \em     EMFILE - too many files open
+*/
+net_socket_t *fs_socket_open_sock(fs_socket_proto_t *proto);
+
 /** \defgroup sock_flags                Socket flags
 
     These are the available flags to set with the fs_socket_setflags() function.

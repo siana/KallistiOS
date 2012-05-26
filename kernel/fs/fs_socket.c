@@ -170,14 +170,26 @@ int fs_socket_input(netif_t *src, int domain, int protocol, const void *hdr,
     fs_socket_proto_t *i;
     int rv = -2;
 
+    if(!initted)
+        return -1;
+
     /* Find the protocol handler and call its input function... */
-    rlock_lock(proto_rlock);
+    if(irq_inside_int()) {
+        if(rlock_trylock(proto_rlock)) {
+            return -1;
+        }
+    }
+    else {
+        rlock_lock(proto_rlock);
+    }
+
     TAILQ_FOREACH(i, &protocols, entry) {
         if(i->protocol == protocol) {
             rv = i->input(src, domain, hdr, data, size);
             break;
         }
     }
+
     rlock_unlock(proto_rlock);
 
     return rv;
@@ -202,7 +214,18 @@ int fs_socket_setflags(int sock, uint32_t flags) {
 }
 
 int fs_socket_proto_add(fs_socket_proto_t *proto) {
-    rlock_lock(proto_rlock);
+    if(!initted)
+        return -1;
+
+    if(irq_inside_int()) {
+        if(rlock_trylock(proto_rlock)) {
+            return -1;
+        }
+    }
+    else {
+        rlock_lock(proto_rlock);
+    }
+
     TAILQ_INSERT_TAIL(&protocols, proto, entry);
     rlock_unlock(proto_rlock);
 
@@ -213,8 +236,19 @@ int fs_socket_proto_remove(fs_socket_proto_t *proto) {
     fs_socket_proto_t *i;
     int rv = -1;
 
+    if(!initted)
+        return -1;
+
     /* Make sure its registered. */
-    rlock_lock(proto_rlock);
+    if(irq_inside_int()) {
+        if(rlock_trylock(proto_rlock)) {
+            return -1;
+        }
+    }
+    else {
+        rlock_lock(proto_rlock);
+    }
+
     TAILQ_FOREACH(i, &protocols, entry) {
         if(i == proto) {
             /* We've got it, remove it. */
@@ -223,6 +257,7 @@ int fs_socket_proto_remove(fs_socket_proto_t *proto) {
             break;
         }
     }
+
     rlock_unlock(proto_rlock);
 
     return rv;
@@ -238,7 +273,15 @@ int socket(int domain, int type, int protocol) {
         return -1;
     }
 
-    rlock_lock(proto_rlock);
+    if(irq_inside_int()) {
+        if(rlock_trylock(proto_rlock)) {
+            errno = EWOULDBLOCK;
+            return -1;
+        }
+    }
+    else {
+        rlock_lock(proto_rlock);
+    }
 
     /* Look for a matching protocol entry. */
     TAILQ_FOREACH(i, &protocols, entry) {
@@ -247,11 +290,10 @@ int socket(int domain, int type, int protocol) {
         }
     }
 
-    rlock_unlock(proto_rlock);
-
     /* If i is NULL, we got through the whole list without finding anything. */
     if(!i) {
         errno = EPROTONOSUPPORT;
+        rlock_unlock(proto_rlock);
         return -1;
     }
 
@@ -259,6 +301,7 @@ int socket(int domain, int type, int protocol) {
     sock = (net_socket_t *)malloc(sizeof(net_socket_t));
     if(!sock) {
         errno = ENOMEM;
+        rlock_unlock(proto_rlock);
         return -1;
     }
 
@@ -266,24 +309,75 @@ int socket(int domain, int type, int protocol) {
     sock->fd = fs_open_handle(&vh, sock);
     if(sock->fd < 0) {
         free(sock);
+        rlock_unlock(proto_rlock);
         return -1;
     }
 
     /* Initialize protocol-specific data */
     if(i->socket(sock, domain, type, protocol) == -1) {
         fs_close(sock->fd);
+        rlock_unlock(proto_rlock);
         return -1;
     }
 
     /* Finish initialization */
     sock->protocol = i;
+    rlock_unlock(proto_rlock);
 
     /* Add this socket into the list of sockets, and return */
-    rlock_lock(list_rlock);
+    if(irq_inside_int()) {
+        if(rlock_trylock(list_rlock)) {
+            free(sock);
+            errno = EWOULDBLOCK;
+            return -1;
+        }
+    }
+    else {
+        rlock_lock(list_rlock);
+    }
+
     LIST_INSERT_HEAD(&sockets, sock, sock_list);
     rlock_unlock(list_rlock);
 
     return sock->fd;
+}
+
+net_socket_t *fs_socket_open_sock(fs_socket_proto_t *proto) {
+    net_socket_t *sock;
+
+    /* Allocate the socket structure, if we have the space */
+    sock = (net_socket_t *)malloc(sizeof(net_socket_t));
+    if(!sock) {
+        errno = ENOMEM;
+        return NULL;
+    }
+
+    /* Attempt to get a handle for this socket */
+    sock->fd = fs_open_handle(&vh, sock);
+    if(sock->fd < 0) {
+        free(sock);
+        return NULL;
+    }
+
+    /* Initialize as much as we can */
+    sock->protocol = proto;
+
+    /* Add this socket into the list of sockets, and return */
+    if(irq_inside_int()) {
+        if(rlock_trylock(list_rlock)) {
+            free(sock);
+            errno = EWOULDBLOCK;
+            return NULL;
+        }
+    }
+    else {
+        rlock_lock(list_rlock);
+    }
+
+    LIST_INSERT_HEAD(&sockets, sock, sock_list);
+    rlock_unlock(list_rlock);
+
+    return sock;
 }
 
 int accept(int sock, struct sockaddr *address, socklen_t *address_len) {
