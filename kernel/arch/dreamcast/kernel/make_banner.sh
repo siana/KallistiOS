@@ -4,7 +4,14 @@
 
 echo 'char banner[] = ' > banner.c
 
-echo -n '"KallistiOS ##version##: ' >> banner.c
+echo -n '"KallistiOS ' >> banner.c
+if [ -d ".svn" ]; then
+    echo -n 'SVN r' >> banner.c
+    echo -n `svnversion` >> banner.c
+    echo -n ': ' >> banner.c
+else
+    echo -n '##version##: ' >> banner.c
+fi
 echo -n `date` >> banner.c
 echo '\n"' >> banner.c
 
