@@ -196,6 +196,11 @@ void net_shutdown() {
     if(!net_initted)
         return;
 
+    /* Stop the network thread, since otherwise we might have problems down the
+       road here... This simplifies things greatly in shutting everything else
+       down in here. */
+    net_thd_kill();
+
     /* Shut down DHCP */
     net_dhcp_shutdown();
 

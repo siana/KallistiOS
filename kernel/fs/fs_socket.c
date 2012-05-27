@@ -32,7 +32,16 @@ static recursive_lock_t *list_rlock = NULL;
 static void fs_socket_close(void *hnd) {
     net_socket_t *sock = (net_socket_t *)hnd;
 
-    rlock_lock(list_rlock);
+    if(irq_inside_int()) {
+        if(rlock_trylock(list_rlock)) {
+            errno = EWOULDBLOCK;
+            return;
+        }
+    }
+    else {
+        rlock_lock(list_rlock);
+    }
+
     LIST_REMOVE(sock, sock_list);
     rlock_unlock(list_rlock);
 
@@ -128,24 +137,18 @@ int fs_socket_shutdown() {
     if(initted == 0)
         return 0;
 
-    rlock_lock(list_rlock);
     c = LIST_FIRST(&sockets);
     while(c != NULL) {
         n = LIST_NEXT(c, sock_list);
-
         fs_close(c->fd);
-
-        free(c);
         c = n;
     }
 
     if(nmmgr_handler_remove(&vh.nmmgr) < 0)
         return -1;
 
-    rlock_unlock(list_rlock);
     rlock_destroy(list_rlock);
 
-    rlock_lock(proto_rlock);
     i = TAILQ_FIRST(&protocols);
     while(i != NULL) {
         j = TAILQ_NEXT(i, entry);
@@ -153,7 +156,6 @@ int fs_socket_shutdown() {
         i = j;
     }
 
-    rlock_unlock(proto_rlock);
     rlock_destroy(proto_rlock);
 
     list_rlock = NULL;

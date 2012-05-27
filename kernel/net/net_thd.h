@@ -1,7 +1,7 @@
 /* KallistiOS ##version##
 
    kernel/net/net_thd.h
-   Copyright (C) 2009 Lawrence Sebald
+   Copyright (C) 2009, 2012 Lawrence Sebald
 
 */
 
@@ -18,6 +18,8 @@ int net_thd_add_callback(void (*cb)(void *), void *data, uint64 timeout);
 int net_thd_del_callback(int cbid);
 
 int net_thd_is_current();
+
+void net_thd_kill();
 
 int net_thd_init();
 void net_thd_shutdown();

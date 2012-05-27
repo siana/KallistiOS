@@ -652,27 +652,14 @@ int net_dhcp_init() {
 }
 
 void net_dhcp_shutdown() {
-    int old;
-
-    /* Remove the callback first, otherwise it'll probably end up grabbing the
-       lock, which we don't want it to do! */
-    if(dhcp_cbid != -1) {
+    if(dhcp_cbid != -1)
         net_thd_del_callback(dhcp_cbid);
-    }
 
-    /* This song and dance is to make sure nobody else is holding the lock,
-       otherwise, we can't destroy it! Granted, nobody should be able to be
-       holding the lock if we've deleted the dhcp callback already... */
+    if(dhcp_sock != -1)
+        close(dhcp_sock);
+
     if(dhcp_lock) {
-        rlock_lock(dhcp_lock);
-        old = irq_disable();
-        rlock_unlock(dhcp_lock);
         rlock_destroy(dhcp_lock);
         dhcp_lock = NULL;
-        irq_restore(old);
-    }
-
-    if(dhcp_sock != -1) {
-        close(dhcp_sock);
     }
 }

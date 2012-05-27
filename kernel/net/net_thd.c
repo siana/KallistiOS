@@ -1,7 +1,7 @@
 /* KallistiOS ##version##
 
    kernel/net/net_thd.c
-   Copyright (C) 2009 Lawrence Sebald
+   Copyright (C) 2009, 2012 Lawrence Sebald
 
 */
 
@@ -104,6 +104,20 @@ int net_thd_is_current() {
     return thd_current == thd;
 }
 
+void net_thd_kill() {
+    /* Do things gracefully, if we can... Otherwise, punt. */
+    done = 1;
+
+    if(!irq_inside_int()) {
+        thd_join(thd, NULL);
+    }
+    else {
+        thd_destroy(thd);
+    }
+
+    thd = NULL;
+}
+
 int net_thd_init() {
     TAILQ_INIT(&cbs);
     done = 0;
@@ -118,8 +132,9 @@ void net_thd_shutdown() {
     struct thd_cb *c, *n;
 
     /* Kill the thread. */
-    done = 1;
-    thd_join(thd, NULL);
+    if(thd) {
+        net_thd_kill();
+    }
 
     /* Free any handlers that we have laying around */
     c = TAILQ_FIRST(&cbs);

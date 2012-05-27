@@ -307,7 +307,8 @@ void net_ipv4_frag_shutdown() {
     struct ip_frag *c, *n;
 
     if(frag_mutex) {
-        mutex_lock(frag_mutex);
+        if(cbid != -1)
+            net_thd_del_callback(cbid);
 
         c = TAILQ_FIRST(&frags);
         while(c) {
@@ -317,11 +318,6 @@ void net_ipv4_frag_shutdown() {
             c = n;
         }
 
-        if(cbid != -1) {
-            net_thd_del_callback(cbid);
-        }
-
-        mutex_unlock(frag_mutex);
         mutex_destroy(frag_mutex);
     }
 

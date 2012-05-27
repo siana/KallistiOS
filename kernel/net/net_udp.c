@@ -142,8 +142,8 @@ static int net_udp_bind(net_socket_t *hnd, const struct sockaddr *addr,
 
     /* See if we requested a specific port or not */
     if(realaddr6.sin6_port != 0) {
-        /* Make sure we don't already have a socket bound to the
-           port specified */
+        /* Make sure we don't already have a socket bound to the port
+           specified */
         LIST_FOREACH(iter, &net_udp_sockets, sock_list) {
             if(iter == udpsock)
                 continue;
