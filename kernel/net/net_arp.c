@@ -339,6 +339,10 @@ void net_arp_shutdown() {
     a1 = LIST_FIRST(&net_arp_cache);
     while (a1 != NULL) {
         a2 = LIST_NEXT(a1, ac_list);
+        if(a1->pkt) {
+            free(a1->pkt);
+            free(a1->data);
+        }
         free(a1);
         a1 = a2;
     }
