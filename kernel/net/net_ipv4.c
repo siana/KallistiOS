@@ -113,7 +113,7 @@ int net_ipv4_send_packet(netif_t *net, ip_hdr_t *hdr, const uint8 *data,
         ++ipv4_stats.pkt_sent;
 
         /* Send it "away" */
-        net_ipv4_input(NULL, pkt, 4 * (hdr->version_ihl & 0x0f) + size);
+        net_ipv4_input(NULL, pkt, 4 * (hdr->version_ihl & 0x0f) + size, NULL);
 
         return 0;
     }
@@ -193,11 +193,13 @@ int net_ipv4_send(netif_t *net, const uint8 *data, int size, int id, int ttl,
     return net_ipv4_frag_send(net, &hdr, data, size);
 }
 
-int net_ipv4_input(netif_t *src, const uint8 *pkt, int pktsize) {
+int net_ipv4_input(netif_t *src, const uint8 *pkt, int pktsize,
+                   const eth_hdr_t *eth) {
     ip_hdr_t *ip;
     int i;
     uint8 *data;
     int hdrlen;
+    uint8 ipa[4];
 
     if(pktsize < sizeof(ip_hdr_t)) {
         /* This is obviously a bad packet, drop it */
@@ -226,6 +228,12 @@ int net_ipv4_input(netif_t *src, const uint8 *pkt, int pktsize) {
     }
 
     data = (uint8 *)(pkt + hdrlen);
+
+    /* Add the sender to the ARP cache, if they're not already there. */
+    if(eth) {
+        net_ipv4_parse_address(ntohl(ip->src), ipa);
+        net_arp_insert(src, eth->src, ipa, jiffies);
+    }
 
     /* Submit the packet for possible reassembly. */
     return net_ipv4_reassemble(src, ip, data, ntohs(ip->length) - hdrlen);

@@ -1,7 +1,7 @@
 /* KallistiOS ##version##
 
    kernel/net/net_ipv6.h
-   Copyright (C) 2010 Lawrence Sebald
+   Copyright (C) 2010, 2012 Lawrence Sebald
 
 */
 
@@ -9,6 +9,8 @@
 #define __LOCAL_NET_IPV6_H
 
 #include <kos/net.h>
+
+#include "net_ipv4.h"
 
 #ifdef PACKED
 #undef PACKED
@@ -46,7 +48,8 @@ int net_ipv6_send_packet(netif_t *net, ipv6_hdr_t *hdr, const uint8 *data,
 int net_ipv6_send(netif_t *net, const uint8 *data, int data_size, int hop_limit,
                   int proto, const struct in6_addr *src,
                   const struct in6_addr *dst);
-int net_ipv6_input(netif_t *src, const uint8 *pkt, int pktsize);
+int net_ipv6_input(netif_t *src, const uint8 *pkt, int pktsize,
+                   const eth_hdr_t *eth);
 uint16 net_ipv6_checksum_pseudo(const struct in6_addr *src,
                                 const struct in6_addr *dst,
                                 uint32 upper_len, uint8 next_hdr);

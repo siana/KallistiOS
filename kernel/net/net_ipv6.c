@@ -1,7 +1,7 @@
 /* KallistiOS ##version##
 
    kernel/net/net_ipv6.c
-   Copyright (C) 2010 Lawrence Sebald
+   Copyright (C) 2010, 2012 Lawrence Sebald
 
 */
 
@@ -71,7 +71,7 @@ int net_ipv6_send_packet(netif_t *net, ipv6_hdr_t *hdr, const uint8 *data,
         ++ipv6_stats.pkt_sent;
 
         /* Send the packet "away" */
-        net_ipv6_input(NULL, pkt, sizeof(ipv6_hdr_t) + data_size);
+        net_ipv6_input(NULL, pkt, sizeof(ipv6_hdr_t) + data_size, NULL);
         return 0;
     }
     else if(IN6_IS_ADDR_MULTICAST(&hdr->dst_addr)) {
@@ -168,7 +168,8 @@ int net_ipv6_send(netif_t *net, const uint8 *data, int data_size, int hop_limit,
     return net_ipv6_send_packet(net, &hdr, data, data_size);
 }
 
-int net_ipv6_input(netif_t *src, const uint8 *pkt, int pktsize) {
+int net_ipv6_input(netif_t *src, const uint8 *pkt, int pktsize,
+                   const eth_hdr_t *eth) {
     ipv6_hdr_t *ip;
     uint8 next_hdr;
     int pos, len, rv;
@@ -192,6 +193,9 @@ int net_ipv6_input(netif_t *src, const uint8 *pkt, int pktsize) {
     /* Parse the header to find the payload */
     pos = sizeof(ipv6_hdr_t);
     next_hdr = ip->next_header;
+
+    if(eth)
+        net_ndp_insert(src, eth->src, &ip->src_addr, 1);
 
     /* XXXX: Parse options and deal with fragmentation */
     switch(next_hdr) {

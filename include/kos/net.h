@@ -266,7 +266,8 @@ int net_arp_gc();
                             entry, otherwise set to jiffies.
     \retval 0               On success (no error conditions defined).
 */
-int net_arp_insert(netif_t *nif, uint8 mac[6], uint8 ip[4], uint32 timestamp);
+int net_arp_insert(netif_t *nif, const uint8 mac[6], const uint8 ip[4],
+                   uint32 timestamp);
 
 /** \brief  Look up an entry from the ARP cache.
 
@@ -285,7 +286,7 @@ int net_arp_insert(netif_t *nif, uint8 mac[6], uint8 ip[4], uint32 timestamp);
     \retval -1              A query is outstanding for that address.
     \retval -2              Address not found, query generated.
 */
-int net_arp_lookup(netif_t *nif, uint8 ip_in[4], uint8 mac_out[6],
+int net_arp_lookup(netif_t *nif, const uint8 ip_in[4], uint8 mac_out[6],
                    const ip_hdr_t *pkt, const uint8 *data, int data_size);
 
 /** \brief  Do a reverse ARP lookup.
@@ -299,7 +300,7 @@ int net_arp_lookup(netif_t *nif, uint8 ip_in[4], uint8 mac_out[6],
     \retval 0               On success.
     \retval -1              On failure.
 */
-int net_arp_revlookup(netif_t *nif, uint8 ip_out[4], uint8 mac_in[6]);
+int net_arp_revlookup(netif_t *nif, uint8 ip_out[4], const uint8 mac_in[6]);
 
 /** \brief  Receive an ARP packet and process it (called by net_input).
     \param  nif             The network device in use.
@@ -314,7 +315,7 @@ int net_arp_input(netif_t *nif, const uint8 *pkt, int len);
     \param  ip              The IP to query.
     \retval 0               On success (no error conditions defined).
 */
-int net_arp_query(netif_t *nif, uint8 ip[4]);
+int net_arp_query(netif_t *nif, const uint8 ip[4]);
 
 
 /***** net_input.c *********************************************************/

@@ -2,7 +2,7 @@
 
    kernel/net/net_input.c
    Copyright (C) 2002 Dan Potter
-   Copyright (C) 2005 Lawrence Sebald
+   Copyright (C) 2005, 2012 Lawrence Sebald
 */
 
 #include <stdio.h>
@@ -31,14 +31,16 @@ static int net_default_input(netif_t *nif, const uint8 *data, int len) {
     switch(proto) {
         case 0x0800:
             return net_ipv4_input(nif, data + sizeof(eth_hdr_t),
-                                  len - sizeof(eth_hdr_t));
+                                  len - sizeof(eth_hdr_t),
+                                  (const eth_hdr_t *)data);
 
         case 0x0806:
             return net_arp_input(nif, data, len);
 
         case 0x86DD:
             return net_ipv6_input(nif, data + sizeof(eth_hdr_t),
-                                  len - sizeof(eth_hdr_t));
+                                  len - sizeof(eth_hdr_t),
+                                  (const eth_hdr_t *)data);
 
         default:
             return 0;

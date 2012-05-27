@@ -1,7 +1,7 @@
 /* KallistiOS ##version##
 
    kernel/net/net_ipv4.h
-   Copyright (C) 2005, 2007, 2008 Lawrence Sebald
+   Copyright (C) 2005, 2007, 2008, 2012 Lawrence Sebald
 
 */
 
@@ -32,7 +32,8 @@ int net_ipv4_send_packet(netif_t *net, ip_hdr_t *hdr, const uint8 *data,
                          int size);
 int net_ipv4_send(netif_t *net, const uint8 *data, int size, int id, int ttl,
                   int proto, uint32 src, uint32 dst);
-int net_ipv4_input(netif_t *src, const uint8 *pkt, int pktsize);
+int net_ipv4_input(netif_t *src, const uint8 *pkt, int pktsize,
+                   const eth_hdr_t *eth);
 int net_ipv4_input_proto(netif_t *net, ip_hdr_t *ip, const uint8 *data);
 
 uint16 net_ipv4_checksum_pseudo(in_addr_t src, in_addr_t dst, uint8 proto,

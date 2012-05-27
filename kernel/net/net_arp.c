@@ -3,7 +3,7 @@
    kernel/net/net_arp.c
 
    Copyright (C) 2002 Dan Potter
-   Copyright (C) 2005, 2010 Lawrence Sebald
+   Copyright (C) 2005, 2010, 2012 Lawrence Sebald
 */
 
 #include <string.h>
@@ -98,7 +98,8 @@ int net_arp_gc() {
 }
 
 /* Add an entry to the ARP cache manually */
-int net_arp_insert(netif_t *nif, uint8 mac[6], uint8 ip[4], uint32 timestamp) {
+int net_arp_insert(netif_t *nif, const uint8 mac[6], const uint8 ip[4],
+                   uint32 timestamp) {
     netarp_t *cur;
 
     /* First make sure the entry isn't already there */
@@ -142,7 +143,7 @@ int net_arp_insert(netif_t *nif, uint8 mac[6], uint8 ip[4], uint32 timestamp) {
    query will be sent and an error will be returned. Thus your packet send
    should also fail. Later when the transmit retries, hopefully the answer
    will have arrived. */
-int net_arp_lookup(netif_t *nif, uint8 ip_in[4], uint8 mac_out[6],
+int net_arp_lookup(netif_t *nif, const uint8 ip_in[4], uint8 mac_out[6],
                    const ip_hdr_t *pkt, const uint8 *data, int data_size) {
     netarp_t *cur;
 
@@ -202,7 +203,7 @@ int net_arp_lookup(netif_t *nif, uint8 ip_in[4], uint8 mac_out[6],
 
 /* Do a reverse ARP lookup: look for an IP for a given mac address; note
    that if this fails, you have no recourse. */
-int net_arp_revlookup(netif_t *nif, uint8 ip_out[4], uint8 mac_in[6]) {
+int net_arp_revlookup(netif_t *nif, uint8 ip_out[4], const uint8 mac_in[6]) {
     netarp_t *cur;
 
     /* Look for the entry */
@@ -276,7 +277,7 @@ int net_arp_input(netif_t *nif, const uint8 *pkt_in, int len) {
 }
 
 /* Generate an ARP who-has query on the given device */
-int net_arp_query(netif_t *nif, uint8 ip[4]) {
+int net_arp_query(netif_t *nif, const uint8 ip[4]) {
     arp_pkt_t pkt_out;
     eth_hdr_t eth_hdr;
     uint8 buf[sizeof(arp_pkt_t) + sizeof(eth_hdr_t)];
