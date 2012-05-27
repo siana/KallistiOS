@@ -35,7 +35,12 @@ recursive_lock_t *rlock_create() {
 /* Destroy a recursive lock */
 void rlock_destroy(recursive_lock_t *l) {
     assert(l);
-    assert(!l->count);
+
+    /* XXX Do something with queued threads */
+    if(l->count) {
+        dbglog(DBG_WARNING, "Destroying a recursive lock that is currently "
+               "being held by a thread!\n");
+    }
 
     free(l);
 }
