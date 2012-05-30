@@ -59,6 +59,7 @@ int net_ipv6_send_packet(netif_t *net, ipv6_hdr_t *hdr, const uint8 *data,
         net = net_default_dev;
 
         if(!net) {
+            errno = ENETDOWN;
             return -1;
         }
     }
@@ -94,8 +95,7 @@ int net_ipv6_send_packet(netif_t *net, ipv6_hdr_t *hdr, const uint8 *data,
             return err;
         }
         else if(err == -2) {
-            ++ipv6_stats.pkt_send_failed;
-            return err;
+            return 0;
         }
     }
 
@@ -128,6 +128,7 @@ int net_ipv6_send(netif_t *net, const uint8 *data, int data_size, int hop_limit,
         net = net_default_dev;
 
         if(!net) {
+            errno = ENETDOWN;
             return -1;
         }
     }

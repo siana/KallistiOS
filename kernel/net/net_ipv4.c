@@ -100,6 +100,11 @@ int net_ipv4_send_packet(netif_t *net, ip_hdr_t *hdr, const uint8 *data,
 
     if(net == NULL) {
         net = net_default_dev;
+
+        if(!net) {
+            errno = ENETDOWN;
+            return -1;
+        }
     }
 
     net_ipv4_parse_address(ntohl(hdr->dest), dest_ip);

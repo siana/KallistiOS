@@ -181,7 +181,7 @@ int net_ndp_lookup(netif_t *net, const struct in6_addr *ip, uint8 mac_out[6],
 
     /* Its not there, add an incomplete entry and solicit the info */
     if(!(i = (ndp_entry_t *)malloc(sizeof(ndp_entry_t)))) {
-        return -3;
+        return -1;
     }
 
     memset(i, 0, sizeof(ndp_entry_t));
