@@ -732,7 +732,7 @@ static int net_udp_input6(netif_t *src, const ipv6_hdr_t *ip, const uint8 *data,
 
     if(hdr->checksum != 0) {
         cs = net_ipv6_checksum_pseudo(&ip->src_addr, &ip->dst_addr,
-                                      IPPROTO_UDP, size);
+                                      size, IPPROTO_UDP);
 
         /* If the checksum is right, we'll get zero back from the checksum
            function */
@@ -874,7 +874,7 @@ static int net_udp_send_raw(netif_t *net, const struct sockaddr_in6 *src,
 
     memcpy(buf + sizeof(udp_hdr_t), data, size);
     size += sizeof(udp_hdr_t);
-    cs = net_ipv6_checksum_pseudo(&srcaddr, &dst->sin6_addr, IPPROTO_UDP, size);
+    cs = net_ipv6_checksum_pseudo(&srcaddr, &dst->sin6_addr, size, IPPROTO_UDP);
 
     hdr->src_port = src->sin6_port;
     hdr->dst_port = dst->sin6_port;
