@@ -25,41 +25,40 @@ static net_ipv4_stats_t ipv4_stats = { 0 };
 /* Perform an IP-style checksum on a block of data */
 uint16 net_ipv4_checksum(const uint8 *data, int bytes, uint16 start) {
     uint32 sum = start;
-    int i;
+    int i = bytes;
 
     /* Make sure we don't do any unaligned memory accesses */
     if(((uint32)data) & 0x01) {
-        for(i = 0; i < bytes; i += 2) {
-            sum += (data[i]) | (data[i + 1] << 8);
+        const uint8 *ptr = data;
 
-            if(sum & 0xFFFF0000) {
-                sum &= 0xFFFF;
-                ++sum;
-            }
+        while(i > 1) {
+            sum += *ptr | ((*ptr + 1) << 8);
+            ptr += 2;
+            i -= 2;
+
+            while(sum >> 16)
+                sum = (sum >> 16) + (sum & 0xFFFF);
         }
     }
     else {
-        uint16 *ptr = (uint16 *)data;
+        const uint16 *ptr = (const uint16 *)data;
 
-        for(i = 0; i < (bytes >> 1); ++i) {
-            sum += ptr[i];
+        while(i > 1) {
+            sum += *ptr++;
+            i -= 2;
 
-            if(sum & 0xFFFF0000) {
-                sum &= 0xFFFF;
-                ++sum;
-            }
+            while(sum >> 16)
+                sum = (sum >> 16) + (sum & 0xFFFF);
         }
     }
 
     /* Handle the last byte, if we have an odd byte count */
-    if(bytes & 0x01) {
+    if(i)
         sum += data[bytes - 1];
 
-        if(sum & 0xFFFF0000) {
-            sum &= 0xFFFF;
-            ++sum;
-        }
-    }
+    /* Take care of any carry bits */
+    while(sum >> 16)
+        sum = (sum >> 16) + (sum & 0xFFFF);
 
     return sum ^ 0xFFFF;
 }
