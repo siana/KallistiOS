@@ -227,9 +227,7 @@ void thd_exit(void *rv) {
     thd_current->rv = rv;
 
     /* Call newlib's thread cleanup function */
-    if(thd_current->thd_reent.__cleanup) {
-        thd_current->thd_reent.__cleanup(_impure_ptr);
-    }
+    _reclaim_reent(&thd_current->thd_reent);
 
     if(thd_current->flags & THD_DETACHED) {
         /* Call Dr. Kevorkian; after this executes we could be killed
@@ -840,7 +838,7 @@ int thd_init(int mode) {
     thd_reap_sem = sem_create(0);
     reaper = thd_create(0, thd_reaper, NULL);
     strcpy(reaper->label, "[reaper]");
-    thd_set_prio(reaper, PRIO_MAX - 1);
+    thd_set_prio(reaper, 1);
 
     /* Main thread -- the kern thread */
     thd_current = kern;
