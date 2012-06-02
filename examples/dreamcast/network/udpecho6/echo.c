@@ -69,6 +69,10 @@ int main(int argc, char *argv[]) {
     inet_ntop(AF_INET6, &net_default_dev->ip6_lladdr, str1, INET6_ADDRSTRLEN);
     printf("Link-local address: %s\n", str1);
 
+    printf("IPv4 address: %d.%d.%d.%d\n", net_default_dev->ip_addr[0],
+           net_default_dev->ip_addr[1], net_default_dev->ip_addr[2],
+           net_default_dev->ip_addr[3]);
+
     sock = socket(PF_INET6, SOCK_DGRAM, IPPROTO_UDP);
     if(sock < 0) {
         perror("socket");
