@@ -652,11 +652,15 @@ int net_dhcp_init() {
 }
 
 void net_dhcp_shutdown() {
-    if(dhcp_cbid != -1)
+    if(dhcp_cbid != -1) {
         net_thd_del_callback(dhcp_cbid);
+        dhcp_cbid = -1;
+    }
 
-    if(dhcp_sock != -1)
+    if(dhcp_sock != -1) {
         close(dhcp_sock);
+        dhcp_sock = -1;
+    }
 
     if(dhcp_lock) {
         rlock_destroy(dhcp_lock);
