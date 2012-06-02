@@ -38,7 +38,7 @@ __BEGIN_DECLS
 #define HZ              100
 
 /** \brief  Default thread stack size. */
-#define THD_STACK_SIZE  8192
+#define THD_STACK_SIZE  32768
 
 /** \brief  Default video mode. */
 #define DEFAULT_VID_MODE    DM_640x480
