@@ -311,7 +311,7 @@ int thd_remove_from_runnable(kthread_t *thd) {
 kthread_t *thd_create(int detach, void *(*routine)(void *param), void *param) {
     kthread_t *nt = NULL;
     tid_t tid;
-    uint32 params[2];
+    uint32 params[4];
     int oldirq = 0;
 
     oldirq = irq_disable();
@@ -327,11 +327,19 @@ kthread_t *thd_create(int detach, void *(*routine)(void *param), void *param) {
 
             /* Create a new thread stack */
             nt->stack = (uint32*)malloc(THD_STACK_SIZE);
+            if(!nt->stack) {
+                free(nt);
+                irq_restore(oldirq);
+                return NULL;
+            }
+
             nt->stack_size = THD_STACK_SIZE;
 
             /* Populate the context */
             params[0] = (uint32)routine;
             params[1] = (uint32)param;
+            params[2] = 0;
+            params[3] = 0;
             irq_create_context(&nt->context,
                                ((uint32)nt->stack)+nt->stack_size,
                                (uint32)thd_birth, params, 0);
