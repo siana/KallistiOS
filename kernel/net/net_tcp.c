@@ -141,6 +141,9 @@ struct tcp_sock {
     file_t sock;
     int state;
     mutex_t *mutex;
+    int hop_limit;
+    uint32_t rcvbuf_sz;
+    uint32_t sndbuf_sz;
 
     union {
         struct {
@@ -156,12 +159,10 @@ struct tcp_sock {
             struct sndrec snd;
             struct rcvrec rcv;
             uint8_t *rcvbuf;
-            uint32_t rcvbuf_sz;
             uint32_t rcvbuf_cur_sz;
             uint32_t rcvbuf_head;
             uint32_t rcvbuf_tail;
             uint8_t *sndbuf;
-            uint32_t sndbuf_sz;
             uint32_t sndbuf_cur_sz;
             uint32_t sndbuf_head;
             uint32_t sndbuf_acked;
@@ -192,6 +193,9 @@ static int thd_cb_id = 0;
 
 /* Default retransmission timeout (in milliseconds). */
 #define TCP_DEFAULT_RTTO    2000
+
+/* Default hop limit (or ttl for IPv4) for new sockets */
+#define TCP_DEFAULT_HOPS    64
 
 /* Flags that can be set in the off_flags field of the above struct */
 #define TCP_FLAG_FIN    0x01
@@ -266,6 +270,9 @@ static int net_tcp_socket(net_socket_t *hnd, int domain, int type, int proto) {
 
     sock->domain = domain;
     sock->sock = hnd->fd;
+    sock->hop_limit = TCP_DEFAULT_HOPS;
+    sock->rcvbuf_sz = TCP_DEFAULT_WINDOW;
+    sock->sndbuf_sz = TCP_DEFAULT_WINDOW;
 
     if(irq_inside_int()) {
         if(rwsem_write_trylock(tcp_sem)) {
@@ -434,49 +441,6 @@ ret_no_remove:
     return;
 }
 
-static int net_tcp_setflags(net_socket_t *hnd, uint32_t flags) {
-    struct tcp_sock *sock;
-
-    if(irq_inside_int()) {
-        if(rwsem_read_trylock(tcp_sem)) {
-            errno = EWOULDBLOCK;
-            return -1;
-        }
-    }
-    else {
-        rwsem_read_lock(tcp_sem);
-    }
-
-    if(!(sock = (struct tcp_sock *)hnd->data)) {
-        rwsem_read_unlock(tcp_sem);
-        errno = EBADF;
-        return -1;
-    }
-
-    if(irq_inside_int()) {
-        if(mutex_trylock(sock->mutex)) {
-            errno = EWOULDBLOCK;
-            return -1;
-        }
-    }
-    else {
-        mutex_lock(sock->mutex);
-    }
-
-    if(flags & (~FS_SOCKET_NONBLOCK)) {
-        mutex_unlock(sock->mutex);
-        rwsem_read_unlock(tcp_sem);
-        errno = EINVAL;
-        return -1;
-    }
-
-    sock->flags |= flags;
-    mutex_unlock(sock->mutex);
-    rwsem_read_unlock(tcp_sem);
-
-    return 0;
-}
-
 static int net_tcp_accept(net_socket_t *hnd, struct sockaddr *addr,
                           socklen_t *addr_len) {
     struct tcp_sock *sock, *sock2;
@@ -589,7 +553,7 @@ static int net_tcp_accept(net_socket_t *hnd, struct sockaddr *addr,
         return -1;
     }
 
-    if(!(sock2->data.rcvbuf = (uint8_t *)malloc(TCP_DEFAULT_WINDOW))) {
+    if(!(sock2->data.rcvbuf = (uint8_t *)malloc(sock->rcvbuf_sz))) {
         errno = ENOMEM;
         mutex_unlock(sock->mutex);
         mutex_destroy(sock2->mutex);
@@ -597,7 +561,7 @@ static int net_tcp_accept(net_socket_t *hnd, struct sockaddr *addr,
         return -1;
     }
 
-    if(!(sock2->data.sndbuf = (uint8_t *)malloc(TCP_DEFAULT_WINDOW))) {
+    if(!(sock2->data.sndbuf = (uint8_t *)malloc(sock->sndbuf_sz))) {
         errno = ENOMEM;
         mutex_unlock(sock->mutex);
         free(sock2->data.rcvbuf);
@@ -645,6 +609,10 @@ static int net_tcp_accept(net_socket_t *hnd, struct sockaddr *addr,
     sock2->state = TCP_STATE_SYN_RECEIVED;
     sock2->local_addr = lsock.local_addr;
     sock2->remote_addr = lsock.remote_addr;
+    sock2->hop_limit = sock->hop_limit;
+    sock2->rcvbuf_sz = sock->rcvbuf_sz;
+    sock2->sndbuf_sz = sock->sndbuf_sz;
+    sock2->data.rcv.wnd = sock->rcvbuf_sz;
 
     /* Fill in the address, if they asked for it. */
     if(addr != NULL) {
@@ -745,9 +713,6 @@ static int net_tcp_accept(net_socket_t *hnd, struct sockaddr *addr,
     sock2->data.snd.mss = lsock.mss;
     sock2->data.rcv.nxt = lsock.isn + 1;
     sock2->data.rcv.irs = lsock.isn;
-    sock2->data.rcv.wnd = TCP_DEFAULT_WINDOW;
-    sock2->data.rcvbuf_sz = TCP_DEFAULT_WINDOW;
-    sock2->data.sndbuf_sz = TCP_DEFAULT_WINDOW;
 
     /* Since nothing else has a pointer to this socket, this will not fail. */
     mutex_trylock(sock2->mutex);
@@ -1107,14 +1072,14 @@ static int net_tcp_connect(net_socket_t *hnd, const struct sockaddr *addr,
        includes setting up all the data we need for that). */
     sock->remote_addr = realaddr6;
 
-    if(!(sock->data.rcvbuf = (uint8_t *)malloc(TCP_DEFAULT_WINDOW))) {
+    if(!(sock->data.rcvbuf = (uint8_t *)malloc(sock->rcvbuf_sz))) {
         errno = ENOBUFS;
         mutex_unlock(sock->mutex);
         rwsem_write_unlock(tcp_sem);
         return -1;
     }
 
-    if(!(sock->data.sndbuf = (uint8_t *)malloc(TCP_DEFAULT_WINDOW))) {
+    if(!(sock->data.sndbuf = (uint8_t *)malloc(sock->sndbuf_sz))) {
         errno = ENOBUFS;
         mutex_unlock(sock->mutex);
         rwsem_write_unlock(tcp_sem);
@@ -1141,9 +1106,7 @@ static int net_tcp_connect(net_socket_t *hnd, const struct sockaddr *addr,
         return -1;
     }
 
-    sock->data.rcv.wnd = TCP_DEFAULT_WINDOW;
-    sock->data.rcvbuf_sz = TCP_DEFAULT_WINDOW;
-    sock->data.sndbuf_sz = TCP_DEFAULT_WINDOW;
+    sock->data.rcv.wnd = sock->rcvbuf_sz;
     sock->data.rcvbuf_head = sock->data.rcvbuf_tail = 0;
     sock->data.net = net_default_dev;
     sock->data.snd.iss = timer_us_gettime64() >> 2;
@@ -1372,15 +1335,15 @@ static ssize_t net_tcp_recvfrom(net_socket_t *hnd, void *buffer, size_t length,
     sock->data.rcv.wnd += size;
     sock->data.rcvbuf_cur_sz -= size;
 
-    if(sock->data.rcvbuf_head + size <= sock->data.rcvbuf_sz) {
+    if(sock->data.rcvbuf_head + size <= sock->rcvbuf_sz) {
         memcpy(buf, rb, size);
         sock->data.rcvbuf_head += size;
 
-        if(sock->data.rcvbuf_head == sock->data.rcvbuf_sz)
+        if(sock->data.rcvbuf_head == sock->rcvbuf_sz)
             sock->data.rcvbuf_head = 0;
     }
     else {
-        tmp = sock->data.rcvbuf_sz - sock->data.rcvbuf_head;
+        tmp = sock->rcvbuf_sz - sock->data.rcvbuf_head;
         memcpy(buf, rb, tmp);
         memcpy(buf + tmp, sock->data.rcvbuf, size - tmp);
         sock->data.rcvbuf_head = size - tmp;
@@ -1516,7 +1479,7 @@ static ssize_t net_tcp_sendto(net_socket_t *hnd, const void *message,
     }
 
     /* See if we have space to buffer at least some of the data... */
-    if(sock->data.sndbuf_cur_sz == sock->data.sndbuf_sz) {
+    if(sock->data.sndbuf_cur_sz == sock->sndbuf_sz) {
         if((sock->flags & FS_SOCKET_NONBLOCK) || irq_inside_int()) {
             errno = EWOULDBLOCK;
             size = -1;
@@ -1527,7 +1490,7 @@ static ssize_t net_tcp_sendto(net_socket_t *hnd, const void *message,
 
         /* If we still don't have any buffer space, its because the connection
            has either been closed or reset by the other side... */
-        if(sock->data.sndbuf_cur_sz == sock->data.sndbuf_sz) {
+        if(sock->data.sndbuf_cur_sz == sock->sndbuf_sz) {
             if(sock->state & TCP_STATE_RESET) {
                 errno = ECONNRESET;
                 size = -1;
@@ -1547,7 +1510,7 @@ static ssize_t net_tcp_sendto(net_socket_t *hnd, const void *message,
             sock->data.sndbuf_tail = 0;
 
     /* Figure out how much we can copy in */
-    bsz = sock->data.sndbuf_sz - sock->data.sndbuf_cur_sz;
+    bsz = sock->sndbuf_sz - sock->data.sndbuf_cur_sz;
 
     if(length > bsz)
         size = bsz;
@@ -1557,15 +1520,15 @@ static ssize_t net_tcp_sendto(net_socket_t *hnd, const void *message,
     sb = sock->data.sndbuf + sock->data.sndbuf_tail;
     sock->data.sndbuf_cur_sz += size;
 
-    if(sock->data.sndbuf_tail + size <= sock->data.sndbuf_sz) {
+    if(sock->data.sndbuf_tail + size <= sock->sndbuf_sz) {
         memcpy(sb, buf, size);
         sock->data.sndbuf_tail += size;
 
-        if(sock->data.sndbuf_tail == sock->data.sndbuf_sz)
+        if(sock->data.sndbuf_tail == sock->sndbuf_sz)
             sock->data.sndbuf_tail = 0;
     }
     else {
-        tmp = sock->data.sndbuf_sz - sock->data.sndbuf_tail;
+        tmp = sock->sndbuf_sz - sock->data.sndbuf_tail;
         memcpy(sb, buf, tmp);
         memcpy(sock->data.sndbuf, buf + tmp, size - tmp);
         sock->data.sndbuf_tail = size - tmp;
@@ -1622,6 +1585,298 @@ static int net_tcp_shutdownsock(net_socket_t *hnd, int how) {
     rwsem_read_unlock(tcp_sem);
 
     return 0;
+}
+
+static int net_tcp_getsockopt(net_socket_t *hnd, int level, int option_name,
+                              void *option_value, socklen_t *option_len) {
+    int tmp;
+    struct tcp_sock *sock;
+
+    if(!option_value || !option_len) {
+        errno = EFAULT;
+        return -1;
+    }
+
+    if(irq_inside_int()) {
+        if(rwsem_read_trylock(tcp_sem)) {
+            errno = EWOULDBLOCK;
+            return -1;
+        }
+    }
+    else {
+        rwsem_read_lock(tcp_sem);
+    }
+
+    if(!(sock = (struct tcp_sock *)hnd->data)) {
+        rwsem_read_unlock(tcp_sem);
+        errno = EBADF;
+        return -1;
+    }
+
+    if(irq_inside_int()) {
+        if(mutex_trylock(sock->mutex)) {
+            rwsem_read_unlock(tcp_sem);
+            errno = EWOULDBLOCK;
+            return -1;
+        }
+    }
+    else {
+        mutex_lock(sock->mutex);
+    }
+
+    switch(level) {
+        case SOL_SOCKET:
+            switch(option_name) {
+                case SO_ACCEPTCONN:
+                    tmp = sock->state == TCP_STATE_LISTEN;
+                    goto copy_int;
+
+                case SO_RCVBUF:
+                    tmp = sock->rcvbuf_sz;
+                    goto copy_int;
+
+                case SO_SNDBUF:
+                    tmp = sock->sndbuf_sz;
+                    goto copy_int;
+
+                case SO_TYPE:
+                    tmp = SOCK_STREAM;
+                    goto copy_int;
+            }
+
+            break;
+
+        case IPPROTO_IP:
+            if(sock->domain != AF_INET)
+                goto ret_inval;
+
+            switch(option_name) {
+                case IP_TTL:
+                    tmp = sock->hop_limit;
+                    goto copy_int;
+            }
+
+            break;
+
+        case IPPROTO_IPV6:
+            if(sock->domain != AF_INET6)
+                goto ret_inval;
+
+            switch(option_name) {
+                case IPV6_UNICAST_HOPS:
+                    tmp = sock->hop_limit;
+                    goto copy_int;
+
+                case IPV6_V6ONLY:
+                    tmp = !!(sock->flags & FS_SOCKET_V6ONLY);
+                    goto copy_int;
+            }
+    }
+
+    /* If it wasn't handled, return that errror. */
+    mutex_unlock(sock->mutex);
+    rwsem_read_unlock(tcp_sem);
+    errno = ENOPROTOOPT;
+    return -1;
+
+ret_inval:
+    mutex_unlock(sock->mutex);
+    rwsem_read_unlock(tcp_sem);
+    errno = EINVAL;
+    return -1;
+
+copy_int:
+    if(*option_len >= sizeof(int)) {
+        memcpy(option_value, &tmp, sizeof(int));
+        *option_len = sizeof(int);
+    }
+    else {
+        memcpy(option_value, &tmp, *option_len);
+    }
+
+    mutex_unlock(sock->mutex);
+    rwsem_read_unlock(tcp_sem);
+    return 0;
+}
+
+static int net_tcp_setsockopt(net_socket_t *hnd, int level, int option_name,
+                              const void *option_value, socklen_t option_len) {
+    struct tcp_sock *sock;
+    int tmp;
+
+    if(!option_value || !option_len) {
+        errno = EFAULT;
+        return -1;
+    }
+
+    if(irq_inside_int()) {
+        if(rwsem_read_trylock(tcp_sem)) {
+            errno = EWOULDBLOCK;
+            return -1;
+        }
+    }
+    else {
+        rwsem_read_lock(tcp_sem);
+    }
+
+    if(!(sock = (struct tcp_sock *)hnd->data)) {
+        rwsem_read_unlock(tcp_sem);
+        errno = EBADF;
+        return -1;
+    }
+
+    if(irq_inside_int()) {
+        if(mutex_trylock(sock->mutex)) {
+            rwsem_read_unlock(tcp_sem);
+            errno = EWOULDBLOCK;
+            return -1;
+        }
+    }
+    else {
+        mutex_lock(sock->mutex);
+    }
+
+    switch(level) {
+        case SOL_SOCKET:
+            switch(option_name) {
+                case SO_ACCEPTCONN:
+                case SO_ERROR:
+                case SO_TYPE:
+                    goto ret_inval;
+            }
+
+            break;
+
+        case IPPROTO_IP:
+            if(sock->domain != AF_INET)
+                goto ret_inval;
+
+            switch(option_name) {
+                case IP_TTL:
+                    if(option_len != sizeof(int))
+                        goto ret_inval;
+
+                    tmp = *((int *)option_value);
+                    if(tmp < -1 || tmp > 255)
+                        goto ret_inval;
+                    else if(tmp == -1)
+                        sock->hop_limit = TCP_DEFAULT_HOPS;
+                    else
+                        sock->hop_limit = tmp;
+                    goto ret_success;
+            }
+
+            break;
+
+        case IPPROTO_IPV6:
+            if(sock->domain != AF_INET6)
+                goto ret_inval;
+
+            switch(option_name) {
+                case IPV6_UNICAST_HOPS:
+                    if(option_len != sizeof(int))
+                        goto ret_inval;
+
+                    tmp = *((int *)option_value);
+                    if(tmp < -1 || tmp > 255)
+                        goto ret_inval;
+                    else if(tmp == -1)
+                        sock->hop_limit = TCP_DEFAULT_HOPS;
+                    else
+                        sock->hop_limit = tmp;
+                    goto ret_success;
+
+                case IPV6_V6ONLY:
+                    if(option_len != sizeof(int))
+                        goto ret_inval;
+
+                    tmp = *((int *)option_value);
+                    if(tmp)
+                        sock->flags |= FS_SOCKET_V6ONLY;
+                    else
+                        sock->flags &= ~FS_SOCKET_V6ONLY;
+                    goto ret_success;
+            }
+
+            break;
+    }
+
+    /* If it wasn't handled, return that errror. */
+    mutex_unlock(sock->mutex);
+    rwsem_read_unlock(tcp_sem);
+    errno = ENOPROTOOPT;
+    return -1;
+
+ret_inval:
+    mutex_unlock(sock->mutex);
+    rwsem_read_unlock(tcp_sem);
+    errno = EINVAL;
+    return -1;
+
+ret_success:
+    mutex_unlock(sock->mutex);
+    rwsem_read_unlock(tcp_sem);
+    return 0;
+}
+
+static int net_tcp_fcntl(net_socket_t *hnd, int cmd, va_list ap) {
+    
+    struct tcp_sock *sock;
+    int rv = -1;
+    long val;
+
+    if(irq_inside_int()) {
+        if(rwsem_read_trylock(tcp_sem)) {
+            errno = EWOULDBLOCK;
+            return -1;
+        }
+    }
+    else {
+        rwsem_read_lock(tcp_sem);
+    }
+
+    if(!(sock = (struct tcp_sock *)hnd->data)) {
+        rwsem_read_unlock(tcp_sem);
+        errno = EBADF;
+        return -1;
+    }
+
+    /* Lock the socket's mutex, since we're going to be manipulating its state
+       in here... */
+    if(irq_inside_int()) {
+        if(mutex_trylock(sock->mutex)) {
+            rwsem_read_unlock(tcp_sem);
+            errno = EWOULDBLOCK;
+            return -1;
+        }
+    }
+    else {
+        mutex_lock(sock->mutex);
+    }
+
+    switch(cmd) {
+        case F_SETFL:
+            val = va_arg(ap, long);
+            if(val & O_NONBLOCK)
+                sock->flags |= FS_SOCKET_NONBLOCK;
+            else
+                sock->flags &= ~FS_SOCKET_NONBLOCK;
+            rv = 0;
+            goto out;
+
+        case F_GETFL:
+            rv = O_RDWR;
+            if(sock->flags & FS_SOCKET_NONBLOCK)
+                rv |= O_NONBLOCK;
+            goto out;
+    }
+
+    errno = EINVAL;
+        
+out:
+    mutex_unlock(sock->mutex);
+    rwsem_read_unlock(tcp_sem);
+    return rv;
 }
 
 static void tcp_rst(netif_t *net, const struct in6_addr *src,
@@ -1722,8 +1977,9 @@ static int tcp_send_syn(struct tcp_sock *sock, int ack) {
                                   sizeof(tcp_hdr_t) + 4, IPPROTO_TCP);
     hdr->checksum = net_ipv4_checksum(rawpkt, sizeof(tcp_hdr_t) + 4, cs);
 
-    return net_ipv6_send(sock->data.net, rawpkt, sizeof(tcp_hdr_t) + 4, 0,
-                         IPPROTO_TCP, &sock->local_addr.sin6_addr,
+    return net_ipv6_send(sock->data.net, rawpkt, sizeof(tcp_hdr_t) + 4,
+                         sock->hop_limit, IPPROTO_TCP,
+                         &sock->local_addr.sin6_addr,
                          &sock->remote_addr.sin6_addr);
 }
 
@@ -1748,8 +2004,9 @@ static void tcp_send_fin_ack(struct tcp_sock *sock) {
                                   sizeof(tcp_hdr_t), IPPROTO_TCP);
     hdr->checksum = net_ipv4_checksum(rawpkt, sizeof(tcp_hdr_t), cs);
 
-    net_ipv6_send(sock->data.net, rawpkt, sizeof(tcp_hdr_t), 0, IPPROTO_TCP,
-                  &sock->local_addr.sin6_addr, &sock->remote_addr.sin6_addr);
+    net_ipv6_send(sock->data.net, rawpkt, sizeof(tcp_hdr_t), sock->hop_limit,
+                  IPPROTO_TCP, &sock->local_addr.sin6_addr,
+                  &sock->remote_addr.sin6_addr);
 }
 
 static void tcp_send_ack(struct tcp_sock *sock) {
@@ -1772,8 +2029,8 @@ static void tcp_send_ack(struct tcp_sock *sock) {
                                  sizeof(tcp_hdr_t), IPPROTO_TCP);
     hdr.checksum = net_ipv4_checksum((const uint8 *)&hdr, sizeof(tcp_hdr_t), c);
 
-    net_ipv6_send(sock->data.net, (const uint8 *)&hdr, sizeof(tcp_hdr_t), 0,
-                  IPPROTO_TCP, &sock->local_addr.sin6_addr,
+    net_ipv6_send(sock->data.net, (const uint8 *)&hdr, sizeof(tcp_hdr_t),
+                  sock->hop_limit, IPPROTO_TCP, &sock->local_addr.sin6_addr,
                   &sock->remote_addr.sin6_addr);
 }
 
@@ -1823,15 +2080,15 @@ static void tcp_send_data(struct tcp_sock *sock, int resend) {
             snd = sock->data.sndbuf_cur_sz - unacked;
 
         /* Copy in the data */
-        if(head + snd <= sock->data.sndbuf_sz) {
+        if(head + snd <= sock->sndbuf_sz) {
             memcpy(buf, sb, snd);
             head += snd;
 
-            if(head == sock->data.sndbuf_sz)
+            if(head == sock->sndbuf_sz)
                 head = 0;
         }
         else {
-            sz = sock->data.sndbuf_sz - head;
+            sz = sock->sndbuf_sz - head;
             memcpy(buf, sb, sz);
             memcpy(buf + sz, sock->data.sndbuf, snd - sz);
             head = snd - sz;
@@ -1848,7 +2105,7 @@ static void tcp_send_data(struct tcp_sock *sock, int resend) {
                                       IPPROTO_TCP);
         hdr->checksum = net_ipv4_checksum(rawpkt, sz, cs);
 
-        net_ipv6_send(sock->data.net, rawpkt, sz, 0, IPPROTO_TCP,
+        net_ipv6_send(sock->data.net, rawpkt, sz, sock->hop_limit, IPPROTO_TCP,
                       &sock->local_addr.sin6_addr,
                       &sock->remote_addr.sin6_addr);
     }
@@ -2198,8 +2455,8 @@ static int process_pkt(netif_t *src, const struct in6_addr *srca,
         s->data.snd.una = ack;
         cond_signal(s->data.send_cv);
 
-        if(s->data.sndbuf_acked >= s->data.sndbuf_sz)
-            s->data.sndbuf_acked -= s->data.sndbuf_sz;
+        if(s->data.sndbuf_acked >= s->sndbuf_sz)
+            s->data.sndbuf_acked -= s->sndbuf_sz;
 
         if(SEQ_LT(s->data.snd.wl1, seq) ||
            (s->data.snd.wl1 == seq && SEQ_LE(s->data.snd.wl2, ack))) {
@@ -2276,12 +2533,12 @@ static int process_pkt(netif_t *src, const struct in6_addr *srca,
             s->data.rcv.wnd -= sz;
             s->data.rcvbuf_cur_sz += sz;
 
-            if(s->data.rcvbuf_tail + sz <= s->data.rcvbuf_sz) {
+            if(s->data.rcvbuf_tail + sz <= s->rcvbuf_sz) {
                 memcpy(rb, buf, sz);
                 s->data.rcvbuf_tail += sz;
             }
             else {
-                tmp = s->data.rcvbuf_sz - s->data.rcvbuf_tail;
+                tmp = s->rcvbuf_sz - s->data.rcvbuf_tail;
                 memcpy(rb, buf, tmp);
                 sz -= tmp;
                 buf += tmp;
@@ -2543,7 +2800,6 @@ static fs_socket_proto_t proto = {
     IPPROTO_TCP,                        /* protocol */
     net_tcp_socket,                     /* socket */
     net_tcp_close,                      /* close */
-    net_tcp_setflags,                   /* setflags */
     net_tcp_accept,                     /* accept */
     net_tcp_bind,                       /* bind */
     net_tcp_connect,                    /* connect */
@@ -2551,7 +2807,10 @@ static fs_socket_proto_t proto = {
     net_tcp_recvfrom,                   /* recvfrom */
     net_tcp_sendto,                     /* sendto */
     net_tcp_shutdownsock,               /* shutdown */
-    net_tcp_input                       /* input */
+    net_tcp_input,                      /* input */
+    net_tcp_getsockopt,                 /* getsockopt */
+    net_tcp_setsockopt,                 /* setsockopt */
+    net_tcp_fcntl                       /* fcntl */
 };
 
 int net_tcp_init() {

@@ -1,7 +1,8 @@
 /* KallistiOS ##version##
 
    fs.c
-   Copyright (C)2000,2001,2002,2003 Dan Potter
+   Copyright (C) 2000, 2001, 2002, 2003 Dan Potter
+   Copyright (C) 2012 Lawrence Sebald
 
 */
 
@@ -567,6 +568,26 @@ int fs_rmdir(const char * fn) {
 	}
 }
 
+int fs_fcntl(file_t fd, int cmd, ...) {
+    fs_hnd_t *h = fs_map_hnd(fd);
+    va_list ap;
+    int rv;
+
+    if(!h) {
+        errno = EBADF;
+        return -1;
+    }
+    if(!h->handler || !h->handler->fcntl) {
+        errno = ENOSYS;
+        return -1;
+    }
+
+    va_start(ap, cmd);
+    rv = h->handler->fcntl(h->hnd, cmd, ap);
+    va_end(ap);
+
+    return rv;
+}
 
 /* Initialize FS structures */
 int fs_init() {

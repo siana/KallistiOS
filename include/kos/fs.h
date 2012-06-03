@@ -1,7 +1,8 @@
 /* KallistiOS ##version##
 
    kos/fs.h
-   Copyright (C)2000,2001,2002,2003 Dan Potter
+   Copyright (C) 2000, 2001, 2002, 2003 Dan Potter
+   Copyright (C) 2012 Lawrence Sebald
 
 */
 
@@ -15,6 +16,7 @@ __BEGIN_DECLS
 #include <kos/limits.h>
 #include <time.h>
 #include <sys/queue.h>
+#include <stdarg.h>
 
 #include <kos/nmmgr.h>
 
@@ -29,6 +31,7 @@ __BEGIN_DECLS
     programs, feel free to use them to your heart's content!
 
     \author Dan Potter
+    \author Lawrence Sebald
 */
 
 /** \brief  Directory entry.
@@ -161,6 +164,9 @@ typedef struct vfs_handler {
 
     /** \brief Remove a directory from the given VFS */
     int (*rmdir)(struct vfs_handler *vfs, const char *fn);
+
+    /** \brief Manipulate file control flags on the given file. */
+    int (*fcntl)(void *fd, int cmd, va_list ap);
 } vfs_handler_t;
 
 /** \brief  The number of distinct file descriptors that can be in use at a
@@ -401,6 +407,17 @@ int fs_mkdir(const char *fn);
     \return                 0 on success, -1 on failure.
 */
 int fs_rmdir(const char *fn);
+
+/** \brief  Manipulate file control flags.
+
+    This function implements the standard C fcntl function.
+
+    \param  fd              The file descriptor to use.
+    \param  cmd             The command to run.
+    \param  ...             Arguments for the command specified.
+    \return                 -1 on error (generally).
+*/
+int fs_fcntl(file_t fd, int cmd, ...);
 
 /** \brief  Duplicate a file descriptor.
 

@@ -1,7 +1,7 @@
 /* KallistiOS ##version##
 
    sys/socket.h
-   Copyright (C)2006, 2010 Lawrence Sebald
+   Copyright (C)2006, 2010, 2012 Lawrence Sebald
 
 */
 
@@ -95,6 +95,44 @@ struct sockaddr_storage {
     underlying protocol.
 */
 #define SOCK_STREAM 2
+
+/** \brief  Socket-level option setting.
+
+    This constant should be used with the setsockopt() or getsockopt() function
+    to represent that options should be accessed at the socket level, not the
+    protocol level.
+*/
+#define SOL_SOCKET  1
+
+/** \defgroup so_opts                   Socket-level options
+
+    These are the various socket-level options that can be accessed with the
+    setsockopt() and getsockopt() functions for the SOL_SOCKET level value.
+
+    Not all of these are currently supported, but they are listed for
+    completeness.
+
+    \see                ipv6_opts
+
+    @{
+*/
+#define SO_ACCEPTCONN   1   /**< \brief Socket is accepting connections (get) */
+#define SO_BROADCAST    2   /**< \brief Support broadcasting (get/set) */
+#define SO_DEBUG        3   /**< \brief Record debugging info (get/set) */
+#define SO_DONTROUTE    4   /**< \brief Do not route packets (get/set) */
+#define SO_ERROR        5   /**< \brief Retrieve error status (get) */
+#define SO_KEEPALIVE    6   /**< \brief Send keepalive messages (get/set) */
+#define SO_LINGER       7   /**< \brief Socket lingers on close (get/set) */
+#define SO_OOBINLINE    8   /**< \brief OOB data is inline (get/set) */
+#define SO_RCVBUF       9   /**< \brief Receive buffer size (get/set) */
+#define SO_RCVLOWAT     10  /**< \brief Receive low-water mark (get/set) */
+#define SO_RCVTIMEO     11  /**< \brief Receive timeout value (get/set) */
+#define SO_REUSEADDR    12  /**< \brief Reuse local addresses (get/set) */
+#define SO_SNDBUF       13  /**< \brief Send buffer size (get/set) */
+#define SO_SNDLOWAT     14  /**< \brief Send low-water mark (get/set) */
+#define SO_SNDTIMEO     15  /**< \brief Send timeout value (get/set) */
+#define SO_TYPE         16  /**< \brief Socket type (get) */
+/** @} */
 
 /** \brief  Internet domain sockets for use with IPv4 addresses. */
 #define AF_INET     1
@@ -271,6 +309,46 @@ int shutdown(int socket, int how);
                         and sets errno as appropriate.
 */
 int socket(int domain, int type, int protocol);
+
+/** \brief  Get socket options.
+
+    This function retrieves options associated with a socket. This function
+    shall attempt to retrieve the specified option (at the specified level) from
+    the given socket.
+
+    \param  sock            The socket to get options for.
+    \param  level           The protocol level to get options at.
+    \param  option_name     The option to look up.
+    \param  option_value    Storage for the value of the option.
+    \param  option_len      The length of option_value on call, and the real
+                            option length (if less than the original value)
+                            on return.
+    \return                 Zero on success. -1 on error, and sets errno as
+                            appropriate.
+
+    \see                    so_opts
+*/
+int getsockopt(int socket, int level, int option_name, void *option_value,
+               socklen_t *option_len);
+
+/** \brief  Set socket options.
+
+    This function sets options associated with a socket. This function shall
+    attempt to set the specified option (at the specified level) from the given
+    socket.
+
+    \param  sock            The socket to set options for.
+    \param  level           The protocol level to set options at.
+    \param  option_name     The option to set.
+    \param  option_value    The value to set for the option.
+    \param  option_len      The length of option_value in bytes.
+    \return                 Zero on success. -1 on error, and sets errno as
+                            appropriate.
+
+    \see                    so_opts
+*/
+int setsockopt(int socket, int level, int option_name, const void *option_value,
+               socklen_t option_len);
 
 __END_DECLS
 

@@ -627,23 +627,23 @@ int net_dhcp_init() {
     }
 
     /* Bind the socket to the DHCP "Client" port */
+    memset(&addr, 0, sizeof(addr));
     addr.sin_family = AF_INET;
     addr.sin_port = htons(DHCP_CLIENT_PORT);
     addr.sin_addr.s_addr = INADDR_ANY;
-    memset(addr.sin_zero, 0, sizeof(addr.sin_zero));
 
     if(bind(dhcp_sock, (struct sockaddr *)&addr, sizeof(addr)) == -1) {
         return -2;
     }
 
     /* Set up the server address */
+    memset(&srv_addr, 0, sizeof(srv_addr));
     srv_addr.sin_family = AF_INET;
     srv_addr.sin_port = htons(DHCP_SERVER_PORT);
     srv_addr.sin_addr.s_addr = INADDR_BROADCAST;
-    memset(srv_addr.sin_zero, 0, sizeof(addr.sin_zero));
 
     /* Make the socket non-blocking */
-    fs_socket_setflags(dhcp_sock, FS_SOCKET_NONBLOCK);
+    fs_fcntl(dhcp_sock, F_SETFL, O_NONBLOCK);
 
     /* Create the callback for processing DHCP packets */
     dhcp_cbid = net_thd_add_callback(&net_dhcp_thd, NULL, 50);

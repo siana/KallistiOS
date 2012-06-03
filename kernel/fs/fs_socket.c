@@ -74,6 +74,11 @@ static ssize_t fs_socket_write(void *hnd, const void *buffer, size_t cnt) {
     return sock->protocol->sendto(sock, buffer, cnt, 0, NULL, 0);
 }
 
+static int fs_socket_fcntl(void *hnd, int cmd, va_list ap) {
+    net_socket_t *sock = (net_socket_t *)hnd;
+    return sock->protocol->fcntl(sock, cmd, ap);
+}
+
 /* VFS handler */
 static vfs_handler_t vh = {
     /* Name handler */
@@ -103,7 +108,8 @@ static vfs_handler_t vh = {
     NULL,            /* complete */
     NULL,            /* stat */
     NULL,            /* mkdir */
-    NULL             /* rmdir */
+    NULL,            /* rmdir */
+    fs_socket_fcntl  /* fcntl */
 };
 
 /* Have we been initialized? */
@@ -195,24 +201,6 @@ int fs_socket_input(netif_t *src, int domain, int protocol, const void *hdr,
     rlock_unlock(proto_rlock);
 
     return rv;
-}
-
-int fs_socket_setflags(int sock, uint32_t flags) {
-    net_socket_t *hnd;
-
-    hnd = (net_socket_t *)fs_get_handle(sock);
-    if(hnd == NULL) {
-        errno = EBADF;
-        return -1;
-    }
-
-    /* Make sure this is actually a socket. */
-    if(fs_get_handler(sock) != &vh) {
-        errno = ENOTSOCK;
-        return -1;
-    }
-
-    return hnd->protocol->setflags(hnd, flags);
 }
 
 int fs_socket_proto_add(fs_socket_proto_t *proto) {
@@ -546,4 +534,44 @@ int shutdown(int sock, int how) {
     }
 
     return hnd->protocol->shutdownsock(hnd, how);
+}
+
+int getsockopt(int sock, int level, int option_name, void *option_value,
+               socklen_t *option_len) {
+    net_socket_t *hnd;
+
+    hnd = (net_socket_t *)fs_get_handle(sock);
+    if(hnd == NULL) {
+        errno = EBADF;
+        return -1;
+    }
+
+    /* Make sure this is actually a socket. */
+    if(fs_get_handler(sock) != &vh) {
+        errno = ENOTSOCK;
+        return -1;
+    }
+
+    return hnd->protocol->getsockopt(hnd, level, option_name, option_value,
+                                     option_len);
+}
+
+int setsockopt(int sock, int level, int option_name, const void *option_value,
+               socklen_t option_len) {
+    net_socket_t *hnd;
+
+    hnd = (net_socket_t *)fs_get_handle(sock);
+    if(hnd == NULL) {
+        errno = EBADF;
+        return -1;
+    }
+
+    /* Make sure this is actually a socket. */
+    if(fs_get_handler(sock) != &vh) {
+        errno = ENOTSOCK;
+        return -1;
+    }
+
+    return hnd->protocol->setsockopt(hnd, level, option_name, option_value,
+                                     option_len);
 }

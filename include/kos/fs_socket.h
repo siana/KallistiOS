@@ -139,20 +139,6 @@ typedef struct fs_socket_proto {
     */
     void (*close)(net_socket_t *hnd);
 
-    /** \brief  Set flags on a socket created with the protocol.
-
-        This function will be called when the user calls fs_socket_setflags() on
-        a socket created with this protocol. The semantics are the same as
-        described in the documentation for that function.
-
-        \param  s           The socket to set flags on
-        \param  flags       The flags to set
-        \retval -1          On error (set errno appropriately)
-        \retval 0           On success
-        \see    fs_socket_setflags
-    */
-    int (*setflags)(net_socket_t *s, uint32_t flags);
-
     /** \brief  Accept a connection on a socket created with the protocol.
 
         This function should implement the ::accept() system call for the
@@ -282,6 +268,58 @@ typedef struct fs_socket_proto {
     */
     int (*input)(netif_t *src, int domain, const void *hdr, const uint8 *data,
                  int size);
+
+    /** \brief  Get socket options.
+
+        This function should implement the ::getsockopt() system call for the
+        given protocol. The semantics are exactly as defined for that function.
+
+        Currently all options (regardless of level) are passed onto the
+        protocol handler.
+
+        \param  s               The socket to get options for.
+        \param  level           The protocol level to get options at.
+        \param  option_name     The option to look up.
+        \param  option_value    Storage for the value of the option.
+        \param  option_len      The length of option_value on call, and the real
+                                option length (if less than the original value)
+                                on return.
+        \retval -1              On error (set errno appropriately).
+        \retval 0               On success.
+    */
+    int (*getsockopt)(net_socket_t *s, int level, int option_name,
+                      void *option_value, socklen_t *option_len);
+
+    /** \brief  Set socket options.
+
+        This function should implement the ::setsockopt() system call for the
+        given protocol. The semantics are exactly as defined for that function.
+
+        Currently all options (regardless of level) are passed onto the
+        protocol handler.
+
+        \param  s               The socket to set options for.
+        \param  level           The protocol level to set options at.
+        \param  option_name     The option to set.
+        \param  option_value    The value to set for the option.
+        \param  option_len      The length of the option_value value.
+        \retval -1              On error (set errno appropriately).
+        \retval 0               On success.
+    */
+    int (*setsockopt)(net_socket_t *s, int level, int option_name,
+                      const void *option_value, socklen_t option_len);
+
+    /** \brief  Manipulate file options.
+
+        This function should implement the ::fcntl() system call for the given
+        protocol. The semantics are exactly as defined for that function.
+
+        \param  s           The socket to manipulate.
+        \param  cmd         The fcntl command to run.
+        \param  ap          Arguments to the command.
+        \retval -1          On error (generally, set errno appropriately).
+    */
+    int (*fcntl)(net_socket_t *s, int cmd, va_list ap);
 } fs_socket_proto_t;
 
 /** \brief  Initializer for the entry field in the fs_socket_proto_t struct. */
@@ -313,7 +351,7 @@ net_socket_t *fs_socket_open_sock(fs_socket_proto_t *proto);
 
 /** \defgroup sock_flags                Socket flags
 
-    These are the available flags to set with the fs_socket_setflags() function.
+    These are the available flags defined for sockets.
 
     Every flag after FS_SOCKET_FAM_MAX is for internal-use only, and should
     never be passed into any functions.
@@ -345,27 +383,6 @@ net_socket_t *fs_socket_open_sock(fs_socket_proto_t *proto);
 */
 int fs_socket_input(netif_t *src, int domain, int protocol, const void *hdr,
                     const uint8 *data, int size);
-
-/** \brief  Set flags on a socket file descriptor.
-
-    This function can be used to set various flags on a socket file descriptor,
-    similar to what one would use fcntl or ioctl on a normal system for. The
-    flags available for use here are largely protocol dependent.
-
-    \param  sock        The socket to operate on (returned from a call to the
-                        function socket())
-    \param  flags       The flags to set on the socket.
-    \retval -1          On error, and sets errno as appropriate
-    \retval 0           On success
-    \see                sock_flags
-
-    \par    Error Conditions:
-    \em     EWOULDBLOCK - if the function would block while inappropriate to \n
-    \em     EBADF - if passed an invalid file descriptor \n
-    \em     ENOTSOCK - if passed a file descriptor other than a socket \n
-    \em     EINVAL - if an invalid flag (or combination) was passed in
-*/
-int fs_socket_setflags(int sock, uint32_t flags);
 
 /** \brief  Add a new protocol for use with fs_socket.
 
