@@ -165,7 +165,7 @@ int net_ipv4_send_packet(netif_t *net, ip_hdr_t *hdr, const uint8 *data,
 
     /* Send it away */
     net->if_tx(net, pkt, sizeof(ip_hdr_t) + size + sizeof(eth_hdr_t),
-           NETIF_BLOCK);
+               NETIF_BLOCK);
 
     return 0;
 }
