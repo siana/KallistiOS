@@ -1869,6 +1869,11 @@ static int net_tcp_fcntl(net_socket_t *hnd, int cmd, va_list ap) {
             if(sock->flags & FS_SOCKET_NONBLOCK)
                 rv |= O_NONBLOCK;
             goto out;
+
+        case F_GETFD:
+        case F_SETFD:
+            rv = 0;
+            goto out;
     }
 
     errno = EINVAL;

@@ -1,8 +1,9 @@
 /* KallistiOS ##version##
 
    kernel/arch/dreamcast/fs/fs_dcload.c
-   Copyright (C)2002 Andrew Kieschnick
-   Copyright (C)2004 Dan Potter
+   Copyright (C) 2002 Andrew Kieschnick
+   Copyright (C) 2004 Dan Potter
+   Copyright (C) 2012 Lawrence Sebald
 
 */
 
@@ -27,6 +28,7 @@ printf goes to the dc-tool console
 #include <ctype.h>
 #include <string.h>
 #include <malloc.h>
+#include <errno.h>
 
 static spinlock_t mutex = SPINLOCK_INITIALIZER;
 
@@ -330,34 +332,59 @@ int dcload_unlink(vfs_handler_t * vfs, const char *fn) {
     return ret;
 }
 
+static int dcload_fcntl(void *h, int cmd, va_list ap) {
+    int rv = -1;
 
+    switch(cmd) {
+        case F_GETFL:
+            /* XXXX: Not the right thing to do... */
+            rv = O_RDWR;
+            break;
+
+        case F_SETFL:
+        case F_GETFD:
+        case F_SETFD:
+            rv = 0;
+            break;
+
+        default:
+            errno = EINVAL;
+    }
+
+    return rv;
+}
 
 /* Pull all that together */
 static vfs_handler_t vh = {
-	/* Name handler */
-	{
-		"/pc",		/* name */
-		0,		/* tbfi */
-		0x00010000,	/* Version 1.0 */
-		0,		/* flags */
-		NMMGR_TYPE_VFS,
-		NMMGR_LIST_INIT
-	},
+    /* Name handler */
+    {
+        "/pc",          /* name */
+        0,              /* tbfi */
+        0x00010000,     /* Version 1.0 */
+        0,              /* flags */
+        NMMGR_TYPE_VFS,
+        NMMGR_LIST_INIT
+    },
 
-	0, NULL,	/* no cache, privdata */
+    0, NULL,            /* no cache, privdata */
 
-	dcload_open,
-	dcload_close,
-	dcload_read,
-	dcload_write,
-	dcload_seek,
-	dcload_tell,
-	dcload_total,
-	dcload_readdir,
-	NULL,               /* ioctl */
-	dcload_rename,
-	dcload_unlink,
-	NULL                /* mmap */
+    dcload_open,
+    dcload_close,
+    dcload_read,
+    dcload_write,
+    dcload_seek,
+    dcload_tell,
+    dcload_total,
+    dcload_readdir,
+    NULL,               /* ioctl */
+    dcload_rename,
+    dcload_unlink,
+    NULL,               /* mmap */
+    NULL,               /* complete */
+    NULL,               /* stat */
+    NULL,               /* mkdir */
+    NULL,               /* rmdir */
+    dcload_fcntl
 };
 
 // We have to provide a minimal interface in case dcload usage is

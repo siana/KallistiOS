@@ -1,9 +1,10 @@
 /* KallistiOS ##version##
 
    fs_iso9660.c
-   Copyright (C)2000,2001,2003 Dan Potter
-   Copyright (C)2001 Andrew Kieschnick
-   Copyright (C)2002 Bero
+   Copyright (C) 2000, 2001, 2003 Dan Potter
+   Copyright (C) 2001 Andrew Kieschnick
+   Copyright (C) 2002 Bero
+   Copyright (C) 2012 Lawrence Sebald
 
 */
 
@@ -40,6 +41,7 @@ ISO9660 systems, as these were used as references as well.
 #include <ctype.h>
 #include <string.h>
 #include <malloc.h>
+#include <errno.h>
 
 static int init_percd();
 static int percd_done;
@@ -840,32 +842,66 @@ static int iso_ioctl(void * hnd, void *data, size_t size) {
 	return 0;
 }
 
+static int iso_fcntl(void *h, int cmd, va_list ap) {
+    file_t fd = (file_t)h;
+    int rv = -1;
+
+    if(fd>=MAX_ISO_FILES || !fh[fd].first_extent || fh[fd].broken) {
+        errno = EBADF;
+        return -1;
+    }
+
+    switch(cmd) {
+        case F_GETFL:
+            rv = O_RDONLY;
+            if(fh[fd].dir)
+                rv |= O_DIR;
+            break;
+
+        case F_SETFL:
+        case F_GETFD:
+        case F_SETFD:
+            rv = 0;
+            break;
+
+        default:
+            errno = EINVAL;
+    }
+
+    return rv;
+}
+
 /* Put everything together */
 static vfs_handler_t vh = {
-	/* Name handler */
-	{
-		"/cd",		/* name */
-		0,		/* tbfi */
-		0x00010000,	/* Version 1.0 */
-		0,		/* flags */
-		NMMGR_TYPE_VFS,	/* VFS handler */
-		NMMGR_LIST_INIT
-	},
+    /* Name handler */
+    {
+        "/cd",          /* name */
+        0,              /* tbfi */
+        0x00010000,     /* Version 1.0 */
+        0,              /* flags */
+        NMMGR_TYPE_VFS, /* VFS handler */
+        NMMGR_LIST_INIT
+    },
 
-	0, NULL,	/* no cacheing, privdata */
+    0, NULL,            /* no cacheing, privdata */
 
-	iso_open,
-	iso_close,
-	iso_read,
-	NULL,
-	iso_seek,
-	iso_tell,
-	iso_total,
-	iso_readdir,
-	iso_ioctl,
-	NULL,
-	NULL,
-	NULL
+    iso_open,
+    iso_close,
+    iso_read,
+    NULL,
+    iso_seek,
+    iso_tell,
+    iso_total,
+    iso_readdir,
+    iso_ioctl,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    iso_fcntl
 };
 
 /* Initialize the file system */

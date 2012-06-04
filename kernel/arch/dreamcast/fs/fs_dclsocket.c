@@ -1,7 +1,7 @@
 /* KallistiOS ##version##
 
    kernel/arch/dreamcast/fs/fs_dclsocket.c
-   Copyright (C) 2007, 2008 Lawrence Sebald
+   Copyright (C) 2007, 2008, 2012 Lawrence Sebald
 
    Based on fs_dclnative.c and related files
    Copyright (C) 2003 Dan Potter
@@ -652,6 +652,28 @@ static int dcls_writebuf(const uint8 *buf, int len, int xlat) {
     return retval;
 }
 
+static int dcls_fcntl(void *h, int cmd, va_list ap) {
+    int rv = -1;
+
+    switch(cmd) {
+        case F_GETFL:
+            /* XXXX: Not the right thing to do... */
+            rv = O_RDWR;
+            break;
+
+        case F_SETFL:
+        case F_GETFD:
+        case F_SETFD:
+            rv = 0;
+            break;
+
+        default:
+            errno = EINVAL;
+    }
+
+    return rv;
+}
+
 /* VFS handler */
 static vfs_handler_t vh = {
     /* Name handler */
@@ -681,7 +703,8 @@ static vfs_handler_t vh = {
     NULL,               /* complete */
     dcls_stat,
     NULL,               /* mkdir */
-    NULL                /* rmdir */
+    NULL,               /* rmdir */
+    dcls_fcntl
 };
 
 /* dbgio handler */

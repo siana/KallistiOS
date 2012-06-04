@@ -1,7 +1,8 @@
 /* KallistiOS ##version##
 
    fs_vmu.c
-   Copyright (C)2003 Dan Potter
+   Copyright (C) 2003 Dan Potter
+   Copyright (C) 2012 Lawrence Sebald
 
 */
 
@@ -17,6 +18,7 @@
 #include <dc/maple.h>
 #include <dc/maple/vmu.h>
 #include <sys/queue.h>
+#include <errno.h>
 
 /*
 
@@ -541,35 +543,69 @@ static int vmu_stat(vfs_handler_t * vfs, const char * fn, stat_t * rv) {
 	return (rv->size < 0) ? -1 : 0;
 }
 
+static int vmu_fcntl(void *fd, int cmd, va_list ap) {
+    vmu_fh_t *fh;
+    int rv = -1;
+
+    /* Check the handle */
+    if(!vmu_verify_hnd(fd, VMU_ANY)) {
+        errno = EBADF;
+        return -1;
+    }
+
+    fh = (vmu_fh_t *)fd;
+
+    switch(cmd) {
+        case F_GETFL:
+            if(fh->strtype)
+                rv = fh->mode;
+            else
+                rv = O_RDONLY | O_DIR;
+            break;
+
+        case F_SETFL:
+        case F_GETFD:
+        case F_SETFD:
+            rv = 0;
+            break;
+
+        default:
+            errno = EINVAL;
+    }
+
+    return rv;
+}
+
 /* handler interface */
 static vfs_handler_t vh = {
-	/* Name handler */
-	{
-		"/vmu",		/* name */
-		0,		/* tbfi */
-		0x00010000,	/* Version 1.0 */
-		0,		/* flags */
-		NMMGR_TYPE_VFS,	/* VFS handler */
-		NMMGR_LIST_INIT
-	},
-	0, NULL,	/* In-kernel, privdata */
+    /* Name handler */
+    {
+        "/vmu",         /* name */
+        0,              /* tbfi */
+        0x00010000,     /* Version 1.0 */
+        0,              /* flags */
+        NMMGR_TYPE_VFS, /* VFS handler */
+        NMMGR_LIST_INIT
+    },
+    0, NULL,            /* In-kernel, privdata */
 
-	vmu_open,
-	vmu_close,
-	vmu_read,
-	vmu_write,	/* the write function */
-	vmu_seek,	/* the seek function */
-	vmu_tell,
-	vmu_total,
-	vmu_readdir,	/* readdir */
-	NULL,		/* ioctl */
-	NULL,		/* rename/move */
-	vmu_unlink,	/* unlink */
-	vmu_mmap,	/* mmap */
-	NULL,		/* complete */
-	vmu_stat,	/* stat */
-	NULL,		/* mkdir */
-	NULL		/* rmdir */
+    vmu_open,
+    vmu_close,
+    vmu_read,
+    vmu_write,          /* the write function */
+    vmu_seek,           /* the seek function */
+    vmu_tell,
+    vmu_total,
+    vmu_readdir,        /* readdir */
+    NULL,               /* ioctl */
+    NULL,               /* rename/move */
+    vmu_unlink,         /* unlink */
+    vmu_mmap,           /* mmap */
+    NULL,               /* complete */
+    vmu_stat,           /* stat */
+    NULL,               /* mkdir */
+    NULL,               /* rmdir */
+    vmu_fcntl
 };
 
 int fs_vmu_init() {
