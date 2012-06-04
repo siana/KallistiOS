@@ -2,6 +2,7 @@
 
    fs_romdisk.c
    Copyright (C)2001,2002,2003 Dan Potter
+   Copyright (C) 2012 Lawrence Sebald
 
 */
 
@@ -361,32 +362,66 @@ static void *romdisk_mmap(void * h) {
 	return (void *)(fh[fd].mnt->image + fh[fd].index);
 }
 
+static int romdisk_fcntl(void *h, int cmd, va_list ap) {
+    file_t fd = (file_t)h;
+    int rv = -1;
+
+    if(fd >= MAX_RD_FILES || !fh[fd].index) {
+        errno = EBADF;
+        return -1;
+    }
+
+    switch(cmd) {
+        case F_GETFL:
+            rv = O_RDONLY;
+            if(fh[fd].dir)
+                rv |= O_DIR;
+            break;
+
+        case F_SETFL:
+        case F_GETFD:
+        case F_SETFD:
+            rv = 0;
+            break;
+
+        default:
+            errno = EINVAL;
+    }
+
+    return rv;
+}
+
 /* This is a template that will be used for each mount */
 static vfs_handler_t vh = {
-	/* Name Handler */
-	{
-		{ 0 },			/* name */
-		0,			/* in-kernel */
-		0x00010000,		/* Version 1.0 */
-		NMMGR_FLAGS_NEEDSFREE,	/* We malloc each VFS struct */
-		NMMGR_TYPE_VFS,		/* VFS handler */
-		NMMGR_LIST_INIT		/* list */
-	},
+    /* Name Handler */
+    {
+        { 0 },                  /* name */
+        0,                      /* in-kernel */
+        0x00010000,             /* Version 1.0 */
+        NMMGR_FLAGS_NEEDSFREE,  /* We malloc each VFS struct */
+        NMMGR_TYPE_VFS,         /* VFS handler */
+        NMMGR_LIST_INIT         /* list */
+    },
 
-	0, NULL,		/* no cacheing, privdata */
+    0, NULL,                    /* no cacheing, privdata */
 
-	romdisk_open,
-	romdisk_close,
-	romdisk_read,
-	NULL,
-	romdisk_seek,
-	romdisk_tell,
-	romdisk_total,
-	romdisk_readdir,
-	NULL,
-	NULL,
-	NULL,
-	romdisk_mmap
+    romdisk_open,
+    romdisk_close,
+    romdisk_read,
+    NULL,
+    romdisk_seek,
+    romdisk_tell,
+    romdisk_total,
+    romdisk_readdir,
+    NULL,
+    NULL,
+    NULL,
+    romdisk_mmap,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    romdisk_fcntl
 };
 
 /* Are we initialized? */

@@ -2,6 +2,7 @@
 
    fs_pty.c
    Copyright (C)2003 Dan Potter
+   Copyright (C) 2012 Lawrence Sebald
 
 */
 
@@ -595,31 +596,72 @@ static dirent_t * pty_readdir(void * h) {
 	return &dl->dirent;
 }
 
+static int pty_fcntl(void *h, int cmd, va_list ap) {
+    pipefd_t *fd = (pipefd_t *)h;
+    int rv = -1;
+    long val;
+
+    if(!fd) {
+        errno = EBADF;
+        return -1;
+    }
+
+    switch(cmd) {
+        case F_GETFL:
+            rv = fd->mode;
+            break;
+
+        case F_SETFL:
+            val = va_arg(ap, long);
+            if(val & O_NONBLOCK)
+                fd->mode |= O_NONBLOCK;
+            else
+                fd->mode &= ~O_NONBLOCK;
+            rv = 0;
+            break;
+
+        case F_GETFD:
+        case F_SETFD:
+            rv = 0;
+            break;
+
+        default:
+            errno = EINVAL;
+    }
+
+    return rv;
+}
+
 static vfs_handler_t vh = {
-	/* Name Handler */
-	{
-		{ "/pty" },		/* name */
-		0,			/* in-kernel */
-		0x00010000,		/* Version 1.0 */
-		0,			/* flags */
-		NMMGR_TYPE_VFS,		/* VFS handler */
-		NMMGR_LIST_INIT		/* list */
-	},
+    /* Name Handler */
+    {
+        { "/pty" },     /* name */
+        0,              /* in-kernel */
+        0x00010000,     /* Version 1.0 */
+        0,              /* flags */
+        NMMGR_TYPE_VFS, /* VFS handler */
+        NMMGR_LIST_INIT /* list */
+    },
 
-	0, NULL,		/* no cacheing, privdata */
+    0, NULL,            /* no cacheing, privdata */
 
-	pty_open,
-	pty_close,
-	pty_read,
-	pty_write,
-	NULL,
-	NULL,
-	pty_total,
-	pty_readdir,
-	NULL,
-	NULL,
-	NULL,
-	NULL
+    pty_open,
+    pty_close,
+    pty_read,
+    pty_write,
+    NULL,
+    NULL,
+    pty_total,
+    pty_readdir,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    pty_fcntl
 };
 
 /* Are we initialized? */

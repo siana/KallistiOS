@@ -2,6 +2,7 @@
 
    fs_ramdisk.c
    Copyright (C)2002,2003 Dan Potter
+   Copyright (C) 2012 Lawrence Sebald
 
 */
 
@@ -38,6 +39,7 @@ cache data from disk rather than as a general purpose file system.
 #include <stdio.h>
 #include <stdlib.h>
 #include <assert.h>
+#include <errno.h>
 
 /* File definition */
 typedef struct rd_file {
@@ -82,10 +84,11 @@ static rd_dir_t  *rootdir = NULL;
 /* File handles.. I could probably do this with a linked list, but I'm just
    too lazy right now. =) */
 static struct {
-	rd_file_t	* file;		/* ramdisk file struct */
-	int		dir;		/* >0 if a directory */
-	uint32		ptr;		/* Current read position in bytes */
-	dirent_t	dirent;		/* A static dirent to pass back to clients */
+    rd_file_t   *file;      /* ramdisk file struct */
+    int         dir;        /* >0 if a directory */
+    uint32      ptr;        /* Current read position in bytes */
+    dirent_t    dirent;     /* A static dirent to pass back to clients */
+    int         omode;      /* Open mode */
 } fh[MAX_RAM_FILES];
 
 /* Mutex for file system structs */
@@ -260,6 +263,7 @@ static void * ramdisk_open(vfs_handler_t * vfs, const char *fn, int mode) {
 	/* Fill the basic fd structure */
 	fh[fd].file = f;
 	fh[fd].dir = mode & O_DIR;
+	fh[fd].omode = mode;
 
 	/* The rest require a bit more thought */
 	switch (mm) {
@@ -534,36 +538,68 @@ static void * ramdisk_mmap(void * h) {
 	return rv;
 }
 
+static int ramdisk_fcntl(void *h, int cmd, va_list ap) {
+    file_t fd = (file_t)h;
+    int rv = -1;
+
+    mutex_lock(rd_mutex);
+
+    if(fd >= MAX_RAM_FILES || !fh[fd].file) {
+        mutex_unlock(rd_mutex);
+        errno = EBADF;
+        return -1;
+    }
+
+    switch(cmd) {
+        case F_GETFL:
+            rv = fh[fd].omode;
+            break;
+
+        case F_SETFL:
+        case F_GETFD:
+        case F_SETFD:
+            rv = 0;
+            break;
+
+        default:
+            errno = EINVAL;
+    }
+
+    mutex_unlock(rd_mutex);
+    return rv;
+}
+
 /* Put everything together */
 static vfs_handler_t vh = {
-	/* Name handler */
-	{
-		"/ram",			/* name */
-		0,			/* tbfi */
-		0x00010000,		/* Version 1.0 */
-		0,			/* flags */
-		NMMGR_TYPE_VFS,		/* VFS handler */
-		NMMGR_LIST_INIT
-	},
+    /* Name handler */
+    {
+        "/ram",         /* name */
+        0,              /* tbfi */
+        0x00010000,     /* Version 1.0 */
+        0,              /* flags */
+        NMMGR_TYPE_VFS, /* VFS handler */
+        NMMGR_LIST_INIT
+    },
 
-	0, NULL,		/* no cacheing, privdata */
+    0, NULL,            /* no cacheing, privdata */
 
-	ramdisk_open,
-	ramdisk_close,
-	ramdisk_read,
-	ramdisk_write,
-	ramdisk_seek,
-	ramdisk_tell,
-	ramdisk_total,
-	ramdisk_readdir,
-	NULL,			/* ioctl */
-	NULL,			/* rename XXX */
-	ramdisk_unlink,
-	ramdisk_mmap,
-	NULL,			/* complete */
-	NULL,			/* stat XXX */
-	NULL,			/* mkdir XXX */
-	NULL			/* rmdir XXX */
+    ramdisk_open,
+    ramdisk_close,
+    ramdisk_read,
+    ramdisk_write,
+    ramdisk_seek,
+    ramdisk_tell,
+    ramdisk_total,
+    ramdisk_readdir,
+    NULL,               /* ioctl */
+    NULL,               /* rename XXX */
+    ramdisk_unlink,
+    ramdisk_mmap,
+    NULL,               /* complete */
+    NULL,               /* stat XXX */
+    NULL,               /* mkdir XXX */
+    NULL,               /* rmdir XXX */
+    ramdisk_fcntl
 };
 
 /* Attach a piece of memory to a file. This works somewhat like open for
