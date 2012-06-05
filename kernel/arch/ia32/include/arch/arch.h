@@ -14,9 +14,9 @@ __BEGIN_DECLS
 #include <arch/types.h>
 
 /* Page size info (for MMU) */
-#define PAGESIZE	4096
-#define PAGESIZE_BITS	12
-#define PAGEMASK	(PAGESIZE - 1)
+#define PAGESIZE    4096
+#define PAGESIZE_BITS   12
+#define PAGEMASK    (PAGESIZE - 1)
 
 /* Page count variable; in this case it's static, so we can
    optimize this quite a bit. */
@@ -27,14 +27,14 @@ __BEGIN_DECLS
 #define page_phys_base 0x00010000
 
 /* Number of timer ticks per second */
-#define HZ		100
+#define HZ      100
 
 /* Default thread stack size */
-#define THD_STACK_SIZE	8192
+#define THD_STACK_SIZE  8192
 
 /* Default serial parameters */
-#define DEFAULT_SERIAL_BAUD	57600
-#define DEFAULT_SERIAL_FIFO	1
+#define DEFAULT_SERIAL_BAUD 57600
+#define DEFAULT_SERIAL_FIFO 1
 
 /* Do we need symbol prefixes? */
 #define ELF_SYM_PREFIX ""
@@ -70,29 +70,29 @@ void __crtend_pullin();
 
 /* Use this macro to determine the level of initialization you'd like in
    your program by default. The defaults line will be fine for most things. */
-#define KOS_INIT_FLAGS(flags)	uint32 __kos_init_flags = (flags)
+#define KOS_INIT_FLAGS(flags)   uint32 __kos_init_flags = (flags)
 
 extern uint32 __kos_init_flags;
 
 /* Defaults */
 #define INIT_DEFAULT \
-	(INIT_IRQ | INIT_THD_PREEMPT)
+    (INIT_IRQ | INIT_THD_PREEMPT)
 
 /* Define a romdisk for your program, if you'd like one */
-#define KOS_INIT_ROMDISK(rd)	void * __kos_romdisk = (rd)
+#define KOS_INIT_ROMDISK(rd)    void * __kos_romdisk = (rd)
 
 extern void * __kos_romdisk;
 
 /* State that you don't want a romdisk */
-#define KOS_INIT_ROMDISK_NONE	NULL
+#define KOS_INIT_ROMDISK_NONE   NULL
 
 /* Constants for the above */
-#define INIT_NONE		0x0000		/* Kernel enables */
-#define INIT_IRQ		0x0001
-#define INIT_THD_PREEMPT	0x0002
-#define INIT_NET		0x0004
-#define INIT_MALLOCSTATS	0x0008
-#define INIT_QUIET		0x0010
+#define INIT_NONE       0x0000      /* Kernel enables */
+#define INIT_IRQ        0x0001
+#define INIT_THD_PREEMPT    0x0002
+#define INIT_NET        0x0004
+#define INIT_MALLOCSTATS    0x0008
+#define INIT_QUIET      0x0010
 
 /* Call this function to remove all arch-specific traces of a process */
 struct kprocess;
@@ -100,8 +100,8 @@ void arch_remove_process(struct kprocess * proc);
 
 /* ia32 specific sleep mode function */
 #define arch_sleep() do { \
-		__asm__ __volatile__("hlt"); \
-	} while(0)
+        __asm__ __volatile__("hlt"); \
+    } while(0)
 
 /* ia32 specific function to get the return address from the current function */
 #define arch_get_ret_addr() (0)
@@ -125,5 +125,5 @@ void arch_remove_process(struct kprocess * proc);
 
 __END_DECLS
 
-#endif	/* __ARCH_ARCH_H */
+#endif  /* __ARCH_ARCH_H */
 

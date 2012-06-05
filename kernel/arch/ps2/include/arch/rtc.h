@@ -18,5 +18,5 @@ time_t rtc_unix_secs();
 
 __END_DECLS
 
-#endif	/* __ARCH_RTC_H */
+#endif  /* __ARCH_RTC_H */
 

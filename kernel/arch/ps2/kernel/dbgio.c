@@ -37,9 +37,9 @@ void dbgio_disable() { }
 
 /* Set another function to capture all debug output */
 dbgio_printk_func dbgio_set_printk(dbgio_printk_func func) {
-	dbgio_printk_func rv = dbgio_printk;
-	dbgio_printk = func;
-	return rv;
+    dbgio_printk_func rv = dbgio_printk;
+    dbgio_printk = func;
+    return rv;
 }
 
 /* This should probably hook up to a ps2-load-ip module at some point */
@@ -47,27 +47,30 @@ static uint32 * ps2lip_block;
 static int (*ps2lip_syscall)(int code, ...);
 
 void dbgio_init() {
-	dbgio_printk = dbgio_null_write;
+    dbgio_printk = dbgio_null_write;
 
-	if (!ps2lip_block) {
-		ps2lip_block = (uint32 *)((uint32 *)0x81fff800)[0];
-		if (ps2lip_block == NULL)
-			return;
-		if (ps2lip_block[0] != 0xdeadbeef) {
-			ps2lip_block = NULL;
-			return;
-		}
-	}
+    if(!ps2lip_block) {
+        ps2lip_block = (uint32 *)((uint32 *)0x81fff800)[0];
 
-	ps2lip_syscall = (int (*)(int, ...))ps2lip_block[2];
+        if(ps2lip_block == NULL)
+            return;
 
-	dbgio_set_printk(dbgio_write_str);
+        if(ps2lip_block[0] != 0xdeadbeef) {
+            ps2lip_block = NULL;
+            return;
+        }
+    }
+
+    ps2lip_syscall = (int (*)(int, ...))ps2lip_block[2];
+
+    dbgio_set_printk(dbgio_write_str);
 }
 
 void dbgio_write(int c) {
-	char str[2] = { c, 0 };
-	if (ps2lip_syscall != NULL)
-		ps2lip_syscall(14, str);
+    char str[2] = { c, 0 };
+
+    if(ps2lip_syscall != NULL)
+        ps2lip_syscall(14, str);
 }
 
 /* Flush all FIFO'd bytes out of the serial port buffer */
@@ -76,22 +79,23 @@ void dbgio_flush() {
 
 /* Send an entire buffer */
 void dbgio_write_buffer(const uint8 *data, int len) {
-	while (len-- > 0)
-		dbgio_write(*data++);
+    while(len-- > 0)
+        dbgio_write(*data++);
 }
 
 /* Send an entire buffer */
 void dbgio_write_buffer_xlat(const uint8 *data, int len) {
-	while (len-- > 0) {
-		if (*data == '\n')
-			dbgio_write('\r');
-		dbgio_write(*data++);
-	}
+    while(len-- > 0) {
+        if(*data == '\n')
+            dbgio_write('\r');
+
+        dbgio_write(*data++);
+    }
 }
 
 /* Send a string (null-terminated) */
 void dbgio_write_str(const char *str) {
-	dbgio_write_buffer_xlat((const uint8*)str, strlen(str));
+    dbgio_write_buffer_xlat((const uint8*)str, strlen(str));
 }
 
 /* Null write-string function for pre-init */
@@ -100,7 +104,7 @@ void dbgio_null_write(const char *str) {
 
 /* Read one char from the serial port (-1 if nothing to read) */
 int dbgio_read() {
-	return -1;
+    return -1;
 }
 
 /* Read an entire buffer (block) */
@@ -112,21 +116,21 @@ static char printf_buf[1024];
 static spinlock_t lock = SPINLOCK_INITIALIZER;
 
 int dbgio_printf(const char *fmt, ...) {
-	va_list args;
-	int i;
+    va_list args;
+    int i;
 
-	if (!irq_inside_int())
-		spinlock_lock(&lock);
+    if(!irq_inside_int())
+        spinlock_lock(&lock);
 
-	va_start(args, fmt);
-	i = vsprintf(printf_buf, fmt, args);
-	va_end(args);
+    va_start(args, fmt);
+    i = vsprintf(printf_buf, fmt, args);
+    va_end(args);
 
-	dbgio_printk(printf_buf);
+    dbgio_printk(printf_buf);
 
-	if (!irq_inside_int())
-		spinlock_unlock(&lock);
+    if(!irq_inside_int())
+        spinlock_unlock(&lock);
 
-	return i;
+    return i;
 }
 

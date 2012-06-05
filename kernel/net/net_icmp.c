@@ -53,7 +53,7 @@ Message types that are not implemented yet (if ever):
 
 static void icmp_default_echo_cb(const uint8 *ip, uint16 seq, uint64 delta_us,
                                  uint8 ttl, const uint8* data, int data_sz) {
-    if(delta_us != (uint64)-1) {
+    if(delta_us != (uint64) - 1) {
         printf("%d bytes from %d.%d.%d.%d: icmp_seq=%d ttl=%d time=%.3f ms\n",
                data_sz, ip[0], ip[1], ip[2], ip[3], seq, ttl,
                delta_us / 1000.0);
@@ -79,8 +79,8 @@ static void net_icmp_input_0(netif_t *src, ip_hdr_t *ip, icmp_hdr_t *icmp,
     /* Read back the time if we have it */
     if(s >= sizeof(icmp_hdr_t) + 8) {
         otmr = ((uint64)d[8] << 56) | ((uint64)d[9] << 48) |
-            ((uint64)d[10] << 40) | ((uint64)d[11] << 32) |
-            (d[12] << 24) | (d[13] << 16) | (d[14] << 8) | (d[15]);
+               ((uint64)d[10] << 40) | ((uint64)d[11] << 32) |
+               (d[12] << 24) | (d[13] << 16) | (d[14] << 8) | (d[15]);
         net_icmp_echo_cb((uint8 *)&ip->src, seq, tmr - otmr, ip->ttl, d, s);
     }
     else {
@@ -115,7 +115,7 @@ int net_icmp_input(netif_t *src, ip_hdr_t *ip, const uint8 *d, int s) {
     /* Check the ICMP checksum */
     i = net_ipv4_checksum(d, s, 0);
 
-    if (i) {
+    if(i) {
         dbglog(DBG_KDEBUG, "net_icmp: icmp with invalid checksum\n");
         return -1;
     }

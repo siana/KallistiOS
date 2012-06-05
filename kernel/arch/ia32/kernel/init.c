@@ -18,20 +18,20 @@
 #include <kos/net.h>
 
 void arch_abort() {
-	dbgio_printk("Halted.\n");
-	asm("cli");
-	asm("hlt");
+    dbgio_printk("Halted.\n");
+    asm("cli");
+    asm("hlt");
 }
 
 void arch_reboot() {
 }
 
 void arch_exit() {
-	arch_abort();
+    arch_abort();
 }
 
 void arch_remove_process(kprocess_t * proc) {
-	irq_remove_process(proc);
+    irq_remove_process(proc);
 }
 
 extern const char banner[];
@@ -39,71 +39,73 @@ extern uint8 edata, end;
 int main(int argc, char **argv);
 
 int arch_main() {
-	// Clear out BSS
-	uint8 *bss_start = (uint8 *)(&edata);
-	uint8 *bss_end = (uint8 *)(&end);
-	memset(bss_start, 0, bss_end - bss_start);
+    // Clear out BSS
+    uint8 *bss_start = (uint8 *)(&edata);
+    uint8 *bss_end = (uint8 *)(&end);
+    memset(bss_start, 0, bss_end - bss_start);
 
-	// Ensure we pull in crtend.c
-	__crtend_pullin();
+    // Ensure we pull in crtend.c
+    __crtend_pullin();
 
-	// Print out a welcome banner
-	dbgio_init();
-	if (__kos_init_flags & INIT_QUIET) {
-		dbgio_set_printk(dbgio_null_write);
-	} else {
-		dbgio_printk("\n--\n");
-		dbgio_printk(banner);
-	}
+    // Print out a welcome banner
+    dbgio_init();
 
-	// Initialize memory management
-	mm_init();
+    if(__kos_init_flags & INIT_QUIET) {
+        dbgio_set_printk(dbgio_null_write);
+    }
+    else {
+        dbgio_printk("\n--\n");
+        dbgio_printk(banner);
+    }
 
-	// Setup hardware basics
-	irq_init();
-	dbgio_init_2();
-	timer_init();
-	timer_ms_enable();
-	rtc_init();
+    // Initialize memory management
+    mm_init();
 
-	// Switch on interrupts
-	irq_enable();
+    // Setup hardware basics
+    irq_init();
+    dbgio_init_2();
+    timer_init();
+    timer_ms_enable();
+    rtc_init();
 
-	// Threads
-	if (__kos_init_flags & INIT_THD_PREEMPT)
-		thd_init(THD_MODE_PREEMPT);
-	else
-		thd_init(THD_MODE_COOP);
+    // Switch on interrupts
+    irq_enable();
 
-	// Mark a few regions unusable (thanks IBM!)
-	// XXX Can't do this anymore, need to use the MMU.
-	// mm_palloc(0x000a0000, 0x60000/PAGESIZE, _local_process);
+    // Threads
+    if(__kos_init_flags & INIT_THD_PREEMPT)
+        thd_init(THD_MODE_PREEMPT);
+    else
+        thd_init(THD_MODE_COOP);
 
-	// VFS facilities
-	nmmgr_init();
-	fs_init();
-	fs_romdisk_init();
-	fs_pty_init();
+    // Mark a few regions unusable (thanks IBM!)
+    // XXX Can't do this anymore, need to use the MMU.
+    // mm_palloc(0x000a0000, 0x60000/PAGESIZE, _local_process);
 
-	if (__kos_romdisk != NULL) {
-		fs_romdisk_mount("/rd", __kos_romdisk);
-	}
+    // VFS facilities
+    nmmgr_init();
+    fs_init();
+    fs_romdisk_init();
+    fs_pty_init();
 
-	// Enable IRQs to start the whole shebang rolling
-	if (__kos_init_flags & INIT_IRQ)
-		irq_enable();
+    if(__kos_romdisk != NULL) {
+        fs_romdisk_mount("/rd", __kos_romdisk);
+    }
 
-	// Enable networking
-	net_init();
+    // Enable IRQs to start the whole shebang rolling
+    if(__kos_init_flags & INIT_IRQ)
+        irq_enable();
 
-	// Run ctors
-	arch_ctors();
+    // Enable networking
+    net_init();
 
-	// Call main.
-	main(0, NULL);
+    // Run ctors
+    arch_ctors();
 
-	// Call kernel exit.
-	arch_exit();
+    // Call main.
+    main(0, NULL);
 
-	return 0;
+    // Call kernel exit.
+    arch_exit();
+
+    return 0;
 }

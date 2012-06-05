@@ -16,43 +16,43 @@ __BEGIN_DECLS
 // These macros determine if the port number is small enough to do it
 // directly. If so it save some code space and registers.
 #define inb(port) ({ \
-	uint8 _data; \
-	if (((port) & 0xffff) < 0x100) \
-		_data = inbc(port); \
-	else \
-		_data = inbv(port); \
-	_data; })
+        uint8 _data; \
+        if (((port) & 0xffff) < 0x100) \
+            _data = inbc(port); \
+        else \
+            _data = inbv(port); \
+        _data; })
 
 #define outb(port, data) ({ \
-	if (((port) & 0xffff) < 0x100) \
-		outbc(port, data); \
-	else \
-		outbv(port, data); })
+        if (((port) & 0xffff) < 0x100) \
+            outbc(port, data); \
+        else \
+            outbv(port, data); })
 
 static inline uint8 inbc(int port) {
-	uint8 data;
+    uint8 data;
 
-	asm volatile("inb %1,%0" : "=a" (data) : "id" ((uint16)port));
-	return data;
+    asm volatile("inb %1,%0" : "=a"(data) : "id"((uint16)port));
+    return data;
 }
 
 static inline void outbc(int port, uint8 data) {
-	asm volatile("outb %0,%1" : : "a" (data), "id" ((uint16)port));
+    asm volatile("outb %0,%1" : : "a"(data), "id"((uint16)port));
 }
 
 static inline uint8 inbv(int port) {
-	uint8 data;
+    uint8 data;
 
-	asm volatile("inb %%dx,%0" : "=a" (data) : "d" ((uint16)port));
-	return data;
+    asm volatile("inb %%dx,%0" : "=a"(data) : "d"((uint16)port));
+    return data;
 }
 
 static inline void outbv(int port, uint8 data) {
-	asm volatile("outb %0,%%dx" : : "a" (data), "d" ((uint16)port));
+    asm volatile("outb %0,%%dx" : : "a"(data), "d"((uint16)port));
 }
 
 
 __END_DECLS
 
-#endif	/* __IA32_PORTS_H */
+#endif  /* __IA32_PORTS_H */
 

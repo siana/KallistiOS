@@ -15,9 +15,9 @@
 #include <GL/glu.h>
 #include <math.h>
 
-GLfloat xrot;	/* X Rotation */
-GLfloat yrot;	/* Y Rotation */
-GLfloat zrot;	/* Z Rotation */
+GLfloat xrot;   /* X Rotation */
+GLfloat yrot;   /* Y Rotation */
+GLfloat zrot;   /* Z Rotation */
 
 GLuint texture[1];
 
@@ -27,140 +27,174 @@ extern unsigned char fruit_end[];
 
 /* Load a texture and glKosTex2D */
 static int loadtxr() {
-	GLuint size;
-	pvr_ptr_t txaddr;
+    GLuint size;
+    pvr_ptr_t txaddr;
 
-	size = fruit_end - fruit;
-	txaddr = pvr_mem_malloc(size);
-	if (txaddr == NULL)
-		return -1;
+    size = fruit_end - fruit;
+    txaddr = pvr_mem_malloc(size);
 
-	/* all writes to vram must be 16/32 bit */
-	memcpy2(txaddr, fruit, size);
+    if(txaddr == NULL)
+        return -1;
 
-	glGenTextures(1, texture);
-	glBindTexture(GL_TEXTURE_2D, texture[0]);
-	glKosTex2D(GL_RGB565_TWID | GL_VQ_ENABLE, 512, 512, txaddr);
-	return 0;
+    /* all writes to vram must be 16/32 bit */
+    memcpy2(txaddr, fruit, size);
+
+    glGenTextures(1, texture);
+    glBindTexture(GL_TEXTURE_2D, texture[0]);
+    glKosTex2D(GL_RGB565_TWID | GL_VQ_ENABLE, 512, 512, txaddr);
+    return 0;
 }
 
 void draw_gl(void) {
 
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-	glLoadIdentity();
-	glTranslatef(0.0f, 0.0f, -5.0f);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    glLoadIdentity();
+    glTranslatef(0.0f, 0.0f, -5.0f);
 
-	glRotatef(xrot, 1.0f, 0.0f, 0.0f);
-	glRotatef(yrot, 0.0f, 1.0f, 0.0f);
-	glRotatef(zrot, 0.0f, 0.0f, 1.0f);
+    glRotatef(xrot, 1.0f, 0.0f, 0.0f);
+    glRotatef(yrot, 0.0f, 1.0f, 0.0f);
+    glRotatef(zrot, 0.0f, 0.0f, 1.0f);
 
-	glBindTexture(GL_TEXTURE_2D, texture[0]);
+    glBindTexture(GL_TEXTURE_2D, texture[0]);
 
-	glBegin(GL_QUADS);
+    glBegin(GL_QUADS);
 
-		/* Front Face */
-		glColor3f(1.0f, 1.0f, 1.0f);
-		glTexCoord2f(0.0f, 0.0f); glVertex3f(-1.0f, -1.0f,  1.0f);
-		glTexCoord2f(1.0f, 0.0f); glVertex3f( 1.0f, -1.0f,  1.0f);
-		glTexCoord2f(1.0f, 1.0f); glVertex3f( 1.0f,  1.0f,  1.0f);
-		glTexCoord2f(0.0f, 1.0f); glVertex3f(-1.0f,  1.0f,  1.0f);
+    /* Front Face */
+    glColor3f(1.0f, 1.0f, 1.0f);
+    glTexCoord2f(0.0f, 0.0f);
+    glVertex3f(-1.0f, -1.0f,  1.0f);
+    glTexCoord2f(1.0f, 0.0f);
+    glVertex3f(1.0f, -1.0f,  1.0f);
+    glTexCoord2f(1.0f, 1.0f);
+    glVertex3f(1.0f,  1.0f,  1.0f);
+    glTexCoord2f(0.0f, 1.0f);
+    glVertex3f(-1.0f,  1.0f,  1.0f);
 
-		/* Back Face */
-		glColor3f(1.0f, 1.0f, 1.0f);
-		glTexCoord2f(1.0f, 0.0f); glVertex3f(-1.0f, -1.0f, -1.0f);
-		glTexCoord2f(1.0f, 1.0f); glVertex3f(-1.0f,  1.0f, -1.0f);
-		glTexCoord2f(0.0f, 1.0f); glVertex3f( 1.0f,  1.0f, -1.0f);
-		glTexCoord2f(0.0f, 0.0f); glVertex3f( 1.0f, -1.0f, -1.0f);
+    /* Back Face */
+    glColor3f(1.0f, 1.0f, 1.0f);
+    glTexCoord2f(1.0f, 0.0f);
+    glVertex3f(-1.0f, -1.0f, -1.0f);
+    glTexCoord2f(1.0f, 1.0f);
+    glVertex3f(-1.0f,  1.0f, -1.0f);
+    glTexCoord2f(0.0f, 1.0f);
+    glVertex3f(1.0f,  1.0f, -1.0f);
+    glTexCoord2f(0.0f, 0.0f);
+    glVertex3f(1.0f, -1.0f, -1.0f);
 
-		/* Top Face */
-		glColor3f(0.0f, 1.0f, 0.0f);
-		glTexCoord2f(0.0f, 1.0f); glVertex3f(-1.0f,  1.0f, -1.0f);
-		glTexCoord2f(0.0f, 0.0f); glVertex3f(-1.0f,  1.0f,  1.0f);
-		glTexCoord2f(1.0f, 0.0f); glVertex3f( 1.0f,  1.0f,  1.0f);
-		glTexCoord2f(1.0f, 1.0f); glVertex3f( 1.0f,  1.0f, -1.0f);
+    /* Top Face */
+    glColor3f(0.0f, 1.0f, 0.0f);
+    glTexCoord2f(0.0f, 1.0f);
+    glVertex3f(-1.0f,  1.0f, -1.0f);
+    glTexCoord2f(0.0f, 0.0f);
+    glVertex3f(-1.0f,  1.0f,  1.0f);
+    glTexCoord2f(1.0f, 0.0f);
+    glVertex3f(1.0f,  1.0f,  1.0f);
+    glTexCoord2f(1.0f, 1.0f);
+    glVertex3f(1.0f,  1.0f, -1.0f);
 
-		/* Bottom Face */
-		glColor3f(1.0f, 0.0f, 0.0f);
-		glTexCoord2f(1.0f, 1.0f); glVertex3f(-1.0f, -1.0f, -1.0f);
-		glTexCoord2f(0.0f, 1.0f); glVertex3f( 1.0f, -1.0f, -1.0f);
-		glTexCoord2f(0.0f, 0.0f); glVertex3f( 1.0f, -1.0f,  1.0f);
-		glTexCoord2f(1.0f, 0.0f); glVertex3f(-1.0f, -1.0f,  1.0f);
+    /* Bottom Face */
+    glColor3f(1.0f, 0.0f, 0.0f);
+    glTexCoord2f(1.0f, 1.0f);
+    glVertex3f(-1.0f, -1.0f, -1.0f);
+    glTexCoord2f(0.0f, 1.0f);
+    glVertex3f(1.0f, -1.0f, -1.0f);
+    glTexCoord2f(0.0f, 0.0f);
+    glVertex3f(1.0f, -1.0f,  1.0f);
+    glTexCoord2f(1.0f, 0.0f);
+    glVertex3f(-1.0f, -1.0f,  1.0f);
 
-		/* Right face */
-		glColor3f(0.0f, 1.0f, 0.0f); glTexCoord2f(1.0f, 0.0f); glVertex3f( 1.0f, -1.0f, -1.0f);
-		glColor3f(0.3f, 0.5f, 1.0f); glTexCoord2f(1.0f, 1.0f); glVertex3f( 1.0f,  1.0f, -1.0f);
-		glColor3f(1.0f, 0.3f, 0.5f); glTexCoord2f(0.0f, 1.0f); glVertex3f( 1.0f,  1.0f,  1.0f);
-		glColor3f(0.5f, 0.5f, 0.5f); glTexCoord2f(0.0f, 0.0f); glVertex3f( 1.0f, -1.0f,  1.0f);
+    /* Right face */
+    glColor3f(0.0f, 1.0f, 0.0f);
+    glTexCoord2f(1.0f, 0.0f);
+    glVertex3f(1.0f, -1.0f, -1.0f);
+    glColor3f(0.3f, 0.5f, 1.0f);
+    glTexCoord2f(1.0f, 1.0f);
+    glVertex3f(1.0f,  1.0f, -1.0f);
+    glColor3f(1.0f, 0.3f, 0.5f);
+    glTexCoord2f(0.0f, 1.0f);
+    glVertex3f(1.0f,  1.0f,  1.0f);
+    glColor3f(0.5f, 0.5f, 0.5f);
+    glTexCoord2f(0.0f, 0.0f);
+    glVertex3f(1.0f, -1.0f,  1.0f);
 
-		/* Left Face */
-		glColor3f(1.0f, 0.0f, 0.0f); glTexCoord2f(0.0f, 0.0f); glVertex3f(-1.0f, -1.0f, -1.0f);
-		glColor3f(1.0f, 1.0f, 0.0f); glTexCoord2f(1.0f, 0.0f); glVertex3f(-1.0f, -1.0f,  1.0f);
-		glColor3f(0.0f, 1.0f, 1.0f); glTexCoord2f(1.0f, 1.0f); glVertex3f(-1.0f,  1.0f,  1.0f);
-		glColor3f(0.0f, 0.0f, 1.0f); glTexCoord2f(0.0f, 1.0f); glVertex3f(-1.0f,  1.0f, -1.0f);
+    /* Left Face */
+    glColor3f(1.0f, 0.0f, 0.0f);
+    glTexCoord2f(0.0f, 0.0f);
+    glVertex3f(-1.0f, -1.0f, -1.0f);
+    glColor3f(1.0f, 1.0f, 0.0f);
+    glTexCoord2f(1.0f, 0.0f);
+    glVertex3f(-1.0f, -1.0f,  1.0f);
+    glColor3f(0.0f, 1.0f, 1.0f);
+    glTexCoord2f(1.0f, 1.0f);
+    glVertex3f(-1.0f,  1.0f,  1.0f);
+    glColor3f(0.0f, 0.0f, 1.0f);
+    glTexCoord2f(0.0f, 1.0f);
+    glVertex3f(-1.0f,  1.0f, -1.0f);
 
-	glEnd();
+    glEnd();
 
-	xrot+=0.3f;
-	yrot+=0.2f;
-	zrot+=0.4f;
+    xrot += 0.3f;
+    yrot += 0.2f;
+    zrot += 0.4f;
 }
 
 int main(int argc, char **argv) {
-	maple_device_t *cont;
-	cont_state_t *state;
+    maple_device_t *cont;
+    cont_state_t *state;
 
-	/* Initialize KOS */
-	pvr_init_defaults();
+    /* Initialize KOS */
+    pvr_init_defaults();
 
-	/* Get basic stuff initialized */
-	glKosInit();
+    /* Get basic stuff initialized */
+    glKosInit();
 
-	glMatrixMode(GL_PROJECTION);
-	glLoadIdentity();
-	gluPerspective(45.0f, 640.0f/480.0f, 0.1f, 100.0f);
-	glMatrixMode(GL_MODELVIEW);
-	glLoadIdentity();
+    glMatrixMode(GL_PROJECTION);
+    glLoadIdentity();
+    gluPerspective(45.0f, 640.0f / 480.0f, 0.1f, 100.0f);
+    glMatrixMode(GL_MODELVIEW);
+    glLoadIdentity();
 
-	glEnable(GL_TEXTURE_2D);
-	glShadeModel(GL_SMOOTH);
-	glClearColor(0.0f, 0.0f, 0.0f, 0.5f);
-	glClearDepth(1.0f);
-	glEnable(GL_DEPTH_TEST);
-	glDepthFunc(GL_LEQUAL);
+    glEnable(GL_TEXTURE_2D);
+    glShadeModel(GL_SMOOTH);
+    glClearColor(0.0f, 0.0f, 0.0f, 0.5f);
+    glClearDepth(1.0f);
+    glEnable(GL_DEPTH_TEST);
+    glDepthFunc(GL_LEQUAL);
 
-	/* Set up the texture */
-	if (loadtxr() < 0) {
-		printf("loadtxr() failed\n");
-		return 0;
-	}
+    /* Set up the texture */
+    if(loadtxr() < 0) {
+        printf("loadtxr() failed\n");
+        return 0;
+    }
 
-	while(1) {
-		cont = maple_enum_type(0, MAPLE_FUNC_CONTROLLER);
+    while(1) {
+        cont = maple_enum_type(0, MAPLE_FUNC_CONTROLLER);
 
-		if (!cont) {
-			printf("No controllers connected\n");
-			break;
-		}
+        if(!cont) {
+            printf("No controllers connected\n");
+            break;
+        }
 
-		/* Check key status */
-		state = (cont_state_t *)maple_dev_status(cont);
-		if (!state) {
-			printf("Error reading controller\n");
-			break;
-		}
+        /* Check key status */
+        state = (cont_state_t *)maple_dev_status(cont);
 
-		if (state->buttons & CONT_START)
-			break;
+        if(!state) {
+            printf("Error reading controller\n");
+            break;
+        }
 
-		/* Begin frame */
-		glKosBeginFrame();
+        if(state->buttons & CONT_START)
+            break;
 
-		/* Draw the GL "scene" */
-		draw_gl();
+        /* Begin frame */
+        glKosBeginFrame();
 
-		/* Finish the frame */
-		glKosFinishFrame();
-	}
+        /* Draw the GL "scene" */
+        draw_gl();
 
-	return 0;
+        /* Finish the frame */
+        glKosFinishFrame();
+    }
+
+    return 0;
 }

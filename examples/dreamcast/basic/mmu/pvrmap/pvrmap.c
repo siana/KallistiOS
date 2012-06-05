@@ -14,53 +14,58 @@
 KOS_INIT_FLAGS(INIT_DEFAULT | INIT_MALLOCSTATS);
 
 int main(int argc, char **argv) {
-	mmucontext_t * cxt;
-	uint16 * vr;
-	int x, y, done = 0;
+    mmucontext_t * cxt;
+    uint16 * vr;
+    int x, y, done = 0;
 
-	/* Initialize MMU support */
-	mmu_init();
+    /* Initialize MMU support */
+    mmu_init();
 
-	/* Setup a context */
-	cxt = mmu_context_create(0);
-	mmu_use_table(cxt);
-	mmu_switch_context(cxt);
+    /* Setup a context */
+    cxt = mmu_context_create(0);
+    mmu_use_table(cxt);
+    mmu_switch_context(cxt);
 
-	/* Map the PVR video memory to 0 */
-	mmu_page_map(cxt, 0, 0x05000000 >> PAGESIZE_BITS, (8*1024*1024) >> PAGESIZE_BITS,
-		MMU_ALL_RDWR, MMU_NO_CACHE, 0, 1);
+    /* Map the PVR video memory to 0 */
+    mmu_page_map(cxt, 0, 0x05000000 >> PAGESIZE_BITS, (8 * 1024 * 1024) >> PAGESIZE_BITS,
+                 MMU_ALL_RDWR, MMU_NO_CACHE, 0, 1);
 
-	/* Draw a nice pattern to the NULL space */
-	vr = NULL;
-	for (y=0; y<480; y++) {
-		for (x=0; x<640; x++) {
-			int v = ((x*x+y*y) & 255);
-			if (v >= 128)
-				v = 127 - (v-128);
-			vr[y*640+x] = ((v >> 3) << 11)
-				| ((v >> 2) << 5)
-				| ((v >> 3) << 0);
-		}
-	}
+    /* Draw a nice pattern to the NULL space */
+    vr = NULL;
 
-	/* Draw some text */
-	bfont_draw_str(vr + 20*640+20, 640, 0, "Press START!");
+    for(y = 0; y < 480; y++) {
+        for(x = 0; x < 640; x++) {
+            int v = ((x * x + y * y) & 255);
 
-	/* Wait for start */
-	while (!done) {
-		MAPLE_FOREACH_BEGIN(MAPLE_FUNC_CONTROLLER, cont_state_t, st)
-			if (st->buttons & CONT_START)
-				done = 1;
-		MAPLE_FOREACH_END()
-	}
+            if(v >= 128)
+                v = 127 - (v - 128);
 
-	/* Destroy the context */
-	mmu_context_destroy(cxt);
+            vr[y * 640 + x] = ((v >> 3) << 11)
+                              | ((v >> 2) << 5)
+                              | ((v >> 3) << 0);
+        }
+    }
 
-	/* Shutdown MMU support */
-	mmu_shutdown();
+    /* Draw some text */
+    bfont_draw_str(vr + 20 * 640 + 20, 640, 0, "Press START!");
 
-	return 0;
+    /* Wait for start */
+    while(!done) {
+        MAPLE_FOREACH_BEGIN(MAPLE_FUNC_CONTROLLER, cont_state_t, st)
+
+        if(st->buttons & CONT_START)
+            done = 1;
+
+        MAPLE_FOREACH_END()
+    }
+
+    /* Destroy the context */
+    mmu_context_destroy(cxt);
+
+    /* Shutdown MMU support */
+    mmu_shutdown();
+
+    return 0;
 }
 
 

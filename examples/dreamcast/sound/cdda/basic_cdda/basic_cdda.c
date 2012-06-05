@@ -19,78 +19,93 @@ correctly yet ^_^;
 */
 
 int main(int argc, char **argv) {
-	maple_device_t	*addr;
-	cont_state_t	*st;
-	int		i;
-	int		done;
-	int		lvol, rvol, lpan, rpan;
+    maple_device_t  *addr;
+    cont_state_t    *st;
+    int     i;
+    int     done;
+    int     lvol, rvol, lpan, rpan;
 
-	/* Start the CDDA playing. Loop tracks 1-3, 4 times, and then stop */
-	cdrom_cdda_play(1, 3, 4, CDDA_TRACKS);
+    /* Start the CDDA playing. Loop tracks 1-3, 4 times, and then stop */
+    cdrom_cdda_play(1, 3, 4, CDDA_TRACKS);
 
-	/* Wait for a controller button */
-	done = 0;
-	lvol = rvol = 15;
-	lpan = 0; rpan = 31;
-	while (!done) {
-		i = 0;
-		while ( (addr = maple_enum_type(i++, MAPLE_FUNC_CONTROLLER)) ) {
-			/* Check for input */
-			st = (cont_state_t *)maple_dev_status(addr);
+    /* Wait for a controller button */
+    done = 0;
+    lvol = rvol = 15;
+    lpan = 0;
+    rpan = 31;
 
-			/* Exit */
-			if (st->buttons & CONT_START) {
-				done = 1;
-				break;
-			}
+    while(!done) {
+        i = 0;
 
-			/* Left channel */
-			if (st->buttons & CONT_DPAD_UP)
-				lvol++;
-			if (st->buttons & CONT_DPAD_DOWN)
-				lvol--;
-			if (st->buttons & CONT_DPAD_LEFT)
-				lpan--;
-			if (st->buttons & CONT_DPAD_RIGHT)
-				lpan++;
+        while((addr = maple_enum_type(i++, MAPLE_FUNC_CONTROLLER))) {
+            /* Check for input */
+            st = (cont_state_t *)maple_dev_status(addr);
 
-			/* Right channel */
-			if (st->buttons & CONT_B)
-				rvol++;
-			if (st->buttons & CONT_A)
-				rvol--;
-			if (st->buttons & CONT_X)
-				rpan--;
-			if (st->buttons & CONT_Y)
-				rpan++;
+            /* Exit */
+            if(st->buttons & CONT_START) {
+                done = 1;
+                break;
+            }
 
-			/* Normalize */
-			if (lvol < 0) lvol = 0;
-			if (lvol > 15) lvol = 15;
-			if (lpan < -16) lpan = -16;
-			if (lpan > 31) lpan = 31;
+            /* Left channel */
+            if(st->buttons & CONT_DPAD_UP)
+                lvol++;
 
-			if (rvol < 0) rvol = 0;
-			if (rvol > 15) rvol = 15;
-			if (rpan < -16) rpan = -16;
-			if (rpan > 31) rpan = 31;
+            if(st->buttons & CONT_DPAD_DOWN)
+                lvol--;
 
-			/* Set pan/vol */
-			spu_cdda_volume(lvol, rvol);
-			spu_cdda_pan(lpan, rpan);
+            if(st->buttons & CONT_DPAD_LEFT)
+                lpan--;
 
-			/* Sleep a little */
-			usleep(100 * 1000);
-		}
-	}
+            if(st->buttons & CONT_DPAD_RIGHT)
+                lpan++;
 
-	/* Stop the CDDA */
-	cdrom_cdda_pause();
+            /* Right channel */
+            if(st->buttons & CONT_B)
+                rvol++;
 
-	/* Spin down the CD */
-	cdrom_spin_down();
+            if(st->buttons & CONT_A)
+                rvol--;
 
-	return 0;
+            if(st->buttons & CONT_X)
+                rpan--;
+
+            if(st->buttons & CONT_Y)
+                rpan++;
+
+            /* Normalize */
+            if(lvol < 0) lvol = 0;
+
+            if(lvol > 15) lvol = 15;
+
+            if(lpan < -16) lpan = -16;
+
+            if(lpan > 31) lpan = 31;
+
+            if(rvol < 0) rvol = 0;
+
+            if(rvol > 15) rvol = 15;
+
+            if(rpan < -16) rpan = -16;
+
+            if(rpan > 31) rpan = 31;
+
+            /* Set pan/vol */
+            spu_cdda_volume(lvol, rvol);
+            spu_cdda_pan(lpan, rpan);
+
+            /* Sleep a little */
+            usleep(100 * 1000);
+        }
+    }
+
+    /* Stop the CDDA */
+    cdrom_cdda_pause();
+
+    /* Spin down the CD */
+    cdrom_spin_down();
+
+    return 0;
 }
 
 

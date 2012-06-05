@@ -23,32 +23,33 @@ int dbglog_level = DBG_KDEBUG;
 
 /* Set debug level */
 void dbglog_set_level(int level) {
-	dbglog_level = level;
+    dbglog_level = level;
 }
 
 /* Kernel debug logging facility */
 void dbglog(int level, const char *fmt, ...) {
-	va_list args;
-	int i;
+    va_list args;
+    int i;
 
-	/* If this log level is blocked out, don't even bother */
-	if (level > dbglog_level)
-		return;
+    /* If this log level is blocked out, don't even bother */
+    if(level > dbglog_level)
+        return;
 
-	/* We only try to lock if the message isn't urgent */
-	if (level >= DBG_ERROR && !irq_inside_int())
-		spinlock_lock(&mutex);
-	va_start(args, fmt);
-	i = vsprintf(printf_buf, fmt, args);
-	va_end(args);
+    /* We only try to lock if the message isn't urgent */
+    if(level >= DBG_ERROR && !irq_inside_int())
+        spinlock_lock(&mutex);
 
-	if (irq_inside_int())
-		dbgio_write_str(printf_buf);
-	else
-		fs_write(1, printf_buf, strlen(printf_buf));
+    va_start(args, fmt);
+    i = vsprintf(printf_buf, fmt, args);
+    va_end(args);
 
-	if (level >= DBG_ERROR && !irq_inside_int())
-		spinlock_unlock(&mutex);
+    if(irq_inside_int())
+        dbgio_write_str(printf_buf);
+    else
+        fs_write(1, printf_buf, strlen(printf_buf));
+
+    if(level >= DBG_ERROR && !irq_inside_int())
+        spinlock_unlock(&mutex);
 }
 
 

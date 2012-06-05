@@ -68,10 +68,10 @@ typedef struct klibrary {
     LIST_ENTRY(klibrary) list;
 
     /** \brief  Library ID (assigned at runtime). */
-    libid_t	libid;
+    libid_t libid;
 
     /** \brief  Library flags. */
-    uint32	flags;
+    uint32  flags;
 
     /** \brief  ELF image for this library.
 
@@ -108,7 +108,7 @@ typedef struct klibrary {
 
         \return             The library's version number
     */
-    uint32 (*lib_get_version)();
+    uint32(*lib_get_version)();
 
     /** \brief  Open a library.
 
@@ -271,5 +271,5 @@ void library_shutdown();
 
 __END_DECLS
 
-#endif	/* __KOS_LIBRARY_H */
+#endif  /* __KOS_LIBRARY_H */
 

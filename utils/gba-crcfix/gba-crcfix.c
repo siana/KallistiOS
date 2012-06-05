@@ -19,81 +19,85 @@
 
 static void fix_header(uint8_t *header) {
 
-	uint8_t sum = 0;
-	uint8_t count = 0xbc - 0xa0;
+    uint8_t sum = 0;
+    uint8_t count = 0xbc - 0xa0;
 
-	/* complement check of 0xa0 - 0xbc */
-	header = header + 0xa0;
+    /* complement check of 0xa0 - 0xbc */
+    header = header + 0xa0;
 
-	while (count-- > 0) {
-		sum = sum - *header++;
-	}
+    while(count-- > 0) {
+        sum = sum - *header++;
+    }
 
-	sum = (sum - 0x19);
-	*header = sum;
+    sum = (sum - 0x19);
+    *header = sum;
 }
 
 static int process(const char *filename) {
 
-	FILE *fp;
-	uint8_t header[HEADER_SIZE];
+    FILE *fp;
+    uint8_t header[HEADER_SIZE];
 
-	fp = fopen(filename, "r+b");
-	if (fp == NULL) {
-		fprintf(stderr, "Failed to open %s for reading/writing\n", filename);
-		return -errno;
-	}
+    fp = fopen(filename, "r+b");
 
-	if (fread(header, 1, HEADER_SIZE, fp) != HEADER_SIZE) {
-		fclose(fp);
-		fprintf(stderr, "Error reading from %s\n", filename);
-		return -errno;
-	}
+    if(fp == NULL) {
+        fprintf(stderr, "Failed to open %s for reading/writing\n", filename);
+        return -errno;
+    }
 
-	fix_header(header);
-	if (fseek(fp, 0, SEEK_SET) < 0) {
-		fclose(fp);
-		fprintf(stderr, "Failed to rewind file %s\n", filename);
-		return -errno;
-	}
+    if(fread(header, 1, HEADER_SIZE, fp) != HEADER_SIZE) {
+        fclose(fp);
+        fprintf(stderr, "Error reading from %s\n", filename);
+        return -errno;
+    }
 
-	if (fwrite(header, 1, HEADER_SIZE, fp) != HEADER_SIZE) {
-		fclose(fp);
-		fprintf(stderr, "Error writing header back to file %s\n", filename);
-		return -errno;
-	}
+    fix_header(header);
 
-	fclose(fp);
-	return 0;
+    if(fseek(fp, 0, SEEK_SET) < 0) {
+        fclose(fp);
+        fprintf(stderr, "Failed to rewind file %s\n", filename);
+        return -errno;
+    }
+
+    if(fwrite(header, 1, HEADER_SIZE, fp) != HEADER_SIZE) {
+        fclose(fp);
+        fprintf(stderr, "Error writing header back to file %s\n", filename);
+        return -errno;
+    }
+
+    fclose(fp);
+    return 0;
 }
 
 static void usage(const char *ego) {
-	const char *name;
+    const char *name;
 
-	name = strrchr(ego, '/');
-	if (name == NULL)
-		name = ego;
-	else
-		name++;
+    name = strrchr(ego, '/');
 
-	printf("GBA Complement Check fix\n");
-	printf("Usage: %s file1 [file2...]\n", name);
+    if(name == NULL)
+        name = ego;
+    else
+        name++;
+
+    printf("GBA Complement Check fix\n");
+    printf("Usage: %s file1 [file2...]\n", name);
 }
 
 int main(int argc, char *argv[]) {
 
-	int i;
+    int i;
 
-	if (argc < 2) {
-		usage(argv[0]);
-		return 0;
-	}
+    if(argc < 2) {
+        usage(argv[0]);
+        return 0;
+    }
 
-	for (i=1; i<argc; i++) {
-		int ok = process(argv[i]);
-		if (ok != 0)
-			return ok;
-	}
+    for(i = 1; i < argc; i++) {
+        int ok = process(argv[i]);
 
-	return 0;
+        if(ok != 0)
+            return ok;
+    }
+
+    return 0;
 }

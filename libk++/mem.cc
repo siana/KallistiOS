@@ -19,45 +19,45 @@ extern "C" void *malloc(unsigned);
 
 #if defined(_arch_dreamcast)
 asm(
-".text\n"
-".global __ZdlPv\n"
-".global __Znwj\n"
-".global __ZdaPv\n"
-".global __Znaj\n"
-".extern _free\n"
-".extern _malloc\n"
-"__ZdlPv:\n"
-"__ZdaPv:\n"
-"	mov.l	freeaddr,r0\n"
-"	jmp	@r0\n"
-"	nop\n"
-".align 2\n"
-"freeaddr:	.long	_free\n"
-"__Znwj:\n"
-"__Znaj:\n"
-"	mov.l	mallocaddr,r0\n"
-"	jmp	@r0\n"
-"	nop\n"
-".align 2\n"
-"mallocaddr:	.long	_malloc\n"
+    ".text\n"
+    ".global __ZdlPv\n"
+    ".global __Znwj\n"
+    ".global __ZdaPv\n"
+    ".global __Znaj\n"
+    ".extern _free\n"
+    ".extern _malloc\n"
+    "__ZdlPv:\n"
+    "__ZdaPv:\n"
+    "	mov.l	freeaddr,r0\n"
+    "	jmp	@r0\n"
+    "	nop\n"
+    ".align 2\n"
+    "freeaddr:	.long	_free\n"
+    "__Znwj:\n"
+    "__Znaj:\n"
+    "	mov.l	mallocaddr,r0\n"
+    "	jmp	@r0\n"
+    "	nop\n"
+    ".align 2\n"
+    "mallocaddr:	.long	_malloc\n"
 );
 #endif
 
 /* void operator delete(void *ptr) {
-	if (ptr)
-		free(ptr);
+    if (ptr)
+        free(ptr);
 }
 
 void* operator new(size_t len) {
-	return malloc(len);
+    return malloc(len);
 }
 
 
 void operator delete[](void *ptr) {
-	::operator delete(ptr);
+    ::operator delete(ptr);
 }
 
 void* operator new[](size_t len) {
-	return ::operator new(len);
+    return ::operator new(len);
 } */
-                     
+

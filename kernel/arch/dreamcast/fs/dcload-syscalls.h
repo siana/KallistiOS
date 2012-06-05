@@ -44,41 +44,41 @@ extern int dcln_syscall_retval;
 extern unsigned char *dcln_syscall_data;
 
 typedef struct {
-  unsigned char id[4] __attribute__ ((packed));
-  unsigned int value0 __attribute__ ((packed));
-  unsigned int value1 __attribute__ ((packed));
-  unsigned int value2 __attribute__ ((packed));
+    unsigned char id[4] __attribute__((packed));
+    unsigned int value0 __attribute__((packed));
+    unsigned int value1 __attribute__((packed));
+    unsigned int value2 __attribute__((packed));
 } command_3int_t;
 
 typedef struct {
-  unsigned char id[4] __attribute__ ((packed));
-  unsigned int value0 __attribute__ ((packed));
-  unsigned int value1 __attribute__ ((packed));
-  unsigned char string[1] __attribute__ ((packed));
+    unsigned char id[4] __attribute__((packed));
+    unsigned int value0 __attribute__((packed));
+    unsigned int value1 __attribute__((packed));
+    unsigned char string[1] __attribute__((packed));
 } command_2int_string_t;
 
 typedef struct {
-  unsigned char id[4] __attribute__ ((packed));
-  unsigned int value0 __attribute__ ((packed));
+    unsigned char id[4] __attribute__((packed));
+    unsigned int value0 __attribute__((packed));
 } command_int_t;
 
 typedef struct {
-  unsigned char id[4] __attribute__ ((packed));
-  unsigned int value0 __attribute__ ((packed));
-  unsigned char string[1] __attribute__ ((packed));
+    unsigned char id[4] __attribute__((packed));
+    unsigned int value0 __attribute__((packed));
+    unsigned char string[1] __attribute__((packed));
 } command_int_string_t;
 
 typedef struct {
-  unsigned char id[4] __attribute__ ((packed));
-  unsigned char string[1] __attribute__ ((packed));
+    unsigned char id[4] __attribute__((packed));
+    unsigned char string[1] __attribute__((packed));
 } command_string_t;
 
 typedef struct {
-  unsigned char id[4] __attribute__ ((packed));
-  unsigned int value0 __attribute__ ((packed));
-  unsigned int value1 __attribute__ ((packed));
-  unsigned int value2 __attribute__ ((packed));
-  unsigned char string[1] __attribute__ ((packed));
+    unsigned char id[4] __attribute__((packed));
+    unsigned int value0 __attribute__((packed));
+    unsigned int value1 __attribute__((packed));
+    unsigned int value2 __attribute__((packed));
+    unsigned char string[1] __attribute__((packed));
 } command_3int_string_t;
 
 void dcln_build_send_packet(int command_len);

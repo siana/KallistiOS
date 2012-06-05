@@ -27,33 +27,34 @@ static void *sbrk_base;
 
 /* MM-wide initialization */
 int mm_init() {
-	int base = (int)(&end);
-	base = (base/4)*4 + 4;		/* longword align */
-	sbrk_base = (void*)base;
+    int base = (int)(&end);
+    base = (base / 4) * 4 + 4;  /* longword align */
+    sbrk_base = (void*)base;
 
-	return 0;
+    return 0;
 }
 
 /* Simple sbrk function */
 void* mm_sbrk(unsigned long increment) {
-	int old;
-	void *base = sbrk_base;
+    int old;
+    void *base = sbrk_base;
 
-	old = irq_disable();
+    old = irq_disable();
 
-	if (increment & 3)
-		increment = (increment + 4) & ~3;
-	sbrk_base += increment;
+    if(increment & 3)
+        increment = (increment + 4) & ~3;
 
-	if ( ((uint32)sbrk_base) >= (0x8d000000 - 65536) ) {
-		dbglog(DBG_DEAD, "Requested sbrk_base %p, was %p, diff %lu\n",
-			sbrk_base, base, increment);
-		panic("out of memory; about to run over kernel stack");
-	}
+    sbrk_base += increment;
 
-	irq_restore(old);
+    if(((uint32)sbrk_base) >= (0x8d000000 - 65536)) {
+        dbglog(DBG_DEAD, "Requested sbrk_base %p, was %p, diff %lu\n",
+               sbrk_base, base, increment);
+        panic("out of memory; about to run over kernel stack");
+    }
 
-	return base;
+    irq_restore(old);
+
+    return base;
 }
 
 

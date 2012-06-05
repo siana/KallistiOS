@@ -53,12 +53,12 @@ typedef vint8 vs8;
 typedef uint32 ptr_t;
 
 /* another format for type names */
-typedef unsigned char	u_char;
-typedef unsigned short	u_short;
-typedef unsigned int	u_int;
-typedef unsigned long	u_long;
-typedef unsigned short	ushort;
-typedef unsigned int	uint;
+typedef unsigned char   u_char;
+typedef unsigned short  u_short;
+typedef unsigned int    u_int;
+typedef unsigned long   u_long;
+typedef unsigned short  ushort;
+typedef unsigned int    uint;
 
 #if 0
 /* File-specific types */
@@ -75,5 +75,5 @@ typedef int handle_t;
 typedef handle_t tid_t;
 typedef handle_t prio_t;
 
-#endif	/* __ARCH_TYPES_H */
+#endif  /* __ARCH_TYPES_H */
 

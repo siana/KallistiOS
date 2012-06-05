@@ -50,9 +50,9 @@ netif_t *net_default_dev = NULL;
 /* Register a network device */
 int net_reg_device(netif_t *device) {
     /* Make sure it's not already registered */
-    if (device->flags & NETIF_REGISTERED) {
+    if(device->flags & NETIF_REGISTERED) {
         dbglog(DBG_WARNING, "net_reg_device: '%s' is already registered\n",
-              device->name);
+               device->name);
         return -1;
     }
 
@@ -75,7 +75,7 @@ int net_reg_device(netif_t *device) {
 /* Unregister a network device */
 int net_unreg_device(netif_t *device) {
     /* Make sure it really was registered */
-    if (!(device->flags & NETIF_REGISTERED)) {
+    if(!(device->flags & NETIF_REGISTERED)) {
         dbglog(DBG_WARNING, "net_unreg_device: '%s' isn't registered\n",
                device->name);
         return -1;
@@ -99,7 +99,7 @@ struct netif_list * net_get_if_list() {
 /* Init/shutdown */
 
 /* Set default */
-netif_t *net_set_default(netif_t *n)	{
+netif_t *net_set_default(netif_t *n)    {
     netif_t *olddev = net_default_dev;
 
     net_default_dev = n;
@@ -114,15 +114,15 @@ int net_dev_init() {
 
     LIST_FOREACH(cur, &net_if_list, if_list) {
         /* Make sure we have one */
-        if (cur->if_detect(cur) < 0)
+        if(cur->if_detect(cur) < 0)
             continue;
 
         /* Ok, we do -- initialize it */
-        if (cur->if_init(cur) < 0)
+        if(cur->if_init(cur) < 0)
             continue;
 
         /* It's initialized, so now enable it */
-        if (cur->if_start(cur) < 0) {
+        if(cur->if_start(cur) < 0) {
             cur->if_shutdown(cur);
             continue;
         }
@@ -148,7 +148,7 @@ int net_init() {
         return 0;
 
     /* Detect and potentially initialize devices */
-    if (net_dev_init() < 0)
+    if(net_dev_init() < 0)
         return -1;
 
     /* Initialize the network thread. */
@@ -231,10 +231,12 @@ void net_shutdown() {
 
     /* Shut down all activated network devices */
     LIST_FOREACH(cur, &net_if_list, if_list) {
-        if (cur->flags & NETIF_RUNNING && cur->if_stop)
+        if(cur->flags & NETIF_RUNNING && cur->if_stop)
             cur->if_stop(cur);
-        if (cur->flags & NETIF_INITIALIZED && cur->if_shutdown)
+
+        if(cur->flags & NETIF_INITIALIZED && cur->if_shutdown)
             cur->if_shutdown(cur);
+
         cur->flags &= ~NETIF_REGISTERED;
     }
 

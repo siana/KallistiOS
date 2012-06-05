@@ -33,25 +33,25 @@ __BEGIN_DECLS
     This timer is used for thread operation, and thus is off limits if you want
     that to work properly.
 */
-#define TMU0	0
+#define TMU0    0
 
 /** \brief  SH4 Timer 1.
 
     This timer is used for the timer_spin_sleep() function.
 */
-#define TMU1	1
+#define TMU1    1
 
 /** \brief  SH4 Timer 2.
 
     This timer is used by the various gettime functions in this header.
 */
-#define TMU2	2
+#define TMU2    2
 
 /** \brief  SH4 Watchdog Timer.
 
     KallistiOS does not currently support using this timer.
 */
-#define WDT	3
+#define WDT 3
 
 /** \brief  Which timer does the thread system use? */
 #define TIMER_ID TMU0
@@ -227,5 +227,5 @@ void timer_shutdown();
 
 __END_DECLS
 
-#endif	/* __ARCH_TIMER_H */
+#endif  /* __ARCH_TIMER_H */
 

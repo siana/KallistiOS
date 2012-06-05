@@ -132,8 +132,7 @@
     These are teh events that a modem event handler should be expected to
     receive at any given point in time.
 */
-typedef enum
-{
+typedef enum {
     /** \brief  The modem tried to establish a connection, but failed.*/
     MODEM_EVENT_CONNECTION_FAILED = 0,
 

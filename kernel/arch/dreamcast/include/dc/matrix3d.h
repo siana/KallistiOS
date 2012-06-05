@@ -89,7 +89,7 @@ void mat_scale(float x, float y, float z);
     \param  zfar            Far Z-plane.
 */
 void mat_perspective(float xcenter, float ycenter, float cot_fovy_2,
-	float znear, float zfar);
+                     float znear, float zfar);
 
 /** \brief  Set up a "camera".
 
@@ -104,6 +104,6 @@ void mat_lookat(const point_t * eye, const point_t * center, const vector_t * up
 
 __END_DECLS
 
-#endif	/* __KOS_MATRIX3D_H */
+#endif  /* __KOS_MATRIX3D_H */
 
 

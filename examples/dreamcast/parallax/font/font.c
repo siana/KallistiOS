@@ -19,45 +19,51 @@ KOS_INIT_FLAGS(INIT_DEFAULT | INIT_MALLOCSTATS);
 KOS_INIT_ROMDISK(romdisk);
 
 int main(int argc, char **argv) {
-	plx_font_t * fnt;
-	plx_fcxt_t * cxt;
-	int done = 0;
-	point_t w;
+    plx_font_t * fnt;
+    plx_fcxt_t * cxt;
+    int done = 0;
+    point_t w;
 
-	cont_btn_callback(0, CONT_START | CONT_A | CONT_B | CONT_X | CONT_Y, arch_exit);
+    cont_btn_callback(0, CONT_START | CONT_A | CONT_B | CONT_X | CONT_Y, arch_exit);
 
-	pvr_init_defaults();
+    pvr_init_defaults();
 
-	fnt = plx_font_load("/rd/axaxax.txf");
-	cxt = plx_fcxt_create(fnt, PVR_LIST_TR_POLY);
+    fnt = plx_font_load("/rd/axaxax.txf");
+    cxt = plx_fcxt_create(fnt, PVR_LIST_TR_POLY);
 
-	w.x = 30.0f;
-	w.y = 50.0f;
-	w.z = 10.0f;
-	while (!done) {
-		pvr_wait_ready();
-		pvr_scene_begin();
-		pvr_list_begin(PVR_LIST_OP_POLY);
-		pvr_list_begin(PVR_LIST_TR_POLY);
+    w.x = 30.0f;
+    w.y = 50.0f;
+    w.z = 10.0f;
 
-		plx_fcxt_begin(cxt);
-		plx_fcxt_setpos_pnt(cxt, &w);
-		plx_fcxt_draw(cxt, "This is a test!");
-		plx_spr_inp(256, 256, 320, 240, 20, 0xffffffff);	// texture test
-		plx_fcxt_end(cxt);
+    while(!done) {
+        pvr_wait_ready();
+        pvr_scene_begin();
+        pvr_list_begin(PVR_LIST_OP_POLY);
+        pvr_list_begin(PVR_LIST_TR_POLY);
 
-		pvr_scene_finish();
+        plx_fcxt_begin(cxt);
+        plx_fcxt_setpos_pnt(cxt, &w);
+        plx_fcxt_draw(cxt, "This is a test!");
+        plx_spr_inp(256, 256, 320, 240, 20, 0xffffffff);    // texture test
+        plx_fcxt_end(cxt);
 
-		MAPLE_FOREACH_BEGIN(MAPLE_FUNC_CONTROLLER, cont_state_t, t)
-			if (t->buttons & CONT_START)
-				done = 1;
-		MAPLE_FOREACH_END()
-	}
-	if (cxt)
-		plx_fcxt_destroy(cxt);
-	if (fnt)
-		plx_font_destroy(fnt);
-	return 0;
+        pvr_scene_finish();
+
+        MAPLE_FOREACH_BEGIN(MAPLE_FUNC_CONTROLLER, cont_state_t, t)
+
+        if(t->buttons & CONT_START)
+            done = 1;
+
+        MAPLE_FOREACH_END()
+    }
+
+    if(cxt)
+        plx_fcxt_destroy(cxt);
+
+    if(fnt)
+        plx_font_destroy(fnt);
+
+    return 0;
 }
 
 

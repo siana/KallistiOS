@@ -68,19 +68,19 @@ struct elf_hdr_t {
 
     @{
 */
-#define SHT_NULL        0		/**< \brief Inactive section */
-#define SHT_PROGBITS    1		/**< \brief Program code/data */
-#define SHT_SYMTAB      2		/**< \brief Full symbol table */
-#define SHT_STRTAB      3		/**< \brief String table */
-#define SHT_RELA        4		/**< \brief Relocation table, with addends */
-#define SHT_HASH        5		/**< \brief Symbol hash table */
-#define SHT_DYNAMIC     6		/**< \brief Dynamic linking info */
-#define SHT_NOTE        7		/**< \brief Notes section */
-#define SHT_NOBITS      8		/**< \brief A section that occupies no space in
-                                            the file */
-#define SHT_REL         9		/**< \brief Relocation table, no addends */
-#define SHT_SHLIB       10		/**< \brief Reserved */
-#define SHT_DYNSYM      11		/**< \brief Dynamic-only sym tab */
+#define SHT_NULL        0       /**< \brief Inactive section */
+#define SHT_PROGBITS    1       /**< \brief Program code/data */
+#define SHT_SYMTAB      2       /**< \brief Full symbol table */
+#define SHT_STRTAB      3       /**< \brief String table */
+#define SHT_RELA        4       /**< \brief Relocation table, with addends */
+#define SHT_HASH        5       /**< \brief Symbol hash table */
+#define SHT_DYNAMIC     6       /**< \brief Dynamic linking info */
+#define SHT_NOTE        7       /**< \brief Notes section */
+#define SHT_NOBITS      8       /**< \brief A section that occupies no space in
+the file */
+#define SHT_REL         9       /**< \brief Relocation table, no addends */
+#define SHT_SHLIB       10      /**< \brief Reserved */
+#define SHT_DYNSYM      11      /**< \brief Dynamic-only sym tab */
 #define SHT_LOPROC  0x70000000  /**< \brief Start of processor specific types */
 #define SHT_HIPROC  0x7fffffff  /**< \brief End of processor specific types */
 #define SHT_LOUSER  0x80000000  /**< \brief Start of program specific types */
@@ -131,21 +131,21 @@ struct elf_shdr_t {
 /* Link and info fields:
 
 switch (sh_type) {
-	case SHT_DYNAMIC:
-		link = section header index of the string table used by
-			the entries in this section
-		info = 0
-	case SHT_HASH:
-		ilnk = section header index of the string table to which
-			this info applies
-		info = 0
-	case SHT_REL, SHT_RELA:
-		link = section header index of associated symbol table
-		info = section header index of section to which reloc applies
-	case SHT_SYMTAB, SHT_DYNSYM:
-		link = section header index of associated string table
-		info = one greater than the symbol table index of the last
-			local symbol (binding STB_LOCAL)
+    case SHT_DYNAMIC:
+        link = section header index of the string table used by
+            the entries in this section
+        info = 0
+    case SHT_HASH:
+        ilnk = section header index of the string table to which
+            this info applies
+        info = 0
+    case SHT_REL, SHT_RELA:
+        link = section header index of associated symbol table
+        info = section header index of section to which reloc applies
+    case SHT_SYMTAB, SHT_DYNSYM:
+        link = section header index of associated string table
+        info = one greater than the symbol table index of the last
+            local symbol (binding STB_LOCAL)
 }
 
 */
@@ -189,7 +189,7 @@ struct elf_sym_t {
     uint32 size;        /**< \brief Size of the symbol */
     uint8 info;         /**< \brief Symbol type and binding */
     uint8 other;        /**< \brief 0. Holds no meaning. */
-    uint16 shndx;		/**< \brief Section index */
+    uint16 shndx;       /**< \brief Section index */
 };
 
 /** \brief  Retrieve the binding type for a symbol.
@@ -197,14 +197,14 @@ struct elf_sym_t {
     \return                 The binding type of the symbol.
     \see                    elf_binding
 */
-#define ELF32_ST_BIND(info)	((info) >> 4)
+#define ELF32_ST_BIND(info) ((info) >> 4)
 
 /** \brief  Retrieve the symbol type for a symbol.
     \param  info            The info field of an elf_sym_t.
     \return                 The symbol type of the symbol.
     \see                    elf_symtype
 */
-#define ELF32_ST_TYPE(info)	((info) & 0xf)
+#define ELF32_ST_TYPE(info) ((info) & 0xf)
 
 /** \brief  ELF Relocation entry (with explicit addend).
 
@@ -216,8 +216,8 @@ struct elf_sym_t {
 */
 struct elf_rela_t {
     uint32 offset;      /**< \brief Offset within section */
-    uint32 info;		/**< \brief Symbol and type */
-    int32 addend;		/**< \brief Constant addend for the symbol */
+    uint32 info;        /**< \brief Symbol and type */
+    int32 addend;       /**< \brief Constant addend for the symbol */
 };
 
 /** \brief  ELF Relocation entry (without explicit addend).
@@ -229,8 +229,8 @@ struct elf_rela_t {
     \headerfile kos/elf.h
 */
 struct elf_rel_t {
-	uint32		offset;		/**< \brief Offset within section */
-	uint32		info;		/**< \brief Symbol and type */
+    uint32      offset;     /**< \brief Offset within section */
+    uint32      info;       /**< \brief Symbol and type */
 };
 
 /** \defgroup elf_reltypes              ELF relocation types
@@ -302,5 +302,5 @@ void elf_free(elf_prog_t *prog);
 
 __END_DECLS
 
-#endif	/* __OS_ELF_H */
+#endif  /* __OS_ELF_H */
 

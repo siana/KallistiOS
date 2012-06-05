@@ -58,7 +58,7 @@ struct sockaddr {
 
 /** \brief  Second padding size used within struct sockaddr_storage. */
 #define _SS_PAD2SIZE (_SS_MAXSIZE - (sizeof(sa_family_t) + \
-                      _SS_PAD1SIZE + _SS_ALIGNSIZE))
+                                     _SS_PAD1SIZE + _SS_ALIGNSIZE))
 
 /** \brief  Socket address structure of appropriate size to hold any supported
             socket type's addresses.

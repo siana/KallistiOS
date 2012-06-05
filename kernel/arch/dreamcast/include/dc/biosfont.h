@@ -58,7 +58,7 @@ uint32 bfont_set_background_color(uint32 c);
 int bfont_set_32bit_mode(int on);
 
 /* Constants for the function below */
-#define BFONT_CODE_ISO8859_1    0	/**< \brief ISO-8859-1 (western) charset */
+#define BFONT_CODE_ISO8859_1    0   /**< \brief ISO-8859-1 (western) charset */
 #define BFONT_CODE_EUC          1   /**< \brief EUC-JP charset */
 #define BFONT_CODE_SJIS         2   /**< \brief Shift-JIS charset */
 

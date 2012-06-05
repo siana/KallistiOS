@@ -80,5 +80,5 @@ int fs_romdisk_unmount(const char * mountpoint);
 
 __END_DECLS
 
-#endif	/* __KOS_FS_ROMDISK_H */
+#endif  /* __KOS_FS_ROMDISK_H */
 

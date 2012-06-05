@@ -748,5 +748,5 @@ void net_shutdown();
 
 __END_DECLS
 
-#endif	/* __KOS_NET_H */
+#endif  /* __KOS_NET_H */
 

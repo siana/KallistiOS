@@ -12,13 +12,13 @@
 __BEGIN_DECLS
 
 /**
-	\file   assert.h
-	\brief  Standard C Assertions
+    \file   assert.h
+    \brief  Standard C Assertions
 
-	This file contains the standard C assertions to raise an assertion or to
-	change the assertion handler.
+    This file contains the standard C assertions to raise an assertion or to
+    change the assertion handler.
 
-	\author Dan Potter
+    \author Dan Potter
 */
 
 /* This is nice and simple, modeled after the BSD one like most of KOS;
@@ -28,8 +28,8 @@ __BEGIN_DECLS
 
 /* __FUNCTION__ is not ANSI, it's GCC, but we depend on GCC anyway.. */
 #ifdef NDEBUG
-#	define assert(e) ((void)0)
-#	define assert_msg(e, m) ((void)0)
+#   define assert(e) ((void)0)
+#   define assert_msg(e, m) ((void)0)
 #else
 
 /** \brief  Standard C assertion macro.
@@ -39,27 +39,27 @@ __BEGIN_DECLS
     expression evaluates to true, the macro does nothing (other than any side
     effects of evaluating the expression).
 
-	\param  e               A value or expression to be evaluated as true or
+    \param  e               A value or expression to be evaluated as true or
                             false.
 */
-#	define assert(e)        ((e) ? (void)0 : __assert(__FILE__, __LINE__, #e, NULL, __FUNCTION__))
+#   define assert(e)        ((e) ? (void)0 : __assert(__FILE__, __LINE__, #e, NULL, __FUNCTION__))
 
 /** \brief  assert() with a custom message.
 
     This macro acts the same as the assert() macro, but allows you to specify a
     custom message to be printed out if the assertion fails.
 
-	\param  e               A value or expression to be evaluated as true or
+    \param  e               A value or expression to be evaluated as true or
                             false.
-	\param  m               A message (const char *).
+    \param  m               A message (const char *).
 */
-#	define assert_msg(e, m) ((e) ? (void)0 : __assert(__FILE__, __LINE__, #e, m, __FUNCTION__))
+#   define assert_msg(e, m) ((e) ? (void)0 : __assert(__FILE__, __LINE__, #e, m, __FUNCTION__))
 #endif
 
 /* \cond */
 /* Defined in assert.c */
 void __assert(const char *file, int line, const char *expr,
-	const char *msg, const char *func);
+              const char *msg, const char *func);
 /* \endcond */
 
 /** \brief  Assertion handler type.
@@ -68,29 +68,29 @@ void __assert(const char *file, int line, const char *expr,
     provided, a default is used which ultimately prints out the location of the
     failed assertion and calls abort().
 
-	\param  file            The filename where the assertion happened.
-	\param  line            The line number where the assertion happened.
-	\param  expr            The expression that raised the assertion.
-	\param  msg             A custom message for why the assertion happened.
-	\param  func            The function name from which the assertion happened.
+    \param  file            The filename where the assertion happened.
+    \param  line            The line number where the assertion happened.
+    \param  expr            The expression that raised the assertion.
+    \param  msg             A custom message for why the assertion happened.
+    \param  func            The function name from which the assertion happened.
 
-	\see    assert_set_handler
+    \see    assert_set_handler
 */
 typedef void (*assert_handler_t)(const char * file, int line, const char * expr,
-	const char * msg, const char * func);
+                                 const char * msg, const char * func);
 
 /** \brief  Set an assertion handler to call on a failed assertion.
 
-	The default assertion handler simply will print a message and call abort().
+    The default assertion handler simply will print a message and call abort().
 
-	\return                 The old assertion handler so it may be restored
+    \return                 The old assertion handler so it may be restored
                             later if appropriate.
 
-	\see    assert_handler_t
+    \see    assert_handler_t
 */
 assert_handler_t assert_set_handler(assert_handler_t hnd);
 
 __END_DECLS
 
-#endif	/* __ASSERT_H */
+#endif  /* __ASSERT_H */
 

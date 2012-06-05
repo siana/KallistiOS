@@ -33,5 +33,5 @@ int timer_init();
 /* Shutdown */
 void timer_shutdown();
 
-#endif	/* __ARCH_TIMER_H */
+#endif  /* __ARCH_TIMER_H */
 

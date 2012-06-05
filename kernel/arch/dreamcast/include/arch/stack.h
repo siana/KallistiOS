@@ -49,5 +49,5 @@ void arch_stk_trace_at(uint32 fp, int n);
 
 __END_DECLS
 
-#endif	/* __ARCH_EXEC_H */
+#endif  /* __ARCH_EXEC_H */
 

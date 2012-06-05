@@ -15,14 +15,14 @@ uint32 net_crc32le(const uint8 *data, int size) {
 
     for(i = 0; i < size; ++i) {
         rv ^= data[i];
-        rv = (0xEDB88320 & (-(rv & 1))) ^ (rv >> 1);
-        rv = (0xEDB88320 & (-(rv & 1))) ^ (rv >> 1);
-        rv = (0xEDB88320 & (-(rv & 1))) ^ (rv >> 1);
-        rv = (0xEDB88320 & (-(rv & 1))) ^ (rv >> 1);
-        rv = (0xEDB88320 & (-(rv & 1))) ^ (rv >> 1);
-        rv = (0xEDB88320 & (-(rv & 1))) ^ (rv >> 1);
-        rv = (0xEDB88320 & (-(rv & 1))) ^ (rv >> 1);
-        rv = (0xEDB88320 & (-(rv & 1))) ^ (rv >> 1);
+        rv = (0xEDB88320 & (-(rv & 1))) ^(rv >> 1);
+        rv = (0xEDB88320 & (-(rv & 1))) ^(rv >> 1);
+        rv = (0xEDB88320 & (-(rv & 1))) ^(rv >> 1);
+        rv = (0xEDB88320 & (-(rv & 1))) ^(rv >> 1);
+        rv = (0xEDB88320 & (-(rv & 1))) ^(rv >> 1);
+        rv = (0xEDB88320 & (-(rv & 1))) ^(rv >> 1);
+        rv = (0xEDB88320 & (-(rv & 1))) ^(rv >> 1);
+        rv = (0xEDB88320 & (-(rv & 1))) ^(rv >> 1);
     }
 
     return ~rv;
@@ -37,7 +37,7 @@ uint32 net_crc32be(const uint8 *data, int size) {
         b = data[i];
 
         for(j = 0; j < 8; ++j) {
-            c = ((rv & 0x80000000) ? 1 : 0) ^ (b & 1);
+            c = ((rv & 0x80000000) ? 1 : 0) ^(b & 1);
             b >>= 1;
 
             if(c)   rv = ((rv << 1) ^ 0x04C11DB6) | c;

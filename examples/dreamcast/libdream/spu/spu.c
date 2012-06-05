@@ -6,7 +6,7 @@
    romdisk and how to use its new mmap() feature. */
 
 #include <kos.h>
-#include "s3mplay.h"	/* Player ARM code */
+#include "s3mplay.h"    /* Player ARM code */
 
 uint8 *song;
 
@@ -14,70 +14,72 @@ uint8 *song;
    how the S3M player works right now. */
 volatile unsigned long *snd_dbg = (unsigned long*)0xa080ffc0;
 void copy_s3m(char *song, int len) {
-	spu_disable();
-	spu_memload(0x10000, song, len);
-	spu_memload(0, s3mplay, sizeof(s3mplay));
+    spu_disable();
+    spu_memload(0x10000, song, len);
+    spu_memload(0, s3mplay, sizeof(s3mplay));
 
-	/* Switch channels to mono if uncommented */
-	/* snd_dbg[1] = 1; */
+    /* Switch channels to mono if uncommented */
+    /* snd_dbg[1] = 1; */
 
-	printf("Load OK, starting ARM\n");
-	spu_enable();
+    printf("Load OK, starting ARM\n");
+    spu_enable();
 
-	while (*snd_dbg != 3)
-		;
+    while(*snd_dbg != 3)
+        ;
 
-	while (*snd_dbg == 3)
-		;
+    while(*snd_dbg == 3)
+        ;
 }
 
 void wait_start() {
-	maple_device_t *cont;
-	cont_state_t *state;
+    maple_device_t *cont;
+    cont_state_t *state;
 
-	while (1) {
-		cont = maple_enum_type(0, MAPLE_FUNC_CONTROLLER);
-		if (!cont) continue;
+    while(1) {
+        cont = maple_enum_type(0, MAPLE_FUNC_CONTROLLER);
 
-		/* Check for start on the controller */
-		state = (cont_state_t *)maple_dev_status(cont);
-		if (!state)
-			continue;
+        if(!cont) continue;
 
-		if (state->buttons & CONT_START) {
-			printf("Pressed start\n");
-			return;
-		}
+        /* Check for start on the controller */
+        state = (cont_state_t *)maple_dev_status(cont);
 
-		thd_sleep(10);
-	}
+        if(!state)
+            continue;
+
+        if(state->buttons & CONT_START) {
+            printf("Pressed start\n");
+            return;
+        }
+
+        thd_sleep(10);
+    }
 }
 
 extern uint8 romdisk[];
 KOS_INIT_ROMDISK(romdisk);
 
 int main(int argc, char **argv) {
-	file_t f;
-	int len;
+    file_t f;
+    int len;
 
-	/* Open the S3M file from the romdisk */
-	f = fs_open("/rd/cyboman.s3m", O_RDONLY);
+    /* Open the S3M file from the romdisk */
+    f = fs_open("/rd/cyboman.s3m", O_RDONLY);
 
-	/* Get its length */
-	len = fs_total(f);
+    /* Get its length */
+    len = fs_total(f);
 
-	/* mmap() the file space; note that this ONLY works on rom file
-	   systems for now; this may change later */
-	song = fs_mmap(f);
+    /* mmap() the file space; note that this ONLY works on rom file
+       systems for now; this may change later */
+    song = fs_mmap(f);
 
-	/* Start a song playing */
-	copy_s3m(song, len);
+    /* Start a song playing */
+    copy_s3m(song, len);
 
-	/* Close the file */
-	fs_close(f);
+    /* Close the file */
+    fs_close(f);
 
-	/* Wait for start */
-	wait_start();
+    /* Wait for start */
+    wait_start();
 
-	return 0;
+    return 0;
 }

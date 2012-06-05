@@ -13,25 +13,25 @@
 /* The number of bytes required to save thread context. This should
    include all general CPU registers, FP registers, and status regs (even
    if not all of these are actually used). */
-#define REG_BYTE_CNT 256			/* Currently really 228 */
+#define REG_BYTE_CNT 256            /* Currently really 228 */
 
 /* Architecture-specific structure for holding the processor state (register
    values, etc). The size of this structure should be less than or equal
    to the above value. */
 typedef struct irq_context {
-	uint32	stuff;
+    uint32  stuff;
 } irq_context_t;
 
 /* A couple of architecture independent access macros */
-#define CONTEXT_PC(c)	((c).stuff)
-#define CONTEXT_FP(c)	((c).stuff)
-#define CONTEXT_SP(c)	((c).stuff)
-#define CONTEXT_RET(c)	((c).stuff)
+#define CONTEXT_PC(c)   ((c).stuff)
+#define CONTEXT_FP(c)   ((c).stuff)
+#define CONTEXT_SP(c)   ((c).stuff)
+#define CONTEXT_RET(c)  ((c).stuff)
 
 /* GBA-specific exception codes */
 
 /* The value of the timer IRQ */
-#define TIMER_IRQ		0
+#define TIMER_IRQ       0
 
 /* The type of an interrupt identifier */
 typedef uint32 irq_t;
@@ -63,7 +63,7 @@ irq_context_t *irq_get_context();
    or user mode. The given parameters will be passed to the called routine (up
    to the architecture maximum). */
 void irq_create_context(irq_context_t *context, uint32 stack_pointer,
-	uint32 routine, uint32 *args, int usermode);
+                        uint32 routine, uint32 *args, int usermode);
 
 /* Enable/Disable interrupts */
 int irq_disable();
@@ -76,5 +76,5 @@ int irq_init();
 /* Shutdown */
 void irq_shutdown();
 
-#endif	/* __ARCH_IRQ_H */
+#endif  /* __ARCH_IRQ_H */
 

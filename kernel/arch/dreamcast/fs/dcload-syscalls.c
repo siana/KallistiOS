@@ -31,25 +31,23 @@ static udp_header_t * udp = (udp_header_t *)(dcln_pkt_buf + ETHER_H_LEN + IP_H_L
 
 /* send command, enable bb, bb_loop(), then return */
 
-void dcln_build_send_packet(int command_len)
-{
+void dcln_build_send_packet(int command_len) {
     unsigned char * command = dcln_pkt_buf + ETHER_H_LEN + IP_H_LEN + UDP_H_LEN;
-/*
-    scif_puts("build_send_packet\n");
-    scif_putchar(command[0]);
-    scif_putchar(command[1]);
-    scif_putchar(command[2]);
-    scif_putchar(command[3]);
-    scif_puts("\n");
-*/
+    /*
+        scif_puts("build_send_packet\n");
+        scif_putchar(command[0]);
+        scif_putchar(command[1]);
+        scif_putchar(command[2]);
+        scif_putchar(command[3]);
+        scif_puts("\n");
+    */
     dcln_make_ether(dcln_tool_mac, dcln_our_mac, ether);
     dcln_make_ip(dcln_tool_ip, dcln_our_ip, UDP_H_LEN + command_len, 17, ip);
     dcln_make_udp(dcln_tool_port, 31313, command, command_len, ip, udp);
     dcln_tx(dcln_pkt_buf, ETHER_H_LEN + IP_H_LEN + UDP_H_LEN + command_len);
 }
 
-void dcln_exit(void)
-{
+void dcln_exit(void) {
     command_t * command = (command_t *)(dcln_pkt_buf + ETHER_H_LEN + IP_H_LEN + UDP_H_LEN);
 
     memcpy(command->id, DCLN_CMD_EXIT, 4);
@@ -58,8 +56,7 @@ void dcln_exit(void)
     dcln_build_send_packet(COMMAND_LEN);
 }
 
-int dcln_read(int fd, void *buf, size_t count)
-{
+int dcln_read(int fd, void *buf, size_t count) {
     command_3int_t * command = (command_3int_t *)(dcln_pkt_buf + ETHER_H_LEN + IP_H_LEN + UDP_H_LEN);
 
     memcpy(command->id, DCLN_CMD_READ, 4);
@@ -72,8 +69,7 @@ int dcln_read(int fd, void *buf, size_t count)
     return dcln_syscall_retval;
 }
 
-int dcln_write(int fd, const void *buf, size_t count)
-{
+int dcln_write(int fd, const void *buf, size_t count) {
     command_3int_t * command = (command_3int_t *)(dcln_pkt_buf + ETHER_H_LEN + IP_H_LEN + UDP_H_LEN);
 
     memcpy(command->id, DCLN_CMD_WRITE, 4);
@@ -86,8 +82,7 @@ int dcln_write(int fd, const void *buf, size_t count)
     return dcln_syscall_retval;
 }
 
-int dcln_open(const char *pathname, int flags, int perms)
-{
+int dcln_open(const char *pathname, int flags, int perms) {
     command_2int_string_t * command = (command_2int_string_t *)(dcln_pkt_buf + ETHER_H_LEN + IP_H_LEN + UDP_H_LEN);
 
     int namelen = strlen(pathname);
@@ -97,16 +92,15 @@ int dcln_open(const char *pathname, int flags, int perms)
     command->value0 = htonl(flags);
     command->value1 = htonl(perms);
 
-    memcpy(command->string, pathname, namelen+1);
+    memcpy(command->string, pathname, namelen + 1);
 
-    dcln_build_send_packet(sizeof(command_2int_string_t)+namelen);
+    dcln_build_send_packet(sizeof(command_2int_string_t) + namelen);
     dcln_rx_loop();
 
     return dcln_syscall_retval;
 }
 
-int dcln_close(int fd)
-{
+int dcln_close(int fd) {
     command_int_t * command = (command_int_t *)(dcln_pkt_buf + ETHER_H_LEN + IP_H_LEN + UDP_H_LEN);
 
     memcpy(command->id, DCLN_CMD_CLOSE, 4);
@@ -118,8 +112,7 @@ int dcln_close(int fd)
     return dcln_syscall_retval;
 }
 
-int dcln_link(const char *oldpath, const char *newpath)
-{
+int dcln_link(const char *oldpath, const char *newpath) {
     command_string_t * command = (command_string_t *)(dcln_pkt_buf + ETHER_H_LEN + IP_H_LEN + UDP_H_LEN);
     int namelen1 = strlen(oldpath);
     int namelen2 = strlen(newpath);
@@ -129,15 +122,14 @@ int dcln_link(const char *oldpath, const char *newpath)
     memcpy(command->string, oldpath, namelen1 + 1);
     memcpy(command->string + namelen1 + 1, newpath, namelen2 + 1);
 
-    dcln_build_send_packet(sizeof(command_string_t)+namelen1+namelen2+1);
+    dcln_build_send_packet(sizeof(command_string_t) + namelen1 + namelen2 + 1);
     dcln_rx_loop();
 
     return dcln_syscall_retval;
 
 }
 
-int dcln_unlink(const char *pathname)
-{
+int dcln_unlink(const char *pathname) {
     command_string_t * command = (command_string_t *)(dcln_pkt_buf + ETHER_H_LEN + IP_H_LEN + UDP_H_LEN);
     int namelen = strlen(pathname);
 
@@ -145,14 +137,13 @@ int dcln_unlink(const char *pathname)
 
     memcpy(command->string, pathname, namelen + 1);
 
-    dcln_build_send_packet(sizeof(command_string_t)+namelen);
+    dcln_build_send_packet(sizeof(command_string_t) + namelen);
     dcln_rx_loop();
 
     return dcln_syscall_retval;
 }
 
-int dcln_chdir(const char *path)
-{
+int dcln_chdir(const char *path) {
     command_string_t * command = (command_string_t *)(dcln_pkt_buf + ETHER_H_LEN + IP_H_LEN + UDP_H_LEN);
     int namelen = strlen(path);
 
@@ -160,14 +151,13 @@ int dcln_chdir(const char *path)
 
     memcpy(command->string, path, namelen + 1);
 
-    dcln_build_send_packet(sizeof(command_string_t)+namelen);
+    dcln_build_send_packet(sizeof(command_string_t) + namelen);
     dcln_rx_loop();
 
     return dcln_syscall_retval;
 }
 
-off_t dcln_lseek(int fildes, off_t offset, int whence)
-{
+off_t dcln_lseek(int fildes, off_t offset, int whence) {
     command_3int_t * command = (command_3int_t *)(dcln_pkt_buf + ETHER_H_LEN + IP_H_LEN + UDP_H_LEN);
 
     memcpy(command->id, DCLN_CMD_LSEEK, 4);
@@ -181,8 +171,7 @@ off_t dcln_lseek(int fildes, off_t offset, int whence)
     return dcln_syscall_retval;
 }
 
-time_t dcln_time(time_t * t)
-{
+time_t dcln_time(time_t * t) {
     command_int_t * command = (command_int_t *)(dcln_pkt_buf + ETHER_H_LEN + IP_H_LEN + UDP_H_LEN);
 
 
@@ -193,39 +182,36 @@ time_t dcln_time(time_t * t)
     return dcln_syscall_retval;
 }
 
-int dcln_stat(const char *file_name, dcload_stat_t *buf)
-{
+int dcln_stat(const char *file_name, dcload_stat_t *buf) {
     command_2int_string_t * command = (command_2int_string_t *)(dcln_pkt_buf + ETHER_H_LEN + IP_H_LEN + UDP_H_LEN);
     int namelen = strlen(file_name);
 
     memcpy(command->id, DCLN_CMD_STAT, 4);
-    memcpy(command->string, file_name, namelen+1);
+    memcpy(command->string, file_name, namelen + 1);
 
     command->value0 = htonl((uint32)buf);
     command->value1 = htonl(sizeof(struct stat));
 
-    dcln_build_send_packet(sizeof(command_2int_string_t)+namelen);
+    dcln_build_send_packet(sizeof(command_2int_string_t) + namelen);
     dcln_rx_loop();
 
     return dcln_syscall_retval;
 }
 
-int dcln_opendir(const char *name)
-{
+int dcln_opendir(const char *name) {
     command_string_t * command = (command_string_t *)(dcln_pkt_buf + ETHER_H_LEN + IP_H_LEN + UDP_H_LEN);
     int namelen = strlen(name);
 
     memcpy(command->id, DCLN_CMD_OPENDIR, 4);
-    memcpy(command->string, name, namelen+1);
+    memcpy(command->string, name, namelen + 1);
 
-    dcln_build_send_packet(sizeof(command_string_t)+namelen);
+    dcln_build_send_packet(sizeof(command_string_t) + namelen);
     dcln_rx_loop();
 
     return dcln_syscall_retval;
 }
 
-int dcln_closedir(int dir)
-{
+int dcln_closedir(int dir) {
     command_int_t * command = (command_int_t *)(dcln_pkt_buf + ETHER_H_LEN + IP_H_LEN + UDP_H_LEN);
 
     memcpy(command->id, DCLN_CMD_CLOSEDIR, 4);
@@ -239,8 +225,7 @@ int dcln_closedir(int dir)
 
 static dcload_dirent_t our_dir;
 
-dcload_dirent_t *dcln_readdir(int dir)
-{
+dcload_dirent_t *dcln_readdir(int dir) {
     command_3int_t * command = (command_3int_t *)(dcln_pkt_buf + ETHER_H_LEN + IP_H_LEN + UDP_H_LEN);
 
     memcpy(command->id, DCLN_CMD_READDIR, 4);
@@ -251,21 +236,20 @@ dcload_dirent_t *dcln_readdir(int dir)
     dcln_build_send_packet(sizeof(command_3int_t));
     dcln_rx_loop();
 
-    if (dcln_syscall_retval)
-	return &our_dir;
+    if(dcln_syscall_retval)
+        return &our_dir;
     else
-	return 0;
+        return 0;
 }
 
-size_t dcln_gdbpacket(const char *in_buf, size_t in_size, char *out_buf, size_t out_size)
-{
+size_t dcln_gdbpacket(const char *in_buf, size_t in_size, char *out_buf, size_t out_size) {
     command_2int_string_t * command = (command_2int_string_t *)(pkt_buf + ETHER_H_LEN + IP_H_LEN + UDP_H_LEN);
 
     memcpy(command->id, CMD_GDBPACKET, 4);
     command->value0 = htonl(in_size);
     command->value1 = htonl(out_size);
     memcpy(command->string, in_buf, in_size);
-    dcln_build_send_packet(sizeof(command_2int_string_t)-1 + in_size);
+    dcln_build_send_packet(sizeof(command_2int_string_t) - 1 + in_size);
     dcln_rx_loop();
 
     memcpy(out_buf, dcln_syscall_data, dcln_syscall_retval);

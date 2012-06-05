@@ -21,10 +21,10 @@ __BEGIN_DECLS
 #include "dcload-packet.h"
 
 typedef struct {
-  unsigned char id[4] __attribute__ ((packed));
-  unsigned int address __attribute__ ((packed));
-  unsigned int size __attribute__ ((packed));
-  unsigned char data[1] __attribute__ ((packed));
+    unsigned char id[4] __attribute__((packed));
+    unsigned int address __attribute__((packed));
+    unsigned int size __attribute__((packed));
+    unsigned char data[1] __attribute__((packed));
 } command_t;
 
 #define DCLN_CMD_EXECUTE  "EXEC" /* execute */

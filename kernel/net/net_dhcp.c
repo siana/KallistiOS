@@ -153,7 +153,7 @@ static uint32 net_dhcp_get_32bit(dhcp_pkt_t *pkt, uint8 opt, int len) {
     for(i = 4; i < len;) {
         if(pkt->options[i] == opt) {
             return (pkt->options[i + 2] << 24) | (pkt->options[i + 3] << 16) |
-                (pkt->options[i + 4] << 8) | (pkt->options[i + 5]);
+                   (pkt->options[i + 4] << 8) | (pkt->options[i + 5]);
         }
         else if(pkt->options[i] == DHCP_OPTION_PAD) {
             ++i;
@@ -488,7 +488,7 @@ static void net_dhcp_thd(void *obj __attribute__((unused))) {
 
     /* Make sure we don't need to renew our lease */
     if(lease_expires <= now && (state == DHCP_STATE_BOUND ||
-       state == DHCP_STATE_RENEWING || state == DHCP_STATE_REBINDING)) {
+                                state == DHCP_STATE_RENEWING || state == DHCP_STATE_REBINDING)) {
         STAILQ_FOREACH(qpkt, &dhcp_pkts, pkt_queue) {
             STAILQ_REMOVE(&dhcp_pkts, qpkt, dhcp_pkt_out, pkt_queue);
             free(qpkt->buf);
@@ -501,7 +501,7 @@ static void net_dhcp_thd(void *obj __attribute__((unused))) {
         net_dhcp_request();
     }
     else if(rebind_time <= now &&
-       (state == DHCP_STATE_BOUND || state == DHCP_STATE_RENEWING)) {
+            (state == DHCP_STATE_BOUND || state == DHCP_STATE_RENEWING)) {
         /* Clear out any existing packets. */
         STAILQ_FOREACH(qpkt, &dhcp_pkts, pkt_queue) {
             STAILQ_REMOVE(&dhcp_pkts, qpkt, dhcp_pkt_out, pkt_queue);
@@ -530,7 +530,7 @@ static void net_dhcp_thd(void *obj __attribute__((unused))) {
         /* Check the magic cookie to make sure we've actually got a DHCP
            packet coming in. */
         if(pkt->options[0] != 0x63 || pkt->options[1] != 0x82 ||
-           pkt->options[2] != 0x53 || pkt->options[3] != 0x63) {
+                pkt->options[2] != 0x53 || pkt->options[3] != 0x63) {
             continue;
         }
 
@@ -551,8 +551,9 @@ static void net_dhcp_thd(void *obj __attribute__((unused))) {
         if(found) {
             switch(net_dhcp_get_message_type(pkt2, qpkt->size)) {
                 case DHCP_MSG_DHCPDISCOVER:
+
                     if(net_dhcp_get_message_type(pkt, len) !=
-                       DHCP_MSG_DHCPOFFER) {
+                            DHCP_MSG_DHCPOFFER) {
                         break;
                     }
 
@@ -589,9 +590,9 @@ static void net_dhcp_thd(void *obj __attribute__((unused))) {
                     free(qpkt);
                     break;
 
-                /* Currently, these are the only two DHCP packets the code
-                   here sends out, so other packet types are omitted for
-                   the time being. */
+                    /* Currently, these are the only two DHCP packets the code
+                       here sends out, so other packet types are omitted for
+                       the time being. */
             }
         }
     }

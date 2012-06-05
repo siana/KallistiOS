@@ -18,6 +18,6 @@
 
 /* Set the palette format */
 void pvr_set_pal_format(int fmt) {
-	PVR_SET(PVR_PALETTE_CFG, fmt);
+    PVR_SET(PVR_PALETTE_CFG, fmt);
 }
 

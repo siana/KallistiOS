@@ -43,7 +43,7 @@ static void icmp6_default_echo_cb(const struct in6_addr *ip, uint16 seq,
 
     inet_ntop(AF_INET6, ip, ipstr, INET6_ADDRSTRLEN);
 
-    if(delta_us != (uint64)-1) {
+    if(delta_us != (uint64) - 1) {
         printf("%d bytes from %s, icmp_seq=%d hlim=%d time=%.3f ms\n", data_sz,
                ipstr, seq, hlim, delta_us / 1000.0);
     }
@@ -68,8 +68,8 @@ static void net_icmp6_input_129(netif_t *net, ipv6_hdr_t *ip, icmp6_hdr_t *icmp,
     /* Read back the time if we have it */
     if(s >= sizeof(icmp6_echo_hdr_t) + 8) {
         otmr = ((uint64)d[8] << 56) | ((uint64)d[9] << 48) |
-            ((uint64)d[10] << 40) | ((uint64)d[11] << 32) |
-            (d[12] << 24) | (d[13] << 16) | (d[14] << 8) | (d[15]);
+               ((uint64)d[10] << 40) | ((uint64)d[11] << 32) |
+               (d[12] << 24) | (d[13] << 16) | (d[14] << 8) | (d[15]);
         net_icmp6_echo_cb(&ip->src_addr, seq, tmr - otmr, ip->hop_limit, d, s);
     }
     else {
@@ -145,6 +145,7 @@ static void net_icmp6_input_134(netif_t *net, ipv6_hdr_t *ip, icmp6_hdr_t *icmp,
 
     /* Make sure that the source address is link-local */
     memcpy(&src, &ip->src_addr, sizeof(struct in6_addr));
+
     if(!IN6_IS_ADDR_LINKLOCAL(&src)) {
         return;
     }
@@ -174,12 +175,11 @@ static void net_icmp6_input_134(netif_t *net, ipv6_hdr_t *ip, icmp6_hdr_t *icmp,
         switch(pkt->options[pos]) {
             case NDP_OPT_MTU:
                 net->mtu6 = (pkt->options[pos + 4] << 24) |
-                    (pkt->options[pos + 5] << 16) |
-                    (pkt->options[pos + 6] << 8) | (pkt->options[pos + 7]);
+                            (pkt->options[pos + 5] << 16) |
+                            (pkt->options[pos + 6] << 8) | (pkt->options[pos + 7]);
                 break;
 
-            case NDP_OPT_PREFIX_INFO:
-            {
+            case NDP_OPT_PREFIX_INFO: {
                 icmp6_ndp_prefix_t *pfx =
                     (icmp6_ndp_prefix_t *)&pkt->options[pos];
                 void *tmp;
@@ -216,6 +216,7 @@ static void net_icmp6_input_134(netif_t *net, ipv6_hdr_t *ip, icmp6_hdr_t *icmp,
                 /* Add the new address to our list */
                 tmp = realloc(net->ip6_addrs, (net->ip6_addr_count + 1) *
                               sizeof(struct in6_addr));
+
                 if(!tmp) {
                     break;
                 }
@@ -227,12 +228,11 @@ static void net_icmp6_input_134(netif_t *net, ipv6_hdr_t *ip, icmp6_hdr_t *icmp,
                 ++net->ip6_addr_count;
 
                 dupdet(net, &addr);
-out:
+            out:
                 break;
             }
 
-            case NDP_OPT_SOURCE_LINK_ADDR:
-            {
+            case NDP_OPT_SOURCE_LINK_ADDR: {
                 icmp6_nsol_lladdr_t *ll =
                     (icmp6_nsol_lladdr_t *)&pkt->options[pos];
 
@@ -345,6 +345,7 @@ static void net_icmp6_input_136(netif_t *net, ipv6_hdr_t *ip, icmp6_hdr_t *icmp,
 
     /* Make sure the hop limit is right and this isn't a multicast addr */
     memcpy(&target, &pkt->target, sizeof(struct in6_addr));
+
     if(ip->hop_limit != 255 || IN6_IS_ADDR_MULTICAST(&target)) {
         return;
     }
@@ -352,6 +353,7 @@ static void net_icmp6_input_136(netif_t *net, ipv6_hdr_t *ip, icmp6_hdr_t *icmp,
     /* Make sure if the destination is multicast, the solicited flag is zero */
     memcpy(&dest, &ip->dst_addr, sizeof(struct in6_addr));
     flags = pkt->flags;
+
     if(IN6_IS_ADDR_MULTICAST(&dest) && (flags & 0x02)) {
         return;
     }

@@ -27,6 +27,7 @@ rw_semaphore_t *rwsem_create() {
     rw_semaphore_t *s;
 
     s = (rw_semaphore_t *)malloc(sizeof(rw_semaphore_t));
+
     if(!s) {
         errno = ENOMEM;
         return NULL;

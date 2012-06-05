@@ -23,7 +23,7 @@
    for all interactions with the SBIOS. */
 
 int sbios_init() {
-	return -1;
+    return -1;
 }
 
 void sbios_shutdown() {

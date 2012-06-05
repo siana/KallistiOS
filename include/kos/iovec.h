@@ -31,5 +31,5 @@ typedef struct iovec {
 
 __END_DECLS
 
-#endif	/* __KOS_IOVEC_H */
+#endif  /* __KOS_IOVEC_H */
 

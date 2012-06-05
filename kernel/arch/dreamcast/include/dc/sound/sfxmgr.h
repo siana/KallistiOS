@@ -143,5 +143,5 @@ void snd_sfx_chn_free(int chn);
 
 __END_DECLS
 
-#endif	/* __DC_SOUND_SFXMGR_H */
+#endif  /* __DC_SOUND_SFXMGR_H */
 

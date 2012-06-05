@@ -66,7 +66,7 @@ enum {
 
     OR this with the generic mode to get four framebuffers instead of one.
 */
-#define DM_MULTIBUFFER	0x2000
+#define DM_MULTIBUFFER  0x2000
 
 //-----------------------------------------------------------------------------
 // More specific modes (and actual indeces into the mode table)
@@ -103,7 +103,7 @@ enum {
 };
 
 /** \brief  The maximum number of framebuffers available. */
-#define VID_MAX_FB	4	// <-- This should be enough
+#define VID_MAX_FB  4   // <-- This should be enough
 
 // These are for the "flags" field of "vid_mode_t"
 /** \defgroup vid_flags Flags for the field in vid_mode_t.
@@ -113,9 +113,9 @@ enum {
     @{
 */
 #define VID_INTERLACE   0x00000001  /**< \brief Interlaced display */
-#define VID_LINEDOUBLE  0x00000002	/**< \brief Display each scanline twice */
-#define VID_PIXELDOUBLE 0x00000004	/**< \brief Display each pixel twice */
-#define VID_PAL         0x00000008	/**< \brief 50Hz refresh rate, if not VGA */
+#define VID_LINEDOUBLE  0x00000002  /**< \brief Display each scanline twice */
+#define VID_PIXELDOUBLE 0x00000004  /**< \brief Display each pixel twice */
+#define VID_PAL         0x00000008  /**< \brief 50Hz refresh rate, if not VGA */
 /** @} */
 
 /** \brief  Video mode structure.
@@ -290,5 +290,5 @@ int vid_screen_shot(const char * destfn);
 
 __END_DECLS
 
-#endif	// __DC_VIDEO_H
+#endif  // __DC_VIDEO_H
 

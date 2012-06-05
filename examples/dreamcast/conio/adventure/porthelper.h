@@ -27,4 +27,4 @@
 #undef putchar
 int getchar();
 
-#endif	/* __PORTHELPER_H */
+#endif  /* __PORTHELPER_H */

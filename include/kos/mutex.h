@@ -145,5 +145,5 @@ void mutex_unlock(mutex_t * m);
 
 __END_DECLS
 
-#endif	/* __KOS_MUTEX_H */
+#endif  /* __KOS_MUTEX_H */
 

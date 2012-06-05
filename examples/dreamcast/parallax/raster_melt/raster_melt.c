@@ -28,62 +28,65 @@ the screen which hasn't been filled yet.
 */
 
 int main(int argc, char **argv) {
-	plx_texture_t * txr;
-	int done;
-	float y, xoffs;
+    plx_texture_t * txr;
+    int done;
+    float y, xoffs;
 
-	// Init PVR
-	pvr_init_defaults();
+    // Init PVR
+    pvr_init_defaults();
 
-	// Load a texture
-	txr = plx_txr_load("/rd/dan.jpg", 0, 0);
-	if (!txr)
-		return 0;
+    // Load a texture
+    txr = plx_txr_load("/rd/dan.jpg", 0, 0);
 
-	// Setup a texture context
-	plx_cxt_init();
-	plx_cxt_texture(txr);
-	plx_cxt_culling(PLX_CULL_NONE);
+    if(!txr)
+        return 0;
 
-	// The image will be offset by this much from each side
-	xoffs = (640 - 512)/2;
+    // Setup a texture context
+    plx_cxt_init();
+    plx_cxt_texture(txr);
+    plx_cxt_culling(PLX_CULL_NONE);
 
-	// Until the user hits start...
-	for (done = 0, y = 0.0f; !done; ) {
-		// Check for start
-		MAPLE_FOREACH_BEGIN(MAPLE_FUNC_CONTROLLER, cont_state_t, st)
-			if (st->buttons & CONT_START)
-				done = 1;
-		MAPLE_FOREACH_END()
+    // The image will be offset by this much from each side
+    xoffs = (640 - 512) / 2;
 
-		// Setup the frame
-		pvr_wait_ready();
-		pvr_scene_begin();
-		pvr_list_begin(PVR_LIST_OP_POLY);
+    // Until the user hits start...
+    for(done = 0, y = 0.0f; !done;) {
+        // Check for start
+        MAPLE_FOREACH_BEGIN(MAPLE_FUNC_CONTROLLER, cont_state_t, st)
 
-		// Submit the context
-		plx_cxt_send(PVR_LIST_OP_POLY);
+        if(st->buttons & CONT_START)
+            done = 1;
 
-		// Two polys -- one normal up to the scan point, and one
-		// stretched to the bottom.
-		plx_vert_ifp(PLX_VERT, xoffs, y, 1.0f, 0xffffffff, 0.0f, y/480.0f);
-		plx_vert_ifp(PLX_VERT, xoffs, 0.0f, 1.0f, 0xffffffff, 0.0f, 0.0f);
-		plx_vert_ifp(PLX_VERT, 640.0f-xoffs, y, 1.0f, 0xffffffff, 1.0f, y/480.0f);
-		plx_vert_ifp(PLX_VERT_EOS, 640.0f-xoffs, 0.0f, 1.0f, 0xffffffff, 1.0f, 0.0f);
+        MAPLE_FOREACH_END()
 
-		plx_vert_ifp(PLX_VERT, xoffs, 480.0f, 1.0f, 0xffffffff, 0.0f, y/480.0f);
-		plx_vert_ifp(PLX_VERT, xoffs, y, 1.0f, 0xffffffff, 0.0f, y/480.0f);
-		plx_vert_ifp(PLX_VERT, 640.0f-xoffs, 480.0f, 1.0f, 0xffffffff, 1.0f, y/480.0f);
-		plx_vert_ifp(PLX_VERT_EOS, 640.0f-xoffs, y, 1.0f, 0xffffffff, 1.0f, y/480.0f);
+        // Setup the frame
+        pvr_wait_ready();
+        pvr_scene_begin();
+        pvr_list_begin(PVR_LIST_OP_POLY);
 
-		pvr_scene_finish();
+        // Submit the context
+        plx_cxt_send(PVR_LIST_OP_POLY);
 
-		// Move our scanline
-		if (y < 480.0f)
-			y += 2.0f;
-	}
+        // Two polys -- one normal up to the scan point, and one
+        // stretched to the bottom.
+        plx_vert_ifp(PLX_VERT, xoffs, y, 1.0f, 0xffffffff, 0.0f, y / 480.0f);
+        plx_vert_ifp(PLX_VERT, xoffs, 0.0f, 1.0f, 0xffffffff, 0.0f, 0.0f);
+        plx_vert_ifp(PLX_VERT, 640.0f - xoffs, y, 1.0f, 0xffffffff, 1.0f, y / 480.0f);
+        plx_vert_ifp(PLX_VERT_EOS, 640.0f - xoffs, 0.0f, 1.0f, 0xffffffff, 1.0f, 0.0f);
 
-	return 0;
+        plx_vert_ifp(PLX_VERT, xoffs, 480.0f, 1.0f, 0xffffffff, 0.0f, y / 480.0f);
+        plx_vert_ifp(PLX_VERT, xoffs, y, 1.0f, 0xffffffff, 0.0f, y / 480.0f);
+        plx_vert_ifp(PLX_VERT, 640.0f - xoffs, 480.0f, 1.0f, 0xffffffff, 1.0f, y / 480.0f);
+        plx_vert_ifp(PLX_VERT_EOS, 640.0f - xoffs, y, 1.0f, 0xffffffff, 1.0f, y / 480.0f);
+
+        pvr_scene_finish();
+
+        // Move our scanline
+        if(y < 480.0f)
+            y += 2.0f;
+    }
+
+    return 0;
 }
 
 

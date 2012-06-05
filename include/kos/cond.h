@@ -57,8 +57,8 @@ __BEGIN_DECLS
 */
 typedef struct condvar {
     /** \cond */
-	/* List entry for the global list of condvars */
-	LIST_ENTRY(condvar)	g_list;
+    /* List entry for the global list of condvars */
+    LIST_ENTRY(condvar) g_list;
     /** \endcond */
 } condvar_t;
 
@@ -198,5 +198,5 @@ void cond_shutdown();
 
 __END_DECLS
 
-#endif	/* __KOS_COND_H */
+#endif  /* __KOS_COND_H */
 

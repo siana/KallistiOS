@@ -303,7 +303,7 @@ int thd_remove_from_runnable(kthread_t *thd);
 
     \return                 The new thread on success, NULL on failure.
 */
-kthread_t *thd_create(int detach, void *(*routine)(void *param), void *param);
+kthread_t *thd_create(int detach, void * (*routine)(void *param), void *param);
 
 /** \brief  Brutally kill the given thread.
 
@@ -318,7 +318,7 @@ kthread_t *thd_create(int detach, void *(*routine)(void *param), void *param);
 int thd_destroy(kthread_t *thd);
 
 /** \brief  Exit the current thread.
- 
+
     This function ends the execution of the current thread, removing it from all
     execution queues. This function will never return to the thread. Returning
     from the thread's function is equivalent to calling this function.
@@ -532,5 +532,5 @@ void thd_shutdown();
 
 __END_DECLS
 
-#endif	/* __KOS_THREAD_H */
+#endif  /* __KOS_THREAD_H */
 

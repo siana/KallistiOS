@@ -47,4 +47,4 @@ int nvflash_write_block(uint32 addr, void * data, uint32 len);
 */
 int nvflash_erase_all();
 
-#endif	/* __NAVI_FLASH_H */
+#endif  /* __NAVI_FLASH_H */

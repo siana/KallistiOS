@@ -28,106 +28,114 @@ static vuint16 * const iprc = (vuint16*)0xffd0000c;
 int thd_pslist();
 
 static void ser_irq(irq_t source, irq_context_t *context) {
-	*SCSCR2 &= ~(1 << 6);
-	*SCSCR2 |= (1 << 6);
+    *SCSCR2 &= ~(1 << 6);
+    *SCSCR2 |= (1 << 6);
 
-	sem_signal(chr_ready);
+    sem_signal(chr_ready);
 }
 
 static char *read_line() {
-	int q = 0, ch;
+    int q = 0, ch;
 
-	while(1) {
-		while ( (ch = dbgio_read()) == -1)
-			/* sem_wait(chr_ready); */
-			thd_pass();
-		if (ch == '\r') {
-			buffer[q] = 0;
-			dbgio_write_str("\n");
-			return buffer;
-		}
+    while(1) {
+        while((ch = dbgio_read()) == -1)
+            /* sem_wait(chr_ready); */
+            thd_pass();
 
-		if (ch == '\x08') {
-			q--;
-			dbgio_write_str("\x08 \x08");
-			continue;
-		}
+        if(ch == '\r') {
+            buffer[q] = 0;
+            dbgio_write_str("\n");
+            return buffer;
+        }
 
-		buffer[q++] = ch;
-		dbgio_write(ch);
-	}
+        if(ch == '\x08') {
+            q--;
+            dbgio_write_str("\x08 \x08");
+            continue;
+        }
+
+        buffer[q++] = ch;
+        dbgio_write(ch);
+    }
 }
 
 static char curdir[256];
 
 static void interact() {
-	char tmp[16];
-	char *buf;
-	int cnt=0;
+    char tmp[16];
+    char *buf;
+    int cnt = 0;
 
-	curdir[0] = '/'; curdir[1] = 0;
+    curdir[0] = '/';
+    curdir[1] = 0;
 
-	while(1) {
-		sprintf(tmp, "%d", cnt); dbgio_write_str(tmp);
-		dbgio_write(' ');
-		dbgio_write_str(curdir);
-		dbgio_write('>');
-		/*write_str("%d %s> ", cnt, curdir); */
-		buf = read_line();
+    while(1) {
+        sprintf(tmp, "%d", cnt);
+        dbgio_write_str(tmp);
+        dbgio_write(' ');
+        dbgio_write_str(curdir);
+        dbgio_write('>');
+        /*write_str("%d %s> ", cnt, curdir); */
+        buf = read_line();
 
-		if (buf[0] == 0) {
-			cnt++;
-			continue;
-		}
+        if(buf[0] == 0) {
+            cnt++;
+            continue;
+        }
 
-		if (!strcmp(buf, "quit") || !strcmp(buf, "exit")) {
-			break;
-		} else if (!strcmp(buf, "die")) {
-			arch_exit();
-		} else if (!strcmp(buf, "ps")) {
-			thd_pslist();
-		} else if (!strcmp(buf, "reboot")) {
-			arch_reboot();
-		} else if (!strcmp(buf, "menu")) {
-		        (*(void(**)())0x8c0000e0)(1);
-		} else {
-			dbgio_write_str("commands: die quit/exit reboot menu ps\n");
-		}
+        if(!strcmp(buf, "quit") || !strcmp(buf, "exit")) {
+            break;
+        }
+        else if(!strcmp(buf, "die")) {
+            arch_exit();
+        }
+        else if(!strcmp(buf, "ps")) {
+            thd_pslist();
+        }
+        else if(!strcmp(buf, "reboot")) {
+            arch_reboot();
+        }
+        else if(!strcmp(buf, "menu")) {
+            (*(void(**)())0x8c0000e0)(1);
+        }
+        else {
+            dbgio_write_str("commands: die quit/exit reboot menu ps\n");
+        }
 
-		cnt++;
-	}
+        cnt++;
+    }
 }
 
 static void real_start(void *param) {
-	dbgio_printk_func old;
+    dbgio_printk_func old;
 
-	/* Set debug output to the serial console again */
-	old = dbgio_set_printk(dbgio_write_str);
+    /* Set debug output to the serial console again */
+    old = dbgio_set_printk(dbgio_write_str);
 
-	/* Make a semaphore */
-	/* chr_ready = sem_create(0); */
+    /* Make a semaphore */
+    /* chr_ready = sem_create(0); */
 
-	/* Hook the serial IRQ */
-	/* irq_set_handler(EXC_SCIF_RXI, ser_irq);
-	*SCSCR2 |= 1 << 6;
-	*iprc |= 0x000e << 4; */
+    /* Hook the serial IRQ */
+    /* irq_set_handler(EXC_SCIF_RXI, ser_irq);
+    *SCSCR2 |= 1 << 6;
+    *iprc |= 0x000e << 4; */
 
-	/* Do the shell */
-	interact();
-	dbgio_write_str("shell exiting\n");
+    /* Do the shell */
+    interact();
+    dbgio_write_str("shell exiting\n");
 
-	/* Unhook serial IRQ */
-	/* *iprc &= ~(0x000e << 4);
-	*SCSCR2 &= ~(1 << 6);
-	irq_set_handler(EXC_SCIF_RXI, NULL); */
+    /* Unhook serial IRQ */
+    /* *iprc &= ~(0x000e << 4);
+    *SCSCR2 &= ~(1 << 6);
+    irq_set_handler(EXC_SCIF_RXI, NULL); */
 
-	/* Destroy the semaphore */
-	/* sem_destroy(chr_ready); */
+    /* Destroy the semaphore */
+    /* sem_destroy(chr_ready); */
 
-	dbgio_set_printk(old);
+    dbgio_set_printk(old);
 }
 
 void ser_console_init() {
-	thd_create(real_start, NULL);
+    thd_create(real_start, NULL);
 }
 

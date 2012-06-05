@@ -254,5 +254,5 @@ void snd_stream_volume(snd_stream_hnd_t hnd, int vol);
 
 __END_DECLS
 
-#endif	/* __DC_SOUND_STREAM_H */
+#endif  /* __DC_SOUND_STREAM_H */
 

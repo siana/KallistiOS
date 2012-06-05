@@ -6,7 +6,6 @@
 
 #include <kos/fs.h>
 
-int rmdir(const char *pathname)
-{
-	return fs_rmdir(pathname);
+int rmdir(const char *pathname) {
+    return fs_rmdir(pathname);
 }

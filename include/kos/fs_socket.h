@@ -414,5 +414,5 @@ int fs_socket_proto_remove(fs_socket_proto_t *proto);
 
 __END_DECLS
 
-#endif	/* __KOS_FS_SOCKET_H */
+#endif  /* __KOS_FS_SOCKET_H */
 

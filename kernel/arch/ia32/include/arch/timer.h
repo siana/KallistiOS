@@ -15,10 +15,10 @@ __BEGIN_DECLS
 #include <arch/irq.h>
 
 /* Timer sources -- we get four on the SH4 */
-#define TMU0	0	/* Off limits during thread operation */
-#define TMU1	1	/* Used for timer_spin_sleep() */
-#define TMU2	2	/* Used for timer_get_ticks() */
-#define WDT	3	/* Not supported yet */
+#define TMU0    0   /* Off limits during thread operation */
+#define TMU1    1   /* Used for timer_spin_sleep() */
+#define TMU2    2   /* Used for timer_get_ticks() */
+#define WDT 3   /* Not supported yet */
 
 /* The main timer for the task switcher to use */
 #define TIMER_ID TMU0
@@ -83,5 +83,5 @@ void timer_shutdown();
 
 __END_DECLS
 
-#endif	/* __ARCH_TIMER_H */
+#endif  /* __ARCH_TIMER_H */
 

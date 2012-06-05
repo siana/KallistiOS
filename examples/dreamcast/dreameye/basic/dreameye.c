@@ -46,6 +46,7 @@ int main(int argc, char *argv[]) {
     printf("Image received successfully, size %d bytes\n", size);
 
     fp = fopen("/pc/image.jpg", "wb");
+
     if(!fp) {
         printf("Could not open /pc/image.jpg for writing\n");
         free(buf);

@@ -57,5 +57,5 @@ int dbgio_printf(const char *fmt, ...) __printflike(1, 2);
 
 __END_DECLS
 
-#endif	/* __ARCH_DBGIO_H */
+#endif  /* __ARCH_DBGIO_H */
 

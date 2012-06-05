@@ -27,7 +27,7 @@ void syscall_set_return(irq_context_t *context, int value);
    mode convienently */
 #define SYSCALL(routine, p1, p2, p3, p4) 0
 
-#endif	/* __ARCH_SYSCALL_H */
+#endif  /* __ARCH_SYSCALL_H */
 
 
 

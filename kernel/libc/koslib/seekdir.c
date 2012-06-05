@@ -9,5 +9,5 @@
 
 // This isn't properly prototyped... sosume :)
 void seekdir() {
-	dbglog(DBG_WARNING, "seekdir: call ignored\n");
+    dbglog(DBG_WARNING, "seekdir: call ignored\n");
 }

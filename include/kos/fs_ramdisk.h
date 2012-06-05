@@ -65,5 +65,5 @@ int fs_ramdisk_shutdown();
 
 __END_DECLS
 
-#endif	/* __KOS_FS_RAMDISK_H */
+#endif  /* __KOS_FS_RAMDISK_H */
 

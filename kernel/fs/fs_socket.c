@@ -60,12 +60,12 @@ static ssize_t fs_socket_read(void *hnd, void *buffer, size_t cnt) {
 
 static off_t fs_socket_seek(void *hnd, off_t offset, int whence) {
     errno = ESPIPE;
-    return (off_t) -1;
+    return (off_t) - 1;
 }
 
 static off_t fs_socket_tell(void *hnd) {
     errno = ESPIPE;
-    return (off_t) -1;
+    return (off_t) - 1;
 }
 
 static ssize_t fs_socket_write(void *hnd, const void *buffer, size_t cnt) {
@@ -144,6 +144,7 @@ int fs_socket_shutdown() {
         return 0;
 
     c = LIST_FIRST(&sockets);
+
     while(c != NULL) {
         n = LIST_NEXT(c, sock_list);
         fs_close(c->fd);
@@ -156,6 +157,7 @@ int fs_socket_shutdown() {
     rlock_destroy(list_rlock);
 
     i = TAILQ_FIRST(&protocols);
+
     while(i != NULL) {
         j = TAILQ_NEXT(i, entry);
         free(i);
@@ -289,6 +291,7 @@ int socket(int domain, int type, int protocol) {
 
     /* Allocate the socket structure, if we have the space */
     sock = (net_socket_t *)malloc(sizeof(net_socket_t));
+
     if(!sock) {
         errno = ENOMEM;
         rlock_unlock(proto_rlock);
@@ -297,6 +300,7 @@ int socket(int domain, int type, int protocol) {
 
     /* Attempt to get a handle for this socket */
     sock->fd = fs_open_handle(&vh, sock);
+
     if(sock->fd < 0) {
         free(sock);
         rlock_unlock(proto_rlock);
@@ -337,6 +341,7 @@ net_socket_t *fs_socket_open_sock(fs_socket_proto_t *proto) {
 
     /* Allocate the socket structure, if we have the space */
     sock = (net_socket_t *)malloc(sizeof(net_socket_t));
+
     if(!sock) {
         errno = ENOMEM;
         return NULL;
@@ -344,6 +349,7 @@ net_socket_t *fs_socket_open_sock(fs_socket_proto_t *proto) {
 
     /* Attempt to get a handle for this socket */
     sock->fd = fs_open_handle(&vh, sock);
+
     if(sock->fd < 0) {
         free(sock);
         return NULL;
@@ -374,6 +380,7 @@ int accept(int sock, struct sockaddr *address, socklen_t *address_len) {
     net_socket_t *hnd;
 
     hnd = (net_socket_t *)fs_get_handle(sock);
+
     if(hnd == NULL) {
         errno = EBADF;
         return -1;
@@ -392,6 +399,7 @@ int bind(int sock, const struct sockaddr *address, socklen_t address_len) {
     net_socket_t *hnd;
 
     hnd = (net_socket_t *)fs_get_handle(sock);
+
     if(hnd == NULL) {
         errno = EBADF;
         return -1;
@@ -410,6 +418,7 @@ int connect(int sock, const struct sockaddr *address, socklen_t address_len) {
     net_socket_t *hnd;
 
     hnd = (net_socket_t *)fs_get_handle(sock);
+
     if(hnd == NULL) {
         errno = EBADF;
         return -1;
@@ -428,6 +437,7 @@ int listen(int sock, int backlog) {
     net_socket_t *hnd;
 
     hnd = (net_socket_t *)fs_get_handle(sock);
+
     if(hnd == NULL) {
         errno = EBADF;
         return -1;
@@ -446,6 +456,7 @@ ssize_t recv(int sock, void *buffer, size_t length, int flags) {
     net_socket_t *hnd;
 
     hnd = (net_socket_t *)fs_get_handle(sock);
+
     if(hnd == NULL) {
         errno = EBADF;
         return -1;
@@ -465,6 +476,7 @@ ssize_t recvfrom(int sock, void *buffer, size_t length, int flags,
     net_socket_t *hnd;
 
     hnd = (net_socket_t *)fs_get_handle(sock);
+
     if(hnd == NULL) {
         errno = EBADF;
         return -1;
@@ -484,6 +496,7 @@ ssize_t send(int sock, const void *message, size_t length, int flags) {
     net_socket_t *hnd;
 
     hnd = (net_socket_t *)fs_get_handle(sock);
+
     if(hnd == NULL) {
         errno = EBADF;
         return -1;
@@ -503,6 +516,7 @@ ssize_t sendto(int sock, const void *message, size_t length, int flags,
     net_socket_t *hnd;
 
     hnd = (net_socket_t *)fs_get_handle(sock);
+
     if(hnd == NULL) {
         errno = EBADF;
         return -1;
@@ -522,6 +536,7 @@ int shutdown(int sock, int how) {
     net_socket_t *hnd;
 
     hnd = (net_socket_t *)fs_get_handle(sock);
+
     if(hnd == NULL) {
         errno = EBADF;
         return -1;
@@ -541,6 +556,7 @@ int getsockopt(int sock, int level, int option_name, void *option_value,
     net_socket_t *hnd;
 
     hnd = (net_socket_t *)fs_get_handle(sock);
+
     if(hnd == NULL) {
         errno = EBADF;
         return -1;
@@ -561,6 +577,7 @@ int setsockopt(int sock, int level, int option_name, const void *option_value,
     net_socket_t *hnd;
 
     hnd = (net_socket_t *)fs_get_handle(sock);
+
     if(hnd == NULL) {
         errno = EBADF;
         return -1;

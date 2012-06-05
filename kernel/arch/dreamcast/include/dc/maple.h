@@ -162,7 +162,7 @@ LIST_HEAD(maple_driver_list, maple_driver);
 */
 typedef struct maple_frame {
     /** \brief  Send queue handle. NOT A FUNCTION! */
-    TAILQ_ENTRY(maple_frame)	frameq;
+    TAILQ_ENTRY(maple_frame)    frameq;
 
     int                 cmd;        /**< \brief Command (see \ref maple_cmds) */
     int                 dst_port;   /**< \brief Destination port */
@@ -176,7 +176,7 @@ typedef struct maple_frame {
 
     struct maple_device *dev;       /**< \brief Does this belong to a device? */
 
-    void    (*callback)(struct maple_frame *);  /**< \brief Response callback */
+    void (*callback)(struct maple_frame *);     /**< \brief Response callback */
 
 #if MAPLE_DMA_DEBUG
     uint8   recv_buf_arr[1024 + 1024 + 32]; /**< \brief Response receive area */
@@ -235,19 +235,19 @@ typedef struct maple_response {
     \headerfile dc/maple.h
 */
 typedef struct maple_device {
-	/* Public */
-	int             valid;  /**< \brief Is this a valid device? */
-	int             port;   /**< \brief Maple bus port connected to */
-    int             unit;	/**< \brief Unit number, off of the port */
-	maple_devinfo_t info;   /**< \brief Device info struct */
+    /* Public */
+    int             valid;  /**< \brief Is this a valid device? */
+    int             port;   /**< \brief Maple bus port connected to */
+    int             unit;   /**< \brief Unit number, off of the port */
+    maple_devinfo_t info;   /**< \brief Device info struct */
 
-	/* Private */
-	int                     dev_mask;       /**< \brief Device-present mask for unit 0's */
-	maple_frame_t           frame;          /**< \brief One rx/tx frame */
-	struct maple_driver     *drv;           /**< \brief Driver which handles this device */
+    /* Private */
+    int                     dev_mask;       /**< \brief Device-present mask for unit 0's */
+    maple_frame_t           frame;          /**< \brief One rx/tx frame */
+    struct maple_driver     *drv;           /**< \brief Driver which handles this device */
 
-	volatile int            status_valid;	/**< \brief Have we got our first status update? */
-	uint8                   status[1024];	/**< \brief Status buffer (for pollable devices) */
+    volatile int            status_valid;   /**< \brief Have we got our first status update? */
+    uint8                   status[1024];   /**< \brief Status buffer (for pollable devices) */
 } maple_device_t;
 
 #define MAPLE_PORT_COUNT    4   /**< \brief Number of ports on the bus */
@@ -277,7 +277,7 @@ typedef struct maple_port {
 */
 typedef struct maple_driver {
     /** \brief  Driver list handle. NOT A FUNCTION! */
-    LIST_ENTRY(maple_driver)	drv_list;
+    LIST_ENTRY(maple_driver)    drv_list;
 
     uint32      functions;  /**< \brief One or more MAPLE_FUNCs ORed together */
     const char  *name;      /**< \brief The driver name */
@@ -291,7 +291,7 @@ typedef struct maple_driver {
 
         \param  drv         This structure for the driver.
     */
-    void    (*periodic)(struct maple_driver *drv);
+    void (*periodic)(struct maple_driver *drv);
 
     /** \brief  Device attached callback.
 
@@ -302,7 +302,7 @@ typedef struct maple_driver {
         \param  dev         The device that was connected.
         \return             0 on success, <0 on error.
     */
-    int     (*attach)(struct maple_driver *drv, maple_device_t *dev);
+    int (*attach)(struct maple_driver *drv, maple_device_t *dev);
 
     /** \brief  Device detached callback.
 
@@ -312,7 +312,7 @@ typedef struct maple_driver {
         \param  drv         This structure for the driver.
         \param  dev         The device that was detached.
     */
-    void    (*detach)(struct maple_driver *drv, maple_device_t *dev);
+    void (*detach)(struct maple_driver *drv, maple_device_t *dev);
 } maple_driver_t;
 
 /** \brief  Maple state structure.
@@ -664,8 +664,8 @@ void maple_wait_scan();
    like this:
 
    MAPLE_FOREACH_BEGIN(MAPLE_FUNC_CONTROLLER, cont_state_t, st)
-   	if (st->buttons & CONT_START)
-   		return -1;
+    if (st->buttons & CONT_START)
+        return -1;
    MAPLE_FOREACH_END()
 
    The peripheral index can be obtained with __i, and the raw device struct
@@ -687,15 +687,15 @@ void maple_wait_scan();
     \param  VAR             The name of the result of maple_dev_status().
 */
 #define MAPLE_FOREACH_BEGIN(TYPE, VARTYPE, VAR) \
-do { \
-	maple_device_t	* __dev; \
-	VARTYPE * VAR; \
-	int	__i; \
-\
-	__i = 0; \
-	while ( (__dev = maple_enum_type(__i, TYPE)) ) { \
-		VAR = (VARTYPE *)maple_dev_status(__dev); \
-		do {
+    do { \
+        maple_device_t  * __dev; \
+        VARTYPE * VAR; \
+        int __i; \
+        \
+        __i = 0; \
+        while ( (__dev = maple_enum_type(__i, TYPE)) ) { \
+            VAR = (VARTYPE *)maple_dev_status(__dev); \
+            do {
 
 /** \brief  End a foreach loop over Maple devices.
 
@@ -703,10 +703,10 @@ do { \
     body.
 */
 #define MAPLE_FOREACH_END() \
-		} while(0); \
-		__i++; \
-	} \
-} while(0);
+    } while(0); \
+    __i++; \
+    } \
+    } while(0);
 
 __END_DECLS
 

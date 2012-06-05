@@ -45,6 +45,7 @@ void *thd_func(void *param UNUSED) {
     kthread_once(&once, &once_func);
 
     printf("Thd %d: Writing to key 2\n", cur->tid);
+
     if(kthread_setspecific(key2, (void *)cur->tid)) {
         printf("Error in kthread_setspecific!!!\n");
         thd_exit(NULL);
@@ -74,6 +75,7 @@ int main(int argc, char *argv[]) {
     printf("KallistiOS TLS test program\n");
 
     printf("Main thread: Creating key 1\n");
+
     if(kthread_key_create(&key1, NULL)) {
         printf("Error in creating key 1\n");
         exit(-1);

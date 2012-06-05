@@ -9,5 +9,5 @@
 #include <sys/times.h>
 
 int _times_r(struct _reent * re, struct tms * tmsbuf) {
-	return -1;
+    return -1;
 }

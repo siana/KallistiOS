@@ -46,13 +46,13 @@ void dbglog(int level, const char *fmt, ...) __printflike(2, 3);
     @{
 */
 #define DBG_DEAD        0       /**< \brief The system is dead */
-#define DBG_CRITICAL    1		/**< \brief A critical error message */
-#define DBG_ERROR       2		/**< \brief A normal error message */
-#define DBG_WARNING     3		/**< \brief Potential problem */
-#define DBG_NOTICE      4		/**< \brief Normal but significant */
-#define DBG_INFO        5		/**< \brief Informational messages */
-#define DBG_DEBUG       6		/**< \brief User debug messages */
-#define DBG_KDEBUG      7		/**< \brief Kernel debug messages */
+#define DBG_CRITICAL    1       /**< \brief A critical error message */
+#define DBG_ERROR       2       /**< \brief A normal error message */
+#define DBG_WARNING     3       /**< \brief Potential problem */
+#define DBG_NOTICE      4       /**< \brief Normal but significant */
+#define DBG_INFO        5       /**< \brief Informational messages */
+#define DBG_DEBUG       6       /**< \brief User debug messages */
+#define DBG_KDEBUG      7       /**< \brief Kernel debug messages */
 /** @} */
 
 /** \brief  Set the debugging log level.
@@ -67,5 +67,5 @@ void dbglog_set_level(int level);
 
 __END_DECLS
 
-#endif	/* __KOS_DBGLOG_H */
+#endif  /* __KOS_DBGLOG_H */
 

@@ -26,76 +26,80 @@ consider this cheating ;)
 // This will be two polygons, each being half a gradient bar. Note that
 // it's ok to mix vertex macro types.
 void drawbar(float y, float z, float r, float g, float b) {
-	// Top poly (black to white)
-	plx_vert_fnp(PLX_VERT, 0.0f, y, z, 1.0f, r, g, b);
-	plx_vert_inp(PLX_VERT, 0.0f, y-20.0f, z, 0xff000000);
-	plx_vert_fnp(PLX_VERT, 640.0f, y, z, 1.0f, r, g, b);
-	plx_vert_inp(PLX_VERT_EOS, 640.0f, y-20, z, 0xff000000);
+    // Top poly (black to white)
+    plx_vert_fnp(PLX_VERT, 0.0f, y, z, 1.0f, r, g, b);
+    plx_vert_inp(PLX_VERT, 0.0f, y - 20.0f, z, 0xff000000);
+    plx_vert_fnp(PLX_VERT, 640.0f, y, z, 1.0f, r, g, b);
+    plx_vert_inp(PLX_VERT_EOS, 640.0f, y - 20, z, 0xff000000);
 
-	// Bottom poly (white to black)
-	plx_vert_inp(PLX_VERT, 0.0f, y+20.0f, z, 0xff000000);
-	plx_vert_fnp(PLX_VERT, 0.0f, y, z, 1.0f, r, g, b);
-	plx_vert_inp(PLX_VERT, 640.0f, y+20.0f, z, 0xff000000);
-	plx_vert_fnp(PLX_VERT_EOS, 640.0f, y, z, 1.0f, r, g, b);
+    // Bottom poly (white to black)
+    plx_vert_inp(PLX_VERT, 0.0f, y + 20.0f, z, 0xff000000);
+    plx_vert_fnp(PLX_VERT, 0.0f, y, z, 1.0f, r, g, b);
+    plx_vert_inp(PLX_VERT, 640.0f, y + 20.0f, z, 0xff000000);
+    plx_vert_fnp(PLX_VERT_EOS, 640.0f, y, z, 1.0f, r, g, b);
 }
 
 int main(int argc, char **argv) {
-	int done, i;
-	float theta, dt;
-	float colors[3*10] = {
-		0.0f, 0.5f, 1.0f,
-		0.0f, 1.0f, 0.0f,
-		1.0f, 0.0f, 0.0f,
-		0.0f, 0.0f, 1.0f,
-		0.5f, 0.5f, 0.0f,
-		0.5f, 0.0f, 0.5f,
-		0.5f, 0.5f, 0.5f,
-		0.73f, 0.8f, 0.25f,
-		0.25f, 0.8f, 0.73f,
-		1.0f, 1.0f, 0.0f
-	};
+    int done, i;
+    float theta, dt;
+    float colors[3 * 10] = {
+        0.0f, 0.5f, 1.0f,
+        0.0f, 1.0f, 0.0f,
+        1.0f, 0.0f, 0.0f,
+        0.0f, 0.0f, 1.0f,
+        0.5f, 0.5f, 0.0f,
+        0.5f, 0.0f, 0.5f,
+        0.5f, 0.5f, 0.5f,
+        0.73f, 0.8f, 0.25f,
+        0.25f, 0.8f, 0.73f,
+        1.0f, 1.0f, 0.0f
+    };
 
-	// Init PVR
-	pvr_init_defaults();
+    // Init PVR
+    pvr_init_defaults();
 
-	// Setup the context
-	plx_cxt_init();
-	plx_cxt_texture(NULL);
-	plx_cxt_culling(PLX_CULL_NONE);
+    // Setup the context
+    plx_cxt_init();
+    plx_cxt_texture(NULL);
+    plx_cxt_culling(PLX_CULL_NONE);
 
-	// Until the user hits start...
-	dt = 2*M_PI/160.0f;
-	for (done = 0, theta = 0.0f; !done; ) {
-		// Check for start
-		MAPLE_FOREACH_BEGIN(MAPLE_FUNC_CONTROLLER, cont_state_t, st)
-			if (st->buttons & CONT_START)
-				done = 1;
-		MAPLE_FOREACH_END()
+    // Until the user hits start...
+    dt = 2 * M_PI / 160.0f;
 
-		// Setup the frame
-		pvr_wait_ready();
-		pvr_scene_begin();
-		pvr_list_begin(PVR_LIST_OP_POLY);
+    for(done = 0, theta = 0.0f; !done;) {
+        // Check for start
+        MAPLE_FOREACH_BEGIN(MAPLE_FUNC_CONTROLLER, cont_state_t, st)
 
-		// Submit the context
-		plx_cxt_send(PVR_LIST_OP_POLY);
+        if(st->buttons & CONT_START)
+            done = 1;
 
-		// Draw a sinus bar at our current position and several positions
-		// back. Each bar will get its own Z value (descending).
-		for (i=0; i<10; i++) {
-			drawbar(240.0f + fsin(theta - dt*i*6) * 120.0f, 100.0f - i,
-				colors[i*3+0], colors[i*3+1], colors[i*3+2]);
-		}
+        MAPLE_FOREACH_END()
 
-		pvr_scene_finish();
+        // Setup the frame
+        pvr_wait_ready();
+        pvr_scene_begin();
+        pvr_list_begin(PVR_LIST_OP_POLY);
 
-		// Move our counters
-		theta += dt;
-		while (theta >= 2*M_PI)
-			theta -= 2*M_PI;
-	}
+        // Submit the context
+        plx_cxt_send(PVR_LIST_OP_POLY);
 
-	return 0;
+        // Draw a sinus bar at our current position and several positions
+        // back. Each bar will get its own Z value (descending).
+        for(i = 0; i < 10; i++) {
+            drawbar(240.0f + fsin(theta - dt * i * 6) * 120.0f, 100.0f - i,
+                    colors[i * 3 + 0], colors[i * 3 + 1], colors[i * 3 + 2]);
+        }
+
+        pvr_scene_finish();
+
+        // Move our counters
+        theta += dt;
+
+        while(theta >= 2 * M_PI)
+            theta -= 2 * M_PI;
+    }
+
+    return 0;
 }
 
 

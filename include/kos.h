@@ -62,50 +62,50 @@ __BEGIN_DECLS
 #include <arch/stack.h>
 
 #ifdef _arch_dreamcast
-#	include <arch/mmu.h>
+#   include <arch/mmu.h>
 
-#	include <dc/biosfont.h>
-#	include <dc/cdrom.h>
-#	include <dc/fs_dcload.h>
-#	include <dc/fs_iso9660.h>
-#	include <dc/fs_vmu.h>
-#	include <dc/asic.h>
-#	include <dc/maple.h>
-#	include <dc/maple/controller.h>
-#	include <dc/maple/keyboard.h>
-#	include <dc/maple/mouse.h>
-#	include <dc/maple/vmu.h>
-#	include <dc/maple/sip.h>
-#	include <dc/maple/purupuru.h>
-#	include <dc/vmu_pkg.h>
-#	include <dc/spu.h>
-#	include <dc/pvr.h>
-#	include <dc/video.h>
-#	include <dc/fmath.h>
-#	include <dc/matrix.h>
-#	include <dc/sound/stream.h>
-#	include <dc/sound/sfxmgr.h>
-#	include <dc/net/broadband_adapter.h>
-#	include <dc/net/lan_adapter.h>
-#	include <dc/modem/modem.h>
-#	include <dc/sq.h>
-#	include <dc/ubc.h>
-#	include <dc/flashrom.h>
-#	include <dc/vblank.h>
-#	include <dc/vmufs.h>
-#	include <dc/scif.h>
-#elif _arch_gba	/* _arch_dreamcast */
-#	include <gba/keys.h>
-#	include <gba/sprite.h>
-#	include <gba/video.h>
-#	include <gba/dma.h>
-#	include <gba/sound.h>
+#   include <dc/biosfont.h>
+#   include <dc/cdrom.h>
+#   include <dc/fs_dcload.h>
+#   include <dc/fs_iso9660.h>
+#   include <dc/fs_vmu.h>
+#   include <dc/asic.h>
+#   include <dc/maple.h>
+#   include <dc/maple/controller.h>
+#   include <dc/maple/keyboard.h>
+#   include <dc/maple/mouse.h>
+#   include <dc/maple/vmu.h>
+#   include <dc/maple/sip.h>
+#   include <dc/maple/purupuru.h>
+#   include <dc/vmu_pkg.h>
+#   include <dc/spu.h>
+#   include <dc/pvr.h>
+#   include <dc/video.h>
+#   include <dc/fmath.h>
+#   include <dc/matrix.h>
+#   include <dc/sound/stream.h>
+#   include <dc/sound/sfxmgr.h>
+#   include <dc/net/broadband_adapter.h>
+#   include <dc/net/lan_adapter.h>
+#   include <dc/modem/modem.h>
+#   include <dc/sq.h>
+#   include <dc/ubc.h>
+#   include <dc/flashrom.h>
+#   include <dc/vblank.h>
+#   include <dc/vmufs.h>
+#   include <dc/scif.h>
+#elif _arch_gba /* _arch_dreamcast */
+#   include <gba/keys.h>
+#   include <gba/sprite.h>
+#   include <gba/video.h>
+#   include <gba/dma.h>
+#   include <gba/sound.h>
 #elif _arch_ps2 /* _arch_gba */
-#	include <ps2/ioports.h>
-#	include	<ps2/fs_ps2load.h>
-#	include <ps2/sbios.h>
-#else	/* _arch_ps2 */
-#	error Invalid architecture or no architecture specified
+#   include <ps2/ioports.h>
+#   include <ps2/fs_ps2load.h>
+#   include <ps2/sbios.h>
+#else   /* _arch_ps2 */
+#   error Invalid architecture or no architecture specified
 #endif
 
 __END_DECLS

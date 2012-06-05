@@ -69,5 +69,5 @@ export_sym_t * export_lookup(const char * name);
 
 __END_DECLS
 
-#endif	/* __KOS_EXPORTS_H */
+#endif  /* __KOS_EXPORTS_H */
 

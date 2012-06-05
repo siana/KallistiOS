@@ -18,9 +18,9 @@ static const uint32 md5initial[4] = {
    depending on its length. This is the padding that is to be used. */
 static const uint8 md5padding[64] = {
     0x80, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-       0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-       0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-       0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
 };
 
 /* MD5 "magic" values */
@@ -87,28 +87,28 @@ int main(int argc, char *argv[]) {
 
 /* Compound operations, consisting of a F, G, H, or I operation and a rotate */
 #define MD5_FH(a, b, c, d, w, s, t) { \
-    (a) += MD5_F((b), (c), (d)) + (w) + (t); \
-    (a) = MD5_ROT((a), (s)); \
-    (a) += (b); \
-}
+        (a) += MD5_F((b), (c), (d)) + (w) + (t); \
+        (a) = MD5_ROT((a), (s)); \
+        (a) += (b); \
+    }
 
 #define MD5_GH(a, b, c, d, w, s, t) { \
-    (a) += MD5_G((b), (c), (d)) + (w) + (t); \
-    (a) = MD5_ROT((a), (s)); \
-    (a) += (b); \
-}
+        (a) += MD5_G((b), (c), (d)) + (w) + (t); \
+        (a) = MD5_ROT((a), (s)); \
+        (a) += (b); \
+    }
 
 #define MD5_HH(a, b, c, d, w, s, t) { \
-    (a) += MD5_H((b), (c), (d)) + (w) + (t); \
-    (a) = MD5_ROT((a), (s)); \
-    (a) += (b); \
-}
+        (a) += MD5_H((b), (c), (d)) + (w) + (t); \
+        (a) = MD5_ROT((a), (s)); \
+        (a) += (b); \
+    }
 
 #define MD5_IH(a, b, c, d, w, s, t) { \
-    (a) += MD5_I((b), (c), (d)) + (w) + (t); \
-    (a) = MD5_ROT((a), (s)); \
-    (a) += (b); \
-}
+        (a) += MD5_I((b), (c), (d)) + (w) + (t); \
+        (a) = MD5_ROT((a), (s)); \
+        (a) += (b); \
+    }
 
 void kos_md5_start(kos_md5_cxt_t *cxt) {
     cxt->size = 0;
@@ -132,7 +132,7 @@ static void kos_md5_process(kos_md5_cxt_t *cxt, const uint8 *input) {
     /* Read the input into our buffer */
     for(i = 0; i < 16; ++i) {
         w[i] = input[(i << 2)] | (input[(i << 2) + 1] << 8) |
-            (input[(i << 2) + 2] << 16) | (input[(i << 2) + 3] << 24);
+               (input[(i << 2) + 2] << 16) | (input[(i << 2) + 3] << 24);
     }
 
     /* First Round */

@@ -201,4 +201,4 @@ void asic_shutdown();
 
 __END_DECLS
 
-#endif	/* __DC_ASIC_H */
+#endif  /* __DC_ASIC_H */

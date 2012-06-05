@@ -36,7 +36,7 @@ static int inet_pton4(const char *src, void *dst) {
     /* Validate each part, note that unlike inet_aton(), inet_pton() only
        supports the standard xxx.xxx.xxx.xxx addresses. */
     if(parts[0] > 0xFF || parts[1] > 0xFF ||
-       parts[2] > 0xFF || parts[3] > 0xFF)
+            parts[2] > 0xFF || parts[3] > 0xFF)
         return 0;
 
     addr->s_addr = htonl(parts[0] << 24 | parts[1] << 16 |

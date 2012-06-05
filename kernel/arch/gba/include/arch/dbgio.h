@@ -38,5 +38,5 @@ void dbgio_enable();
 /* Printf functionality */
 int dbgio_printf(const char *fmt, ...);
 
-#endif	/* __ARCH_DBGIO_H */
+#endif  /* __ARCH_DBGIO_H */
 

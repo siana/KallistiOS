@@ -36,38 +36,38 @@ __BEGIN_DECLS
 */
 typedef struct dbgio_handler {
     /** \brief  Name of the dbgio handler */
-    const char	* name;
+    const char  * name;
 
     /** \brief  Detect this debug interface.
         \retval 1           If the device is available and useable
         \retval 0           If the device is unavailable
     */
-    int	(*detected)();
+    int (*detected)();
 
     /** \brief  Initialize this debug interface with default parameters.
         \retval 0           On success
         \retval -1          On failure
     */
-    int	(*init)();
+    int (*init)();
 
     /** \brief  Shutdown this debug interface.
         \retval 0           On success
         \retval -1          On failure
     */
-    int	(*shutdown)();
+    int (*shutdown)();
 
     /** \brief  Set either polled or IRQ usage for this interface.
         \param  mode        1 for IRQ-based usage, 0 for polled I/O
         \retval 0           On success
         \retval -1          On failure
     */
-    int	(*set_irq_usage)(int mode);
+    int (*set_irq_usage)(int mode);
 
     /** \brief  Read one character from the console.
         \retval 0           On success
         \retval -1          On failure (set errno as appropriate)
     */
-    int	(*read)();
+    int (*read)();
 
     /** \brief  Write one character to the console.
         \param  c           The character to write
@@ -76,13 +76,13 @@ typedef struct dbgio_handler {
         \note               Interfaces may require a call to flush() before the
                             output is actually flushed to the console.
     */
-    int	(*write)(int c);
+    int (*write)(int c);
 
     /** \brief  Flush any queued output.
         \retval 0           On success
         \retval -1          On error (set errno as appropriate)
     */
-    int	(*flush)();
+    int (*flush)();
 
     /** \brief  Write an entire buffer of data to the console.
         \param  data        The buffer to write
@@ -91,7 +91,7 @@ typedef struct dbgio_handler {
         \return             Number of characters written on success, or -1 on
                             failure (set errno as appropriate)
     */
-    int	(*write_buffer)(const uint8 *data, int len, int xlat);
+    int (*write_buffer)(const uint8 *data, int len, int xlat);
 
     /** \brief  Read an entire buffer of data from the console.
         \param  data        The buffer to read into
@@ -99,7 +99,7 @@ typedef struct dbgio_handler {
         \return             Number of characters read on success, or -1 on
                             failure (set errno as appropriate)
     */
-    int	(*read_buffer)(uint8 *data, int len);
+    int (*read_buffer)(uint8 *data, int len);
 } dbgio_handler_t;
 
 /** \cond */
@@ -233,5 +233,5 @@ int dbgio_printf(const char *fmt, ...) __printflike(1, 2);
 
 __END_DECLS
 
-#endif	/* __KOS_DBGIO_H */
+#endif  /* __KOS_DBGIO_H */
 

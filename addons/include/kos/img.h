@@ -22,14 +22,14 @@ __BEGIN_DECLS
    the paletted formats) the data interpretation _may_ be platform dependent.
    Thus we also provide a data-length field. */
 typedef struct kos_img {
-	void	* data;
-	uint32	w, h;
-	uint32	fmt;
-	uint32	byte_count;
+    void    * data;
+    uint32  w, h;
+    uint32  fmt;
+    uint32  byte_count;
 } kos_img_t;
 
 /* Access to the upper and lower pieces of the format word */
-#define KOS_IMG_FMT_I(x) ((x) & 0xffff)		/* Platform independent part */
+#define KOS_IMG_FMT_I(x) ((x) & 0xffff)     /* Platform independent part */
 #define KOS_IMG_FMT_D(x) (((x) >> 16) & 0xffff)
 
 /* Macro to create a new format word */
@@ -38,24 +38,24 @@ typedef struct kos_img {
 /* Definitions for the plat independent part *************************************/
 
 /* Bitmap formats */
-#define KOS_IMG_FMT_NONE	0x00	/* Undefined */
-#define KOS_IMG_FMT_RGB888	0x01	/* Interleaved r/g/b bytes (24-bit) */
-#define KOS_IMG_FMT_ARGB8888	0x02	/* Interleaved a/r/g/b bytes (32-bit) */
-#define KOS_IMG_FMT_RGB565	0x03	/* r/g/b 5/6/5 (16-bit) */
-#define KOS_IMG_FMT_ARGB4444	0x04	/* a/r/g/b 4/4/4/4 (16-bit) */
-#define KOS_IMG_FMT_ARGB1555	0x05	/* a/r/g/b 1/5/5/5 (16-bit) */
-#define KOS_IMG_FMT_PAL4BPP	0x06	/* Paletted (4-bit) */
-#define KOS_IMG_FMT_PAL8BPP	0x07	/* Paletted (8-bit) */
-#define KOS_IMG_FMT_YUV422	0x08	/* y/u/v 4/2/2 (8-bit) */
-#define KOS_IMG_FMT_BGR565	0x09	/* b/g/r 5/6/5 (16-bit) */
-#define KOS_IMG_FMT_RGBA8888	0x10	/* Interleaved r/g/b/a bytes (32-bit) */
-#define KOS_IMG_FMT_MASK	0xff
+#define KOS_IMG_FMT_NONE    0x00    /* Undefined */
+#define KOS_IMG_FMT_RGB888  0x01    /* Interleaved r/g/b bytes (24-bit) */
+#define KOS_IMG_FMT_ARGB8888    0x02    /* Interleaved a/r/g/b bytes (32-bit) */
+#define KOS_IMG_FMT_RGB565  0x03    /* r/g/b 5/6/5 (16-bit) */
+#define KOS_IMG_FMT_ARGB4444    0x04    /* a/r/g/b 4/4/4/4 (16-bit) */
+#define KOS_IMG_FMT_ARGB1555    0x05    /* a/r/g/b 1/5/5/5 (16-bit) */
+#define KOS_IMG_FMT_PAL4BPP 0x06    /* Paletted (4-bit) */
+#define KOS_IMG_FMT_PAL8BPP 0x07    /* Paletted (8-bit) */
+#define KOS_IMG_FMT_YUV422  0x08    /* y/u/v 4/2/2 (8-bit) */
+#define KOS_IMG_FMT_BGR565  0x09    /* b/g/r 5/6/5 (16-bit) */
+#define KOS_IMG_FMT_RGBA8888    0x10    /* Interleaved r/g/b/a bytes (32-bit) */
+#define KOS_IMG_FMT_MASK    0xff
 
 /* Misc attributes */
-#define KOS_IMG_INVERTED_X	0x0100	/* X axis is inverted */
-#define KOS_IMG_INVERTED_Y	0x0200	/* Y axis is inverted */
-#define KOS_IMG_NOT_OWNER	0x0400	/* We don't own the buffer containing
-					   the data (ROM or similar) */
+#define KOS_IMG_INVERTED_X  0x0100  /* X axis is inverted */
+#define KOS_IMG_INVERTED_Y  0x0200  /* Y axis is inverted */
+#define KOS_IMG_NOT_OWNER   0x0400  /* We don't own the buffer containing
+the data (ROM or similar) */
 
 /* Util functions ****************************************************************/
 
@@ -65,5 +65,5 @@ void kos_img_free(kos_img_t *img, int struct_also);
 
 __END_DECLS
 
-#endif	/* __KOS_IMG_H */
+#endif  /* __KOS_IMG_H */
 

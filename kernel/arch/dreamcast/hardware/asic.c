@@ -62,34 +62,34 @@
   693x -> irq 9
 
   69x0
-    bit 2	render complete
-        3	scanline 1
-        4	scanline 2
-        5	vsync
-        7	opaque polys accepted
-        8	opaque modifiers accepted
-        9	translucent polys accepted
-        10	translucent modifiers accepted
-        12	maple dma complete
-        13	maple error(?)
-        14	gd-rom dma complete
-        15	aica dma complete
-        16	external dma 1 complete
-        17	external dma 2 complete
-        18	??? dma complete
-        21	punch-thru polys accepted
+    bit 2   render complete
+        3   scanline 1
+        4   scanline 2
+        5   vsync
+        7   opaque polys accepted
+        8   opaque modifiers accepted
+        9   translucent polys accepted
+        10  translucent modifiers accepted
+        12  maple dma complete
+        13  maple error(?)
+        14  gd-rom dma complete
+        15  aica dma complete
+        16  external dma 1 complete
+        17  external dma 2 complete
+        18  ??? dma complete
+        21  punch-thru polys accepted
 
   69x4
-    bit 0	gd-rom command status
-        1	AICA
+    bit 0   gd-rom command status
+        1   AICA
         2       modem?
         3       expansion port (PCI bridge)
 
   69x8
-    bit 2	out of primitive memory
-        3	out of matrix memory
-        12	gd-rom dma illegal address
-        13	gd-rom dma overrun
+    bit 2   out of primitive memory
+        3   out of matrix memory
+        12  gd-rom dma illegal address
+        13  gd-rom dma overrun
 
  */
 
@@ -106,116 +106,119 @@ static asic_evt_handler asic_evt_handlers[0x4][0x20];
 
 /* Set a handler, or remove a handler */
 int asic_evt_set_handler(uint32 code, asic_evt_handler hnd) {
-	uint32 evtreg, evt;
+    uint32 evtreg, evt;
 
-	evtreg = (code >> 8) & 0xff;
-	evt = code & 0xff;
+    evtreg = (code >> 8) & 0xff;
+    evt = code & 0xff;
 
-	if (evtreg > 0x4)
-		return -1;
-	if (evt > 0x20)
-		return -1;
+    if(evtreg > 0x4)
+        return -1;
 
-	asic_evt_handlers[evtreg][evt] = hnd;
+    if(evt > 0x20)
+        return -1;
 
-	return 0;
+    asic_evt_handlers[evtreg][evt] = hnd;
+
+    return 0;
 }
 
 /* The ASIC event handler; this is called from the global IRQ handler
    to handle external IRQ 9. */
 static void handler_irq9(irq_t source, irq_context_t *context) {
-	int	reg, i;
-	vuint32	*asicack = (vuint32*)0xa05f6900;
-	uint32	mask;
+    int reg, i;
+    vuint32 *asicack = (vuint32*)0xa05f6900;
+    uint32  mask;
 
-	/* Go through each event register and look for pending events */
-	for (reg=0; reg<3; reg++) {
-		/* Read the event mask and clear pending */
-		mask = asicack[reg]; asicack[reg] = mask;
+    /* Go through each event register and look for pending events */
+    for(reg = 0; reg < 3; reg++) {
+        /* Read the event mask and clear pending */
+        mask = asicack[reg];
+        asicack[reg] = mask;
 
-		/* Search for relevant handlers */
-		for (i=0; i<32; i++) {
-			if (mask & (1 << i)) {
-				if (asic_evt_handlers[reg][i] != NULL) {
-					asic_evt_handlers[reg][i]( (reg << 8) | i );
-				}
-			}
-		}
-	}
+        /* Search for relevant handlers */
+        for(i = 0; i < 32; i++) {
+            if(mask & (1 << i)) {
+                if(asic_evt_handlers[reg][i] != NULL) {
+                    asic_evt_handlers[reg][i]((reg << 8) | i);
+                }
+            }
+        }
+    }
 }
 
 
 /* Disable all G2 events */
 void asic_evt_disable_all() {
-	vuint32 * asicen;
-	int irq, sub;
+    vuint32 * asicen;
+    int irq, sub;
 
-	for (irq=0; irq<3; irq++) {
-		asicen = (vuint32*)(0xa05f6910 + irq*0x10);
-		for (sub=0; sub<3; sub++) {
-			asicen[sub] = 0;
-		}
-	}
+    for(irq = 0; irq < 3; irq++) {
+        asicen = (vuint32*)(0xa05f6910 + irq * 0x10);
+
+        for(sub = 0; sub < 3; sub++) {
+            asicen[sub] = 0;
+        }
+    }
 }
 
 /* Disable a particular G2 event */
 void asic_evt_disable(uint32 code, int irqlevel) {
-	vuint32 *asicen;
+    vuint32 *asicen;
 
-	/* Did the user choose an IRQ level? If not, give them 9 by default */
-	if (irqlevel == ASIC_IRQ_DEFAULT)
-		irqlevel = ASIC_IRQ9;
+    /* Did the user choose an IRQ level? If not, give them 9 by default */
+    if(irqlevel == ASIC_IRQ_DEFAULT)
+        irqlevel = ASIC_IRQ9;
 
-	asicen = (vuint32*)(0xa05f6900 + irqlevel*0x10);
-	asicen[((code >> 8) & 0xff)] &= ~(1 << (code & 0xff));
+    asicen = (vuint32*)(0xa05f6900 + irqlevel * 0x10);
+    asicen[((code >> 8) & 0xff)] &= ~(1 << (code & 0xff));
 }
 
 /* Enable a particular G2 event */
 void asic_evt_enable(uint32 code, int irqlevel) {
-	vuint32 *asicen;
+    vuint32 *asicen;
 
-	/* Did the user choose an IRQ level? If not, give them 9 by default */
-	if (irqlevel == ASIC_IRQ_DEFAULT)
-		irqlevel = ASIC_IRQ9;
+    /* Did the user choose an IRQ level? If not, give them 9 by default */
+    if(irqlevel == ASIC_IRQ_DEFAULT)
+        irqlevel = ASIC_IRQ9;
 
-	asicen = (vuint32*)(0xa05f6900 + irqlevel*0x10);
-	asicen[((code >> 8) & 0xff)] |= (1 << (code & 0xff));
+    asicen = (vuint32*)(0xa05f6900 + irqlevel * 0x10);
+    asicen[((code >> 8) & 0xff)] |= (1 << (code & 0xff));
 }
 
 /* Initialize events */
 static void asic_evt_init() {
-	/* Clear any pending interrupts and disable all events */
-	asic_evt_disable_all();
-	ASIC_ACK_A = 0xffffffff;
-	ASIC_ACK_B = 0xffffffff;
-	ASIC_ACK_C = 0xffffffff;
+    /* Clear any pending interrupts and disable all events */
+    asic_evt_disable_all();
+    ASIC_ACK_A = 0xffffffff;
+    ASIC_ACK_B = 0xffffffff;
+    ASIC_ACK_C = 0xffffffff;
 
-	/* Clear out the event table */
-	memset(asic_evt_handlers, 0, sizeof(asic_evt_handlers));
+    /* Clear out the event table */
+    memset(asic_evt_handlers, 0, sizeof(asic_evt_handlers));
 
-	/* Hook IRQ9,B,D */
-	irq_set_handler(EXC_IRQ9, handler_irq9);
-	irq_set_handler(EXC_IRQB, handler_irq9);
-	irq_set_handler(EXC_IRQD, handler_irq9);
+    /* Hook IRQ9,B,D */
+    irq_set_handler(EXC_IRQ9, handler_irq9);
+    irq_set_handler(EXC_IRQB, handler_irq9);
+    irq_set_handler(EXC_IRQD, handler_irq9);
 }
 
 /* Shutdown events */
 static void asic_evt_shutdown() {
-	/* Disable all events */
-	asic_evt_disable_all();
+    /* Disable all events */
+    asic_evt_disable_all();
 
-	/* Unhook handlers */
-	irq_set_handler(EXC_IRQ9, NULL);
-	irq_set_handler(EXC_IRQB, NULL);
-	irq_set_handler(EXC_IRQD, NULL);
+    /* Unhook handlers */
+    irq_set_handler(EXC_IRQ9, NULL);
+    irq_set_handler(EXC_IRQB, NULL);
+    irq_set_handler(EXC_IRQD, NULL);
 }
 
 /* Init routine */
 void asic_init() {
-	asic_evt_init();
+    asic_evt_init();
 }
 
 
 void asic_shutdown() {
-	asic_evt_shutdown();
+    asic_evt_shutdown();
 }

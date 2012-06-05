@@ -45,12 +45,12 @@ typedef volatile int8 vint8;
 typedef uint32 ptr_t;
 
 /* another format for type names */
-typedef unsigned char	u_char;
-typedef unsigned short	u_short;
-typedef unsigned int	u_int;
-typedef unsigned long	u_long;
-typedef unsigned short	ushort;
-typedef unsigned int	uint;
+typedef unsigned char   u_char;
+typedef unsigned short  u_short;
+typedef unsigned int    u_int;
+typedef unsigned long   u_long;
+typedef unsigned short  ushort;
+typedef unsigned int    uint;
 
 /* File-specific types */
 typedef size_t ssize_t;
@@ -67,5 +67,5 @@ typedef handle_t prio_t;
 
 __END_DECLS
 
-#endif	/* __ARCH_TYPES_H */
+#endif  /* __ARCH_TYPES_H */
 

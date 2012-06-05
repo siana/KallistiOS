@@ -58,5 +58,5 @@ int fs_pty_shutdown();
 
 __END_DECLS
 
-#endif	/* __KOS_FS_PTY_H */
+#endif  /* __KOS_FS_PTY_H */
 

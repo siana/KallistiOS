@@ -14,28 +14,28 @@
    defining new data in them. */
 typedef void (*fptr)(void);
 
-static fptr ctor_list[1] __attribute__((section(".ctors"))) = { (fptr) -1 };
-static fptr dtor_list[1] __attribute__((section(".dtors"))) = { (fptr) -1 };
+static fptr ctor_list[1] __attribute__((section(".ctors"))) = { (fptr) - 1 };
+static fptr dtor_list[1] __attribute__((section(".dtors"))) = { (fptr) - 1 };
 
 /* Call this to execute all ctors */
 void arch_ctors() {
-	fptr *fpp;
+    fptr *fpp;
 
-	/* Run up to the end of the list (defined by crtend) */
-	for (fpp=ctor_list + 1; *fpp != 0; ++fpp)
-		;
+    /* Run up to the end of the list (defined by crtend) */
+    for(fpp = ctor_list + 1; *fpp != 0; ++fpp)
+        ;
 
-	/* Now run the ctors backwards */
-	while (--fpp > ctor_list)
-		(**fpp)();
+    /* Now run the ctors backwards */
+    while(--fpp > ctor_list)
+        (**fpp)();
 }
 
 /* Call this to execute all dtors */
 void arch_dtors() {
-	fptr *fpp;
+    fptr *fpp;
 
-	/* Do the dtors forwards */
-	for (fpp=dtor_list + 1; *fpp != 0; ++fpp )
-		(**fpp)();
+    /* Do the dtors forwards */
+    for(fpp = dtor_list + 1; *fpp != 0; ++fpp)
+        (**fpp)();
 }
 

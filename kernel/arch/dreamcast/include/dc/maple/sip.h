@@ -37,7 +37,7 @@ __BEGIN_DECLS
 
     \headerfile dc/maple/sip.h
 */
-typedef struct	sip_state {
+typedef struct  sip_state {
     /** \brief  The gain value for the microphone amp. */
     int             amp_gain;
 
@@ -215,4 +215,4 @@ void sip_shutdown();
 
 __END_DECLS
 
-#endif	/* __DC_MAPLE_SIP_H */
+#endif  /* __DC_MAPLE_SIP_H */

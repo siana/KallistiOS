@@ -24,13 +24,13 @@ void arch_stk_trace(int n) {
 /* Do a stack trace from the given frame pointer (useful for things like
    tracing from an ISR); leave off the first n frames. */
 void arch_stk_trace_at(uint32 fp, int n) {
-	uint32 foo = fp + 5;
-	dbgio_printf("%d\n", foo);
+    uint32 foo = fp + 5;
+    dbgio_printf("%d\n", foo);
 #ifdef FRAME_POINTERS
-	dbgio_printf("-------- Stack Trace (innermost first) ---------\n");
-	dbgio_printf("-------------- End Stack Trace -----------------\n");
+    dbgio_printf("-------- Stack Trace (innermost first) ---------\n");
+    dbgio_printf("-------------- End Stack Trace -----------------\n");
 #else
-	dbgio_printf("Stack Trace: frame pointers not enabled!\n");
+    dbgio_printf("Stack Trace: frame pointers not enabled!\n");
 #endif
 }
 

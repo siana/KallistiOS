@@ -27,25 +27,25 @@ __BEGIN_DECLS
 /** \brief ANSI C functions */
 struct mallinfo {
     /** \brief non-mmapped space allocated from system */
-	int arena;
+    int arena;
     /** \brief number of free chunks */
-	int ordblks;
+    int ordblks;
     /** \brief number of fastbin blocks */
-	int smblks;
+    int smblks;
     /** \brief number of mmapped regions */
-	int hblks;
+    int hblks;
     /** \brief space in mmapped regions */
-	int hblkhd;
+    int hblkhd;
     /** \brief maximum total allocated space */
-	int usmblks;
+    int usmblks;
     /** \brief space available in freed fastbin blocks */
-	int fsmblks;
+    int fsmblks;
     /** \brief total allocated space */
-	int uordblks;
+    int uordblks;
     /** \brief total free space */
-	int fordblks;
+    int fordblks;
     /** \brief top-most, releasable (via malloc_trim) space */
-	int keepcost;
+    int keepcost;
 };
 
 /** \brief allocate memory
@@ -163,5 +163,5 @@ int mem_check_all();
 
 __END_DECLS
 
-#endif	/* __MALLOC_H */
+#endif  /* __MALLOC_H */
 

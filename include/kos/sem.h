@@ -39,13 +39,13 @@ __BEGIN_DECLS
     \headerfile kos/sem.h
 */
 typedef struct semaphore {
-	/** \cond */
-	/* List entry for the global list of semaphores */
-	LIST_ENTRY(semaphore)	g_list;
+    /** \cond */
+    /* List entry for the global list of semaphores */
+    LIST_ENTRY(semaphore)   g_list;
 
-	/* Basic semaphore info */
-	int		count;		/* The semaphore count */
-	/** \endcond */
+    /* Basic semaphore info */
+    int     count;      /* The semaphore count */
+    /** \endcond */
 } semaphore_t;
 
 /** \cond */
@@ -169,5 +169,5 @@ void sem_shutdown();
 
 __END_DECLS
 
-#endif	/* __KOS_SEM_H */
+#endif  /* __KOS_SEM_H */
 

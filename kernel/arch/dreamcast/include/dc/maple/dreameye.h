@@ -159,4 +159,4 @@ void dreameye_shutdown();
 
 __END_DECLS
 
-#endif	/* __DC_MAPLE_DREAMEYE_H */
+#endif  /* __DC_MAPLE_DREAMEYE_H */

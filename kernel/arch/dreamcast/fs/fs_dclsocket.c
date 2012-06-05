@@ -105,6 +105,7 @@ static void dcls_handle_dbin(command_t *cmd) {
     }
     else {
         cmd->address = htonl(bin_info.addr + i * 1024);
+
         if(i == (bin_info.size + 1023) / 1024 - 1) {
             cmd->size = htonl(bin_info.size % 1024);
         }
@@ -449,7 +450,7 @@ static dirent_t *dcls_readdir(void *hnd) {
 
     memcpy(cmd->id, "DC18", 4);
     cmd->value0 = htonl(fd);
-    cmd->value1 = htonl((uint32) (&our_dir));
+    cmd->value1 = htonl((uint32)(&our_dir));
     cmd->value2 = htonl(sizeof(dcload_dirent_t));
 
     send(dcls_socket, cmd, sizeof(command_3int_t), 0);
@@ -678,15 +679,15 @@ static int dcls_fcntl(void *h, int cmd, va_list ap) {
 static vfs_handler_t vh = {
     /* Name handler */
     {
-        "/pc",		/* name */
-        0,		/* tbfi */
-        0x00010000,	/* Version 1.0 */
-        0,		/* flags */
+        "/pc",      /* name */
+        0,      /* tbfi */
+        0x00010000, /* Version 1.0 */
+        0,      /* flags */
         NMMGR_TYPE_VFS,
         NMMGR_LIST_INIT
     },
 
-    0, NULL,	/* no cache, privdata */
+    0, NULL,    /* no cache, privdata */
 
     dcls_open,
     dcls_close,
@@ -758,6 +759,7 @@ int fs_dclsocket_init() {
     net_ipv4_parse_address(ip, ipaddr);
 
     err = net_arp_lookup(net_default_dev, ipaddr, mac, NULL, NULL, 0);
+
     while(err == -1 || err == -2) {
         err = net_arp_lookup(net_default_dev, ipaddr, mac, NULL, NULL, 0);
     }

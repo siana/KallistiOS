@@ -14,4 +14,4 @@
 /** \brief  POSIX timeouts supported (sorta) */
 #define _POSIX_TIMEOUTS
 
-#endif	/* __SYS__PTHREAD_H */
+#endif  /* __SYS__PTHREAD_H */

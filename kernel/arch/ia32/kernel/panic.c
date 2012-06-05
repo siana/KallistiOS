@@ -12,7 +12,7 @@
    can recover, call this. This is a pretty standard tactic from *nixy
    kernels which ought to be avoided if at all possible. */
 void panic(const char *msg) {
-	printf("kernel panic: %s\n", msg);
-	arch_abort();
+    printf("kernel panic: %s\n", msg);
+    arch_abort();
 }
 

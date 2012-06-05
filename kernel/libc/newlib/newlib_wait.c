@@ -9,6 +9,6 @@
 #include <errno.h>
 
 int _wait_r(struct _reent * reent, int * status) {
-	reent->_errno = EAGAIN;
-	return -1;
+    reent->_errno = EAGAIN;
+    return -1;
 }

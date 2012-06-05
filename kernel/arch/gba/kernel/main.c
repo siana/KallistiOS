@@ -12,26 +12,26 @@
    to be running in your build, and also below in arch_main() */
 int arch_auto_init() {
 
-	fs_init();			/* VFS */
-//	fs_ramdisk_init();		/* Ramdisk */
-	fs_romdisk_init();		/* Romdisk */
+    fs_init();          /* VFS */
+//  fs_ramdisk_init();      /* Ramdisk */
+    fs_romdisk_init();      /* Romdisk */
 
-	if (__kos_romdisk != NULL) {
-		fs_romdisk_mount("/rd", __kos_romdisk, 0);
-	}
+    if(__kos_romdisk != NULL) {
+        fs_romdisk_mount("/rd", __kos_romdisk, 0);
+    }
 
-	return 0;
+    return 0;
 }
 
 /* This is the entry point inside the C program */
 int arch_main() {
 
-	if (mm_init() < 0)
-		return 0;
+    if(mm_init() < 0)
+        return 0;
 
-	arch_auto_init();
+    arch_auto_init();
 
-	return main(0, NULL);
+    return main(0, NULL);
 }
 
 /* Called to shut down the system */

@@ -31,25 +31,25 @@ typedef volatile int spinlock_t;
 
 /* Spin on a lock */
 #define spinlock_lock(A) do { \
-	int __x = irq_disable(); \
-	while (*A) { \
-		irq_restore(__x); \
-		thd_pass(); \
-		irq_disable(); \
-	} \
-	*A = 1; \
-	irq_restore(__x); \
-} while(0)
+        int __x = irq_disable(); \
+        while (*A) { \
+            irq_restore(__x); \
+            thd_pass(); \
+            irq_disable(); \
+        } \
+        *A = 1; \
+        irq_restore(__x); \
+    } while(0)
 
 /* Free a lock */
 #define spinlock_unlock(A) do { \
-		*(A) = 0; \
-	} while (0)
+        *(A) = 0; \
+    } while (0)
 
 __END_DECLS
 
 /* Determine if a lock is locked */
 #define spinlock_is_locked(A) ( *(A) != 0 )
 
-#endif	/* __ARCH_SPINLOCK_H */
+#endif  /* __ARCH_SPINLOCK_H */
 

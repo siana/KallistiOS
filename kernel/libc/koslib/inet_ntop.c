@@ -27,7 +27,8 @@ static const char *inet_ntop4(const void *src, char *dst, socklen_t size) {
         do {
             *ch++ = '0' + (char)(part % 10);
             part /= 10;
-        } while(part);
+        }
+        while(part);
 
         /* tmp now contains the inverse of the number that is in the given
            8 bits. Reverse it for the final result, rewinding ch to the
@@ -87,7 +88,7 @@ static const char *inet_ntop6(const void *src, char *dst, socklen_t size) {
 
             /* Parse the IPv4 address at the end */
             if(!inet_ntop4(&addr.__s6_addr.__s6_addr32[3], dst + 2, size - 2))
-               goto err;
+                goto err;
 
             return dst;
         }
@@ -157,7 +158,8 @@ static const char *inet_ntop6(const void *src, char *dst, socklen_t size) {
                 }
 
                 ch++;
-            } while(part);
+            }
+            while(part);
 
             /* tmp now contains the inverse of the number that is in the given
                16 bits. Reverse it for the final result, rewinding ch to the
@@ -192,6 +194,7 @@ static const char *inet_ntop6(const void *src, char *dst, socklen_t size) {
     return dst;
 
 err:
+
     /* In the event of an error, clear whatever we may have done */
     for(i = 0; i < size; ++i) {
         dst[i] = 0;

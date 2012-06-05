@@ -20,57 +20,56 @@ pvr_ptr_t back_tex;
 char *data;
 
 /* init background */
-void back_init()
-{
-    back_tex = pvr_mem_malloc(512*512*2);
+void back_init() {
+    back_tex = pvr_mem_malloc(512 * 512 * 2);
     png_to_texture("/rd/background.png", back_tex, PNG_NO_ALPHA);
 }
 
 /* init font */
-void font_init()
-{
-    int i,x,y,c;
+void font_init() {
+    int i, x, y, c;
     unsigned short * temp_tex;
 
-    font_tex = pvr_mem_malloc(256*256*2);
-    temp_tex = (unsigned short *)malloc(256*128*2);
+    font_tex = pvr_mem_malloc(256 * 256 * 2);
+    temp_tex = (unsigned short *)malloc(256 * 128 * 2);
 
     c = 0;
-    for(y = 0; y < 128 ; y+=16)
-        for(x = 0; x < 256 ; x+=8) {
+
+    for(y = 0; y < 128 ; y += 16)
+        for(x = 0; x < 256 ; x += 8) {
             for(i = 0; i < 16; i++) {
-                temp_tex[x + (y+i) * 256 + 0] = 0xffff * ((wfont[c+i] & 0x80)>>7);
-                temp_tex[x + (y+i) * 256 + 1] = 0xffff * ((wfont[c+i] & 0x40)>>6);
-                temp_tex[x + (y+i) * 256 + 2] = 0xffff * ((wfont[c+i] & 0x20)>>5);
-                temp_tex[x + (y+i) * 256 + 3] = 0xffff * ((wfont[c+i] & 0x10)>>4);
-                temp_tex[x + (y+i) * 256 + 4] = 0xffff * ((wfont[c+i] & 0x08)>>3);
-                temp_tex[x + (y+i) * 256 + 5] = 0xffff * ((wfont[c+i] & 0x04)>>2);
-                temp_tex[x + (y+i) * 256 + 6] = 0xffff * ((wfont[c+i] & 0x02)>>1);
-                temp_tex[x + (y+i) * 256 + 7] = 0xffff * (wfont[c+i] & 0x01);
+                temp_tex[x + (y + i) * 256 + 0] = 0xffff * ((wfont[c + i] & 0x80) >> 7);
+                temp_tex[x + (y + i) * 256 + 1] = 0xffff * ((wfont[c + i] & 0x40) >> 6);
+                temp_tex[x + (y + i) * 256 + 2] = 0xffff * ((wfont[c + i] & 0x20) >> 5);
+                temp_tex[x + (y + i) * 256 + 3] = 0xffff * ((wfont[c + i] & 0x10) >> 4);
+                temp_tex[x + (y + i) * 256 + 4] = 0xffff * ((wfont[c + i] & 0x08) >> 3);
+                temp_tex[x + (y + i) * 256 + 5] = 0xffff * ((wfont[c + i] & 0x04) >> 2);
+                temp_tex[x + (y + i) * 256 + 6] = 0xffff * ((wfont[c + i] & 0x02) >> 1);
+                temp_tex[x + (y + i) * 256 + 7] = 0xffff * (wfont[c + i] & 0x01);
             }
-            c+=16;
+
+            c += 16;
         }
+
     pvr_txr_load_ex(temp_tex, font_tex, 256, 256, PVR_TXRLOAD_16BPP);
 }
 
-void text_init()
-{
-  int length = zlib_getlength("/rd/text.gz");
-  gzFile f;
+void text_init() {
+    int length = zlib_getlength("/rd/text.gz");
+    gzFile f;
 
-  data = (char *)malloc(length+1); // I am not currently freeing it
+    data = (char *)malloc(length + 1); // I am not currently freeing it
 
-  f = gzopen("/rd/text.gz", "r");
-  gzread(f, data, length);
-  data[length] = 0;
-  gzclose(f);
+    f = gzopen("/rd/text.gz", "r");
+    gzread(f, data, length);
+    data[length] = 0;
+    gzclose(f);
 
-  printf("length [%d]\n", length);
+    printf("length [%d]\n", length);
 }
 
 /* draw background */
-void draw_back(void)
-{
+void draw_back(void) {
     pvr_poly_cxt_t cxt;
     pvr_poly_hdr_t hdr;
     pvr_vertex_t vert;
@@ -114,8 +113,7 @@ void draw_back(void)
 }
 
 /* draw one character */
-void draw_char(float x1, float y1, float z1, float a, float r, float g, float b, int c, float xs, float ys)
-{
+void draw_char(float x1, float y1, float z1, float a, float r, float g, float b, int c, float xs, float ys) {
     pvr_vertex_t    vert;
     int             ix, iy;
     float           u1, v1, u2, v2;
@@ -124,8 +122,8 @@ void draw_char(float x1, float y1, float z1, float a, float r, float g, float b,
     iy = (c / 32) * 16;
     u1 = (ix + 0.5f) * 1.0f / 256.0f;
     v1 = (iy + 0.5f) * 1.0f / 256.0f;
-    u2 = (ix+7.5f) * 1.0f / 256.0f;
-    v2 = (iy+15.5f) * 1.0f / 256.0f;
+    u2 = (ix + 7.5f) * 1.0f / 256.0f;
+    v2 = (iy + 15.5f) * 1.0f / 256.0f;
 
     vert.flags = PVR_CMD_VERTEX;
     vert.x = x1;
@@ -133,7 +131,7 @@ void draw_char(float x1, float y1, float z1, float a, float r, float g, float b,
     vert.z = z1;
     vert.u = u1;
     vert.v = v2;
-    vert.argb = PVR_PACK_COLOR(a,r,g,b);
+    vert.argb = PVR_PACK_COLOR(a, r, g, b);
     vert.oargb = 0;
     pvr_prim(&vert, sizeof(vert));
 
@@ -159,33 +157,32 @@ void draw_char(float x1, float y1, float z1, float a, float r, float g, float b,
 
 /* draw a string */
 void draw_string(float x, float y, float z, float a, float r, float g, float b, char *str, float xs, float ys) {
-  pvr_poly_cxt_t cxt;
-  pvr_poly_hdr_t hdr;
-  float orig_x = x;
+    pvr_poly_cxt_t cxt;
+    pvr_poly_hdr_t hdr;
+    float orig_x = x;
 
-  pvr_poly_cxt_txr(&cxt, PVR_LIST_TR_POLY, PVR_TXRFMT_ARGB4444, 256, 256, font_tex, PVR_FILTER_BILINEAR);
-  pvr_poly_compile(&hdr, &cxt);
-  pvr_prim(&hdr, sizeof(hdr));
+    pvr_poly_cxt_txr(&cxt, PVR_LIST_TR_POLY, PVR_TXRFMT_ARGB4444, 256, 256, font_tex, PVR_FILTER_BILINEAR);
+    pvr_poly_compile(&hdr, &cxt);
+    pvr_prim(&hdr, sizeof(hdr));
 
-  while (*str) {
-    if (*str == '\n')
-    {
-      x = orig_x;
-      y += 40;
-      str++;
-      continue;
+    while(*str) {
+        if(*str == '\n') {
+            x = orig_x;
+            y += 40;
+            str++;
+            continue;
+        }
+
+        draw_char(x, y, z, a, r, g, b, *str++, xs, ys);
+        x += 8 * xs;
     }
-    draw_char(x, y, z, a, r, g, b, *str++, xs, ys);
-	x+=8*xs;
-  }
 }
 
 /* base y coordinate */
 int y = 0;
 
 /* draw one frame */
-void draw_frame(void)
-{
+void draw_frame(void) {
     pvr_wait_ready();
     pvr_scene_begin();
 
@@ -200,7 +197,7 @@ void draw_frame(void)
      * the screen to off the top.  31 lines * 40 pixels + 480 pixel high screen
      * 480 is the height of the screen (starts the text at the bottom)
      */
-    draw_string(0, y % 1720 + 440, 3, 1, 1,1,1, data, 2, 2);
+    draw_string(0, y % 1720 + 440, 3, 1, 1, 1, 1, data, 2, 2);
 
     pvr_list_finish();
     pvr_scene_finish();
@@ -212,8 +209,7 @@ void draw_frame(void)
 extern uint8 romdisk_boot[];
 KOS_INIT_ROMDISK(romdisk_boot);
 
-int main(void)
-{
+int main(void) {
     int done = 0;
 
     /* init kos  */
@@ -231,11 +227,13 @@ int main(void)
     /* keep drawing frames until start is pressed */
     while(!done) {
         MAPLE_FOREACH_BEGIN(MAPLE_FUNC_CONTROLLER, cont_state_t, st)
-            if (st->buttons & CONT_START)
-                done = 1;
+
+        if(st->buttons & CONT_START)
+            done = 1;
+
         MAPLE_FOREACH_END()
 
-	draw_frame();
+        draw_frame();
     }
 
     return 0;

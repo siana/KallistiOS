@@ -21,7 +21,7 @@ __BEGIN_DECLS
     \headerfile sys/sched.h
 */
 struct sched_param {
-  int sched_priority;           /**< \brief Process execution scheduling priority */
+    int sched_priority;           /**< \brief Process execution scheduling priority */
 };
 
 // And all this maps pthread types to KOS types for pthread.h.
@@ -40,7 +40,7 @@ struct sched_param {
     \headerfile sys/sched.h
 */
 typedef struct {
-	// Empty
+    // Empty
 } pthread_mutexattr_t;
 
 /** \brief  POSIX condition variable attributes.
@@ -50,7 +50,7 @@ typedef struct {
     \headerfile sys/sched.h
 */
 typedef struct {
-	// Empty
+    // Empty
 } pthread_condattr_t;
 
 /** \brief  POSIX thread attributes.
@@ -60,7 +60,7 @@ typedef struct {
     \headerfile sys/sched.h
 */
 typedef struct {
-	// Empty
+    // Empty
 } pthread_attr_t;
 
 // Map over KOS types. The mutex/condvar maps have to be pointers
@@ -75,4 +75,4 @@ typedef kthread_key_t pthread_key_t;    /**< \brief POSIX thread data key */
 
 __END_DECLS
 
-#endif	/* __SYS_SCHED_H */
+#endif  /* __SYS_SCHED_H */

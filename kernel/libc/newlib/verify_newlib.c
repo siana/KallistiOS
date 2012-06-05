@@ -11,5 +11,5 @@
 // patched Newlib (otherwise a link error will occur).
 extern int __newlib_kos_patch;
 void __verify_newlib_patch() {
-	(void)__newlib_kos_patch;
+    (void)__newlib_kos_patch;
 }

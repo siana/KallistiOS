@@ -6,7 +6,6 @@
 
 #include <kos/fs.h>
 
-int mkdir(const char *pathname, mode_t mode)
-{
-	return fs_mkdir(pathname);
+int mkdir(const char *pathname, mode_t mode) {
+    return fs_mkdir(pathname);
 }

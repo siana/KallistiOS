@@ -17,15 +17,15 @@ __BEGIN_DECLS
    so that it's easier to calculate the type you need. Unfortunately the
    next slowest thing you can latch to is HSYNC, which is based on
    refresh rates and not real time. -_- */
-#define TIMER_BUSCLK	147456000
-#define TIMER_BUSCLK16	9216000
-#define TIMER_BUSCLK256	576000
+#define TIMER_BUSCLK    147456000
+#define TIMER_BUSCLK16  9216000
+#define TIMER_BUSCLK256 576000
 
 /* Timer sources -- we get four on the SH4 */
-#define TIMER0	0	/* Unused */
-#define TIMER1	1	/* Used for timer_spin_sleep() */
-#define TIMER2	2	/* Will for timer_ms_gettime() maybe */
-#define TIMER3	3	/* Off limits during thread operation */
+#define TIMER0  0   /* Unused */
+#define TIMER1  1   /* Used for timer_spin_sleep() */
+#define TIMER2  2   /* Will for timer_ms_gettime() maybe */
+#define TIMER3  3   /* Off limits during thread operation */
 
 /* The main timer for the task switcher to use */
 #define TIMER_ID TIMER3
@@ -78,5 +78,5 @@ void timer_shutdown();
 
 __END_DECLS
 
-#endif	/* __ARCH_TIMER_H */
+#endif  /* __ARCH_TIMER_H */
 

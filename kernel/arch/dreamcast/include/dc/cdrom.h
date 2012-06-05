@@ -286,4 +286,4 @@ void cdrom_shutdown();
 
 __END_DECLS
 
-#endif	/* __DC_CDROM_H */
+#endif  /* __DC_CDROM_H */

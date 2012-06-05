@@ -27,5 +27,5 @@ void rtc_shutdown();
 
 __END_DECLS
 
-#endif	/* __ARCH_RTC_H */
+#endif  /* __ARCH_RTC_H */
 

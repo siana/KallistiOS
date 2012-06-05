@@ -29,29 +29,32 @@ static time_t boot_time = 0;
 
 /* Returns the date/time value as a UNIX epoch time stamp */
 time_t rtc_unix_secs() {
-	uint32 rtcold, rtcnew;
-	int i;
+    uint32 rtcold, rtcnew;
+    int i;
 
-	/* Try several times to make sure we don't read one value, then the
-	   clock increments itself, then we read the second value. This
-	   algorithm is from NetBSD. */
-	rtcold = 0;
-	for (;;) {
-		for (i=0; i<3; i++) {
-			rtcnew = ((g2_read_32(0xa0710000) & 0xffff) << 16) | (g2_read_32(0xa0710004) & 0xffff);
-			if (rtcnew != rtcold)
-				break;
-		}
-		if (i < 3)
-			rtcold = rtcnew;
-		else
-			break;
-	}
+    /* Try several times to make sure we don't read one value, then the
+       clock increments itself, then we read the second value. This
+       algorithm is from NetBSD. */
+    rtcold = 0;
 
-	/* Subtract out 20 years */
-	rtcnew = rtcnew - 631152000;
+    for(;;) {
+        for(i = 0; i < 3; i++) {
+            rtcnew = ((g2_read_32(0xa0710000) & 0xffff) << 16) | (g2_read_32(0xa0710004) & 0xffff);
 
-	return rtcnew;
+            if(rtcnew != rtcold)
+                break;
+        }
+
+        if(i < 3)
+            rtcold = rtcnew;
+        else
+            break;
+    }
+
+    /* Subtract out 20 years */
+    rtcnew = rtcnew - 631152000;
+
+    return rtcnew;
 }
 
 
@@ -59,12 +62,12 @@ time_t rtc_unix_secs() {
    stamp. Adding this to the value from timer_ms_gettime() will
    produce a current timestamp. */
 time_t rtc_boot_time() {
-	return boot_time;
+    return boot_time;
 }
 
 int rtc_init() {
-	boot_time = rtc_unix_secs();
-	return 0;
+    boot_time = rtc_unix_secs();
+    return 0;
 }
 
 void rtc_shutdown() {

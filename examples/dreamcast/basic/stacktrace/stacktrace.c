@@ -7,15 +7,15 @@
 #include <kos.h>
 
 void func() {
-	arch_stk_trace(0);
+    arch_stk_trace(0);
 }
 
 int main(int argc, char **argv) {
-	arch_stk_trace(0);
+    arch_stk_trace(0);
 
-	func();
+    func();
 
-	return 0;
+    return 0;
 }
 
 

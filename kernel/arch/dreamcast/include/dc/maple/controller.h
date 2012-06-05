@@ -32,33 +32,33 @@ __BEGIN_DECLS
 
     @{
 */
-#define CONT_C			(1<<0)
-#define CONT_B			(1<<1)
-#define CONT_A			(1<<2)
-#define CONT_START		(1<<3)
-#define CONT_DPAD_UP		(1<<4)
-#define CONT_DPAD_DOWN		(1<<5)
-#define CONT_DPAD_LEFT		(1<<6)
-#define CONT_DPAD_RIGHT		(1<<7)
-#define CONT_Z			(1<<8)
-#define CONT_Y			(1<<9)
-#define CONT_X			(1<<10)
-#define CONT_D			(1<<11)
-#define CONT_DPAD2_UP		(1<<12)
-#define CONT_DPAD2_DOWN		(1<<13)
-#define CONT_DPAD2_LEFT		(1<<14)
-#define CONT_DPAD2_RIGHT	(1<<15)
+#define CONT_C          (1<<0)
+#define CONT_B          (1<<1)
+#define CONT_A          (1<<2)
+#define CONT_START      (1<<3)
+#define CONT_DPAD_UP        (1<<4)
+#define CONT_DPAD_DOWN      (1<<5)
+#define CONT_DPAD_LEFT      (1<<6)
+#define CONT_DPAD_RIGHT     (1<<7)
+#define CONT_Z          (1<<8)
+#define CONT_Y          (1<<9)
+#define CONT_X          (1<<10)
+#define CONT_D          (1<<11)
+#define CONT_DPAD2_UP       (1<<12)
+#define CONT_DPAD2_DOWN     (1<<13)
+#define CONT_DPAD2_LEFT     (1<<14)
+#define CONT_DPAD2_RIGHT    (1<<15)
 /* @} */
 
 /* Raw controller condition structure */
 typedef struct {
-	uint16 buttons;			/* buttons bitfield */
-	uint8 rtrig;			/* right trigger */
-	uint8 ltrig;			/* left trigger */
-	uint8 joyx;			/* joystick X */
-	uint8 joyy;			/* joystick Y */
-	uint8 joy2x;			/* second joystick X */
-	uint8 joy2y;			/* second joystick Y */
+    uint16 buttons;         /* buttons bitfield */
+    uint8 rtrig;            /* right trigger */
+    uint8 ltrig;            /* left trigger */
+    uint8 joyx;         /* joystick X */
+    uint8 joyy;         /* joystick Y */
+    uint8 joy2x;            /* second joystick X */
+    uint8 joy2y;            /* second joystick Y */
 } cont_cond_t;
 
 /* Our more civilized structure. Note that there are some fairly
@@ -88,22 +88,22 @@ typedef struct {
     /** \brief  Buttons bitfield.
         \see    controller_buttons
     */
-    uint32	buttons;
+    uint32  buttons;
 
     /** \brief  Left trigger value. */
-    int	ltrig;
+    int ltrig;
 
     /** \brief  Right trigger value. */
     int rtrig;
 
     /** \brief  Main joystick x-axis value. */
-    int	joyx;
+    int joyx;
 
     /** \brief  Main joystick y-axis value. */
     int joyy;
 
     /** \brief  Secondary joystick x-axis value (if applicable). */
-    int	joy2x;
+    int joy2x;
 
     /** \brief  Secondary joystick y-axis value (if applicable). */
     int joy2y;
@@ -111,8 +111,8 @@ typedef struct {
 
 /* \cond */
 /* Init / Shutdown */
-int	cont_init();
-void	cont_shutdown();
+int cont_init();
+void    cont_shutdown();
 /* \endcond */
 
 /** \brief  Controller automatic callback type.
@@ -134,7 +134,7 @@ typedef void (*cont_btn_callback_t)(uint8 addr, uint32 btns);
     \param  btns            The buttons bitmask to match.
     \param  cb              The callback to call when the buttons are pressed.
 */
-void	cont_btn_callback(uint8 addr, uint32 btns, cont_btn_callback_t cb);
+void    cont_btn_callback(uint8 addr, uint32 btns, cont_btn_callback_t cb);
 
 /** \defgroup   controller_caps Controller capability bits.
 
@@ -169,5 +169,5 @@ void	cont_btn_callback(uint8 addr, uint32 btns, cont_btn_callback_t cb);
 
 __END_DECLS
 
-#endif	/* __DC_MAPLE_CONTROLLER_H */
+#endif  /* __DC_MAPLE_CONTROLLER_H */
 

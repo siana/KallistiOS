@@ -33,7 +33,7 @@ __BEGIN_DECLS
                             divisible by 4 (and will be rounded down if not).
     \return                 The original value of dest.
 */
-void * memcpy4(void * dest,const void *src,size_t count);
+void * memcpy4(void * dest, const void *src, size_t count);
 
 /** \brief  Set a block of memory, 4 bytes at a time.
 
@@ -47,7 +47,7 @@ void * memcpy4(void * dest,const void *src,size_t count);
                             divisible by 4 (and will be rounded down if not).
     \return                 The original value of dest.
 */
-void * memset4(void * s,unsigned long c,size_t count);
+void * memset4(void * s, unsigned long c, size_t count);
 
 /** \brief  Copy a block of memory, 2 bytes at a time.
 
@@ -59,7 +59,7 @@ void * memset4(void * s,unsigned long c,size_t count);
                             divisible by 2 (and will be rounded down if not).
     \return                 The original value of dest.
 */
-void * memcpy2(void * dest,const void *src,size_t count);
+void * memcpy2(void * dest, const void *src, size_t count);
 
 /** \brief  Set a block of memory, 2 bytes at a time.
 
@@ -73,10 +73,10 @@ void * memcpy2(void * dest,const void *src,size_t count);
                             divisible by 2 (and will be rounded down if not).
     \return                 The original value of dest.
 */
-void * memset2(void * s,unsigned short c,size_t count);
+void * memset2(void * s, unsigned short c, size_t count);
 
 __END_DECLS
 
-#endif	/* __KOS_STRING_H */
+#endif  /* __KOS_STRING_H */
 
 

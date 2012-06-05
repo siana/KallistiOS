@@ -64,153 +64,158 @@
 #define CMD_RESET_DATA                  0x00F0
 #define CMD_SECTOR_ERASE_UNLOCK_DATA    0x0080
 #define CMD_SECTOR_ERASE_UNLOCK_DATA_2  0x0030
-#define CMD_ERASE_ALL			0x0010
+#define CMD_ERASE_ALL           0x0010
 
 #define CMD_UNLOCK_SECTOR               0x0060
-#define STMICRO				0x0020
+#define STMICRO             0x0020
 #define D6_MASK                         0x40
 
-static vuint8	* const flashport = (vuint8 *)0xa0000000;
+static vuint8   * const flashport = (vuint8 *)0xa0000000;
 
 /* We'll do this before sending a command */
 static void send_unlock() {
-	flashport[ADDR_UNLOCK_1] = CMD_UNLOCK_DATA_1;
-	flashport[ADDR_UNLOCK_2] = CMD_UNLOCK_DATA_2;
+    flashport[ADDR_UNLOCK_1] = CMD_UNLOCK_DATA_1;
+    flashport[ADDR_UNLOCK_2] = CMD_UNLOCK_DATA_2;
 }
 
 /* Send a command (including unlock) */
 static void send_cmd(uint32 cmd) {
-	send_unlock();
-	flashport[ADDR_UNLOCK_1] = cmd;
+    send_unlock();
+    flashport[ADDR_UNLOCK_1] = cmd;
 }
 
 /* Read a flash value */
 static uint32 nvflash_read(uint32 addr) {
-	return flashport[addr];
+    return flashport[addr];
 }
 
 /* Determine if the flash memory is busy writing */
 static int nvflash_busy(uint32 addr) {
-	return (nvflash_read(addr) & D6_MASK) != (nvflash_read(addr) & D6_MASK);
+    return (nvflash_read(addr) & D6_MASK) != (nvflash_read(addr) & D6_MASK);
 }
 
 /* Wait until the flash is ready, with timeout */
 static int nvflash_wait_ready(uint32 addr, int timeout) {
-	int wait = 0;
+    int wait = 0;
 
-	if (timeout < 0) {
-		timeout = -timeout;
-		wait = 1;
-	}
-	while (timeout-- && nvflash_busy(addr)) {
-		if (wait)
-			usleep(1000);
-	}
-	if (timeout <= 0) {
-		printf("nvflash_wait_ready: writing to flash timed out\n");
-		return -1;
-	}
+    if(timeout < 0) {
+        timeout = -timeout;
+        wait = 1;
+    }
 
-	return 0;
+    while(timeout-- && nvflash_busy(addr)) {
+        if(wait)
+            usleep(1000);
+    }
+
+    if(timeout <= 0) {
+        printf("nvflash_wait_ready: writing to flash timed out\n");
+        return -1;
+    }
+
+    return 0;
 }
 
 /* Write a single flash value, return -1 if we fail or timeout */
 static int nvflash_write(uint32 addr, uint8 value) {
-	send_cmd(CMD_PROGRAM_UNLOCK_DATA);
-	flashport[addr] = value;
+    send_cmd(CMD_PROGRAM_UNLOCK_DATA);
+    flashport[addr] = value;
 
-	if (nvflash_wait_ready(addr, 10000) < 0) {
-		printf("nvflash_write: failed writing to flash at %08lx (%02x vs %02x)\n",
-			addr, flashport[addr], value);
-		return 0;
-	}
+    if(nvflash_wait_ready(addr, 10000) < 0) {
+        printf("nvflash_write: failed writing to flash at %08lx (%02x vs %02x)\n",
+               addr, flashport[addr], value);
+        return 0;
+    }
 
-	if (flashport[addr] != value) {
-		printf("nvflash_write: warning! failed writing to flash at %08lx (%02x vs %02x)\n",
-			addr, flashport[addr], value);
-		return 0;
-	}
+    if(flashport[addr] != value) {
+        printf("nvflash_write: warning! failed writing to flash at %08lx (%02x vs %02x)\n",
+               addr, flashport[addr], value);
+        return 0;
+    }
 
-	return 0;
+    return 0;
 }
 
 /* Write a block of data */
 int nvflash_write_block(uint32 addr, void * data, uint32 len) {
-	uint8	* db = (uint8 *)data;
-	int	i;
+    uint8   * db = (uint8 *)data;
+    int i;
 
-	for (i=0; i<len; i++) {
-		if (!(i % 0x10000)) {
-			printf("nvflash_write_block: writing block at %08x\n", i+addr);
-		}
-		if (nvflash_write(addr + i, db[i]) < 0) {
-			printf("nvflash_write_block: aborting block write at %d\n", i+addr);
-			return -1;
-		}
-	}
-	return 0;
+    for(i = 0; i < len; i++) {
+        if(!(i % 0x10000)) {
+            printf("nvflash_write_block: writing block at %08x\n", i + addr);
+        }
+
+        if(nvflash_write(addr + i, db[i]) < 0) {
+            printf("nvflash_write_block: aborting block write at %d\n", i + addr);
+            return -1;
+        }
+    }
+
+    return 0;
 }
 
 /* Erase a block of flash */
 int nvflash_erase_block(uint32 addr) {
-	send_cmd(CMD_SECTOR_ERASE_UNLOCK_DATA);
-	send_unlock();
-	flashport[addr] = CMD_SECTOR_ERASE_UNLOCK_DATA_2;
+    send_cmd(CMD_SECTOR_ERASE_UNLOCK_DATA);
+    send_unlock();
+    flashport[addr] = CMD_SECTOR_ERASE_UNLOCK_DATA_2;
 
-	if (nvflash_wait_ready(addr, -10000) < 0) {
-		printf("nvflash_erase_block: failed erasing flash block at %08lx\n", addr);
-		return -1;
-	}
+    if(nvflash_wait_ready(addr, -10000) < 0) {
+        printf("nvflash_erase_block: failed erasing flash block at %08lx\n", addr);
+        return -1;
+    }
 
-	if (flashport[addr] != 0xff) {
-		printf("nvflash_erase_block: failed erasing flash block at %08lx\n", addr);
-		return -1;
-	}
+    if(flashport[addr] != 0xff) {
+        printf("nvflash_erase_block: failed erasing flash block at %08lx\n", addr);
+        return -1;
+    }
 
-	return 0;
+    return 0;
 }
 
 /* Erase the whole flash chip */
 int nvflash_erase_all() {
-	send_cmd(CMD_SECTOR_ERASE_UNLOCK_DATA);
-	send_cmd(CMD_ERASE_ALL);
+    send_cmd(CMD_SECTOR_ERASE_UNLOCK_DATA);
+    send_cmd(CMD_ERASE_ALL);
 
-	if (nvflash_wait_ready(0, -20000) < 0) {
-		printf("nvflash_erase_all: failed erasing full chip\n");
-		return -1;
-	}
+    if(nvflash_wait_ready(0, -20000) < 0) {
+        printf("nvflash_erase_all: failed erasing full chip\n");
+        return -1;
+    }
 
-	if (flashport[0] != 0xff) {
-		printf("nvflash_erase_block: failed erasing full chip\n");
-		return -1;
-	}
+    if(flashport[0] != 0xff) {
+        printf("nvflash_erase_block: failed erasing full chip\n");
+        return -1;
+    }
 
-	return 0;
+    return 0;
 }
 
 /* Return 0 if we successfully detect a compatible device */
 int nvflash_detect() {
-	uint16		mfr_id, dev_id;
+    uint16      mfr_id, dev_id;
 
-	if (nvflash_read(0) == 0xff && nvflash_read(2) == 0x28) {
-		printf("flash_detect: normal DC BIOS detected\n");
-		return -1;
-	}
+    if(nvflash_read(0) == 0xff && nvflash_read(2) == 0x28) {
+        printf("flash_detect: normal DC BIOS detected\n");
+        return -1;
+    }
 
-	/* Reset and ask for manufacturer code */
-	send_cmd(CMD_RESET_DATA);
-	send_cmd(CMD_MANUFACTURER_UNLOCK_DATA);
-	mfr_id = nvflash_read(0);
-	dev_id = nvflash_read(2);
-	send_cmd(CMD_RESET_DATA);
+    /* Reset and ask for manufacturer code */
+    send_cmd(CMD_RESET_DATA);
+    send_cmd(CMD_MANUFACTURER_UNLOCK_DATA);
+    mfr_id = nvflash_read(0);
+    dev_id = nvflash_read(2);
+    send_cmd(CMD_RESET_DATA);
 
-	if (mfr_id == STMICRO) {
-		printf("flash_detect: STMicro flash detected, device id = %02x\n", dev_id);
-		return 0;
-	} else {
-		printf("flash_detect: unknown manufacturer/device pair %02x/%02x\n", mfr_id, dev_id);
-		printf(" .... we'll assume you know what you're doing!\n");
-		return 0;
-	}
+    if(mfr_id == STMICRO) {
+        printf("flash_detect: STMicro flash detected, device id = %02x\n", dev_id);
+        return 0;
+    }
+    else {
+        printf("flash_detect: unknown manufacturer/device pair %02x/%02x\n", mfr_id, dev_id);
+        printf(" .... we'll assume you know what you're doing!\n");
+        return 0;
+    }
 }
 

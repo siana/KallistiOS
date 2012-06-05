@@ -33,7 +33,7 @@ __BEGIN_DECLS
     On the Dreamcast, we need 228 bytes for all of that, but we round it up to a
     nicer number for sanity.
 */
-#define REG_BYTE_CNT 256			/* Currently really 228 */
+#define REG_BYTE_CNT 256            /* Currently really 228 */
 
 /** \brief  Architecture-specific structure for holding the processor state.
 
@@ -205,14 +205,14 @@ typedef struct irq_context {
     This exception is completely done in software (not represented on the CPU at
     all). Its used for when an exception occurs during an IRQ service routine.
 */
-#define EXC_DOUBLE_FAULT	0x0ff0
+#define EXC_DOUBLE_FAULT    0x0ff0
 
 /** \brief  Unhandled exception
 
     This exception is a software-generated exception for a generic unhandled
     exception.
 */
-#define EXC_UNHANDLED_EXC	0x0fe0
+#define EXC_UNHANDLED_EXC   0x0fe0
 /** @} */
 
 /** \brief  irq_type_offsets        Exception type offsets
@@ -229,7 +229,7 @@ typedef struct irq_context {
 /** @} */
 
 /** \brief  The value of the timer IRQ */
-#define TIMER_IRQ		EXC_TMU0_TUNI0
+#define TIMER_IRQ       EXC_TMU0_TUNI0
 
 /** \brief  The type of an interrupt identifier */
 typedef uint32 irq_t;
@@ -372,4 +372,4 @@ void irq_shutdown();
 
 __END_DECLS
 
-#endif	/* __ARCH_IRQ_H */
+#endif  /* __ARCH_IRQ_H */

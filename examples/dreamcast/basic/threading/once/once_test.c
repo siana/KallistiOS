@@ -50,11 +50,13 @@ int main(int argc, char *argv[]) {
 
     /* Create the threads. */
     printf("Creating %d threads\n", THD_COUNT);
+
     for(i = 0; i < THD_COUNT; ++i) {
         thds[i] = thd_create(0, &thd_func, NULL);
     }
 
     printf("Waiting for the threads to finish\n");
+
     for(i = 0; i < THD_COUNT; ++i) {
         thd_join(thds[i], NULL);
     }

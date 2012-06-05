@@ -20,37 +20,38 @@
 KOS_INIT_FLAGS(INIT_DEFAULT | INIT_MALLOCSTATS);
 
 void test_builtin(int argc, char **argv) {
-	int i;
+    int i;
 
-	conio_printf("You passed %d args:\n", argc);
-	for (i=0; i<argc; i++)
-		conio_printf("%s\n", argv[i]);
+    conio_printf("You passed %d args:\n", argc);
+
+    for(i = 0; i < argc; i++)
+        conio_printf("%s\n", argv[i]);
 }
 
 int main(int argc, char **argv) {
-	pvr_init_defaults();
+    pvr_init_defaults();
 
-	printf("kosh starting\n");
+    printf("kosh starting\n");
 
-	/* initialize the conio service */
-	conio_init(CONIO_TTY_PVR, CONIO_INPUT_LINE);
-	// conio_init(CONIO_TTY_SERIAL, CONIO_INPUT_LINE);
+    /* initialize the conio service */
+    conio_init(CONIO_TTY_PVR, CONIO_INPUT_LINE);
+    // conio_init(CONIO_TTY_SERIAL, CONIO_INPUT_LINE);
 
-	/* initialize kosh */
-	kosh_init();
+    /* initialize kosh */
+    kosh_init();
 
-	/* Add a test builtin */
-	kosh_builtin_add("test", "This is a test command.", test_builtin);
+    /* Add a test builtin */
+    kosh_builtin_add("test", "This is a test command.", test_builtin);
 
-	/* wait for the user to exit */
-	kosh_join();
+    /* wait for the user to exit */
+    kosh_join();
 
-	/* shutdown kosh */
-	kosh_shutdown();
+    /* shutdown kosh */
+    kosh_shutdown();
 
-	/* shutdown console i/o */
-	conio_shutdown();
+    /* shutdown console i/o */
+    conio_shutdown();
 
-	printf("kosh is done\n");
-	return 0;
+    printf("kosh is done\n");
+    return 0;
 }

@@ -23,5 +23,5 @@ void aica_pan(int ch);
 void aica_freq(int ch);
 int aica_get_pos(int ch);
 
-#endif	/* __AICA_H */
+#endif  /* __AICA_H */
 

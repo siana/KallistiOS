@@ -199,5 +199,5 @@ int bba_shutdown();
 
 __END_DECLS
 
-#endif	/* __DC_NET_BROADBAND_ADAPTER_H */
+#endif  /* __DC_NET_BROADBAND_ADAPTER_H */
 

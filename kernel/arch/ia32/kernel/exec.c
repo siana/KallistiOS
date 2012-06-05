@@ -18,9 +18,9 @@ void arch_shutdown();
 /* Replace the currently running image with whatever is at
    the pointer; note that this call will never return. */
 void arch_exec_at(const void *image, uint32 length, uint32 address) {
-	panic("ENOSYS");
+    panic("ENOSYS");
 }
 
 void arch_exec(const void *image, uint32 length) {
-	panic("ENOSYS");
+    panic("ENOSYS");
 }

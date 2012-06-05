@@ -299,6 +299,7 @@ static void net_tcp_close(net_socket_t *hnd) {
     int i;
 
 retry:
+
     if(irq_inside_int()) {
         if(rwsem_write_trylock(tcp_sem)) {
             errno = EWOULDBLOCK;
@@ -346,6 +347,7 @@ retry:
        as appropriate. */
     switch(sock->state) {
         case TCP_STATE_LISTEN:
+
             for(i = sock->listen.head; i < sock->listen.tail; ++i) {
                 ls = sock->listen.queue + i;
 
@@ -375,6 +377,7 @@ retry:
             goto ret_remove;
 
         case TCP_STATE_ESTABLISHED:
+
             /* See if all sends have finished... */
             if(sock->data.sndbuf_cur_sz) {
                 goto ret_no_remove;
@@ -389,8 +392,9 @@ retry:
             ++sock->data.snd.nxt;
             sock->state = TCP_STATE_FIN_WAIT_1;
             goto ret_no_remove;
-            
+
         case TCP_STATE_CLOSE_WAIT:
+
             /* See if all sends have finished... */
             if(sock->data.sndbuf_cur_sz) {
                 goto ret_no_remove;
@@ -426,12 +430,14 @@ ret_remove:
     return;
 
 ret_no_remove:
+
     if(sock->state != TCP_STATE_LISTEN)
         sock->intflags = TCP_IFLAG_CANBEDEL;
 
     if(sock->state == TCP_STATE_ESTABLISHED ||
-       sock->state == TCP_STATE_CLOSE_WAIT)
+            sock->state == TCP_STATE_CLOSE_WAIT)
         sock->intflags |= TCP_IFLAG_QUEUEDCLOSE;
+
     sock->sock = -1;
 
     /* Don't free anything here, it will be dealt with later on in the
@@ -745,6 +751,7 @@ static int net_tcp_bind(net_socket_t *hnd, const struct sockaddr *addr,
 
     switch(addr->sa_family) {
         case AF_INET:
+
             if(addr_len != sizeof(struct sockaddr_in)) {
                 errno = EINVAL;
                 return -1;
@@ -764,9 +771,11 @@ static int net_tcp_bind(net_socket_t *hnd, const struct sockaddr *addr,
             else {
                 realaddr6.sin6_addr = in6addr_any;
             }
+
             break;
 
         case AF_INET6:
+
             if(addr_len != sizeof(struct sockaddr_in6)) {
                 errno = EINVAL;
                 return -1;
@@ -930,6 +939,7 @@ static int net_tcp_connect(net_socket_t *hnd, const struct sockaddr *addr,
 
     switch(addr->sa_family) {
         case AF_INET:
+
             if(addr_len != sizeof(struct sockaddr_in)) {
                 errno = EINVAL;
                 return -1;
@@ -952,6 +962,7 @@ static int net_tcp_connect(net_socket_t *hnd, const struct sockaddr *addr,
             break;
 
         case AF_INET6:
+
             if(addr_len != sizeof(struct sockaddr_in6)) {
                 errno = EINVAL;
                 return -1;
@@ -1019,7 +1030,7 @@ static int net_tcp_connect(net_socket_t *hnd, const struct sockaddr *addr,
 
     /* Make sure we have a valid address to connect to */
     if(IN6_IS_ADDR_UNSPECIFIED(&realaddr6.sin6_addr) ||
-       realaddr6.sin6_port == 0) {
+            realaddr6.sin6_port == 0) {
         mutex_unlock(sock->mutex);
         rwsem_write_unlock(tcp_sem);
         errno = EADDRNOTAVAIL;
@@ -1208,6 +1219,7 @@ static int net_tcp_listen(net_socket_t *hnd, int backlog) {
 
     /* Allocate the queue and set up everything */
     sock->listen.queue = (struct lsock *)malloc(sizeof(struct lsock) * backlog);
+
     if(!sock->listen.queue) {
         mutex_unlock(sock->mutex);
         rwsem_read_unlock(tcp_sem);
@@ -1298,10 +1310,10 @@ static ssize_t net_tcp_recvfrom(net_socket_t *hnd, void *buffer, size_t length,
         /* Check if we're in a state where there's not going to be any more
            messages coming in. */
         if(sock->state == TCP_STATE_CLOSED ||
-           sock->state == TCP_STATE_CLOSE_WAIT ||
-           sock->state == TCP_STATE_CLOSING ||
-           sock->state == TCP_STATE_LAST_ACK ||
-           sock->state == TCP_STATE_TIME_WAIT) {
+                sock->state == TCP_STATE_CLOSE_WAIT ||
+                sock->state == TCP_STATE_CLOSING ||
+                sock->state == TCP_STATE_LAST_ACK ||
+                sock->state == TCP_STATE_TIME_WAIT) {
             goto out;
         }
 
@@ -1507,7 +1519,7 @@ static ssize_t net_tcp_sendto(net_socket_t *hnd, const void *message,
     /* Reset the pointers if there's nothing in the buffer */
     if(sock->data.sndbuf_cur_sz == 0)
         sock->data.sndbuf_head = sock->data.sndbuf_acked =
-            sock->data.sndbuf_tail = 0;
+                                     sock->data.sndbuf_tail = 0;
 
     /* Figure out how much we can copy in */
     bsz = sock->sndbuf_sz - sock->data.sndbuf_cur_sz;
@@ -1626,6 +1638,7 @@ static int net_tcp_getsockopt(net_socket_t *hnd, int level, int option_name,
 
     switch(level) {
         case SOL_SOCKET:
+
             switch(option_name) {
                 case SO_ACCEPTCONN:
                     tmp = sock->state == TCP_STATE_LISTEN;
@@ -1647,6 +1660,7 @@ static int net_tcp_getsockopt(net_socket_t *hnd, int level, int option_name,
             break;
 
         case IPPROTO_IP:
+
             if(sock->domain != AF_INET)
                 goto ret_inval;
 
@@ -1659,6 +1673,7 @@ static int net_tcp_getsockopt(net_socket_t *hnd, int level, int option_name,
             break;
 
         case IPPROTO_IPV6:
+
             if(sock->domain != AF_INET6)
                 goto ret_inval;
 
@@ -1686,6 +1701,7 @@ ret_inval:
     return -1;
 
 copy_int:
+
     if(*option_len >= sizeof(int)) {
         memcpy(option_value, &tmp, sizeof(int));
         *option_len = sizeof(int);
@@ -1738,6 +1754,7 @@ static int net_tcp_setsockopt(net_socket_t *hnd, int level, int option_name,
 
     switch(level) {
         case SOL_SOCKET:
+
             switch(option_name) {
                 case SO_ACCEPTCONN:
                 case SO_ERROR:
@@ -1748,53 +1765,64 @@ static int net_tcp_setsockopt(net_socket_t *hnd, int level, int option_name,
             break;
 
         case IPPROTO_IP:
+
             if(sock->domain != AF_INET)
                 goto ret_inval;
 
             switch(option_name) {
                 case IP_TTL:
+
                     if(option_len != sizeof(int))
                         goto ret_inval;
 
                     tmp = *((int *)option_value);
+
                     if(tmp < -1 || tmp > 255)
                         goto ret_inval;
                     else if(tmp == -1)
                         sock->hop_limit = TCP_DEFAULT_HOPS;
                     else
                         sock->hop_limit = tmp;
+
                     goto ret_success;
             }
 
             break;
 
         case IPPROTO_IPV6:
+
             if(sock->domain != AF_INET6)
                 goto ret_inval;
 
             switch(option_name) {
                 case IPV6_UNICAST_HOPS:
+
                     if(option_len != sizeof(int))
                         goto ret_inval;
 
                     tmp = *((int *)option_value);
+
                     if(tmp < -1 || tmp > 255)
                         goto ret_inval;
                     else if(tmp == -1)
                         sock->hop_limit = TCP_DEFAULT_HOPS;
                     else
                         sock->hop_limit = tmp;
+
                     goto ret_success;
 
                 case IPV6_V6ONLY:
+
                     if(option_len != sizeof(int))
                         goto ret_inval;
 
                     tmp = *((int *)option_value);
+
                     if(tmp)
                         sock->flags |= FS_SOCKET_V6ONLY;
                     else
                         sock->flags &= ~FS_SOCKET_V6ONLY;
+
                     goto ret_success;
             }
 
@@ -1820,7 +1848,7 @@ ret_success:
 }
 
 static int net_tcp_fcntl(net_socket_t *hnd, int cmd, va_list ap) {
-    
+
     struct tcp_sock *sock;
     int rv = -1;
     long val;
@@ -1857,17 +1885,21 @@ static int net_tcp_fcntl(net_socket_t *hnd, int cmd, va_list ap) {
     switch(cmd) {
         case F_SETFL:
             val = va_arg(ap, long);
+
             if(val & O_NONBLOCK)
                 sock->flags |= FS_SOCKET_NONBLOCK;
             else
                 sock->flags &= ~FS_SOCKET_NONBLOCK;
+
             rv = 0;
             goto out;
 
         case F_GETFL:
             rv = O_RDWR;
+
             if(sock->flags & FS_SOCKET_NONBLOCK)
                 rv |= O_NONBLOCK;
+
             goto out;
 
         case F_GETFD:
@@ -1877,7 +1909,7 @@ static int net_tcp_fcntl(net_socket_t *hnd, int cmd, va_list ap) {
     }
 
     errno = EINVAL;
-        
+
 out:
     mutex_unlock(sock->mutex);
     rwsem_read_unlock(tcp_sem);
@@ -1921,6 +1953,7 @@ static void tcp_bpkt_rst(netif_t *net, const struct in6_addr *src,
 
     if(flags & TCP_FLAG_SYN)
         size += 1;
+
     if(flags & TCP_FLAG_FIN)
         size += 1;
 
@@ -2081,6 +2114,7 @@ static void tcp_send_data(struct tcp_sock *sock, int resend) {
 
         if(snd > sock->data.snd.mss - sizeof(tcp_hdr_t))
             snd = sock->data.snd.mss - sizeof(tcp_hdr_t);
+
         if(snd > sock->data.sndbuf_cur_sz - unacked)
             snd = sock->data.sndbuf_cur_sz - unacked;
 
@@ -2143,24 +2177,24 @@ static struct tcp_sock *find_sock(const struct in6_addr *src,
            packet, or any that are IPv4 only when we have an incoming IPv6
            packet. */
         if((domain == AF_INET && (i->flags & FS_SOCKET_V6ONLY)) ||
-           (domain == AF_INET6 && i->domain == AF_INET))
+                (domain == AF_INET6 && i->domain == AF_INET))
             continue;
 
         /* See if the remote end matches what's in the socket */
         if(!IN6_IS_ADDR_UNSPECIFIED(&i->remote_addr.sin6_addr) &&
-           (!ADDR_EQUAL(i->remote_addr.sin6_addr, *src) ||
-            i->remote_addr.sin6_port != sport))
+                (!ADDR_EQUAL(i->remote_addr.sin6_addr, *src) ||
+                 i->remote_addr.sin6_port != sport))
             continue;
 
         /* See if it matches the local end */
         if((!IN6_IS_ADDR_UNSPECIFIED(&i->local_addr.sin6_addr) &&
-            !ADDR_EQUAL(i->local_addr.sin6_addr, *dst)) ||
-           i->local_addr.sin6_port != dport)
+                !ADDR_EQUAL(i->local_addr.sin6_addr, *dst)) ||
+                i->local_addr.sin6_port != dport)
             continue;
 
         if(irq_inside_int()) {
             if(mutex_trylock(i->mutex))
-                return (struct tcp_sock *)-1;
+                return (struct tcp_sock *) - 1;
         }
         else {
             mutex_lock(i->mutex);
@@ -2196,6 +2230,7 @@ static int listen_pkt(netif_t *src, const struct in6_addr *srca,
 
     /* Parse options now, in case we need to update the max segment size. */
     end_of_opts = TCP_GET_OFFSET(flags) - 20;
+
     while(j < end_of_opts) {
         switch(tcp->options[j]) {
             case TCP_OPT_EOL:
@@ -2207,6 +2242,7 @@ static int listen_pkt(netif_t *src, const struct in6_addr *srca,
                 break;
 
             case TCP_OPT_MSS:
+
                 if(j + 4 > end_of_opts || tcp->options[j + 1] != 4)
                     return -1;
 
@@ -2215,9 +2251,11 @@ static int listen_pkt(netif_t *src, const struct in6_addr *srca,
                 break;
 
             default:
+
                 /* Skip unknown options */
                 if(j + 1 > end_of_opts || j + tcp->options[j + 1] > end_of_opts)
                     return -1;
+
                 j += tcp->options[j + 1];
         }
     }
@@ -2232,8 +2270,8 @@ static int listen_pkt(netif_t *src, const struct in6_addr *srca,
        the queue... */
     for(j = s->listen.head; j < s->listen.tail; ++j) {
         if(ADDR_EQUAL(s->listen.queue[j].remote_addr.sin6_addr, *srca) &&
-           ADDR_EQUAL(s->listen.queue[j].local_addr.sin6_addr, *dsta) &&
-           s->listen.queue[j].remote_addr.sin6_port == tcp->src_port) {
+                ADDR_EQUAL(s->listen.queue[j].local_addr.sin6_addr, *dsta) &&
+                s->listen.queue[j].remote_addr.sin6_port == tcp->src_port) {
             s->listen.queue[j].isn = ntohl(tcp->seq);
             s->listen.queue[j].mss = mss;
             return 0;
@@ -2283,6 +2321,7 @@ static int synsent_pkt(netif_t *src, const struct in6_addr *srca,
     /* First, we need to check the ACK bit */
     if(flags & TCP_FLAG_ACK) {
         gotack = 1;
+
         if(SEQ_LE(ack, s->data.snd.iss) || SEQ_GT(ack, s->data.snd.nxt)) {
             tcp_bpkt_rst(s->data.net, srca, dsta, tcp, sz);
             return 0;
@@ -2307,6 +2346,7 @@ static int synsent_pkt(netif_t *src, const struct in6_addr *srca,
         s->data.rcv.irs = seq;
 
         end_of_opts = TCP_GET_OFFSET(flags) - 20;
+
         while(j < end_of_opts) {
             switch(tcp->options[j]) {
                 case TCP_OPT_EOL:
@@ -2318,6 +2358,7 @@ static int synsent_pkt(netif_t *src, const struct in6_addr *srca,
                     break;
 
                 case TCP_OPT_MSS:
+
                     if(j + 4 > end_of_opts || tcp->options[j + 1] != 4)
                         return -1;
 
@@ -2326,10 +2367,12 @@ static int synsent_pkt(netif_t *src, const struct in6_addr *srca,
                     break;
 
                 default:
+
                     /* Skip unknown options */
                     if(j + 1 > end_of_opts ||
-                       j + tcp->options[j + 1] > end_of_opts)
+                            j + tcp->options[j + 1] > end_of_opts)
                         return -1;
+
                     j += tcp->options[j + 1];
             }
         }
@@ -2383,12 +2426,12 @@ static int process_pkt(netif_t *src, const struct in6_addr *srca,
     else {
         if(!sz) {
             if(!(SEQ_GE(seq, s->data.rcv.nxt) &&
-                 SEQ_LT(seq, s->data.rcv.nxt + s->data.rcv.wnd)))
+                    SEQ_LT(seq, s->data.rcv.nxt + s->data.rcv.wnd)))
                 bad_pkt = 1;
         }
         else {
             if(!(SEQ_GE(seq, s->data.rcv.nxt) &&
-                 SEQ_LT(seq, s->data.rcv.nxt + s->data.rcv.wnd)))
+                    SEQ_LT(seq, s->data.rcv.nxt + s->data.rcv.wnd)))
                 bad_pkt = 1;
         }
     }
@@ -2464,7 +2507,7 @@ static int process_pkt(netif_t *src, const struct in6_addr *srca,
             s->data.sndbuf_acked -= s->sndbuf_sz;
 
         if(SEQ_LT(s->data.snd.wl1, seq) ||
-           (s->data.snd.wl1 == seq && SEQ_LE(s->data.snd.wl2, ack))) {
+                (s->data.snd.wl1 == seq && SEQ_LE(s->data.snd.wl2, ack))) {
             s->data.snd.wnd = ntohs(tcp->wnd);
             s->data.snd.wl1 = seq;
             s->data.snd.wl2 = ack;
@@ -2480,13 +2523,16 @@ static int process_pkt(netif_t *src, const struct in6_addr *srca,
     /* We need to do a bit more processing in certain states... */
     switch(s->state) {
         case TCP_STATE_FIN_WAIT_1:
+
             /* If the FIN has been acked, go to the FIN-WAIT-2 state. */
             if(ack == s->data.snd.nxt) {
                 s->state = TCP_STATE_FIN_WAIT_2;
             }
+
             break;
 
         case TCP_STATE_CLOSING:
+
             /* If the FIN has been acked, go to TIME-WAIT */
             if(ack == s->data.snd.nxt) {
                 s->state = TCP_STATE_TIME_WAIT;
@@ -2498,11 +2544,13 @@ static int process_pkt(netif_t *src, const struct in6_addr *srca,
             }
 
         case TCP_STATE_LAST_ACK:
+
             /* If the FIN has been acked, go to CLOSED */
             if(ack == s->data.snd.nxt) {
                 s->state = TCP_STATE_CLOSED;
                 return 0;
             }
+
             break;
 
         case TCP_STATE_TIME_WAIT:
@@ -2515,15 +2563,15 @@ static int process_pkt(netif_t *src, const struct in6_addr *srca,
     /* Next, we handle the URG bit */
     if(flags & TCP_FLAG_URG) {
         if(s->state == TCP_STATE_ESTABLISHED ||
-           s->state == TCP_STATE_FIN_WAIT_1 ||
-           s->state == TCP_STATE_FIN_WAIT_2) {
+                s->state == TCP_STATE_FIN_WAIT_1 ||
+                s->state == TCP_STATE_FIN_WAIT_2) {
             up = ntohl(tcp->urg);
             s->data.rcv.up = MAX(s->data.rcv.up, up);
         }
     }
 
     if(s->state == TCP_STATE_ESTABLISHED || s->state == TCP_STATE_FIN_WAIT_1 ||
-       s->state == TCP_STATE_FIN_WAIT_2) {
+            s->state == TCP_STATE_FIN_WAIT_2) {
         /* Next, check the data size versus our window. If its more than the
            window, truncate the data and copy out what we can. */
         if(sz > s->data.rcv.wnd) {
@@ -2578,9 +2626,11 @@ static int process_pkt(netif_t *src, const struct in6_addr *srca,
                 break;
 
             case TCP_STATE_FIN_WAIT_1:
+
                 if(ack < s->data.snd.nxt) {
                     s->state = TCP_STATE_CLOSING;
                 }
+
                 break;
 
             case TCP_STATE_FIN_WAIT_2:
@@ -2659,7 +2709,7 @@ static int net_tcp_input(netif_t *src, int domain, const void *hdr,
     /* Find a matching socket */
     if((s = find_sock(&srca, &dsta, tcp->src_port, tcp->dst_port, domain))) {
         /* Make sure we take care of busy sockets... */
-        if(s == (struct tcp_sock *)-1) {
+        if(s == (struct tcp_sock *) - 1) {
             rwsem_read_unlock(tcp_sem);
             return 0;
         }
@@ -2720,6 +2770,7 @@ static void tcp_thd_cb(void *arg) {
                 break;
 
             case TCP_STATE_SYN_SENT:
+
                 /* If our last <SYN> was sent more than one  retransmission
                    timeout period ago and we are still in the SYN-SENT state,
                    send another one. */
@@ -2727,9 +2778,11 @@ static void tcp_thd_cb(void *arg) {
                     tcp_send_syn(i, 0);
                     i->data.timer = timer;
                 }
+
                 break;
 
             case TCP_STATE_SYN_RECEIVED:
+
                 /* If our last <SYN,ACK> was sent more than one  retransmission
                    timeout period ago and we are still in the SYN-RECEIVED
                    state, send another one. */
@@ -2737,20 +2790,24 @@ static void tcp_thd_cb(void *arg) {
                     tcp_send_syn(i, 1);
                     i->data.timer = timer;
                 }
+
                 break;
 
             case TCP_STATE_TIME_WAIT:
+
                 /* If the TIME-WAIT timer has expired, then clean up the rest of
                    the connection (the fd was already taken care of by a close()
                    call earlier that ended up putting us in this state). */
                 if(i->data.timer + 2 * TCP_DEFAULT_MSL <= timer)
                     i->state = TCP_STATE_CLOSED;
+
                 break;
 
             case TCP_STATE_ESTABLISHED:
             case TCP_STATE_CLOSE_WAIT:
+
                 if(i->data.sndbuf_cur_sz &&
-                   i->data.timer + TCP_DEFAULT_RTTO <= timer) {
+                        i->data.timer + TCP_DEFAULT_RTTO <= timer) {
                     tcp_send_data(i, 1);
                 }
                 else if(!i->data.sndbuf_cur_sz &&
@@ -2765,6 +2822,7 @@ static void tcp_thd_cb(void *arg) {
                     tcp_send_fin_ack(i);
                     ++i->data.snd.nxt;
                 }
+
                 break;
         }
 
@@ -2777,11 +2835,12 @@ static void tcp_thd_cb(void *arg) {
     rwsem_write_lock(tcp_sem);
 
     i = LIST_FIRST(&tcp_socks);
+
     while(i) {
         tmp = LIST_NEXT(i, sock_list);
 
         if((i->intflags & TCP_IFLAG_CANBEDEL) &&
-           (i->state & 0x0F) == TCP_STATE_CLOSED) {
+                (i->state & 0x0F) == TCP_STATE_CLOSED) {
             LIST_REMOVE(i, sock_list);
             cond_destroy(i->data.send_cv);
             cond_destroy(i->data.recv_cv);
@@ -2826,7 +2885,7 @@ int net_tcp_init() {
         rwsem_destroy(tcp_sem);
         return -1;
     }
-    
+
     return fs_socket_proto_add(&proto);
 }
 
@@ -2843,6 +2902,7 @@ void net_tcp_shutdown() {
 
     /* Clean up existing sockets */
     i = LIST_FIRST(&tcp_socks);
+
     while(i) {
         tmp = LIST_NEXT(i, sock_list);
 

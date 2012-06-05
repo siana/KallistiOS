@@ -37,4 +37,4 @@ void bspline_get_point(float t, point_t *p);
 
 __END_DECLS
 
-#endif	/* __KOS_BSPLINE_H */
+#endif  /* __KOS_BSPLINE_H */

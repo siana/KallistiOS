@@ -22,89 +22,91 @@
 */
 
 void * pvr_set_vertbuf(pvr_list_t list, void * buffer, int len) {
-	void * oldbuf;
+    void * oldbuf;
 
-	// Make sure we have global DMA usage enabled. The DMA can still
-	// be used in other situations, but the user must take care of
-	// that themselves.
-	assert( pvr_state.dma_mode );
+    // Make sure we have global DMA usage enabled. The DMA can still
+    // be used in other situations, but the user must take care of
+    // that themselves.
+    assert(pvr_state.dma_mode);
 
-	// Make sure it's a valid list.
-	assert( list >= 0 && list < PVR_OPB_COUNT );
+    // Make sure it's a valid list.
+    assert(list >= 0 && list < PVR_OPB_COUNT);
 
-	// Make sure it's an _enabled_ list.
-	assert( pvr_state.lists_enabled & (1 << list) );
+    // Make sure it's an _enabled_ list.
+    assert(pvr_state.lists_enabled & (1 << list));
 
-	// Make sure the buffer parameters are valid.
-	assert( !( ((ptr_t)buffer) & 31 ) );
-	assert( !( len & 63 ) );
+    // Make sure the buffer parameters are valid.
+    assert(!(((ptr_t)buffer) & 31));
+    assert(!(len & 63));
 
-	// Save the old value.
-	oldbuf = pvr_state.dma_buffers[0].base[list];
+    // Save the old value.
+    oldbuf = pvr_state.dma_buffers[0].base[list];
 
-	// Write new values.
-	pvr_state.dma_buffers[0].base[list] = (uint8 *)buffer;
-	pvr_state.dma_buffers[0].ptr[list] = 0;
-	pvr_state.dma_buffers[0].size[list] = len / 2;
-	pvr_state.dma_buffers[0].ready = 0;
-	pvr_state.dma_buffers[1].base[list] = ((uint8 *)buffer) + len / 2;
-	pvr_state.dma_buffers[1].ptr[list] = 0;
-	pvr_state.dma_buffers[1].size[list] = len / 2;
-	pvr_state.dma_buffers[1].ready = 0;
+    // Write new values.
+    pvr_state.dma_buffers[0].base[list] = (uint8 *)buffer;
+    pvr_state.dma_buffers[0].ptr[list] = 0;
+    pvr_state.dma_buffers[0].size[list] = len / 2;
+    pvr_state.dma_buffers[0].ready = 0;
+    pvr_state.dma_buffers[1].base[list] = ((uint8 *)buffer) + len / 2;
+    pvr_state.dma_buffers[1].ptr[list] = 0;
+    pvr_state.dma_buffers[1].size[list] = len / 2;
+    pvr_state.dma_buffers[1].ready = 0;
 
-	return oldbuf;
+    return oldbuf;
 }
 
 void * pvr_vertbuf_tail(pvr_list_t list) {
-	uint8 * bufbase;
+    uint8 * bufbase;
 
-	// Check the validity of the request.
-	assert( list >= 0 && list < PVR_OPB_COUNT );
-	assert( pvr_state.dma_mode );
+    // Check the validity of the request.
+    assert(list >= 0 && list < PVR_OPB_COUNT);
+    assert(pvr_state.dma_mode);
 
-	// Get the buffer base.
-	bufbase = pvr_state.dma_buffers[pvr_state.ram_target].base[list];
-	assert( bufbase );
+    // Get the buffer base.
+    bufbase = pvr_state.dma_buffers[pvr_state.ram_target].base[list];
+    assert(bufbase);
 
-	// Return the current end of the buffer.
-	return bufbase + pvr_state.dma_buffers[pvr_state.ram_target].ptr[list];
+    // Return the current end of the buffer.
+    return bufbase + pvr_state.dma_buffers[pvr_state.ram_target].ptr[list];
 }
 
 void pvr_vertbuf_written(pvr_list_t list, uint32 amt) {
-	uint32 val;
+    uint32 val;
 
-	// Check the validity of the request.
-	assert( list >= 0 && list < PVR_OPB_COUNT );
-	assert( pvr_state.dma_mode );
+    // Check the validity of the request.
+    assert(list >= 0 && list < PVR_OPB_COUNT);
+    assert(pvr_state.dma_mode);
 
-	// Change the current end of the buffer.
-	val = pvr_state.dma_buffers[pvr_state.ram_target].ptr[list];
-	val += amt;
-	assert( val < pvr_state.dma_buffers[pvr_state.ram_target].size[list] );
-	pvr_state.dma_buffers[pvr_state.ram_target].ptr[list] = val;
+    // Change the current end of the buffer.
+    val = pvr_state.dma_buffers[pvr_state.ram_target].ptr[list];
+    val += amt;
+    assert(val < pvr_state.dma_buffers[pvr_state.ram_target].size[list]);
+    pvr_state.dma_buffers[pvr_state.ram_target].ptr[list] = val;
 }
 
 /* Begin collecting data for a frame of 3D output to the off-screen
    frame buffer */
 void pvr_scene_begin() {
-	int i;
+    int i;
 
-	// Get general stuff ready.
-	pvr_state.list_reg_open = -1;
+    // Get general stuff ready.
+    pvr_state.list_reg_open = -1;
 
-	// Clear these out in case we're using DMA.
-	if (pvr_state.dma_mode) {
-		for (i=0; i<PVR_OPB_COUNT; i++) {
-			pvr_state.dma_buffers[pvr_state.ram_target].ptr[i] = 0;
-		}
-		pvr_sync_stats(PVR_SYNC_BUFSTART);
-		// DBG(("pvr_scene_begin(dma -> %d)\n", pvr_state.ram_target));
-	} else {
-		pvr_state.lists_closed = 0;
+    // Clear these out in case we're using DMA.
+    if(pvr_state.dma_mode) {
+        for(i = 0; i < PVR_OPB_COUNT; i++) {
+            pvr_state.dma_buffers[pvr_state.ram_target].ptr[i] = 0;
+        }
 
-		// We assume registration is starting immediately
-		pvr_sync_stats(PVR_SYNC_REGSTART);
-	}
+        pvr_sync_stats(PVR_SYNC_BUFSTART);
+        // DBG(("pvr_scene_begin(dma -> %d)\n", pvr_state.ram_target));
+    }
+    else {
+        pvr_state.lists_closed = 0;
+
+        // We assume registration is starting immediately
+        pvr_sync_stats(PVR_SYNC_REGSTART);
+    }
 }
 
 /* Begin collecting data for a frame of 3D output to the specified texture;
@@ -115,19 +117,19 @@ void pvr_scene_begin() {
    rx and ry are appropriate (i.e. *rx = 1024 and *ry = 512 for 640x480).
    Also, note that this probably won't work with DMA mode for now... */
 void pvr_scene_begin_txr(pvr_ptr_t txr, uint32 *rx, uint32 *ry) {
-	/* For the most part, this isn't very much different than the normal render setup.
-	   And, yes, if you remember KOS 1.1.6, this pretty much looks similar to what was
-	   there. I'm quite uncreative with my variable naming ;) */
-	// Mark us as rendering to a texture
-	pvr_state.to_texture = 1;
+    /* For the most part, this isn't very much different than the normal render setup.
+       And, yes, if you remember KOS 1.1.6, this pretty much looks similar to what was
+       there. I'm quite uncreative with my variable naming ;) */
+    // Mark us as rendering to a texture
+    pvr_state.to_texture = 1;
 
-	// Set the render pitch up
-	pvr_state.to_txr_rp = (*rx) * 2 / 8;
+    // Set the render pitch up
+    pvr_state.to_txr_rp = (*rx) * 2 / 8;
 
-	// Set the output address
-	pvr_state.to_txr_addr = (uint32)(txr) - PVR_RAM_INT_BASE;
+    // Set the output address
+    pvr_state.to_txr_addr = (uint32)(txr) - PVR_RAM_INT_BASE;
 
-	pvr_scene_begin();
+    pvr_scene_begin();
 }
 
 /* Begin collecting data for the given list type. Lists do not have to be
@@ -135,22 +137,23 @@ void pvr_scene_begin_txr(pvr_ptr_t txr, uint32 *rx, uint32 *ry) {
    submitted at once. If the given list has already been closed, then an
    error (-1) is returned. */
 int pvr_list_begin(pvr_list_t list) {
-	/* Check to make sure we can do this */
+    /* Check to make sure we can do this */
 #ifndef NDEBUG
-	if (!pvr_state.dma_mode && pvr_state.lists_closed & (1 << list)) {
-		dbglog(DBG_WARNING, "pvr_list_begin: attempt to open already closed list\n");
-		return -1;
-	}
-#endif	/* !NDEBUG */
+    if(!pvr_state.dma_mode && pvr_state.lists_closed & (1 << list)) {
+        dbglog(DBG_WARNING, "pvr_list_begin: attempt to open already closed list\n");
+        return -1;
+    }
 
-	/* If we already had a list open, close it first */
-	if (pvr_state.list_reg_open != -1 && pvr_state.list_reg_open != list)
-		pvr_list_finish();
+#endif  /* !NDEBUG */
 
-	/* Ok, set the flag */
-	pvr_state.list_reg_open = list;
+    /* If we already had a list open, close it first */
+    if(pvr_state.list_reg_open != -1 && pvr_state.list_reg_open != list)
+        pvr_list_finish();
 
-	return 0;
+    /* Ok, set the flag */
+    pvr_state.list_reg_open = list;
+
+    return 0;
 }
 
 /* End collecting data for the current list type. Lists can never be opened
@@ -160,67 +163,70 @@ int pvr_list_begin(pvr_list_t list) {
    a list but do not submit any primitives, this causes a hardware error. For
    simplicity we just always submit a blank primitive. */
 int pvr_list_finish() {
-	/* Check to make sure we can do this */
+    /* Check to make sure we can do this */
 #ifndef NDEBUG
-	if (!pvr_state.dma_mode && pvr_state.list_reg_open == -1) {
-		dbglog(DBG_WARNING, "pvr_list_finish: attempt to close unopened list\n");
-		return -1;
-	}
-#endif	/* !NDEBUG */
+    if(!pvr_state.dma_mode && pvr_state.list_reg_open == -1) {
+        dbglog(DBG_WARNING, "pvr_list_finish: attempt to close unopened list\n");
+        return -1;
+    }
 
-	if (!pvr_state.dma_mode) {
-		/* In case we haven't sent anything in this list, send a dummy */
-		pvr_blank_polyhdr(pvr_state.list_reg_open);
+#endif  /* !NDEBUG */
 
-		/* Set the flags */
-		pvr_state.lists_closed |= (1 << pvr_state.list_reg_open);
+    if(!pvr_state.dma_mode) {
+        /* In case we haven't sent anything in this list, send a dummy */
+        pvr_blank_polyhdr(pvr_state.list_reg_open);
 
-		/* Send an EOL marker */
-		sq_set32((void *)PVR_TA_INPUT, 0, 32);
-	}
+        /* Set the flags */
+        pvr_state.lists_closed |= (1 << pvr_state.list_reg_open);
 
-	pvr_state.list_reg_open = -1;
+        /* Send an EOL marker */
+        sq_set32((void *)PVR_TA_INPUT, 0, 32);
+    }
 
-	return 0;
+    pvr_state.list_reg_open = -1;
+
+    return 0;
 }
 
 int pvr_prim(void * data, int size) {
-	/* Check to make sure we can do this */
+    /* Check to make sure we can do this */
 #ifndef NDEBUG
-	if (pvr_state.list_reg_open == -1) {
-		dbglog(DBG_WARNING, "pvr_prim: attempt to submit to unopened list\n");
-		return -1;
-	}
-#endif	/* !NDEBUG */
+    if(pvr_state.list_reg_open == -1) {
+        dbglog(DBG_WARNING, "pvr_prim: attempt to submit to unopened list\n");
+        return -1;
+    }
 
-	if (!pvr_state.dma_mode) {
-		/* Send the data */
-		sq_cpy((void *)PVR_TA_INPUT, data, size);
-	} else {
-		return pvr_list_prim(pvr_state.list_reg_open, data, size);
-	}
+#endif  /* !NDEBUG */
 
-	return 0;
+    if(!pvr_state.dma_mode) {
+        /* Send the data */
+        sq_cpy((void *)PVR_TA_INPUT, data, size);
+    }
+    else {
+        return pvr_list_prim(pvr_state.list_reg_open, data, size);
+    }
+
+    return 0;
 }
 
 int pvr_list_prim(pvr_list_t list, void * data, int size) {
-	volatile pvr_dma_buffers_t * b;
+    volatile pvr_dma_buffers_t * b;
 
-	b = pvr_state.dma_buffers + pvr_state.ram_target;
-	assert( b->base[list] );
+    b = pvr_state.dma_buffers + pvr_state.ram_target;
+    assert(b->base[list]);
 
-	assert( !(size & 31 ) );
+    assert(!(size & 31));
 
-	memcpy(b->base[list] + b->ptr[list], data, size);
-	b->ptr[list] += size;
-	assert( b->ptr[list] <= b->size[list] );
+    memcpy(b->base[list] + b->ptr[list], data, size);
+    b->ptr[list] += size;
+    assert(b->ptr[list] <= b->size[list]);
 
-	return 0;
+    return 0;
 }
 
 int pvr_list_flush(pvr_list_t list) {
-	assert_msg(0, "not implemented yet");
-	return -1;
+    assert_msg(0, "not implemented yet");
+    return -1;
 }
 
 /* Call this after you have finished submitting all data for a frame; once
@@ -228,93 +234,96 @@ int pvr_list_flush(pvr_list_t list) {
    pvr_scene_begin() functions is called again. An error (-1) is returned if
    you have not started a scene already. */
 int pvr_scene_finish() {
-	int i, o;
-	volatile pvr_dma_buffers_t * b;
+    int i, o;
+    volatile pvr_dma_buffers_t * b;
 
-	// If we're in DMA mode, then this works a little differently...
-	if (pvr_state.dma_mode) {
-		// DBG(("pvr_scene_finish(dma -> %d)\n", pvr_state.ram_target));
-		// If any enabled lists are empty, fill them with a blank polyhdr. Also
-		// add a zero-marker to the end of each list.
-		b = pvr_state.dma_buffers + pvr_state.ram_target;
-		for (i=0; i<PVR_OPB_COUNT; i++) {
-			// Not enabled -> skip
-			if (!(pvr_state.lists_enabled & (1 << i)))
-				continue;
+    // If we're in DMA mode, then this works a little differently...
+    if(pvr_state.dma_mode) {
+        // DBG(("pvr_scene_finish(dma -> %d)\n", pvr_state.ram_target));
+        // If any enabled lists are empty, fill them with a blank polyhdr. Also
+        // add a zero-marker to the end of each list.
+        b = pvr_state.dma_buffers + pvr_state.ram_target;
 
-			// Make sure there's at least one primitive in each.
-			if (b->ptr[i] == 0) {
-				pvr_blank_polyhdr_buf(i, (pvr_poly_hdr_t*)(b->base[i]));
-				b->ptr[i] += 32;
-			}
+        for(i = 0; i < PVR_OPB_COUNT; i++) {
+            // Not enabled -> skip
+            if(!(pvr_state.lists_enabled & (1 << i)))
+                continue;
 
-			// Put a zero-marker on the end.
-			memset(b->base[i] + b->ptr[i], 0, 32);
-			b->ptr[i] += 32;
+            // Make sure there's at least one primitive in each.
+            if(b->ptr[i] == 0) {
+                pvr_blank_polyhdr_buf(i, (pvr_poly_hdr_t*)(b->base[i]));
+                b->ptr[i] += 32;
+            }
 
-			// Verify that there is no overrun.
-			assert( b->ptr[i] <= b->size[i] );
-		}
+            // Put a zero-marker on the end.
+            memset(b->base[i] + b->ptr[i], 0, 32);
+            b->ptr[i] += 32;
 
-		// Flip buffers and mark them complete.
-		o = irq_disable();
-		pvr_state.dma_buffers[pvr_state.ram_target].ready = 1;
-		pvr_state.ram_target ^= 1;
-		irq_restore(o);
+            // Verify that there is no overrun.
+            assert(b->ptr[i] <= b->size[i]);
+        }
 
-		pvr_sync_stats(PVR_SYNC_BUFDONE);
-	} else {
-		/* If a list was open, close it */
-		if (pvr_state.list_reg_open != -1)
-			pvr_list_finish();
+        // Flip buffers and mark them complete.
+        o = irq_disable();
+        pvr_state.dma_buffers[pvr_state.ram_target].ready = 1;
+        pvr_state.ram_target ^= 1;
+        irq_restore(o);
 
-		/* If any lists weren't submitted, then submit blank ones now */
-		for (i=0; i<PVR_OPB_COUNT; i++) {
-			if ( (pvr_state.lists_enabled & (1 << i))
-					&& (!( pvr_state.lists_closed & (1 << i) )) ) {
-				pvr_list_begin(i);
-				pvr_blank_polyhdr(i);
-				pvr_list_finish();
-			}
-		}
-	}
+        pvr_sync_stats(PVR_SYNC_BUFDONE);
+    }
+    else {
+        /* If a list was open, close it */
+        if(pvr_state.list_reg_open != -1)
+            pvr_list_finish();
 
-	/* Ok, now it's just a matter of waiting for the interrupt... */
-	return 0;
+        /* If any lists weren't submitted, then submit blank ones now */
+        for(i = 0; i < PVR_OPB_COUNT; i++) {
+            if((pvr_state.lists_enabled & (1 << i))
+                    && (!(pvr_state.lists_closed & (1 << i)))) {
+                pvr_list_begin(i);
+                pvr_blank_polyhdr(i);
+                pvr_list_finish();
+            }
+        }
+    }
+
+    /* Ok, now it's just a matter of waiting for the interrupt... */
+    return 0;
 }
 
 int pvr_wait_ready() {
-	int t;
+    int t;
 
-	assert( pvr_state.valid );
+    assert(pvr_state.valid);
 
-	t = sem_wait_timed(pvr_state.ready_sem, 100);
-	if (t < 0) {
+    t = sem_wait_timed(pvr_state.ready_sem, 100);
+
+    if(t < 0) {
 #if 0
-		dbglog(DBG_WARNING, "pvr_wait_ready: timed out\n");
-		printf("VERTBUF_ADDR: %08lx\n", PVR_GET(PVR_ISP_VERTBUF_ADDR));
-		printf("TILEMAT_ADDR: %08lx\n", PVR_GET(PVR_ISP_TILEMAT_ADDR));
-		printf("OPB_START: %08lx\n", PVR_GET(PVR_TA_OPB_START));
-		printf("OPB_END: %08lx\n", PVR_GET(PVR_TA_OPB_END));
-		printf("OPB_POS: %08lx\n", PVR_GET(PVR_TA_OPB_POS));
-		printf("OPB_INIT: %08lx\n", PVR_GET(PVR_TA_OPB_INIT));
-		printf("VERTBUF_START: %08lx\n", PVR_GET(PVR_TA_VERTBUF_START));
-		printf("VERTBUF_END: %08lx\n", PVR_GET(PVR_TA_VERTBUF_END));
-		printf("VERTBUF_POS: %08lx\n", PVR_GET(PVR_TA_VERTBUF_POS));
+        dbglog(DBG_WARNING, "pvr_wait_ready: timed out\n");
+        printf("VERTBUF_ADDR: %08lx\n", PVR_GET(PVR_ISP_VERTBUF_ADDR));
+        printf("TILEMAT_ADDR: %08lx\n", PVR_GET(PVR_ISP_TILEMAT_ADDR));
+        printf("OPB_START: %08lx\n", PVR_GET(PVR_TA_OPB_START));
+        printf("OPB_END: %08lx\n", PVR_GET(PVR_TA_OPB_END));
+        printf("OPB_POS: %08lx\n", PVR_GET(PVR_TA_OPB_POS));
+        printf("OPB_INIT: %08lx\n", PVR_GET(PVR_TA_OPB_INIT));
+        printf("VERTBUF_START: %08lx\n", PVR_GET(PVR_TA_VERTBUF_START));
+        printf("VERTBUF_END: %08lx\n", PVR_GET(PVR_TA_VERTBUF_END));
+        printf("VERTBUF_POS: %08lx\n", PVR_GET(PVR_TA_VERTBUF_POS));
 #endif
-		return -1;
-	}
+        return -1;
+    }
 
-	return 0;
+    return 0;
 }
 
 int pvr_check_ready() {
-	assert( pvr_state.valid );
+    assert(pvr_state.valid);
 
-	if (sem_count(pvr_state.ready_sem) > 0)
-		return 0;
-	else
-		return -1;
+    if(sem_count(pvr_state.ready_sem) > 0)
+        return 0;
+    else
+        return -1;
 }
 
 

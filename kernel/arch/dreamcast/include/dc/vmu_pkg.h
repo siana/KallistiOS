@@ -76,7 +76,7 @@ typedef struct vmu_hdr {
     @{
 */
 #define VMUPKG_EC_NONE      0   /**< \brief No eyecatch */
-#define VMUPKG_EC_16BIT     1	/**< \brief 16-bit ARGB4444 */
+#define VMUPKG_EC_16BIT     1   /**< \brief 16-bit ARGB4444 */
 #define VMUPKG_EC_256COL    2   /**< \brief 256-color palette */
 #define VMUPKG_EC_16COL     3   /**< \brief 16-color palette */
 /** @} */
@@ -108,5 +108,5 @@ int vmu_pkg_parse(uint8 *data, vmu_pkg_t *pkg);
 
 __END_DECLS
 
-#endif	/* __DC_VMU_PKG_H */
+#endif  /* __DC_VMU_PKG_H */
 

@@ -137,6 +137,7 @@ int net_ipv4_send_packet(netif_t *net, ip_hdr_t *hdr, const uint8 *data,
            cached, return a distinguished error to the upper-level protocol so
            that it can decide what to do. */
         err = net_arp_lookup(net, dest_ip, dest_mac, hdr, data, size);
+
         if(err == -1) {
             errno = ENETUNREACH;
             ++ipv4_stats.pkt_send_failed;
@@ -276,10 +277,10 @@ uint32 net_ipv4_address(const uint8 addr[4]) {
 }
 
 void net_ipv4_parse_address(uint32 addr, uint8 out[4]) {
-    out[0] = (uint8) ((addr >> 24) & 0xFF);
-    out[1] = (uint8) ((addr >> 16) & 0xFF);
-    out[2] = (uint8) ((addr >> 8) & 0xFF);
-    out[3] = (uint8) (addr & 0xFF);
+    out[0] = (uint8)((addr >> 24) & 0xFF);
+    out[1] = (uint8)((addr >> 16) & 0xFF);
+    out[2] = (uint8)((addr >> 8) & 0xFF);
+    out[3] = (uint8)(addr & 0xFF);
 }
 
 uint16 net_ipv4_checksum_pseudo(in_addr_t src, in_addr_t dst, uint8 proto,

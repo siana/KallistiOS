@@ -10,6 +10,6 @@
 
 /* This is probably the closest mapping we've got for abort() */
 void abort() {
-	arch_exit();
+    arch_exit();
 }
 

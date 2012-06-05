@@ -32,5 +32,5 @@ int pcx_load_palette(const char *fn, int *w_out, int *h_out, void *pic_out, void
 
 __END_DECLS
 
-#endif	/* __KOS_PCX_H */
+#endif  /* __KOS_PCX_H */
 

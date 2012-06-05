@@ -37,4 +37,4 @@ int net_icmp_input(netif_t *src, ip_hdr_t *ih, const uint8 *data, int size);
 
 __END_DECLS
 
-#endif	/* __LOCAL_NET_ICMP_H */
+#endif  /* __LOCAL_NET_ICMP_H */

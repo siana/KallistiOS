@@ -53,7 +53,7 @@ void dbgio_write_str(char *str) {
 
 /* Read one char from the serial port (-1 if nothing to read) */
 int dbgio_read() {
-	return -1;
+    return -1;
 }
 
 /* Read an entire buffer (block) */
@@ -61,7 +61,7 @@ void dbgio_read_buffer(uint8 *data, int len) {
 }
 
 int dbgio_printf(const char *fmt, ...) {
-	return 0;
+    return 0;
 }
 
 void dbgio_printk(const char *buf) {

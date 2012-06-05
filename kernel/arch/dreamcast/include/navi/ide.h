@@ -27,7 +27,7 @@
     \param  bufptr          The buffer to read into.
     \return                 0 on success, <0 on error.
 */
-int ide_read(uint32 linear,uint32 numsects, void *bufptr);
+int ide_read(uint32 linear, uint32 numsects, void *bufptr);
 
 /** \brief  Write sectors from the hard disk via PIO.
     \param  linear          The address to begin writing to.
@@ -35,7 +35,7 @@ int ide_read(uint32 linear,uint32 numsects, void *bufptr);
     \param  bufptr          The buffer to write out of.
     \return                 0 on success, <0 on error.
 */
-int ide_write(uint32 linear,uint32 numsects, void *bufptr);
+int ide_write(uint32 linear, uint32 numsects, void *bufptr);
 
 /** \brief  Retrieve the number of sectors from the hard disk.
     \returns                The total number of linear sectors.
@@ -50,4 +50,4 @@ int ide_init();
 /** \brief  Shutdown Navi IDE. */
 void ide_shutdown();
 
-#endif	/* __NAVI_IDE_H */
+#endif  /* __NAVI_IDE_H */

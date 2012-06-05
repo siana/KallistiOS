@@ -13,8 +13,7 @@
 #define CHAIN_BUFFER_OVERFLOW_FLAG      0x1
 #define CHAIN_BUFFER_CONTAINS_DATA_FLAG 0x2
 
-typedef struct
-{
+typedef struct {
     int           length;     /* Number of bytes allocated to data */
     int           start, end; /* Start and end indices */
     unsigned char flags;

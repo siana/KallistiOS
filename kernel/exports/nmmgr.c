@@ -31,82 +31,87 @@ static nmmgr_list_t nmmgr_handlers;
 
 /* Locate a name handler for a given path name */
 nmmgr_handler_t * nmmgr_lookup(const char *fn) {
-	nmmgr_handler_t	*cur;
+    nmmgr_handler_t *cur;
 
-	/* Scan the handler table and look for a path match */
-	LIST_FOREACH(cur, &nmmgr_handlers, list_ent) {
-		if (!strnicmp(cur->pathname, fn, strlen(cur->pathname)))
-			break;
-	}
-	if (cur == NULL) {
-		/* Couldn't find a handler */
-		return NULL;
-	} else
-		return cur;
+    /* Scan the handler table and look for a path match */
+    LIST_FOREACH(cur, &nmmgr_handlers, list_ent) {
+        if(!strnicmp(cur->pathname, fn, strlen(cur->pathname)))
+            break;
+    }
+
+    if(cur == NULL) {
+        /* Couldn't find a handler */
+        return NULL;
+    }
+    else
+        return cur;
 }
 
 nmmgr_list_t * nmmgr_get_list() {
-	return &nmmgr_handlers;
+    return &nmmgr_handlers;
 }
 
 /* Add a name handler */
 int nmmgr_handler_add(nmmgr_handler_t *hnd) {
-	mutex_lock(mutex);
+    mutex_lock(mutex);
 
-	LIST_INSERT_HEAD(&nmmgr_handlers, hnd, list_ent);
+    LIST_INSERT_HEAD(&nmmgr_handlers, hnd, list_ent);
 
-	mutex_unlock(mutex);
+    mutex_unlock(mutex);
 
-	return 0;
+    return 0;
 }
 
 /* Remove a name handler */
 int nmmgr_handler_remove(nmmgr_handler_t *hnd) {
-	nmmgr_handler_t *c;
-	int rv = -1;
+    nmmgr_handler_t *c;
+    int rv = -1;
 
-	mutex_lock(mutex);
+    mutex_lock(mutex);
 
-	/* Verify that it's actually in there */
-	LIST_FOREACH(c, &nmmgr_handlers, list_ent) {
-		if (c == hnd) {
-			LIST_REMOVE(hnd, list_ent);
-			rv = 0;
-			break;
-		}
-	}
+    /* Verify that it's actually in there */
+    LIST_FOREACH(c, &nmmgr_handlers, list_ent) {
+        if(c == hnd) {
+            LIST_REMOVE(hnd, list_ent);
+            rv = 0;
+            break;
+        }
+    }
 
-	mutex_unlock(mutex);
+    mutex_unlock(mutex);
 
-	return rv;
+    return rv;
 }
 
 /* Initialize structures */
 int nmmgr_init() {
-	int rv = 0;
+    int rv = 0;
 
-	/* Start with no handlers */
-	LIST_INIT(&nmmgr_handlers);
+    /* Start with no handlers */
+    LIST_INIT(&nmmgr_handlers);
 
-	/* Init thread mutex */
-	mutex = mutex_create();
+    /* Init thread mutex */
+    mutex = mutex_create();
 
-	/* Initialize our internal exports */
-	export_init();
+    /* Initialize our internal exports */
+    export_init();
 
-	return rv;
+    return rv;
 }
 
 void nmmgr_shutdown() {
-	nmmgr_handler_t *c, *n;
+    nmmgr_handler_t *c, *n;
 
-	c = LIST_FIRST(&nmmgr_handlers);
-	while (c != NULL) {
-		n = LIST_NEXT(c, list_ent);
-		if (c->flags & NMMGR_FLAGS_NEEDSFREE)
-			free(c);
-		c = n;
-	}
+    c = LIST_FIRST(&nmmgr_handlers);
 
-	mutex_destroy(mutex);
+    while(c != NULL) {
+        n = LIST_NEXT(c, list_ent);
+
+        if(c->flags & NMMGR_FLAGS_NEEDSFREE)
+            free(c);
+
+        c = n;
+    }
+
+    mutex_destroy(mutex);
 }

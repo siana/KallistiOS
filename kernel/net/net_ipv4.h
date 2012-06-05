@@ -13,17 +13,17 @@
 /* These structs are from AndrewK's dcload-ip. */
 #define packed __attribute__((packed))
 typedef struct {
-	uint8	dest[6];
-	uint8	src[6];
-	uint8	type[2];
+    uint8   dest[6];
+    uint8   src[6];
+    uint8   type[2];
 } packed eth_hdr_t;
 
 typedef struct {
-	uint32 src_addr;
-	uint32 dst_addr;
-	uint8 zero;
-	uint8 proto;
-	uint16 length;
+    uint32 src_addr;
+    uint32 dst_addr;
+    uint8 zero;
+    uint8 proto;
+    uint16 length;
 } packed ipv4_pseudo_hdr_t;
 #undef packed
 

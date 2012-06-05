@@ -25,7 +25,8 @@ char *inet_ntoa(struct in_addr addr) {
         do {
             *ch++ = '0' + (char)(part % 10);
             part /= 10;
-        } while(part);
+        }
+        while(part);
 
         /* tmp now contains the inverse of the number that is in the given
            8 bits. Reverse it for the final result, rewinding ch to the

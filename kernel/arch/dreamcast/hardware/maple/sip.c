@@ -60,7 +60,7 @@ static void sip_stop_sampling_cb(maple_frame_t *frame) {
 int sip_set_gain(maple_device_t *dev, unsigned int g) {
     sip_state_t *sip;
 
-    assert( dev != NULL );
+    assert(dev != NULL);
 
     /* Check the gain value for validity */
     if(g > SIP_MAX_GAIN)
@@ -75,7 +75,7 @@ int sip_set_gain(maple_device_t *dev, unsigned int g) {
 int sip_set_sample_type(maple_device_t *dev, unsigned int type) {
     sip_state_t *sip;
 
-    assert( dev != NULL );
+    assert(dev != NULL);
 
     /* Check the sample type value for validity. */
     if(type > SIP_SAMPLE_8BIT_ULAW)
@@ -95,7 +95,7 @@ int sip_set_sample_type(maple_device_t *dev, unsigned int type) {
 int sip_set_frequency(maple_device_t *dev, unsigned int freq) {
     sip_state_t *sip;
 
-    assert( dev != NULL );
+    assert(dev != NULL);
 
     /* Check the frequency value for validity. */
     if(freq > SIP_SAMPLE_8KHZ)
@@ -116,7 +116,7 @@ int sip_start_sampling(maple_device_t *dev, int block) {
     sip_state_t *sip;
     uint32 *send_buf;
 
-    assert( dev != NULL );
+    assert(dev != NULL);
 
     sip = (sip_state_t *)dev->status;
 
@@ -163,7 +163,7 @@ int sip_stop_sampling(maple_device_t *dev, int block) {
     sip_state_t *sip;
     uint32 *send_buf;
 
-    assert( dev != NULL );
+    assert(dev != NULL);
 
     sip = (sip_state_t *)dev->status;
 
@@ -209,8 +209,8 @@ uint8 *sip_get_samples(maple_device_t *dev, size_t *sz) {
     uint8 *rv;
     uint32 old;
 
-    assert( dev != NULL );
-    assert( sz != NULL );
+    assert(dev != NULL);
+    assert(sz != NULL);
 
     /* Disable interrupts so that nothing changes underneath us. */
     old = irq_disable();
@@ -220,7 +220,7 @@ uint8 *sip_get_samples(maple_device_t *dev, size_t *sz) {
     /* Make sure that we're not currently sampling. */
     if(sip->is_sampling) {
         irq_restore(old);
-        *sz = (size_t)-1;
+        *sz = (size_t) - 1;
         return NULL;
     }
 
@@ -249,7 +249,7 @@ int sip_clear_samples(maple_device_t *dev) {
     sip_state_t *sip;
     uint32 old;
 
-    assert( dev != NULL );
+    assert(dev != NULL);
 
     /* Disable IRQs so that nothing changes under us */
     old = irq_disable();
@@ -384,11 +384,16 @@ static void sip_detach(maple_driver_t *drv, maple_device_t *dev) {
 
 /* Device Driver Struct */
 static maple_driver_t sip_drv = {
-    functions:	MAPLE_FUNC_MICROPHONE,
-    name:		"Sound Input Peripheral",
-    periodic:	sip_periodic,
-    attach:		sip_attach,
-    detach:		sip_detach
+functions:
+    MAPLE_FUNC_MICROPHONE,
+name:       "Sound Input Peripheral"
+    ,
+periodic:
+    sip_periodic,
+attach:
+    sip_attach,
+detach:
+    sip_detach
 };
 
 /* Add the SIP to the driver chain */

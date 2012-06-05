@@ -21,12 +21,14 @@ __BEGIN_DECLS
 typedef float matrix_t[4][4];
 
 /* Vector definition */
-typedef struct vectorstr { float x, y, z, w; } vector_t;
+typedef struct vectorstr {
+    float x, y, z, w;
+} vector_t;
 
 /* Points are just vectors */
 typedef vector_t point_t;
 
 __END_DECLS
 
-#endif	/* __KOS_VECTOR_H */
+#endif  /* __KOS_VECTOR_H */
 

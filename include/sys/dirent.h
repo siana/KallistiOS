@@ -23,11 +23,11 @@
 /** \brief The POSIX dirent which describes a directory entry
  */
 struct dirent {
-	int	d_ino; /**< \brief the file number */
-	off_t	d_off; /**< \brief the file offset */
-	uint16	d_reclen; /**< \brief the record length */
-	uint8	d_type; /**< \brief the type */
-	char	d_name[256]; /**< \brief the entry name */
+    int d_ino; /**< \brief the file number */
+    off_t   d_off; /**< \brief the file offset */
+    uint16  d_reclen; /**< \brief the record length */
+    uint8   d_type; /**< \brief the type */
+    char    d_name[256]; /**< \brief the entry name */
 };
 
 /** \brief the DIR structure in KOS
@@ -36,8 +36,8 @@ struct dirent {
     POSIX dirent.
 */
 typedef struct {
-	file_t		fd; /**< \brief the file descriptor */
-	struct dirent	d_ent; /**< \brief the POSIX dirent */
+    file_t      fd; /**< \brief the file descriptor */
+    struct dirent   d_ent; /**< \brief the POSIX dirent */
 } DIR;
 
 // Standard UNIX dir functions. Not all of these are fully functional
@@ -83,8 +83,8 @@ struct dirent *readdir(DIR *dir);
 void rewinddir(DIR *dir);
 /** \brief Not implemented */
 int scandir(const char *dir, struct dirent ***namelist,
-	int(*filter)(const struct dirent *),
-	int(*compar)(const struct dirent **, const struct dirent **));
+            int(*filter)(const struct dirent *),
+            int(*compar)(const struct dirent **, const struct dirent **));
 /** \brief Not implemented */
 void seekdir(DIR *dir, off_t offset);
 /** \brief Not implemented */

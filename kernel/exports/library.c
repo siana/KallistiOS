@@ -58,20 +58,20 @@ struct kllist library_list;
 #include <kos/dbgio.h>
 
 int library_print_list(int (*pf)(const char *fmt, ...)) {
-	klibrary_t *cur;
+    klibrary_t *cur;
 
-	pf("All libraries (may not be deterministic):\n");
-	pf("libid\tflags\t\tbase\t\tname\n");
+    pf("All libraries (may not be deterministic):\n");
+    pf("libid\tflags\t\tbase\t\tname\n");
 
-	LIST_FOREACH(cur, &library_list, list) {
-		pf("%d\t", cur->libid);
-		pf("%08lx\t", cur->flags);
-		pf("%p\t", cur->image.data);
-		pf("%s\n", cur->lib_get_name());
-	}
-	pf("--end of list--\n");
+    LIST_FOREACH(cur, &library_list, list) {
+        pf("%d\t", cur->libid);
+        pf("%08lx\t", cur->flags);
+        pf("%p\t", cur->image.data);
+        pf("%s\n", cur->lib_get_name());
+    }
+    pf("--end of list--\n");
 
-	return 0;
+    return 0;
 }
 
 /*****************************************************************************/
@@ -84,21 +84,21 @@ static libid_t libid_highest;
 /* Return the next available library id (assumes wraparound will not run
    into old libraries). */
 static libid_t library_next_free() {
-	int id;
-	id = libid_highest++;
-	return id;
+    int id;
+    id = libid_highest++;
+    return id;
 }
 
 /* Given a library ID, locates the library structure */
 klibrary_t *library_by_libid(libid_t libid) {
-	klibrary_t *np;
+    klibrary_t *np;
 
-	LIST_FOREACH(np, &library_list, list) {
-		if (np->libid == libid)
-			return np;
-	}
+    LIST_FOREACH(np, &library_list, list) {
+        if(np->libid == libid)
+            return np;
+    }
 
-	return NULL;
+    return NULL;
 }
 
 
@@ -106,195 +106,202 @@ klibrary_t *library_by_libid(libid_t libid) {
 /* Library shell creation and deletion */
 
 klibrary_t * library_create(int flags) {
-	int		oldirq = 0;
-	klibrary_t	* np;
-	libid_t		libid;
+    int     oldirq = 0;
+    klibrary_t  * np;
+    libid_t     libid;
 
-	oldirq = irq_disable();
-	np = NULL;
+    oldirq = irq_disable();
+    np = NULL;
 
-	/* Get a new library id */
-	libid = library_next_free();
+    /* Get a new library id */
+    libid = library_next_free();
 
-	if (libid >= 0) {
-		/* Create a new library structure */
-		np = malloc(sizeof(klibrary_t));
-		if (np != NULL) {
-			/* Clear out potentially unused stuff */
-			memset(np, 0, sizeof(klibrary_t));
+    if(libid >= 0) {
+        /* Create a new library structure */
+        np = malloc(sizeof(klibrary_t));
 
-			/* Populate the context */
-			np->libid = libid;
-			np->flags = flags;
-			np->refcnt = 0;
+        if(np != NULL) {
+            /* Clear out potentially unused stuff */
+            memset(np, 0, sizeof(klibrary_t));
 
-			/* Insert it into the library list */
-			LIST_INSERT_HEAD(&library_list, np, list);
-		}
-	}
+            /* Populate the context */
+            np->libid = libid;
+            np->flags = flags;
+            np->refcnt = 0;
 
-	irq_restore(oldirq);
-	return np;
+            /* Insert it into the library list */
+            LIST_INSERT_HEAD(&library_list, np, list);
+        }
+    }
+
+    irq_restore(oldirq);
+    return np;
 }
 
 int library_destroy(klibrary_t * lib) {
-	int		oldirq = 0;
+    int     oldirq = 0;
 
-	oldirq = irq_disable();
+    oldirq = irq_disable();
 
-	/* Free up the image */
-	if (lib->image.data)
-		elf_free(&lib->image);
+    /* Free up the image */
+    if(lib->image.data)
+        elf_free(&lib->image);
 
-	/* Remove it from the global list */
-	LIST_REMOVE(lib, list);
+    /* Remove it from the global list */
+    LIST_REMOVE(lib, list);
 
-	irq_restore(oldirq);
+    irq_restore(oldirq);
 
-	/* Free the memory */
-	free(lib);
+    /* Free the memory */
+    free(lib);
 
-	return 0;
+    return 0;
 }
 
 /*****************************************************************************/
 /* Library attribute functions -- all read-only */
 
 libid_t library_get_libid(klibrary_t * lib) {
-	if (lib == NULL) {
-		errno = EINVAL;
-		return -1;
-	} else
-		return lib->libid;
+    if(lib == NULL) {
+        errno = EINVAL;
+        return -1;
+    }
+    else
+        return lib->libid;
 }
 
 int library_get_refcnt(klibrary_t * lib) {
-	if (lib == NULL) {
-		errno = EINVAL;
-		return -1;
-	} else
-		return lib->refcnt;
+    if(lib == NULL) {
+        errno = EINVAL;
+        return -1;
+    }
+    else
+        return lib->refcnt;
 }
 
 const char * library_get_name(klibrary_t * lib) {
-	if (lib == NULL || lib->lib_get_name == NULL) {
-		errno = EINVAL;
-		return NULL;
-	} else
-		return lib->lib_get_name();
+    if(lib == NULL || lib->lib_get_name == NULL) {
+        errno = EINVAL;
+        return NULL;
+    }
+    else
+        return lib->lib_get_name();
 }
 
 uint32 library_get_version(klibrary_t * lib) {
-	if (lib == NULL || lib->lib_get_version == NULL) {
-		errno = EINVAL;
-		return 0;
-	} else
-		return lib->lib_get_version();
+    if(lib == NULL || lib->lib_get_version == NULL) {
+        errno = EINVAL;
+        return 0;
+    }
+    else
+        return lib->lib_get_version();
 }
 
 /*****************************************************************************/
 klibrary_t * library_lookup(const char * name) {
-	int		old;
-	klibrary_t	* lib;
+    int     old;
+    klibrary_t  * lib;
 
-	old = irq_disable();
+    old = irq_disable();
 
-	LIST_FOREACH(lib, &library_list, list) {
-		if (!strcasecmp(lib->lib_get_name(), name))
-			break;
-	}
+    LIST_FOREACH(lib, &library_list, list) {
+        if(!strcasecmp(lib->lib_get_name(), name))
+            break;
+    }
 
-	irq_restore(old);
+    irq_restore(old);
 
-	if (!lib)
-		errno = ENOENT;
-	return lib;
+    if(!lib)
+        errno = ENOENT;
+
+    return lib;
 }
 
 klibrary_t * library_open(const char * name, const char * fn) {
-	klibrary_t * lib;
+    klibrary_t * lib;
 
-	// If they passed us a valid name, try that first.
-	if (name) {
-		lib = library_lookup(name);
-		if (lib) {
-			// Make sure lib_open is valid. Note that since we
-			// _have_ found something, any inconsistencies here
-			// are errors and not a signal to load another copy.
-			if (!lib->lib_open) {
-				errno = EINVAL;
-				return NULL;
-			}
+    // If they passed us a valid name, try that first.
+    if(name) {
+        lib = library_lookup(name);
 
-			// Open the lib.
-			if (lib->lib_open(lib) < 0)
-				return NULL;
+        if(lib) {
+            // Make sure lib_open is valid. Note that since we
+            // _have_ found something, any inconsistencies here
+            // are errors and not a signal to load another copy.
+            if(!lib->lib_open) {
+                errno = EINVAL;
+                return NULL;
+            }
 
-			return lib;
-		}
-	}
+            // Open the lib.
+            if(lib->lib_open(lib) < 0)
+                return NULL;
 
-	// Ok, we need to load. Make sure we have a valid filename.
-	if (!fn) {
-		errno = ENOENT;
-		return NULL;
-	}
+            return lib;
+        }
+    }
 
-	lib = library_create(LIBRARY_DEFAULTS);
-	if (!lib) {
-		errno = ENOMEM;
-		return NULL;
-	}
+    // Ok, we need to load. Make sure we have a valid filename.
+    if(!fn) {
+        errno = ENOENT;
+        return NULL;
+    }
 
-	// Use the ELF functions to load the memory image and extract the
-	// entry points we need.
-	if (elf_load(fn, lib, &lib->image) < 0) {
-		library_destroy(lib);
-		return NULL;
-	}
+    lib = library_create(LIBRARY_DEFAULTS);
 
-	// Pull out the image pointers
-	lib->lib_get_name = (const char * (*)())lib->image.lib_get_name;
-	lib->lib_get_version = (uint32 (*)())lib->image.lib_get_version;
-	lib->lib_open = (int (*)(klibrary_t *))lib->image.lib_open;
-	lib->lib_close = (int (*)(klibrary_t *))lib->image.lib_close;
+    if(!lib) {
+        errno = ENOMEM;
+        return NULL;
+    }
 
-	// Make sure they are all valid.
-	if (!lib->lib_get_name || !lib->lib_get_version ||
-		!lib->lib_open || !lib->lib_close)
-	{
-		errno = EINVAL;
-		library_destroy(lib);
-		return NULL;
-	}
+    // Use the ELF functions to load the memory image and extract the
+    // entry points we need.
+    if(elf_load(fn, lib, &lib->image) < 0) {
+        library_destroy(lib);
+        return NULL;
+    }
 
-	// Call down and "open" the library itself.
-	if (lib->lib_open(lib) < 0) {
-		library_destroy(lib);
-		return NULL;
-	}
+    // Pull out the image pointers
+    lib->lib_get_name = (const char * (*)())lib->image.lib_get_name;
+    lib->lib_get_version = (uint32(*)())lib->image.lib_get_version;
+    lib->lib_open = (int (*)(klibrary_t *))lib->image.lib_open;
+    lib->lib_close = (int (*)(klibrary_t *))lib->image.lib_close;
 
-	// It's all good.
-	return lib;
+    // Make sure they are all valid.
+    if(!lib->lib_get_name || !lib->lib_get_version ||
+            !lib->lib_open || !lib->lib_close) {
+        errno = EINVAL;
+        library_destroy(lib);
+        return NULL;
+    }
+
+    // Call down and "open" the library itself.
+    if(lib->lib_open(lib) < 0) {
+        library_destroy(lib);
+        return NULL;
+    }
+
+    // It's all good.
+    return lib;
 }
 
 int library_close(klibrary_t * lib) {
-	// Make sure it's valid.
-	if (lib == NULL || lib->lib_close == NULL) {
-		errno = EINVAL;
-		return -1;
-	}
+    // Make sure it's valid.
+    if(lib == NULL || lib->lib_close == NULL) {
+        errno = EINVAL;
+        return -1;
+    }
 
-	// Call down and "close" the lib.
-	if (lib->lib_close(lib) < 0)
-		return -1;
+    // Call down and "close" the lib.
+    if(lib->lib_close(lib) < 0)
+        return -1;
 
-	// If the refcount is down to zero, unload this lib.
-	if (lib->refcnt <= 0)
-		library_destroy(lib);
+    // If the refcount is down to zero, unload this lib.
+    if(lib->refcnt <= 0)
+        library_destroy(lib);
 
-	// It's all good.
-	return 0;
+    // It's all good.
+    return 0;
 }
 
 
@@ -303,28 +310,29 @@ int library_close(klibrary_t * lib) {
 
 /* Init */
 int library_init() {
-	/* Initialize handle counters */
-	libid_highest = 1;
+    /* Initialize handle counters */
+    libid_highest = 1;
 
-	/* Initialize the library list */
-	LIST_INIT(&library_list);
+    /* Initialize the library list */
+    LIST_INIT(&library_list);
 
-	return 0;
+    return 0;
 }
 
 /* Shutdown */
 void library_shutdown() {
-	klibrary_t *n1, *n2;
+    klibrary_t *n1, *n2;
 
-	/* Kill remaining libraries */
-	n1 = LIST_FIRST(&library_list);
-	while (n1 != NULL) {
-		n2 = LIST_NEXT(n1, list);
-		free(n1);
-		n1 = n2;
-	}
+    /* Kill remaining libraries */
+    n1 = LIST_FIRST(&library_list);
 
-	LIST_INIT(&library_list);
+    while(n1 != NULL) {
+        n2 = LIST_NEXT(n1, list);
+        free(n1);
+        n1 = n2;
+    }
+
+    LIST_INIT(&library_list);
 }
 
 

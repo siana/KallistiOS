@@ -26,4 +26,4 @@
 #define KEY_R           0x0100
 #define KEY_L           0x0200
 
-#endif	/* __GBA_KEYS_H */
+#endif  /* __GBA_KEYS_H */

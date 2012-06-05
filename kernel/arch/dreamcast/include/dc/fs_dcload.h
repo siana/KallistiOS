@@ -80,11 +80,11 @@ int dcloadsyscall(unsigned int syscall, ...);
 /* dcload dirent */
 
 struct dcload_dirent {
-  long            d_ino;  /* inode number */
-  off_t           d_off;  /* offset to the next dirent */
-  unsigned short  d_reclen;/* length of this record */
-  unsigned char   d_type;         /* type of file */
-  char            d_name[256];    /* filename */
+    long            d_ino;  /* inode number */
+    off_t           d_off;  /* offset to the next dirent */
+    unsigned short  d_reclen;/* length of this record */
+    unsigned char   d_type;         /* type of file */
+    char            d_name[256];    /* filename */
 };
 
 typedef struct dcload_dirent dcload_dirent_t;
@@ -92,23 +92,23 @@ typedef struct dcload_dirent dcload_dirent_t;
 /* dcload stat */
 
 struct  dcload_stat {
-  unsigned short st_dev;
-  unsigned short st_ino;
-  int st_mode;
-  unsigned short st_nlink;
-  unsigned short st_uid;
-  unsigned short st_gid;
-  unsigned short st_rdev;
-  long st_size;
-  long st_atime;
-  long st_spare1;
-  long st_mtime;
-  long st_spare2;
-  long st_ctime;
-  long st_spare3;
-  long st_blksize;
-  long st_blocks;
-  long st_spare4[2];
+    unsigned short st_dev;
+    unsigned short st_ino;
+    int st_mode;
+    unsigned short st_nlink;
+    unsigned short st_uid;
+    unsigned short st_gid;
+    unsigned short st_rdev;
+    long st_size;
+    long st_atime;
+    long st_spare1;
+    long st_mtime;
+    long st_spare2;
+    long st_ctime;
+    long st_spare3;
+    long st_blksize;
+    long st_blocks;
+    long st_spare4[2];
 };
 
 typedef struct dcload_stat dcload_stat_t;
@@ -120,12 +120,12 @@ void dcload_printk(const char *str);
 size_t dcload_gdbpacket(const char* in_buf, size_t in_size, char* out_buf, size_t out_size);
 
 /* File functions */
-void*	dcload_open(vfs_handler_t * vfs, const char *fn, int mode);
-void	dcload_close(void * hnd);
-ssize_t	dcload_read(void * hnd, void *buf, size_t cnt);
-off_t	dcload_seek(void * hnd, off_t offset, int whence);
-off_t	dcload_tell(void * hnd);
-size_t	dcload_total(void * hnd);
+void*   dcload_open(vfs_handler_t * vfs, const char *fn, int mode);
+void    dcload_close(void * hnd);
+ssize_t dcload_read(void * hnd, void *buf, size_t cnt);
+off_t   dcload_seek(void * hnd, off_t offset, int whence);
+off_t   dcload_tell(void * hnd);
+size_t  dcload_total(void * hnd);
 dirent_t* dcload_readdir(void * hnd);
 int     dcload_rename(vfs_handler_t * vfs, const char *fn1, const char *fn2);
 int     dcload_unlink(vfs_handler_t * vfs, const char *fn);
@@ -142,6 +142,6 @@ int fs_dcload_init_lwip(void *p);
 
 __END_DECLS
 
-#endif	/* __KALLISTI_FS_DCLOAD_H */
+#endif  /* __KALLISTI_FS_DCLOAD_H */
 
 

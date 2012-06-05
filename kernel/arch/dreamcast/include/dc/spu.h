@@ -98,7 +98,7 @@ typedef g2_dma_callback_t spu_dma_callback_t;
     \em     EIO - I/O error
 */
 int spu_dma_transfer(void * from, uint32 dest, uint32 length, int block,
-	spu_dma_callback_t callback, ptr_t cbdata);
+                     spu_dma_callback_t callback, ptr_t cbdata);
 
 /** \brief  Enable the SPU.
 
@@ -169,5 +169,5 @@ void spu_dma_shutdown();
 
 __END_DECLS
 
-#endif	/* __DC_SPU_H */
+#endif  /* __DC_SPU_H */
 

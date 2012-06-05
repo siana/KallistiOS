@@ -9,6 +9,6 @@
 
 /* usleep() */
 void usleep(unsigned long usec) {
-	thd_sleep (usec / 1000);
+    thd_sleep(usec / 1000);
 }
 

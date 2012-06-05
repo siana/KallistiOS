@@ -55,7 +55,7 @@ __BEGIN_DECLS
 
 /* We use sh channel 3 here to avoid conflicts with the PVR. */
 #define SPU_DMA_MODE   6 /* should we use 6 instead, so that the formula is 3+shchn ?
-			    6 works too, so ... */
+6 works too, so ... */
 #define SPU_DMA_G2CHN  0
 #define SPU_DMA_SHCHN  3
 
@@ -73,8 +73,8 @@ __BEGIN_DECLS
 
 typedef void (*g2_dma_callback_t)(ptr_t data);
 int g2_dma_transfer(void *from, void * dest, uint32 length, int block,
-	g2_dma_callback_t callback, ptr_t cbdata,
-	uint32 dir, uint32 mode, uint32 g2chn, uint32 sh4chn);
+                    g2_dma_callback_t callback, ptr_t cbdata,
+                    uint32 dir, uint32 mode, uint32 g2chn, uint32 sh4chn);
 
 /** \brief  Read one byte from G2.
 
@@ -227,5 +227,5 @@ void g2_fifo_wait();
 
 __END_DECLS
 
-#endif	/* __DC_G2BUS_H */
+#endif  /* __DC_G2BUS_H */
 

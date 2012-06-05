@@ -64,14 +64,12 @@ typedef long _ssize_t;
 /** \brief  Conversion state information.
     \headerfile sys/_types.h
 */
-typedef struct
-{
-  int __count;
-  union
-  {
-    wint_t __wch;
-    unsigned char __wchb[4];
-  } __value;            /* Value so far.  */
+typedef struct {
+    int __count;
+    union {
+        wint_t __wch;
+        unsigned char __wchb[4];
+    } __value;            /* Value so far.  */
 } _mbstate_t;
 #endif
 
@@ -107,4 +105,4 @@ typedef void *_iconv_t;
 // Include stuff to make pthreads work as well.
 #include <sys/_pthread.h>
 
-#endif	/* _SYS__TYPES_H */
+#endif  /* _SYS__TYPES_H */

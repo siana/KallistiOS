@@ -58,6 +58,7 @@ int net_thd_add_callback(void (*cb)(void *), void *data, uint64 timeout) {
 
     /* Allocate space for the new callback and set it up. */
     newcb = (struct thd_cb *)malloc(sizeof(struct thd_cb));
+
     if(!newcb) {
         errno = ENOMEM;
         return -1;
@@ -138,6 +139,7 @@ void net_thd_shutdown() {
 
     /* Free any handlers that we have laying around */
     c = TAILQ_FIRST(&cbs);
+
     while(c) {
         n = TAILQ_NEXT(c, thds);
         free(c);

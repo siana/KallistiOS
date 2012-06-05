@@ -13,26 +13,26 @@ KOS_INIT_ROMDISK(romdisk);
 #define false (1 == 0)
 
 int main(int argc, char **argv) {
-	file_t f;
-	void *subelf;
+    file_t f;
+    void *subelf;
 
-	/* Print a hello */
-	printf("\n\nHello world from the exec.elf process\n");
+    /* Print a hello */
+    printf("\n\nHello world from the exec.elf process\n");
 
-	/* Map the sub-elf */
-	f = fs_open("/rd/sub.bin", O_RDONLY);
-	assert( f );
-	subelf = fs_mmap(f);
-	assert( subelf );
+    /* Map the sub-elf */
+    f = fs_open("/rd/sub.bin", O_RDONLY);
+    assert(f);
+    subelf = fs_mmap(f);
+    assert(subelf);
 
-	/* Tell exec to replace us */
-	printf("sub.bin mapped at %08x, jumping to it!\n\n\n", subelf);
-	arch_exec(subelf, fs_total(f));
+    /* Tell exec to replace us */
+    printf("sub.bin mapped at %08x, jumping to it!\n\n\n", subelf);
+    arch_exec(subelf, fs_total(f));
 
-	/* Shouldn't get here */
-	assert_msg( false, "exec call failed" );
+    /* Shouldn't get here */
+    assert_msg(false, "exec call failed");
 
-	return 0;
+    return 0;
 }
 
 

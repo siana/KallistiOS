@@ -17,49 +17,49 @@
 #define INTEGER_T 1
 
 typedef struct Menuitem_t {
-	int type;
-	int min;
-	int max;
-	int amt;
-	int* pvalue;
-	char* pformat;
-	Menuitem_t* prev;
-	Menuitem_t* next;
+    int type;
+    int min;
+    int max;
+    int amt;
+    int* pvalue;
+    char* pformat;
+    Menuitem_t* prev;
+    Menuitem_t* next;
 };
 
 union uf2i_t {
-	int i;
-	float f;
+    int i;
+    float f;
 };
 
 class Menu {
 
-	protected:
+protected:
 
-	static Menuitem_t* mlist;
-	static Menuitem_t* mtail;
-	static Menuitem_t* mcur;
-	static union uf2i_t uf2i;
+    static Menuitem_t* mlist;
+    static Menuitem_t* mtail;
+    static Menuitem_t* mcur;
+    static union uf2i_t uf2i;
 
-	public:
+public:
 
-	Menu () {
-		mlist = mtail = mcur = NULL;
-	}
+    Menu() {
+        mlist = mtail = mcur = NULL;
+    }
 
-	void add(int min, int max, int amt, int* pval, char *pformat);
+    void add(int min, int max, int amt, int* pval, char *pformat);
 
-	void add(float min, float max, float amt, float* pval, char *pformat);
+    void add(float min, float max, float amt, float* pval, char *pformat);
 
-	void next();
+    void next();
 
-	void prev();
+    void prev();
 
-	void inc();
+    void inc();
 
-	void dec();
+    void dec();
 
-	void draw(int x, int y, int yinc);
+    void draw(int x, int y, int yinc);
 };
 
 #endif /* __MENU_H */

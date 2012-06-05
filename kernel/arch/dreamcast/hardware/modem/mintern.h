@@ -16,13 +16,13 @@
 #include "chainbuf.h"
 
 #ifndef REGLOC
-  #define REGLOC(x) (0xA0600400 + (x) * 4)
+#define REGLOC(x) (0xA0600400 + (x) * 4)
 #endif
 
 #define MAKE_DSP_ADDR(x) ((x) & 0xFF), (((x) >> 8) & 0xF)
 
 #ifndef G2_8BP_RST
-  #define G2_8BP_RST 0xA0600480
+#define G2_8BP_RST 0xA0600480
 #endif
 
 #define modemWrite(a, d)     g2_write_8(a, d)
@@ -54,8 +54,7 @@
 #define EQM_FLAG_RETRAIN 0x2 /* Set if a retrain is currently in progress */
 #define EQM_FLAG_EQMAT   0x4 /* The MDP has recently set EQMAT */
 
-enum
-{
+enum {
     MODEM_STATE_NULL = 0,     /* Not doing anything specific */
     MODEM_STATE_RING_WAIT,    /* Waiting for a ring (answering modes only) */
     MODEM_STATE_CONNECT_WAIT, /* Waiting for a handshake signal */
@@ -65,44 +64,39 @@ enum
                                  operation */
 };
 
-typedef struct
-{
+typedef struct {
     unsigned char  protocol;    /* MODEM_PROTOCOL_* */
     unsigned char  speed;       /* MODEM_SPEED_* */
     unsigned short bps;
 } MODEM_CINFO;
 
-typedef struct
-{
-  unsigned char inited;
-  unsigned char flags;     /* Modem configuration flags */
-  MODEM_CINFO   cInfo;
+typedef struct {
+    unsigned char inited;
+    unsigned char flags;     /* Modem configuration flags */
+    MODEM_CINFO   cInfo;
 
-  MODEMEVENTHANDLERPROC eventHandler;
+    MODEMEVENTHANDLERPROC eventHandler;
 
-  struct
-  {
-    unsigned long speed;      /* Actual connection speed */
-    int           state;      /* State constant used by the interrupt handlers */
-    unsigned char phaseState; /* Flags for monitoring the phase and phase state
+    struct {
+        unsigned long speed;      /* Actual connection speed */
+        int           state;      /* State constant used by the interrupt handlers */
+        unsigned char phaseState; /* Flags for monitoring the phase and phase state
                                  of the connection that's being initiated */
-  } actual;
+    } actual;
 
-  struct
-  {
-    unsigned char conf;  /* Last known value of the CONF register */
-    unsigned char speed; /* Last known value of the SPEED register */
-  } registers;
+    struct {
+        unsigned char conf;  /* Last known value of the CONF register */
+        unsigned char speed; /* Last known value of the SPEED register */
+    } registers;
 
-  struct
-  {
-      unsigned char flags;    /* EQM_FLAG_* */
-      unsigned char attempts; /* The number of consecutive retrain attempts */
-      time_t        nextClock;
-      char          counter;
-      char          lastCounter;
-      char          auxCounter;
-  } eqm;
+    struct {
+        unsigned char flags;    /* EQM_FLAG_* */
+        unsigned char attempts; /* The number of consecutive retrain attempts */
+        time_t        nextClock;
+        char          counter;
+        char          lastCounter;
+        char          auxCounter;
+    } eqm;
 } MODEM_CFG;
 
 extern MODEM_CFG            modemCfg;

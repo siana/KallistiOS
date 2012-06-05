@@ -48,6 +48,7 @@ int net_multicast_add(const uint8 mac[6]) {
     mc_entry_t *ent;
 
     ent = (mc_entry_t *)malloc(sizeof(mc_entry_t));
+
     if(!ent) {
         return -1;
     }
@@ -87,6 +88,7 @@ int net_multicast_del(const uint8 mac[6]) {
 
     /* Look for the one in question */
     i = LIST_FIRST(&multicasts);
+
     while(i) {
         tmp = LIST_NEXT(i, entry);
 
@@ -141,6 +143,7 @@ void net_multicast_shutdown() {
 
     /* Free all entries */
     i = LIST_FIRST(&multicasts);
+
     while(i) {
         tmp = LIST_NEXT(i, entry);
         free(i);

@@ -12,5 +12,5 @@
 #include <kos/fs.h>
 
 int _fcntl_r(struct _reent *reent, int fd, int cmd, int arg) {
-	return fs_fcntl(fd, cmd, arg);
+    return fs_fcntl(fd, cmd, arg);
 }

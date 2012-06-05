@@ -8,9 +8,9 @@
 
 /* Your program's main entry point */
 int main(int argc, char **argv) {
-	printf("\n\nHello world from sub.bin\n\n\n");
+    printf("\n\nHello world from sub.bin\n\n\n");
 
-	return 0;
+    return 0;
 }
 
 

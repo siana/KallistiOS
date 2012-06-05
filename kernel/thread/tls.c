@@ -73,7 +73,7 @@ int kthread_key_create(kthread_key_t *key, void (*destructor)(void *)) {
     kthread_tls_dest_t *dest;
 
     if(irq_inside_int() &&
-       (spinlock_is_locked(&mutex) || !malloc_irq_safe()))  {
+            (spinlock_is_locked(&mutex) || !malloc_irq_safe()))  {
         errno = EPERM;
         return -1;
     }
@@ -83,6 +83,7 @@ int kthread_key_create(kthread_key_t *key, void (*destructor)(void *)) {
     /* Store the destructor if need be. */
     if(destructor)  {
         dest = (kthread_tls_dest_t *)malloc(sizeof(kthread_tls_dest_t));
+
         if(!dest)   {
             errno = ENOMEM;
             spinlock_unlock(&mutex);
@@ -174,9 +175,10 @@ void kthread_tls_shutdown() {
 
     /* Tear down the destructor list. */
     n1 = LIST_FIRST(&dest_list);
-	while (n1 != NULL) {
-		n2 = LIST_NEXT(n1, dest_list);
-		free(n1);
-		n1 = n2;
-	}
+
+    while(n1 != NULL) {
+        n2 = LIST_NEXT(n1, dest_list);
+        free(n1);
+        n1 = n2;
+    }
 }

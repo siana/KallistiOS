@@ -3,11 +3,11 @@
 #define __GET_IMAGE_H
 
 typedef struct image_t {
-	int w;
-	int h;
-	int bpp;
-	int stride;
-	unsigned char *data;
+    int w;
+    int h;
+    int bpp;
+    int stride;
+    unsigned char *data;
 } image_t;
 
 int get_image(const char *filename, image_t *image);

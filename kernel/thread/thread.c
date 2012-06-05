@@ -79,10 +79,12 @@ static const char *thd_state_to_str(kthread_t * thd) {
         case STATE_READY:
             return "ready";
         case STATE_WAIT:
-            if (thd->wait_msg)
+
+            if(thd->wait_msg)
                 return thd->wait_msg;
             else
                 return "wait";
+
         case STATE_FINISHED:
             return "finished";
         default:
@@ -99,10 +101,12 @@ int thd_pslist(int (*pf)(const char *fmt, ...)) {
     LIST_FOREACH(cur, &thd_list, t_list) {
         pf("%08lx\t", CONTEXT_PC(cur->context));
         pf("%d\t", cur->tid);
-        if (cur->prio == PRIO_MAX)
+
+        if(cur->prio == PRIO_MAX)
             pf("MAX\t");
         else
             pf("%d\t", cur->prio);
+
         pf("%08lx\t", cur->flags);
         pf("%ld\t\t", (uint32)cur->wait_timeout);
         pf("%10s", thd_state_to_str(cur));
@@ -121,10 +125,12 @@ int thd_pslist_queue(int (*pf)(const char *fmt, ...)) {
     TAILQ_FOREACH(cur, &run_queue, thdq) {
         pf("%08lx\t", CONTEXT_PC(cur->context));
         pf("%d\t", cur->tid);
-        if (cur->prio == PRIO_MAX)
+
+        if(cur->prio == PRIO_MAX)
             pf("MAX\t");
         else
             pf("%d\t", cur->prio);
+
         pf("%08lx\t", cur->flags);
         pf("%ld\t\t", (uint32)cur->wait_timeout);
         pf("%10s", thd_state_to_str(cur));
@@ -153,7 +159,7 @@ kthread_t *thd_by_tid(tid_t tid) {
     kthread_t *np;
 
     LIST_FOREACH(np, &thd_list, t_list) {
-        if (np->tid == tid)
+        if(np->tid == tid)
             return np;
     }
 
@@ -168,14 +174,14 @@ kthread_t *thd_by_tid(tid_t tid) {
    forever. It's meant to be used for an idle task. */
 static void *thd_idle_task(void *param) {
     /* Uncomment these if you want some debug for deadlocking */
-/*	int old = irq_disable();
-#ifndef NDEBUG
-    thd_pslist();
-    printf("Inside idle task now\n");
-#endif
-    irq_restore(old); */
-    for (;;) {
-        arch_sleep();	/* We can safely enter sleep mode here */
+    /*  int old = irq_disable();
+    #ifndef NDEBUG
+        thd_pslist();
+        printf("Inside idle task now\n");
+    #endif
+        irq_restore(old); */
+    for(;;) {
+        arch_sleep();   /* We can safely enter sleep mode here */
     }
 
     /* Never reached */
@@ -208,7 +214,7 @@ static void *thd_reaper(void *param) {
 /* Thread execution wrapper; when the thd_create function below
    adds a new thread to the thread chain, this function is the one
    that gets called in the new context. */
-static void thd_birth(void *(*routine)(void *param), void *param) {
+static void thd_birth(void * (*routine)(void *param), void *param) {
     /* Call the thread function */
     void *rv = routine(param);
 
@@ -261,28 +267,29 @@ void thd_add_to_runnable(kthread_t *t, int front_of_line) {
     kthread_t *i;
     int done;
 
-    if (t->flags & THD_QUEUED)
+    if(t->flags & THD_QUEUED)
         return;
 
     done = 0;
 
-    if (!front_of_line) {
+    if(!front_of_line) {
         /* Look for a thread of lower priority and insert
            before it. If there is nothing on the run queue, we'll
            fall through to the bottom. */
         TAILQ_FOREACH(i, &run_queue, thdq) {
-            if (i->prio > t->prio) {
+            if(i->prio > t->prio) {
                 TAILQ_INSERT_BEFORE(i, t, thdq);
                 done = 1;
                 break;
             }
         }
-    } else {
+    }
+    else {
         /* Look for a thread of the same or lower priority and
            insert before it. If there is nothing on the run queue,
            we'll fall through to the bottom. */
         TAILQ_FOREACH(i, &run_queue, thdq) {
-            if (i->prio >= t->prio) {
+            if(i->prio >= t->prio) {
                 TAILQ_INSERT_BEFORE(i, t, thdq);
                 done = 1;
                 break;
@@ -291,7 +298,7 @@ void thd_add_to_runnable(kthread_t *t, int front_of_line) {
     }
 
     /* Didn't find one, put it at the end */
-    if (!done)
+    if(!done)
         TAILQ_INSERT_TAIL(&run_queue, t, thdq);
 
     t->flags |= THD_QUEUED;
@@ -299,7 +306,8 @@ void thd_add_to_runnable(kthread_t *t, int front_of_line) {
 
 /* Removes a thread from the runnable queue, if it's there. */
 int thd_remove_from_runnable(kthread_t *thd) {
-    if (!(thd->flags & THD_QUEUED)) return 0;
+    if(!(thd->flags & THD_QUEUED)) return 0;
+
     thd->flags &= ~THD_QUEUED;
     TAILQ_REMOVE(&run_queue, thd, thdq);
     return 0;
@@ -308,7 +316,7 @@ int thd_remove_from_runnable(kthread_t *thd) {
 /* New thread function; given a routine address, it will create a
    new kernel thread with a default stack. When the routine
    returns, the thread will exit. Returns the new thread struct. */
-kthread_t *thd_create(int detach, void *(*routine)(void *param), void *param) {
+kthread_t *thd_create(int detach, void * (*routine)(void *param), void *param) {
     kthread_t *nt = NULL;
     tid_t tid;
     uint32 params[4];
@@ -318,15 +326,18 @@ kthread_t *thd_create(int detach, void *(*routine)(void *param), void *param) {
 
     /* Get a new thread id */
     tid = thd_next_free();
-    if (tid >= 0) {
+
+    if(tid >= 0) {
         /* Create a new thread structure */
         nt = malloc(sizeof(kthread_t));
-        if (nt != NULL) {
+
+        if(nt != NULL) {
             /* Clear out potentially unused stuff */
             memset(nt, 0, sizeof(kthread_t));
 
             /* Create a new thread stack */
             nt->stack = (uint32*)malloc(THD_STACK_SIZE);
+
             if(!nt->stack) {
                 free(nt);
                 irq_restore(oldirq);
@@ -341,7 +352,7 @@ kthread_t *thd_create(int detach, void *(*routine)(void *param), void *param) {
             params[2] = 0;
             params[3] = 0;
             irq_create_context(&nt->context,
-                               ((uint32)nt->stack)+nt->stack_size,
+                               ((uint32)nt->stack) + nt->stack_size,
                                (uint32)thd_birth, params, 0);
 
             nt->tid = tid;
@@ -349,7 +360,8 @@ kthread_t *thd_create(int detach, void *(*routine)(void *param), void *param) {
             nt->flags = THD_DEFAULTS;
             nt->state = STATE_READY;
             strcpy(nt->label, "[un-named kernel thread]");
-            if (thd_current)
+
+            if(thd_current)
                 strcpy(nt->pwd, thd_current->pwd);
             else
                 strcpy(nt->pwd, "/");
@@ -405,6 +417,7 @@ int thd_destroy(kthread_t *thd) {
     }
 
     i = LIST_FIRST(&thd->tls_list);
+
     while(i != NULL) {
         i2 = LIST_NEXT(i, kv_list);
         free(i);
@@ -459,7 +472,7 @@ void thd_schedule(int front_of_line, uint64 now) {
     int dontenq;
     kthread_t *thd;
 
-    if (now == 0)
+    if(now == 0)
         now = timer_ms_gettime64();
 
     /* We won't re-enqueue the current thread if it's NULL (i.e., the
@@ -468,14 +481,14 @@ void thd_schedule(int front_of_line, uint64 now) {
 
     /* If there's only two thread left, it's the idle task and the reaper task:
        exit the OS */
-    if (thd_count == 2) {
+    if(thd_count == 2) {
         dbgio_printf("\nthd_schedule: idle tasks are the only things left; exiting\n");
         arch_exit();
     }
 
     /* Re-queue the last "current" thread onto the run queue if
        it didn't die */
-    if (!dontenq && thd_current->state == STATE_RUNNING) {
+    if(!dontenq && thd_current->state == STATE_RUNNING) {
         thd_current->state = STATE_READY;
         thd_add_to_runnable(thd_current, front_of_line);
     }
@@ -488,12 +501,12 @@ void thd_schedule(int front_of_line, uint64 now) {
        always be there at the bottom. */
     TAILQ_FOREACH(thd, &run_queue, thdq) {
         /* Is it runnable? If not, keep going */
-        if (thd->state == STATE_READY)
+        if(thd->state == STATE_READY)
             break;
     }
 
     /* Didn't find one? Big problem here... */
-    if (thd == NULL) {
+    if(thd == NULL) {
         thd_pslist(printf);
         panic("couldn't find a runnable thread");
     }
@@ -507,11 +520,11 @@ void thd_schedule(int front_of_line, uint64 now) {
     thd->state = STATE_RUNNING;
 
     /* Make sure the thread hasn't underrun its stack */
-    if (thd_current->stack && thd_current->stack_size) {
-        if ( CONTEXT_SP(thd_current->context) < (ptr_t)(thd_current->stack) ) {
+    if(thd_current->stack && thd_current->stack_size) {
+        if(CONTEXT_SP(thd_current->context) < (ptr_t)(thd_current->stack)) {
             thd_pslist(printf);
             thd_pslist_queue(printf);
-            assert_msg( 0, "Thread stack underrun" );
+            assert_msg(0, "Thread stack underrun");
         }
     }
 
@@ -524,18 +537,18 @@ void thd_schedule(int front_of_line, uint64 now) {
    was executing (unless it was already executing). */
 void thd_schedule_next(kthread_t *thd) {
     /* Make sure we're actually inside an interrupt */
-    if (!irq_inside_int())
+    if(!irq_inside_int())
         return;
 
     /* Can't boost a blocked thread */
-    if (thd->state != STATE_READY)
+    if(thd->state != STATE_READY)
         return;
 
     /* Unfortunately we have to take care of this here */
-    if (thd_current->state == STATE_ZOMBIE) {
+    if(thd_current->state == STATE_ZOMBIE) {
         sem_signal(thd_reap_sem);
     }
-    else if (thd_current->state == STATE_RUNNING) {
+    else if(thd_current->state == STATE_RUNNING) {
         thd_current->state = STATE_READY;
         thd_add_to_runnable(thd_current, 0);
     }
@@ -573,7 +586,7 @@ static void thd_timer_hnd(irq_context_t *context) {
     //printf("timer woke at %d\n", (uint32)now);
 
     thd_schedule(0, now);
-    timer_primary_wakeup(1000/HZ);
+    timer_primary_wakeup(1000 / HZ);
 }
 
 /*****************************************************************************/
@@ -582,14 +595,14 @@ static void thd_timer_hnd(irq_context_t *context) {
    sleep because it eases the load on the system for the other
    threads. */
 void thd_sleep(int ms) {
-    if (thd_mode == THD_MODE_NONE) {
+    if(thd_mode == THD_MODE_NONE) {
         timer_spin_sleep(ms);
         return;
     }
 
     /* A timeout of zero is the same as thd_pass() and passing zero
        down to genwait_wait() causes bad juju. */
-    if (!ms) {
+    if(!ms) {
         thd_pass();
         return;
     }
@@ -605,7 +618,7 @@ void thd_sleep(int ms) {
 /* Manually cause a re-schedule */
 void thd_pass() {
     /* Makes no sense inside int */
-    if (irq_inside_int()) return;
+    if(irq_inside_int()) return;
 
     /* Pass off control manually */
     thd_block_now(&thd_current->context);
@@ -617,10 +630,10 @@ int thd_join(kthread_t * thd, void **value_ptr) {
     kthread_t * t = NULL;
 
     /* Can't scan for NULL threads */
-    if (thd == NULL)
+    if(thd == NULL)
         return -1;
 
-    if (irq_inside_int()) {
+    if(irq_inside_int()) {
         dbglog(DBG_WARNING, "thd_join(%p) called inside an interrupt!\n", thd);
         return -1;
     }
@@ -630,15 +643,15 @@ int thd_join(kthread_t * thd, void **value_ptr) {
     /* Search the thread list and make sure that this thread hasn't
        already died and been deallocated. */
     LIST_FOREACH(t, &thd_list, t_list) {
-        if (t == thd)
+        if(t == thd)
             break;
     }
 
     /* Did we find anything? */
-    if (t != thd) {
+    if(t != thd) {
         rv = -2;
     }
-    else if (thd->flags & THD_DETACHED) {
+    else if(thd->flags & THD_DETACHED) {
         /* Can't join a detached thread */
         rv = -3;
     }
@@ -668,7 +681,7 @@ int thd_detach(kthread_t *thd) {
     kthread_t * t = NULL;
 
     /* Can't scan for NULL threads */
-    if (thd == NULL)
+    if(thd == NULL)
         return -1;
 
     old = irq_disable();
@@ -676,19 +689,19 @@ int thd_detach(kthread_t *thd) {
     /* Search the thread list and make sure that this thread hasn't
        already died and been deallocated. */
     LIST_FOREACH(t, &thd_list, t_list) {
-        if (t == thd)
+        if(t == thd)
             break;
     }
 
     /* Did we find anything? */
-    if (t != thd) {
+    if(t != thd) {
         rv = -2;
     }
-    else if (thd->flags & THD_DETACHED) {
+    else if(thd->flags & THD_DETACHED) {
         /* Can't detach an already detached thread */
         rv = -3;
     }
-    else if (thd->state == STATE_FINISHED) {
+    else if(thd->state == STATE_FINISHED) {
         /* If the thread is already finished, deallocate it now */
         thd_destroy(thd);
     }
@@ -741,12 +754,12 @@ int thd_set_mode(int mode) {
     int old = thd_mode;
 
     /* Nothing to change? */
-    if (thd_mode == mode)
+    if(thd_mode == mode)
         return thd_mode;
 
-    if (thd_mode == THD_MODE_COOP) {
+    if(thd_mode == THD_MODE_COOP) {
         /* Schedule our first pre-emption wakeup */
-        timer_primary_wakeup(1000/HZ);
+        timer_primary_wakeup(1000 / HZ);
     }
 
     thd_mode = mode;
@@ -803,7 +816,7 @@ int thd_init(int mode) {
     kthread_t *idle, *kern, *reaper;
 
     /* Make sure we're not already running */
-    if (thd_mode != THD_MODE_NONE)
+    if(thd_mode != THD_MODE_NONE)
         return -1;
 
     /* Setup our mode as appropriate */
@@ -866,12 +879,13 @@ int thd_init(int mode) {
     timer_primary_set_callback(thd_timer_hnd);
 
     /* If we're in pre-emptive mode, then schedule the first context switch */
-    if (thd_mode == THD_MODE_PREEMPT) {
+    if(thd_mode == THD_MODE_PREEMPT) {
         /* Schedule our first wakeup */
-        timer_primary_wakeup(1000/HZ);
+        timer_primary_wakeup(1000 / HZ);
 
         printf("thd: pre-emption enabled, HZ=%d\n", HZ);
-    } else
+    }
+    else
         printf("thd: pre-emption disabled\n");
 
     return 0;
@@ -882,13 +896,14 @@ void thd_shutdown() {
     kthread_t *n1, *n2;
 
     /* Disable pre-emption, if neccessary */
-    if (thd_mode == THD_MODE_PREEMPT) {
+    if(thd_mode == THD_MODE_PREEMPT) {
         timer_primary_set_callback(NULL);
     }
 
     /* Kill remaining live threads */
     n1 = LIST_FIRST(&thd_list);
-    while (n1 != NULL) {
+
+    while(n1 != NULL) {
         n2 = LIST_NEXT(n1, t_list);
         free(n1->stack);
         free(n1);

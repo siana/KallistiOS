@@ -21,12 +21,20 @@ const struct in6_addr in6addr_loopback = IN6ADDR_LOOPBACK_INIT;
 
 /* These few aren't in the IEEE 1003.1-2008 spec, but do appear on (at least)
    Mac OS X (in not strictly compliant mode) and are useful for us... */
-const struct in6_addr in6addr_linklocal_allnodes =
-    {{{ 0xff, 0x02, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01 }}};
-const struct in6_addr in6addr_linklocal_allrouters =
-    {{{ 0xff, 0x02, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02 }}};
+const struct in6_addr in6addr_linklocal_allnodes = {
+    {   {
+            0xff, 0x02, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01
+        }
+    }
+};
+const struct in6_addr in6addr_linklocal_allrouters = {
+    {   {
+            0xff, 0x02, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02
+        }
+    }
+};
 
 static int is_in_network(netif_t *net, const struct in6_addr *ip) {
     int i;
@@ -239,7 +247,7 @@ uint16 net_ipv6_checksum_pseudo(const struct in6_addr *src,
 
     /* If this is actually an IPv4 packet, do the calculation there instead. */
     if(IN6_IS_ADDR_V4MAPPED(&ps.src_addr) &&
-       IN6_IS_ADDR_V4MAPPED(&ps.dst_addr)) {
+            IN6_IS_ADDR_V4MAPPED(&ps.dst_addr)) {
         return net_ipv4_checksum_pseudo(ps.src_addr.__s6_addr.__s6_addr32[3],
                                         ps.dst_addr.__s6_addr.__s6_addr32[3],
                                         next_hdr, (uint16)upper_len);

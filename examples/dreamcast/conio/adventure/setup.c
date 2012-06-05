@@ -1,6 +1,6 @@
 /*-
  * Copyright (c) 1991, 1993
- *	The Regents of the University of California.  All rights reserved.
+ *  The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * Jim Gillogly at The Rand Corporation.
@@ -15,8 +15,8 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
+ *  This product includes software developed by the University of
+ *  California, Berkeley and its contributors.
  * 4. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
@@ -36,7 +36,7 @@
 
 #ifndef lint
 static const char copyright[] =
-"@(#) Copyright (c) 1991, 1993\n\
+    "@(#) Copyright (c) 1991, 1993\n\
 	The Regents of the University of California.  All rights reserved.\n";
 #endif /* not lint */
 
@@ -45,7 +45,7 @@ static const char copyright[] =
 static char sccsid[] = "@(#)setup.c	8.1 (Berkeley) 5/31/93";
 #endif
 static const char rcsid[] =
- "$FreeBSD: src/games/adventure/setup.c,v 1.8.2.1 2001/03/05 11:43:11 kris Exp $";
+    "$FreeBSD: src/games/adventure/setup.c,v 1.8.2.1 2001/03/05 11:43:11 kris Exp $";
 #endif /* not lint */
 
 /*
@@ -74,50 +74,54 @@ static const char rcsid[] =
 #define LINE 10         /* How many values do we get on a line? */
 
 int
-main(int argc, char **argv)
-{
-	FILE *infile;
-	int c, count, linestart;
+main(int argc, char **argv) {
+    FILE *infile;
+    int c, count, linestart;
 
-	if (argc != 2) printf(USAGE);
+    if(argc != 2) printf(USAGE);
 
-	if ((infile = fopen(argv[1], "r")) == NULL)
-		printf("Can't read file %s", argv[1]);
-	puts("/*\n * data.c: created by setup from the ascii data file.");
-	puts(SIG1);
-	puts(SIG2);
-	puts(" */");
-	printf("\n\nunsigned char data_file[] =\n{");
-	srandom(SEED);
-	count = 0;
-	linestart = YES;
+    if((infile = fopen(argv[1], "r")) == NULL)
+        printf("Can't read file %s", argv[1]);
 
-	while ((c = getc(infile)) != EOF)
-	{
-		if (linestart && c == ' ') /* Convert first spaces to tab */
-		{
-			if (count++ % LINE == 0)
-				printf("\n\t");
-			// printf("0x%02lx,", ('\t' ^ random()) & 0xFF);
-			printf("0x%02lx,", '\t');
-			while ((c = getc(infile)) == ' ' && c != EOF);
-			/* Drop the non-whitespace character through */
-			linestart = NO;
-		}
-		switch(c)
-		{
-		    case '\t':
-			linestart = NO; /* Don't need to convert spaces */
-			break;
-		    case '\n':
-			linestart = YES; /* Ready to convert spaces again */
-			break;
-		}
-		if (count++ % LINE == 0)
-			printf("\n\t");
-		printf("0x%02lx,", c);
-	}
-	puts("\n\t0\n};");
-	fclose(infile);
-	exit(0);
+    puts("/*\n * data.c: created by setup from the ascii data file.");
+    puts(SIG1);
+    puts(SIG2);
+    puts(" */");
+    printf("\n\nunsigned char data_file[] =\n{");
+    srandom(SEED);
+    count = 0;
+    linestart = YES;
+
+    while((c = getc(infile)) != EOF) {
+        if(linestart && c == ' ') { /* Convert first spaces to tab */
+            if(count++ % LINE == 0)
+                printf("\n\t");
+
+            // printf("0x%02lx,", ('\t' ^ random()) & 0xFF);
+            printf("0x%02lx,", '\t');
+
+            while((c = getc(infile)) == ' ' && c != EOF);
+
+            /* Drop the non-whitespace character through */
+            linestart = NO;
+        }
+
+        switch(c) {
+            case '\t':
+                linestart = NO; /* Don't need to convert spaces */
+                break;
+            case '\n':
+                linestart = YES; /* Ready to convert spaces again */
+                break;
+        }
+
+        if(count++ % LINE == 0)
+            printf("\n\t");
+
+        printf("0x%02lx,", c);
+    }
+
+    puts("\n\t0\n};");
+    fclose(infile);
+    exit(0);
 }

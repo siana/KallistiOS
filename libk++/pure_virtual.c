@@ -10,6 +10,6 @@
 #include <arch/arch.h>
 
 void __cxa_pure_virtual() {
-	panic("Pure virtual method called");
+    panic("Pure virtual method called");
 }
 

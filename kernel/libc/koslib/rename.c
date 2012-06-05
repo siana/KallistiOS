@@ -6,7 +6,6 @@
 
 #include <kos/fs.h>
 
-int rename(const char *oldpath, const char *newpath)
-{
-	return fs_rename(oldpath, newpath);
+int rename(const char *oldpath, const char *newpath) {
+    return fs_rename(oldpath, newpath);
 }

@@ -56,5 +56,5 @@ int vblank_shutdown();
 
 __END_DECLS
 
-#endif	/* __DC_VBLANK_H */
+#endif  /* __DC_VBLANK_H */
 

@@ -98,5 +98,5 @@ void vmu_shutdown();
 
 __END_DECLS
 
-#endif	/* __DC_MAPLE_VMU_H */
+#endif  /* __DC_MAPLE_VMU_H */
 

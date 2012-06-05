@@ -162,10 +162,10 @@ int flashrom_get_block(int partid, int blockid, uint8 * buffer_out);
     \headerfile dc/flashrom.h
 */
 typedef struct flashrom_syscfg {
-    int	language;   /**< \brief Language setting.
+    int language;   /**< \brief Language setting.
                          \see fr_langs */
-    int	audio;      /**< \brief Stereo/mono setting. 0 == mono, 1 == stereo */
-    int	autostart;  /**< \brief Autostart discs? 0 == off, 1 == on */
+    int audio;      /**< \brief Stereo/mono setting. 0 == mono, 1 == stereo */
+    int autostart;  /**< \brief Autostart discs? 0 == off, 1 == on */
 } flashrom_syscfg_t;
 
 /** \brief  Retrieve the current system configuration settings.
@@ -328,4 +328,4 @@ int flashrom_get_pw_ispcfg(flashrom_ispcfg_t *out);
 
 __END_DECLS
 
-#endif	/* __DC_FLASHROM_H */
+#endif  /* __DC_FLASHROM_H */

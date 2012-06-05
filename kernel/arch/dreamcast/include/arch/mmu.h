@@ -73,9 +73,9 @@ __BEGIN_DECLS
 
    Virtual addresses are broken up as follows:
 
-   Bits 31 - 22		10 bits top-level page directory
-   Bits 21 - 13		9 bits bottom-level page entry
-   Bits 11 - 0		Byte index into page
+   Bits 31 - 22     10 bits top-level page directory
+   Bits 21 - 13     9 bits bottom-level page entry
+   Bits 11 - 0      Byte index into page
 
    */
 
@@ -130,15 +130,15 @@ __BEGIN_DECLS
 */
 typedef struct mmupage {
     /* Explicit pieces, used for reference */
-    /*uint32	virtual; */ /* implicit */
-    uint32  physical:18;    /**< \brief Physical page ID -- 18 bits */
-    uint32  prkey:2;        /**< \brief Protection key data -- 2 bits */
-    uint32  valid:1;        /**< \brief Valid mapping -- 1 bit */
-    uint32  shared:1;       /**< \brief Shared between procs -- 1 bit */
-    uint32  cache:1;        /**< \brief Cacheable -- 1 bit */
-    uint32  dirty:1;        /**< \brief Dirty -- 1 bit */
-    uint32  wthru:1;        /**< \brief Write-thru enable -- 1 bit */
-    uint32  blank:7;        /**< \brief Reserved -- 7 bits */
+    /*uint32    virtual; */ /* implicit */
+    uint32  physical: 18;   /**< \brief Physical page ID -- 18 bits */
+    uint32  prkey: 2;       /**< \brief Protection key data -- 2 bits */
+    uint32  valid: 1;       /**< \brief Valid mapping -- 1 bit */
+    uint32  shared: 1;      /**< \brief Shared between procs -- 1 bit */
+    uint32  cache: 1;       /**< \brief Cacheable -- 1 bit */
+    uint32  dirty: 1;       /**< \brief Dirty -- 1 bit */
+    uint32  wthru: 1;       /**< \brief Write-thru enable -- 1 bit */
+    uint32  blank: 7;       /**< \brief Reserved -- 7 bits */
 
     /* Pre-compiled pieces. These waste a bit of ram, but they also
        speed loading immensely at runtime. */
@@ -287,7 +287,7 @@ int mmu_copyin(mmucontext_t *context, uint32 srcaddr, uint32 srccnt,
     \param  iovcnt2         The number of entries in iov2.
 */
 int mmu_copyv(mmucontext_t *context1, iovec_t *iov1, int iovcnt1,
-	mmucontext_t *context2, iovec_t *iov2, int iovcnt2);
+              mmucontext_t *context2, iovec_t *iov2, int iovcnt2);
 
 /** \brief  MMU mapping handler.
 
@@ -337,4 +337,4 @@ void mmu_shutdown();
 
 __END_DECLS
 
-#endif	/* __ARCH_MMU_H */
+#endif  /* __ARCH_MMU_H */

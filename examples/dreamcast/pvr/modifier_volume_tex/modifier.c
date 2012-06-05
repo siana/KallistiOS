@@ -87,7 +87,7 @@ void setup() {
         verts[i * 4].argb1 = 0xFFFFFFFF;
         verts[i * 4].oargb1 = 0xFF000000;
         verts[i * 4].d1 = verts[i * 4].d2 = verts[i * 4].d3 =
-            verts[i * 4].d4 = 0;
+                                                verts[i * 4].d4 = 0;
 
         verts[i * 4 + 1].flags = PVR_CMD_VERTEX;
         verts[i * 4 + 1].x = x - 50;
@@ -102,7 +102,7 @@ void setup() {
         verts[i * 4 + 1].argb1 = 0xFFFFFFFF;
         verts[i * 4 + 1].oargb1 = 0xFF000000;
         verts[i * 4 + 1].d1 = verts[i * 4 + 1].d2 = verts[i * 4 + 1].d3 =
-            verts[i * 4 + 1].d4 = 0;
+                                  verts[i * 4 + 1].d4 = 0;
 
         verts[i * 4 + 2].flags = PVR_CMD_VERTEX;
         verts[i * 4 + 2].x = x + 50;
@@ -117,7 +117,7 @@ void setup() {
         verts[i * 4 + 2].argb1 = 0xFFFFFFFF;
         verts[i * 4 + 2].oargb1 = 0xFF000000;
         verts[i * 4 + 2].d1 = verts[i * 4 + 2].d2 = verts[i * 4 + 2].d3 =
-            verts[i * 4 + 2].d4 = 0;
+                                  verts[i * 4 + 2].d4 = 0;
 
         verts[i * 4 + 3].flags = PVR_CMD_VERTEX_EOL;
         verts[i * 4 + 3].x = x + 50;
@@ -132,7 +132,7 @@ void setup() {
         verts[i * 4 + 3].argb1 = 0xFFFFFFFF;
         verts[i * 4 + 3].oargb1 = 0xFF000000;
         verts[i * 4 + 3].d1 = verts[i * 4 + 3].d2 = verts[i * 4 + 3].d3 =
-            verts[i * 4 + 3].d4 = 0;
+                                  verts[i * 4 + 3].d4 = 0;
     }
 }
 
@@ -142,9 +142,10 @@ int check_start() {
 
     cont = maple_enum_type(0, MAPLE_FUNC_CONTROLLER);
 
-    if (cont) {
+    if(cont) {
         state = (cont_state_t *)maple_dev_status(cont);
-        if (!state)
+
+        if(!state)
             return 0;
 
         if(state->buttons & CONT_START)
@@ -152,10 +153,13 @@ int check_start() {
 
         if(state->buttons & CONT_DPAD_UP)
             my -= 1.0f;
+
         if(state->buttons & CONT_DPAD_DOWN)
             my += 1.0f;
+
         if(state->buttons & CONT_DPAD_LEFT)
             mx -= 1.0f;
+
         if(state->buttons & CONT_DPAD_RIGHT)
             mx += 1.0f;
     }
@@ -220,9 +224,11 @@ void do_frame() {
 
 static pvr_init_params_t pvr_params = {
     /* Enable Opaque and Opaque modifiers. */
-    { PVR_BINSIZE_16, PVR_BINSIZE_16, PVR_BINSIZE_0, PVR_BINSIZE_0,
-      PVR_BINSIZE_0 },
-	512 * 1024
+    {
+        PVR_BINSIZE_16, PVR_BINSIZE_16, PVR_BINSIZE_0, PVR_BINSIZE_0,
+        PVR_BINSIZE_0
+    },
+    512 * 1024
 };
 
 extern uint8 romdisk[];

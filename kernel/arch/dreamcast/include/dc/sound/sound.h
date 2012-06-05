@@ -140,5 +140,5 @@ void snd_poll_resp();
 
 __END_DECLS
 
-#endif	/* __DC_SOUND_SOUND_H */
+#endif  /* __DC_SOUND_SOUND_H */
 

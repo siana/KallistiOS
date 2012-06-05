@@ -19,5 +19,5 @@ void gdb_breakpoint();
 
 __END_DECLS
 
-#endif	/* __ARCH_GDB_H */
+#endif  /* __ARCH_GDB_H */
 

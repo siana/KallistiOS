@@ -52,5 +52,5 @@ int fs_iso9660_shutdown();
 
 __END_DECLS
 
-#endif	/* __DC_FS_ISO9660_H */
+#endif  /* __DC_FS_ISO9660_H */
 

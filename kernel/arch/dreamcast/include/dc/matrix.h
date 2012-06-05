@@ -96,21 +96,21 @@ void mat_transform_sq(void * input, void * output, int veccnt);
     \param  z               The Z coordinate to transform.
 */
 #define mat_trans_single(x, y, z) { \
-	register float __x __asm__("fr0") = (x); \
-	register float __y __asm__("fr1") = (y); \
-	register float __z __asm__("fr2") = (z); \
-	__asm__ __volatile__( \
-		"fldi1	fr3\n" \
-		"ftrv	xmtrx,fv0\n" \
-		"fldi1	fr2\n" \
-		"fdiv	fr3,fr2\n" \
-		"fmul	fr2,fr0\n" \
-		"fmul	fr2,fr1\n" \
-		: "=f" (__x), "=f" (__y), "=f" (__z) \
-		: "0" (__x), "1" (__y), "2" (__z) \
-		: "fr3" ); \
-	x = __x; y = __y; z = __z; \
-}
+        register float __x __asm__("fr0") = (x); \
+        register float __y __asm__("fr1") = (y); \
+        register float __z __asm__("fr2") = (z); \
+        __asm__ __volatile__( \
+                              "fldi1	fr3\n" \
+                              "ftrv	xmtrx,fv0\n" \
+                              "fldi1	fr2\n" \
+                              "fdiv	fr3,fr2\n" \
+                              "fmul	fr2,fr0\n" \
+                              "fmul	fr2,fr1\n" \
+                              : "=f" (__x), "=f" (__y), "=f" (__z) \
+                              : "0" (__x), "1" (__y), "2" (__z) \
+                              : "fr3" ); \
+        x = __x; y = __y; z = __z; \
+    }
 
 /** \brief  Macro to transform a single vertex by the internal matrix.
 
@@ -126,23 +126,23 @@ void mat_transform_sq(void * input, void * output, int veccnt);
     \param  w               The W coordinate to transform.
 */
 #define mat_trans_single4(x, y, z, w) { \
-	register float __x __asm__("fr0") = (x); \
-	register float __y __asm__("fr1") = (y); \
-	register float __z __asm__("fr2") = (z); \
-	register float __w __asm__("fr3") = (w); \
-	__asm__ __volatile__( \
-		"ftrv	xmtrx,fv0\n" \
-		"fdiv	fr3,fr0\n" \
-		"fdiv	fr3,fr1\n" \
-		"fdiv	fr3,fr2\n" \
-		"fldi1	fr4\n" \
-		"fdiv	fr3,fr4\n" \
-		"fmov	fr4,fr3\n" \
-		: "=f" (__x), "=f" (__y), "=f" (__z), "=f" (__w) \
-		: "0" (__x), "1" (__y), "2" (__z), "3" (__w) \
-		: "fr4" ); \
-	x = __x; y = __y; z = __z; w = __w; \
-}
+        register float __x __asm__("fr0") = (x); \
+        register float __y __asm__("fr1") = (y); \
+        register float __z __asm__("fr2") = (z); \
+        register float __w __asm__("fr3") = (w); \
+        __asm__ __volatile__( \
+                              "ftrv	xmtrx,fv0\n" \
+                              "fdiv	fr3,fr0\n" \
+                              "fdiv	fr3,fr1\n" \
+                              "fdiv	fr3,fr2\n" \
+                              "fldi1	fr4\n" \
+                              "fdiv	fr3,fr4\n" \
+                              "fmov	fr4,fr3\n" \
+                              : "=f" (__x), "=f" (__y), "=f" (__z), "=f" (__w) \
+                              : "0" (__x), "1" (__y), "2" (__z), "3" (__w) \
+                              : "fr4" ); \
+        x = __x; y = __y; z = __z; w = __w; \
+    }
 
 /** \brief  Macro to transform a single vertex by the internal matrix.
 
@@ -156,20 +156,20 @@ void mat_transform_sq(void * input, void * output, int veccnt);
     \param  z               The Z coordinate to transform.
 */
 #define mat_trans_single3(x, y, z) { \
-	register float __x __asm__("fr0") = (x); \
-	register float __y __asm__("fr1") = (y); \
-	register float __z __asm__("fr2") = (z); \
-	__asm__ __volatile__( \
-		"fldi1	fr3\n" \
-		"ftrv	xmtrx,fv0\n" \
-		"fdiv	fr3,fr0\n" \
-		"fdiv	fr3,fr1\n" \
-		"fdiv	fr3,fr2\n" \
-		: "=f" (__x), "=f" (__y), "=f" (__z) \
-		: "0" (__x), "1" (__y), "2" (__z) \
-		: "fr3" ); \
-	x = __x; y = __y; z = __z; \
-}
+        register float __x __asm__("fr0") = (x); \
+        register float __y __asm__("fr1") = (y); \
+        register float __z __asm__("fr2") = (z); \
+        __asm__ __volatile__( \
+                              "fldi1	fr3\n" \
+                              "ftrv	xmtrx,fv0\n" \
+                              "fdiv	fr3,fr0\n" \
+                              "fdiv	fr3,fr1\n" \
+                              "fdiv	fr3,fr2\n" \
+                              : "=f" (__x), "=f" (__y), "=f" (__z) \
+                              : "0" (__x), "1" (__y), "2" (__z) \
+                              : "fr3" ); \
+        x = __x; y = __y; z = __z; \
+    }
 
 /** \brief  Macro to transform a single vertex by the internal matrix with no
             perspective division.
@@ -185,19 +185,19 @@ void mat_transform_sq(void * input, void * output, int veccnt);
     \param  w               The W coordinate to transform.
 */
 #define mat_trans_nodiv(x, y, z, w) { \
-	register float __x __asm__("fr0") = (x); \
-	register float __y __asm__("fr1") = (y); \
-	register float __z __asm__("fr2") = (z); \
-	register float __w __asm__("fr3") = (w); \
-	__asm__ __volatile__( \
-		"ftrv   xmtrx,fv0\n" \
-		: "=f" (__x), "=f" (__y), "=f" (__z), "=f" (__w) \
-		: "0" (__x), "1" (__y), "2" (__z), "3" (__w) ); \
-	x = __x; y = __y; z = __z; w = __w; \
-}
+        register float __x __asm__("fr0") = (x); \
+        register float __y __asm__("fr1") = (y); \
+        register float __z __asm__("fr2") = (z); \
+        register float __w __asm__("fr3") = (w); \
+        __asm__ __volatile__( \
+                              "ftrv   xmtrx,fv0\n" \
+                              : "=f" (__x), "=f" (__y), "=f" (__z), "=f" (__w) \
+                              : "0" (__x), "1" (__y), "2" (__z), "3" (__w) ); \
+        x = __x; y = __y; z = __z; w = __w; \
+    }
 
 
 __END_DECLS
 
-#endif	/* __DC_MATRIX_H */
+#endif  /* __DC_MATRIX_H */
 

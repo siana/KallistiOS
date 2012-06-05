@@ -30,5 +30,5 @@ void cache_flush_all();
 
 __END_DECLS
 
-#endif	/* __ARCH_CACHE_H */
+#endif  /* __ARCH_CACHE_H */
 

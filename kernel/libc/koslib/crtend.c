@@ -21,8 +21,8 @@ static fptr dtor_list[1] __attribute__((section(".dtors"))) = { (fptr) 0 };
 
 /* Ensures that this gets linked in */
 void __crtend_pullin() {
-	(void)ctor_list;
-	(void)dtor_list;
+    (void)ctor_list;
+    (void)dtor_list;
 }
 
 #endif /* __GNUC__ < 4 */

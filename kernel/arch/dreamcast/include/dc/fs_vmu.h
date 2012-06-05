@@ -41,5 +41,5 @@ int fs_vmu_shutdown();
 
 __END_DECLS
 
-#endif	/* __DC_FS_VMU_H */
+#endif  /* __DC_FS_VMU_H */
 

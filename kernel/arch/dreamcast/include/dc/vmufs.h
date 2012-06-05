@@ -249,7 +249,7 @@ int vmufs_file_read(maple_device_t * dev, uint16 * fat, vmu_dir_t * dirent, void
     \return                 0 on success, <0 on failure.
 */
 int vmufs_file_write(maple_device_t * dev, vmu_root_t * root, uint16 * fat,
-	vmu_dir_t * dir, vmu_dir_t * newdirent, void * filebuf, int size);
+                     vmu_dir_t * dir, vmu_dir_t * newdirent, void * filebuf, int size);
 
 /** \brief  Given a previously-read FAT and directory, delete the named file.
 
@@ -398,4 +398,4 @@ int vmufs_shutdown();
 
 __END_DECLS
 
-#endif	/* __DC_VMUFS_H */
+#endif  /* __DC_VMUFS_H */

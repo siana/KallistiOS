@@ -29,9 +29,9 @@ __BEGIN_DECLS
 
     @{
 */
-#define MOUSE_RIGHTBUTTON	(1<<1)  /**< \brief Right mouse button */
-#define MOUSE_LEFTBUTTON	(1<<2)  /**< \brief Left mouse button */
-#define MOUSE_SIDEBUTTON	(1<<3)  /**< \brief Side mouse button */
+#define MOUSE_RIGHTBUTTON   (1<<1)  /**< \brief Right mouse button */
+#define MOUSE_LEFTBUTTON    (1<<2)  /**< \brief Left mouse button */
+#define MOUSE_SIDEBUTTON    (1<<3)  /**< \brief Side mouse button */
 /** @} */
 
 /** \brief  Mouse center value in the raw condition structure. */
@@ -39,14 +39,14 @@ __BEGIN_DECLS
 
 /* Raw mouse condition structure */
 typedef struct {
-	uint16 buttons;
-	uint16 dummy1;
-	int16 dx;
-	int16 dy;
-	int16 dz;
-	uint16 dummy2;
-	uint32 dummy3;
-	uint32 dummy4;
+    uint16 buttons;
+    uint16 dummy1;
+    int16 dx;
+    int16 dy;
+    int16 dz;
+    uint16 dummy2;
+    uint32 dummy3;
+    uint32 dummy4;
 } mouse_cond_t;
 
 /* More civilized mouse structure. There are several significant
@@ -70,7 +70,7 @@ typedef struct {
     /** \brief  Buttons pressed bitmask.
         \see    mouse_buttons
     */
-    uint32	buttons;
+    uint32  buttons;
 
     /** \brief  X movement value */
     int dx;
@@ -84,11 +84,11 @@ typedef struct {
 
 /* \cond */
 /* Init / Shutdown */
-int	mouse_init();
-void	mouse_shutdown();
+int mouse_init();
+void    mouse_shutdown();
 /* \endcond */
 
 __END_DECLS
 
-#endif	/* __DC_MAPLE_MOUSE_H */
+#endif  /* __DC_MAPLE_MOUSE_H */
 

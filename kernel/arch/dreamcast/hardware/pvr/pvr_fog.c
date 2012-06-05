@@ -117,12 +117,12 @@
  * ---
  *
  * Notes:
- * 	A word about the fake alpha values fog_table_alpha.
- * 	In my experiments with table fog I was could not seem to set an alpha
- * 	value in the fog table color register. Therefore I created a fake one
- * 	that effectively does the same thing as alpha.  We simple multiply
- * 	the values to be loaded into the fog table registers by the alpha
- * 	value to get the desired effect.
+ *  A word about the fake alpha values fog_table_alpha.
+ *  In my experiments with table fog I was could not seem to set an alpha
+ *  value in the fog table color register. Therefore I created a fake one
+ *  that effectively does the same thing as alpha.  We simple multiply
+ *  the values to be loaded into the fog table registers by the alpha
+ *  value to get the desired effect.
  *
  *      You should always specify the fog color before calling one of the
  *      three fog table functions.  This insures that the alpha value is set.
@@ -139,15 +139,15 @@
 static float fog_alpha;
 
 union ieee32_t {
-	float flt32;
-	uint32 uit32;
+    float flt32;
+    uint32 uit32;
 };
 
 /* useful macros */
 #define ABS(n) ( (n)<(0.0f) ? (-n):(n) )
 #define NEG(n) ( (n)>(0.0f) ? (-n):(n) )
 #define CLAMP01(x) \
-	( (x)<(0.0f) ? ((x) = (0.0f)) : ((x)>(1.0f) ? ((x)=(1.0f)) : (x)) )
+    ( (x)<(0.0f) ? ((x) = (0.0f)) : ((x)>(1.0f) ? ((x)=(1.0f)) : (x)) )
 
 /* helper functions */
 #define FOG_EXP_TABLE_SIZE 256
@@ -158,20 +158,20 @@ union ieee32_t {
 /* A fast negative argument only exp function - That is it treats any
  * argument as a negative number
  */
-float neg_exp( float arg ) {
+float neg_exp(float arg) {
 
-	float result, f;
-	int k;
+    float result, f;
+    int k;
 
-	f = (float) (ABS(arg) * (1.0/FOG_INCR));
-	k = (int) f;
+    f = (float)(ABS(arg) * (1.0 / FOG_INCR));
+    k = (int) f;
 
-	if (k > FOG_EXP_TABLE_SIZE-2)
-		result = (float) EXP_FOG_MAX;
-	else
-		result = exp_table[k] + (f-k)*(exp_table[k+1]-exp_table[k]);
+    if(k > FOG_EXP_TABLE_SIZE - 2)
+        result = (float) EXP_FOG_MAX;
+    else
+        result = exp_table[k] + (f - k) * (exp_table[k + 1] - exp_table[k]);
 
-   return result;
+    return result;
 }
 
 /* This function converts an IEEE 754 32-bit floating point number to
@@ -207,76 +207,76 @@ float neg_exp( float arg ) {
 
  */
 uint32 float16(float f) {
-	union ieee32_t float32;
-	uint32 float16;
-	uint32 sign, exponent, mantissa;
+    union ieee32_t float32;
+    uint32 float16;
+    uint32 sign, exponent, mantissa;
 
-	float32.flt32 = f;
-	sign = exponent = mantissa = float32.uit32;
+    float32.flt32 = f;
+    sign = exponent = mantissa = float32.uit32;
 
-	sign = (sign>>16)&0x8000;
-	exponent = (((exponent>>23)&0xff)-127)&0xff;
-	mantissa = (mantissa>>8)&0x7f00;
-	float16 = sign | mantissa | exponent;
-	return float16;
+    sign = (sign >> 16) & 0x8000;
+    exponent = (((exponent >> 23) & 0xff) - 127) & 0xff;
+    mantissa = (mantissa >> 8) & 0x7f00;
+    float16 = sign | mantissa | exponent;
+    return float16;
 }
 
 /* Set the fog table color */
 void pvr_fog_table_color(float a, float r, float g, float b) {
-	PVR_SET(PVR_FOG_TABLE_COLOR, PVR_PACK_COLOR(a, r, g, b));
-	fog_alpha = a;
+    PVR_SET(PVR_FOG_TABLE_COLOR, PVR_PACK_COLOR(a, r, g, b));
+    fog_alpha = a;
 }
 
 /* Set the fog vertex color */
 void pvr_fog_vertex_color(float a, float r, float g, float b) {
-	assert_msg(0, "not implemented");
-/*	PVR_SET(PVR_FOG_VERTEX_COLOR, PVR_PACK_COLOR(a, r, g, b)); */
+    assert_msg(0, "not implemented");
+    /*  PVR_SET(PVR_FOG_VERTEX_COLOR, PVR_PACK_COLOR(a, r, g, b)); */
 }
 
 /* Set the fog far depth */
 void pvr_fog_far_depth(float d) {
-	PVR_SET(PVR_FOG_DENSITY, float16(NEG(d)));
+    PVR_SET(PVR_FOG_DENSITY, float16(NEG(d)));
 }
 
 #define TABLE_LEN (PVR_FOG_TABLE_BASE + 0x200)
 
 /* Initialize the fog table using an exp2 algorithm (like GL_EXP2) */
 void pvr_fog_table_exp2(float density) {
-	uint32 idx, i;
-	uint32 value, valh, vall;
-	float z =  259.999999f;
-	float d2 = density * density;
+    uint32 idx, i;
+    uint32 value, valh, vall;
+    float z =  259.999999f;
+    float d2 = density * density;
 
-	pvr_fog_far_depth(259.999999f);
+    pvr_fog_far_depth(259.999999f);
 
-	valh = (uint32)(fog_alpha*255.0f*(1.0f-neg_exp(-(z * z * d2))))&0xff;
+    valh = (uint32)(fog_alpha * 255.0f * (1.0f - neg_exp(-(z * z * d2)))) & 0xff;
 
-	for (idx=PVR_FOG_TABLE_BASE, i=0; idx<TABLE_LEN; idx+=4, i++) {
-		z = inverse_w_depth260[i];
-		vall = (uint32)(fog_alpha*255.0f*(1.0f-neg_exp(-(z * z * d2))))&0xff;
-		value = (((valh)<<8&0xff00)+vall);
-		PVR_SET(idx, value);
-		valh = vall;
-	}
+    for(idx = PVR_FOG_TABLE_BASE, i = 0; idx < TABLE_LEN; idx += 4, i++) {
+        z = inverse_w_depth260[i];
+        vall = (uint32)(fog_alpha * 255.0f * (1.0f - neg_exp(-(z * z * d2)))) & 0xff;
+        value = (((valh) << 8 & 0xff00) + vall);
+        PVR_SET(idx, value);
+        valh = vall;
+    }
 }
 
 /* Initialize the fog table using an exp algorithm (like GL_EXP) */
 void pvr_fog_table_exp(float density) {
-	uint32 idx, i;
-	uint32 value, valh, vall;
-	float z =  259.999999f;
+    uint32 idx, i;
+    uint32 value, valh, vall;
+    float z =  259.999999f;
 
-	pvr_fog_far_depth(259.999999f);
+    pvr_fog_far_depth(259.999999f);
 
-	valh = (uint32)(fog_alpha*255.0f*(1.0f-neg_exp(-(z * density))))&0xff;
+    valh = (uint32)(fog_alpha * 255.0f * (1.0f - neg_exp(-(z * density)))) & 0xff;
 
-	for (idx=PVR_FOG_TABLE_BASE, i=0; idx<TABLE_LEN; idx+=4, i++) {
-		z = inverse_w_depth260[i];
-		vall = (uint32)(fog_alpha*255.0f*(1.0f-neg_exp(-(z * density))))&0xff;
-		value = (((valh)<<8&0xff00)+vall);
-		PVR_SET(idx, value);
-		valh = vall;
-	}
+    for(idx = PVR_FOG_TABLE_BASE, i = 0; idx < TABLE_LEN; idx += 4, i++) {
+        z = inverse_w_depth260[i];
+        vall = (uint32)(fog_alpha * 255.0f * (1.0f - neg_exp(-(z * density)))) & 0xff;
+        value = (((valh) << 8 & 0xff00) + vall);
+        PVR_SET(idx, value);
+        valh = vall;
+    }
 }
 
 /* Initialize the fog table using a linear algorithm (like GL_LINEAR)
@@ -293,37 +293,41 @@ void pvr_fog_table_exp(float density) {
 */
 
 void pvr_fog_table_linear(float start, float end) {
-	uint32 idx, i, tdx;
-	uint32 value, valh, vall;
-	uint32 table_start, non_zero_entries, step_size;
+    uint32 idx, i, tdx;
+    uint32 value, valh, vall;
+    uint32 table_start, non_zero_entries, step_size;
 
-	start = ABS(start);
-	end = ABS(end);
-	if (start >= end) {
-		dbglog(DBG_DEBUG, "pvr_fog_table_linear: start >= end\n");
-		return;
-	}
+    start = ABS(start);
+    end = ABS(end);
 
-	/* ratio of start/end times number of fog table entries */
-	table_start = (uint32)((start/end)*128.0f);
-	/* number of entries to load with linear fog values */
-	non_zero_entries = 128 - table_start;
-	/* size of steps to use as we walk the inverse_w_depth table */
-	step_size = 128 / non_zero_entries;
+    if(start >= end) {
+        dbglog(DBG_DEBUG, "pvr_fog_table_linear: start >= end\n");
+        return;
+    }
 
-	pvr_fog_far_depth(end);
+    /* ratio of start/end times number of fog table entries */
+    table_start = (uint32)((start / end) * 128.0f);
+    /* number of entries to load with linear fog values */
+    non_zero_entries = 128 - table_start;
+    /* size of steps to use as we walk the inverse_w_depth table */
+    step_size = 128 / non_zero_entries;
 
-	valh=(uint32)(255.0f*fog_alpha); /* f=1/1  full occlusion */
-	for (idx=PVR_FOG_TABLE_BASE, i=0, tdx=127; idx<TABLE_LEN; idx+=4, i+=step_size, tdx--) {
-		if (tdx >= table_start) {
-		vall=(uint32)(inverse_w_depth[i]*255.0f*fog_alpha);
-		} else {
-			vall = 0x0;
-		}
-		value = (((valh)<<8&0xff00)+vall);
-		PVR_SET(idx, value);
-		valh=vall;
-	}
+    pvr_fog_far_depth(end);
+
+    valh = (uint32)(255.0f * fog_alpha); /* f=1/1  full occlusion */
+
+    for(idx = PVR_FOG_TABLE_BASE, i = 0, tdx = 127; idx < TABLE_LEN; idx += 4, i += step_size, tdx--) {
+        if(tdx >= table_start) {
+            vall = (uint32)(inverse_w_depth[i] * 255.0f * fog_alpha);
+        }
+        else {
+            vall = 0x0;
+        }
+
+        value = (((valh) << 8 & 0xff00) + vall);
+        PVR_SET(idx, value);
+        valh = vall;
+    }
 }
 
 /* Set a custom fog table from float values
@@ -336,17 +340,17 @@ void pvr_fog_table_linear(float start, float end) {
  * The larger the value the heavier the fog.
  */
 void pvr_fog_table_custom(float tbl1[]) {
-	uint32 idx, i;
-	uint32 value, valh, vall;
+    uint32 idx, i;
+    uint32 value, valh, vall;
 
-	valh = (uint32)( fog_alpha * 255.0f * CLAMP01(tbl1[0]) )&0xff;
+    valh = (uint32)(fog_alpha * 255.0f * CLAMP01(tbl1[0])) & 0xff;
 
-	for (idx=PVR_FOG_TABLE_BASE, i=1; idx<TABLE_LEN; idx+=4, i++) {
-		vall = (uint32)( fog_alpha * 255.0f * CLAMP01(tbl1[i]) )&0xff;
-		value = (((valh)<<8&0xff00)+vall);
-		PVR_SET(idx, value);
-		valh = vall;
-	}
+    for(idx = PVR_FOG_TABLE_BASE, i = 1; idx < TABLE_LEN; idx += 4, i++) {
+        vall = (uint32)(fog_alpha * 255.0f * CLAMP01(tbl1[i])) & 0xff;
+        value = (((valh) << 8 & 0xff00) + vall);
+        PVR_SET(idx, value);
+        valh = vall;
+    }
 }
 
 

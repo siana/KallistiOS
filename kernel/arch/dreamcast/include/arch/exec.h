@@ -46,5 +46,5 @@ void arch_exec(const void *image, uint32 length) __noreturn;
 
 __END_DECLS
 
-#endif	/* __ARCH_EXEC_H */
+#endif  /* __ARCH_EXEC_H */
 

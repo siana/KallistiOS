@@ -12,8 +12,8 @@
 __BEGIN_DECLS
 
 struct arch_atexit_handler {
-	struct arch_atexit_handler *next;
-	void (*handler)(void);
+    struct arch_atexit_handler *next;
+    void (*handler)(void);
 };
 
 extern struct arch_atexit_handler *arch_atexit_handlers;
@@ -23,5 +23,5 @@ void arch_atexit();
 
 __END_DECLS
 
-#endif	/* __ARCH_ATEXIT_H */
+#endif  /* __ARCH_ATEXIT_H */
 

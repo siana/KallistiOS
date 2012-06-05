@@ -37,164 +37,167 @@ to a translucent poly to interfere with the cube.
 
 // Draw a single point in 3D space. Uses the currently loaded matrix.
 void drawpnt(float x, float y, float z, float a, float r, float g, float b) {
-	uint32 col = plx_pack_color(a, r, g, b);
+    uint32 col = plx_pack_color(a, r, g, b);
 
-	// Transform the point, clip the Z plane to avoid artifacts.
-	plx_mat_tfip_3d(x, y, z);
-	if (z <= 0.00001f) z = 0.00001f;
+    // Transform the point, clip the Z plane to avoid artifacts.
+    plx_mat_tfip_3d(x, y, z);
 
-	// Draw it.
-	plx_vert_inp(PLX_VERT, x, y+1.0f, z, col);
-	plx_vert_inp(PLX_VERT, x, y, z, col);
-	plx_vert_inp(PLX_VERT, x+1.0f, y+1.0f, z, col);
-	plx_vert_inp(PLX_VERT_EOS, x+1.0f, y, z, col);
+    if(z <= 0.00001f) z = 0.00001f;
+
+    // Draw it.
+    plx_vert_inp(PLX_VERT, x, y + 1.0f, z, col);
+    plx_vert_inp(PLX_VERT, x, y, z, col);
+    plx_vert_inp(PLX_VERT, x + 1.0f, y + 1.0f, z, col);
+    plx_vert_inp(PLX_VERT_EOS, x + 1.0f, y, z, col);
 }
 
 // Draws the full cube at the current position.
 void drawcube() {
-	uint32 color = 0xff808080;
-	plx_dr_state_t dr;
+    uint32 color = 0xff808080;
+    plx_dr_state_t dr;
 
-	plx_dr_init(&dr);
+    plx_dr_init(&dr);
 
-	// Left face
-	plx_vert_indm3(&dr, PLX_VERT, -3, -3, -3, color);
-	plx_vert_indm3(&dr, PLX_VERT, -3,  3, -3, color);
-	plx_vert_indm3(&dr, PLX_VERT, -3, -3,  3, color);
-	plx_vert_indm3(&dr, PLX_VERT_EOS, -3,  3,  3, color);
+    // Left face
+    plx_vert_indm3(&dr, PLX_VERT, -3, -3, -3, color);
+    plx_vert_indm3(&dr, PLX_VERT, -3,  3, -3, color);
+    plx_vert_indm3(&dr, PLX_VERT, -3, -3,  3, color);
+    plx_vert_indm3(&dr, PLX_VERT_EOS, -3,  3,  3, color);
 
-	// Right face
-	plx_vert_indm3(&dr, PLX_VERT, 3, -3, -3, color);
-	plx_vert_indm3(&dr, PLX_VERT, 3,  3, -3, color);
-	plx_vert_indm3(&dr, PLX_VERT, 3, -3,  3, color);
-	plx_vert_indm3(&dr, PLX_VERT_EOS, 3,  3,  3, color);
+    // Right face
+    plx_vert_indm3(&dr, PLX_VERT, 3, -3, -3, color);
+    plx_vert_indm3(&dr, PLX_VERT, 3,  3, -3, color);
+    plx_vert_indm3(&dr, PLX_VERT, 3, -3,  3, color);
+    plx_vert_indm3(&dr, PLX_VERT_EOS, 3,  3,  3, color);
 
-	// Front face
-	plx_vert_indm3(&dr, PLX_VERT, -3,  3, -3, color);
-	plx_vert_indm3(&dr, PLX_VERT, -3, -3, -3, color);
-	plx_vert_indm3(&dr, PLX_VERT,  3,  3, -3, color);
-	plx_vert_indm3(&dr, PLX_VERT_EOS,  3, -3, -3, color);
+    // Front face
+    plx_vert_indm3(&dr, PLX_VERT, -3,  3, -3, color);
+    plx_vert_indm3(&dr, PLX_VERT, -3, -3, -3, color);
+    plx_vert_indm3(&dr, PLX_VERT,  3,  3, -3, color);
+    plx_vert_indm3(&dr, PLX_VERT_EOS,  3, -3, -3, color);
 
-	// Back face
-	plx_vert_indm3(&dr, PLX_VERT, -3,  3, 3, color);
-	plx_vert_indm3(&dr, PLX_VERT, -3, -3, 3, color);
-	plx_vert_indm3(&dr, PLX_VERT,  3,  3, 3, color);
-	plx_vert_indm3(&dr, PLX_VERT_EOS,  3, -3, 3, color);
+    // Back face
+    plx_vert_indm3(&dr, PLX_VERT, -3,  3, 3, color);
+    plx_vert_indm3(&dr, PLX_VERT, -3, -3, 3, color);
+    plx_vert_indm3(&dr, PLX_VERT,  3,  3, 3, color);
+    plx_vert_indm3(&dr, PLX_VERT_EOS,  3, -3, 3, color);
 
-	// Top face
-	plx_vert_indm3(&dr, PLX_VERT, -3, -3, -3, color);
-	plx_vert_indm3(&dr, PLX_VERT, -3, -3,  3, color);
-	plx_vert_indm3(&dr, PLX_VERT,  3, -3, -3, color);
-	plx_vert_indm3(&dr, PLX_VERT_EOS,  3, -3,  3, color);
+    // Top face
+    plx_vert_indm3(&dr, PLX_VERT, -3, -3, -3, color);
+    plx_vert_indm3(&dr, PLX_VERT, -3, -3,  3, color);
+    plx_vert_indm3(&dr, PLX_VERT,  3, -3, -3, color);
+    plx_vert_indm3(&dr, PLX_VERT_EOS,  3, -3,  3, color);
 
-	// Bottom face
-	plx_vert_indm3(&dr, PLX_VERT, -3, 3, -3, color);
-	plx_vert_indm3(&dr, PLX_VERT, -3, 3,  3, color);
-	plx_vert_indm3(&dr, PLX_VERT,  3, 3, -3, color);
-	plx_vert_indm3(&dr, PLX_VERT_EOS,  3, 3,  3, color);
+    // Bottom face
+    plx_vert_indm3(&dr, PLX_VERT, -3, 3, -3, color);
+    plx_vert_indm3(&dr, PLX_VERT, -3, 3,  3, color);
+    plx_vert_indm3(&dr, PLX_VERT,  3, 3, -3, color);
+    plx_vert_indm3(&dr, PLX_VERT_EOS,  3, 3,  3, color);
 }
 
 // Draws the wave in the background (2D)
 void drawwave(int theta) {
-	uint32 color = 0xffa0a0a0;
-	int i, divs = 320;
-	float x, y, t;
-	plx_dr_state_t dr;
+    uint32 color = 0xffa0a0a0;
+    int i, divs = 320;
+    float x, y, t;
+    plx_dr_state_t dr;
 
-	plx_dr_init(&dr);
+    plx_dr_init(&dr);
 
-	// Convert to radians for sin/cos
-	t = theta * 2*M_PI / 360.0f;
+    // Convert to radians for sin/cos
+    t = theta * 2 * M_PI / 360.0f;
 
-	for (i=0; i<=divs; i++) {
-		x = i*640.0f/divs;
+    for(i = 0; i <= divs; i++) {
+        x = i * 640.0f / divs;
 
-		// These are more or less magic numbers I played with until
-		// it looked neat.
-		y = 240.0f + fsin(t + i*M_PI/64.0f)*30.0f*fsin(t*4);
-		y += fcos(t + i*M_PI/36.0f)*40.0f*fcos(t*6);
-		y += fcos(t + i*M_PI/30.0f)*24.0f*fcos(t*8);
+        // These are more or less magic numbers I played with until
+        // it looked neat.
+        y = 240.0f + fsin(t + i * M_PI / 64.0f) * 30.0f * fsin(t * 4);
+        y += fcos(t + i * M_PI / 36.0f) * 40.0f * fcos(t * 6);
+        y += fcos(t + i * M_PI / 30.0f) * 24.0f * fcos(t * 8);
 
-		plx_vert_ind(&dr, PLX_VERT, x, y, 0.0001f, color);
-		plx_vert_ind(&dr, i == divs ? PLX_VERT_EOS : PLX_VERT, x, 480.0f, 0.0001f, color);
-	}
+        plx_vert_ind(&dr, PLX_VERT, x, y, 0.0001f, color);
+        plx_vert_ind(&dr, i == divs ? PLX_VERT_EOS : PLX_VERT, x, 480.0f, 0.0001f, color);
+    }
 }
 
 int main(int argc, char **argv) {
-	int done, i;
-	int theta;
-	pvr_stats_t stats;
+    int done, i;
+    int theta;
+    pvr_stats_t stats;
 
-	// Init PVR
-	pvr_init_defaults();
-	pvr_set_bg_color(0.8f, 0.8f, 0.8f);
+    // Init PVR
+    pvr_init_defaults();
+    pvr_set_bg_color(0.8f, 0.8f, 0.8f);
 
-	// Setup the context
-	plx_cxt_init();
-	plx_cxt_texture(NULL);
-	plx_cxt_culling(PLX_CULL_NONE);
+    // Setup the context
+    plx_cxt_init();
+    plx_cxt_texture(NULL);
+    plx_cxt_culling(PLX_CULL_NONE);
 
-	// Init 3D stuff. mat3d is like KGL.
-	plx_mat3d_init();
-	plx_mat3d_mode(PLX_MAT_PROJECTION);
-	plx_mat3d_identity();
-	plx_mat3d_perspective(45.0f, 640.0f / 480.0f, 0.1f, 100.0f);
-	plx_mat3d_mode(PLX_MAT_MODELVIEW);
+    // Init 3D stuff. mat3d is like KGL.
+    plx_mat3d_init();
+    plx_mat3d_mode(PLX_MAT_PROJECTION);
+    plx_mat3d_identity();
+    plx_mat3d_perspective(45.0f, 640.0f / 480.0f, 0.1f, 100.0f);
+    plx_mat3d_mode(PLX_MAT_MODELVIEW);
 
-	// Until the user hits start...
-	for (done = 0, theta = 0; !done; ) {
-		// Check for start
-		MAPLE_FOREACH_BEGIN(MAPLE_FUNC_CONTROLLER, cont_state_t, st)
-			if (st->buttons & CONT_START)
-				done = 1;
-		MAPLE_FOREACH_END()
+    // Until the user hits start...
+    for(done = 0, theta = 0; !done;) {
+        // Check for start
+        MAPLE_FOREACH_BEGIN(MAPLE_FUNC_CONTROLLER, cont_state_t, st)
 
-		// Setup the frame
-		pvr_wait_ready();
-		pvr_scene_begin();
-		pvr_list_begin(PVR_LIST_OP_POLY);
+        if(st->buttons & CONT_START)
+            done = 1;
 
-		// Submit the context
-		plx_cxt_send(PVR_LIST_OP_POLY);
+        MAPLE_FOREACH_END()
 
-		// Setup some rotations/translations. These are "executed" from
-		// bottom to top. So we rotate the cube in place on all three
-		// axes a bit, then translate it to the left by 10, and rotate
-		// the whole deal (so it zooms around the screen a bit). Finally
-		// we translate the whole mess back by 30 so it's visible.
-		plx_mat3d_identity();
-		plx_mat3d_translate(0.0f, 0.0f, -30.0f);
-		plx_mat3d_rotate(theta*0.3f, 1.0f, 0.0f, 0.0f);
-		plx_mat3d_rotate(theta*1.5f, 0.0f, 1.0f, 0.0f);
-		plx_mat3d_translate(10.0f, 0.0f, 0.0f);
-		plx_mat3d_rotate(theta, 1.0f, 0.0f, 0.0f);
-		plx_mat3d_rotate(theta*0.5f, 0.0f, 0.1f, 0.0f);
-		plx_mat3d_rotate(theta*0.3f, 0.0f, 0.0f, 0.1f);
+        // Setup the frame
+        pvr_wait_ready();
+        pvr_scene_begin();
+        pvr_list_begin(PVR_LIST_OP_POLY);
 
-		// Draw a cube at our current position/rotation. We make a snapshot
-		// of the full translation matrix after projection so that we can
-		// just apply new modelview matrices for the delay cubes.
-		plx_mat_identity();
-		plx_mat3d_apply(PLX_MAT_SCREENVIEW);
-		plx_mat3d_apply(PLX_MAT_PROJECTION);
-		plx_mat3d_apply(PLX_MAT_MODELVIEW);
-		drawcube();
+        // Submit the context
+        plx_cxt_send(PVR_LIST_OP_POLY);
 
-		drawwave(theta);
+        // Setup some rotations/translations. These are "executed" from
+        // bottom to top. So we rotate the cube in place on all three
+        // axes a bit, then translate it to the left by 10, and rotate
+        // the whole deal (so it zooms around the screen a bit). Finally
+        // we translate the whole mess back by 30 so it's visible.
+        plx_mat3d_identity();
+        plx_mat3d_translate(0.0f, 0.0f, -30.0f);
+        plx_mat3d_rotate(theta * 0.3f, 1.0f, 0.0f, 0.0f);
+        plx_mat3d_rotate(theta * 1.5f, 0.0f, 1.0f, 0.0f);
+        plx_mat3d_translate(10.0f, 0.0f, 0.0f);
+        plx_mat3d_rotate(theta, 1.0f, 0.0f, 0.0f);
+        plx_mat3d_rotate(theta * 0.5f, 0.0f, 0.1f, 0.0f);
+        plx_mat3d_rotate(theta * 0.3f, 0.0f, 0.0f, 0.1f);
 
-		pvr_scene_finish();
+        // Draw a cube at our current position/rotation. We make a snapshot
+        // of the full translation matrix after projection so that we can
+        // just apply new modelview matrices for the delay cubes.
+        plx_mat_identity();
+        plx_mat3d_apply(PLX_MAT_SCREENVIEW);
+        plx_mat3d_apply(PLX_MAT_PROJECTION);
+        plx_mat3d_apply(PLX_MAT_MODELVIEW);
+        drawcube();
 
-		// Move our counters
-		theta++;
-	}
+        drawwave(theta);
 
-	// You have to keep a watch on these, especially the vertex used
-	// for really poly intensive effects.
-	pvr_get_stats(&stats);
-	dbglog(DBG_DEBUG, "3D Stats: %ld vblanks, frame rate ~%f fps, max vertex used %d bytes\n",
-		stats.vbl_count, (double)stats.frame_rate, stats.vtx_buffer_used_max);
+        pvr_scene_finish();
 
-	return 0;
+        // Move our counters
+        theta++;
+    }
+
+    // You have to keep a watch on these, especially the vertex used
+    // for really poly intensive effects.
+    pvr_get_stats(&stats);
+    dbglog(DBG_DEBUG, "3D Stats: %ld vblanks, frame rate ~%f fps, max vertex used %d bytes\n",
+           stats.vbl_count, (double)stats.frame_rate, stats.vtx_buffer_used_max);
+
+    return 0;
 }
 
 

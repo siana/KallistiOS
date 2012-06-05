@@ -6,7 +6,6 @@
 
 #include <kos/fs.h>
 
-int chdir(const char *path)
-{
-	return fs_chdir(path);
+int chdir(const char *path) {
+    return fs_chdir(path);
 }

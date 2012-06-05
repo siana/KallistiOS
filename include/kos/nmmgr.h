@@ -50,12 +50,12 @@ typedef LIST_HEAD(nmmgr_list, nmmgr_handler) nmmgr_list_t;
     \headerfile kos/nmmgr.h
 */
 typedef struct nmmgr_handler {
-	char	pathname[MAX_FN_LEN];	/* Path name */
-	int	pid;			/* Process table ID for handler (0 == static) */
-	uint32	version;		/* Version code */
-	uint32	flags;			/* Bitmask of flags */
-	uint32	type;			/* Type of handler */
-	LIST_ENTRY(nmmgr_handler)	list_ent;	/* Linked list entry */
+    char    pathname[MAX_FN_LEN];   /* Path name */
+    int pid;            /* Process table ID for handler (0 == static) */
+    uint32  version;        /* Version code */
+    uint32  flags;          /* Bitmask of flags */
+    uint32  type;           /* Type of handler */
+    LIST_ENTRY(nmmgr_handler)   list_ent;   /* Linked list entry */
 } nmmgr_handler_t;
 
 /* Version codes ('version') have two pieces: a major and minor revision.
@@ -65,7 +65,7 @@ typedef struct nmmgr_handler {
 
 /* Flag bits */
 /** \brief  This structure must be freed when removed. */
-#define NMMGR_FLAGS_NEEDSFREE	0x00000001
+#define NMMGR_FLAGS_NEEDSFREE   0x00000001
 
 /** \defgroup   nmmgr_types     Name handler types
 
@@ -75,17 +75,17 @@ typedef struct nmmgr_handler {
     @{
 */
 /** \brief  Unknown nmmgr type. */
-#define NMMGR_TYPE_UNKNOWN	0x0000		/* ? */
+#define NMMGR_TYPE_UNKNOWN  0x0000      /* ? */
 /** \brief  A mounted filesystem. */
-#define NMMGR_TYPE_VFS		0x0010		/* Mounted file system */
+#define NMMGR_TYPE_VFS      0x0010      /* Mounted file system */
 /** \brief  A block device. */
-#define NMMGR_TYPE_BLOCKDEV	0x0020		/* Block device */
+#define NMMGR_TYPE_BLOCKDEV 0x0020      /* Block device */
 /** \brief  A singleton service (e.g., /dev/irq) */
-#define NMMGR_TYPE_SINGLETON	0x0030		/* Singleton service (e.g., /dev/irq) */
+#define NMMGR_TYPE_SINGLETON    0x0030      /* Singleton service (e.g., /dev/irq) */
 /** \brief  A symbol table. */
-#define NMMGR_TYPE_SYMTAB	0x0040		/* Symbol table */
+#define NMMGR_TYPE_SYMTAB   0x0040      /* Symbol table */
 /** \brief  Everything this and above is a user type. */
-#define NMMGR_SYS_MAX		0x10000		/* Here and above are user types */
+#define NMMGR_SYS_MAX       0x10000     /* Here and above are user types */
 /** @} */
 
 /** \brief  Retrieve a name handler by name.
@@ -113,7 +113,7 @@ nmmgr_list_t * nmmgr_get_list();
     \param  hnd             The handler to add
     \retval 0               On success
 */
-int	nmmgr_handler_add(nmmgr_handler_t *hnd);
+int nmmgr_handler_add(nmmgr_handler_t *hnd);
 
 /** \brief  Remove a name handler.
 
@@ -123,15 +123,15 @@ int	nmmgr_handler_add(nmmgr_handler_t *hnd);
     \retval 0               On success
     \retval -1              If the handler wasn't found
 */
-int	nmmgr_handler_remove(nmmgr_handler_t *hnd);
+int nmmgr_handler_remove(nmmgr_handler_t *hnd);
 
 /** \cond */
 /* Name manager init */
-int	nmmgr_init();
-void 	nmmgr_shutdown();
+int nmmgr_init();
+void    nmmgr_shutdown();
 /** \endcond */
 
 __END_DECLS
 
-#endif	/* __KOS_NMMGR_H */
+#endif  /* __KOS_NMMGR_H */
 

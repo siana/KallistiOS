@@ -36,38 +36,37 @@ assuming you compiled your program with -g:
 */
 
 void func2() {
-	int a = 5;
+    int a = 5;
 
-	assert_msg( a != 5, "This is a test message!" );
-	assert( a != 5 );
+    assert_msg(a != 5, "This is a test message!");
+    assert(a != 5);
 }
 
 void func1() {
-	func2();
+    func2();
 }
 
 void hnd(const char * file, int line, const char * expr,
-	const char * msg, const char * func)
-{
-	printf( "Our assert handler got called!\n"
-		"  file = %s\n"
-		"  line = %d\n"
-		"  expr = %s\n"
-		"  msg = %s\n"
-		"  func = %s\n",
-		file, line, expr, msg, func);
+         const char * msg, const char * func) {
+    printf("Our assert handler got called!\n"
+           "  file = %s\n"
+           "  line = %d\n"
+           "  expr = %s\n"
+           "  msg = %s\n"
+           "  func = %s\n",
+           file, line, expr, msg, func);
 }
 
 int main(int argc, char **argv) {
-	/* Try once with our own handler */
-	assert_handler_t old = assert_set_handler(hnd);
-	func1();
+    /* Try once with our own handler */
+    assert_handler_t old = assert_set_handler(hnd);
+    func1();
 
-	/* Now put back the default */
-	assert_set_handler(old);
-	func1();
+    /* Now put back the default */
+    assert_set_handler(old);
+    func1();
 
-	return 0;
+    return 0;
 }
 
 

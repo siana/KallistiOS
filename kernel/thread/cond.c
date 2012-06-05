@@ -28,139 +28,141 @@ static struct condlist cond_list;
    to the calling process and when that process dies, the condvar
    will also die. */
 condvar_t *cond_create() {
-	condvar_t	*cv;
-	int		old = 0;
+    condvar_t   *cv;
+    int     old = 0;
 
-	/* Create a condvar structure */
-	cv = (condvar_t*)malloc(sizeof(condvar_t));
-	if (!cv) {
-		errno = ENOMEM;
-		return NULL;
-	}
+    /* Create a condvar structure */
+    cv = (condvar_t*)malloc(sizeof(condvar_t));
 
-	/* Add to the global list */
-	old = irq_disable();
-	LIST_INSERT_HEAD(&cond_list, cv, g_list);
-	irq_restore(old);
+    if(!cv) {
+        errno = ENOMEM;
+        return NULL;
+    }
 
-	return cv;
+    /* Add to the global list */
+    old = irq_disable();
+    LIST_INSERT_HEAD(&cond_list, cv, g_list);
+    irq_restore(old);
+
+    return cv;
 }
 
 /* Free a condvar */
 void cond_destroy(condvar_t *cv) {
-	int		old = 0;
+    int     old = 0;
 
-	/* XXX Do something better with queued threads */
-	genwait_wake_all(cv);
+    /* XXX Do something better with queued threads */
+    genwait_wake_all(cv);
 
-	/* Remove it from the global list */
-	old = irq_disable();
-	LIST_REMOVE(cv, g_list);
-	irq_restore(old);
+    /* Remove it from the global list */
+    old = irq_disable();
+    LIST_REMOVE(cv, g_list);
+    irq_restore(old);
 
-	/* Free the memory */
-	free(cv);
+    /* Free the memory */
+    free(cv);
 }
 
 int cond_wait_timed(condvar_t *cv, mutex_t *m, int timeout) {
-	int old, rv;
+    int old, rv;
 
-	if (irq_inside_int()) {
-		dbglog(DBG_WARNING, "cond_wait: called inside interrupt\n");
-		errno = EPERM;
-		return -1;
-	}
+    if(irq_inside_int()) {
+        dbglog(DBG_WARNING, "cond_wait: called inside interrupt\n");
+        errno = EPERM;
+        return -1;
+    }
 
-	old = irq_disable();
+    old = irq_disable();
 
-	/* First of all, release the associated mutex */
-	assert( mutex_is_locked(m) );
-	mutex_unlock(m);
+    /* First of all, release the associated mutex */
+    assert(mutex_is_locked(m));
+    mutex_unlock(m);
 
-	/* Now block us until we're signaled */
-	rv = genwait_wait(cv, timeout ? "cond_wait_timed" : "cond_wait", timeout, NULL);
+    /* Now block us until we're signaled */
+    rv = genwait_wait(cv, timeout ? "cond_wait_timed" : "cond_wait", timeout, NULL);
 
-	/* Re-lock our mutex */
-	if (rv >= 0 || errno == EAGAIN) {
-		mutex_lock(m);
-	}
+    /* Re-lock our mutex */
+    if(rv >= 0 || errno == EAGAIN) {
+        mutex_lock(m);
+    }
 
-	/* Ok, ready to return */
-	irq_restore(old);
+    /* Ok, ready to return */
+    irq_restore(old);
 
-	return rv;
+    return rv;
 }
 
 int cond_wait_timed_recursive(condvar_t *cv, recursive_lock_t *l, int timeout) {
-	int old, rv;
+    int old, rv;
 
-	if (irq_inside_int()) {
-		dbglog(DBG_WARNING, "cond_wait_recursive: called inside interrupt\n");
-		errno = EPERM;
-		return -1;
-	}
+    if(irq_inside_int()) {
+        dbglog(DBG_WARNING, "cond_wait_recursive: called inside interrupt\n");
+        errno = EPERM;
+        return -1;
+    }
 
-	old = irq_disable();
+    old = irq_disable();
 
-	/* First of all, release the associated recursive lock */
-	assert( rlock_is_locked(l) );
-	if (rlock_unlock(l) < 0) {
-		dbglog(DBG_WARNING, "cond_wait_recursive: lock held by other thread\n");
-		return -1;
-	}
+    /* First of all, release the associated recursive lock */
+    assert(rlock_is_locked(l));
 
-	/* Now block us until we're signaled */
-	rv = genwait_wait(cv, timeout ? "cond_wait_timed_recursive" :
-	                  "cond_wait_recursive", timeout, NULL);
+    if(rlock_unlock(l) < 0) {
+        dbglog(DBG_WARNING, "cond_wait_recursive: lock held by other thread\n");
+        return -1;
+    }
 
-	/* Re-lock our recursive lock */
-	if (rv >= 0 || errno == EAGAIN) {
-		rlock_lock(l);
-	}
+    /* Now block us until we're signaled */
+    rv = genwait_wait(cv, timeout ? "cond_wait_timed_recursive" :
+                      "cond_wait_recursive", timeout, NULL);
 
-	/* Ok, ready to return */
-	irq_restore(old);
+    /* Re-lock our recursive lock */
+    if(rv >= 0 || errno == EAGAIN) {
+        rlock_lock(l);
+    }
 
-	return rv;
+    /* Ok, ready to return */
+    irq_restore(old);
+
+    return rv;
 }
 
 int cond_wait(condvar_t *cv, mutex_t *m) {
-	return cond_wait_timed(cv, m, 0);
+    return cond_wait_timed(cv, m, 0);
 }
 
 int cond_wait_recursive(condvar_t *cv, recursive_lock_t *l) {
-	return cond_wait_timed_recursive(cv, l, 0);
+    return cond_wait_timed_recursive(cv, l, 0);
 }
 
 void cond_signal(condvar_t *cv) {
-	int old = 0;
+    int old = 0;
 
-	old = irq_disable();
+    old = irq_disable();
 
-	/* Wake any one thread who's waiting */
-	genwait_wake_one(cv);
+    /* Wake any one thread who's waiting */
+    genwait_wake_one(cv);
 
-	irq_restore(old);
+    irq_restore(old);
 }
 
 void cond_broadcast(condvar_t *cv) {
-	int old = 0;
+    int old = 0;
 
-	old = irq_disable();
+    old = irq_disable();
 
-	/* Wake all threads who are waiting */
-	genwait_wake_all(cv);
+    /* Wake all threads who are waiting */
+    genwait_wake_all(cv);
 
-	irq_restore(old);
+    irq_restore(old);
 }
 
 /* Initialize condvar structures */
 int cond_init() {
-	LIST_INIT(&cond_list);
-	return 0;
+    LIST_INIT(&cond_list);
+    return 0;
 }
 
 /* Shut down condvar structures */
 void cond_shutdown() {
-	/* XXX Destroy all condvars here */
+    /* XXX Destroy all condvars here */
 }

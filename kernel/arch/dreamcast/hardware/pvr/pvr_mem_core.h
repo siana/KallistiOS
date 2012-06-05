@@ -534,7 +534,7 @@ Void_t* memcpy();
 #endif */
 
 #define MALLOC_FAILURE_ACTION \
-	dbglog(DBG_ERROR, "pvr_mem: ERROR -- out of PVR memory; texture heap probably corrupted\n");
+    dbglog(DBG_ERROR, "pvr_mem: ERROR -- out of PVR memory; texture heap probably corrupted\n");
 
 /*
   MORECORE-related declarations. By default, rely on sbrk
@@ -674,8 +674,8 @@ extern Void_t*     sbrk();
   the actual value probably doesn't impact performance.
 */
 
-#define malloc_getpagesize 4096		/* XXX: Should we make this 16384
-					   for cache considerations? */
+#define malloc_getpagesize 4096     /* XXX: Should we make this 16384
+for cache considerations? */
 
 #ifndef malloc_getpagesize
 
@@ -693,7 +693,7 @@ extern Void_t*     sbrk();
 #    define malloc_getpagesize sysconf(_SC_PAGE_SIZE)
 #  else
 #    if defined(BSD) || defined(DGUX) || defined(HAVE_GETPAGESIZE)
-       extern size_t getpagesize();
+extern size_t getpagesize();
 #      define malloc_getpagesize getpagesize()
 #    else
 #      ifdef WIN32 /* use supplied emulation of getpagesize */
@@ -764,16 +764,16 @@ extern Void_t*     sbrk();
 /* SVID2/XPG mallinfo structure */
 
 struct mallinfo {
-  int arena;    /* non-mmapped space allocated from system */
-  int ordblks;  /* number of free chunks */
-  int smblks;   /* number of fastbin blocks */
-  int hblks;    /* number of mmapped regions */
-  int hblkhd;   /* space in mmapped regions */
-  int usmblks;  /* maximum total allocated space */
-  int fsmblks;  /* space available in freed fastbin blocks */
-  int uordblks; /* total allocated space */
-  int fordblks; /* total free space */
-  int keepcost; /* top-most, releasable (via malloc_trim) space */
+    int arena;    /* non-mmapped space allocated from system */
+    int ordblks;  /* number of free chunks */
+    int smblks;   /* number of fastbin blocks */
+    int hblks;    /* number of mmapped regions */
+    int hblkhd;   /* space in mmapped regions */
+    int usmblks;  /* maximum total allocated space */
+    int fsmblks;  /* space available in freed fastbin blocks */
+    int uordblks; /* total allocated space */
+    int fordblks; /* total free space */
+    int keepcost; /* top-most, releasable (via malloc_trim) space */
 };
 
 /*
@@ -1392,6 +1392,6 @@ void     public_pvr_mSTATs();
 
 __END_DECLS
 
-#endif	/* __MALLOC_H */
+#endif  /* __MALLOC_H */
 
 

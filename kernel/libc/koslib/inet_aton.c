@@ -107,7 +107,7 @@ int inet_aton(const char *cp, struct in_addr *pin) {
     }
     else {
         if(parts[0] > 0xFF || parts[1] > 0xFF ||
-           parts[2] > 0xFF || parts[3] > 0xFF)
+                parts[2] > 0xFF || parts[3] > 0xFF)
             return 0;
 
         pin->s_addr = htonl(parts[0] << 24 | parts[1] << 16 |

@@ -31,27 +31,27 @@ typedef volatile int spinlock_t;
    here, but what the heck... ll/sc are pretty ridiculously complicated
    and the manual doesn't say for sure if they prevent interrupts anyway. */
 #define spinlock_lock(A) do { \
-	spinlock_t * __lock = A; \
-  try_again: \
-	irq_disable(); \
-	if (*__lock) { \
-		irq_enable(); \
-		thd_pass(); \
-		goto try_again; \
-	} else { \
-		*__lock = 1; \
-	} \
-} while (0)
+        spinlock_t * __lock = A; \
+    try_again: \
+        irq_disable(); \
+        if (*__lock) { \
+            irq_enable(); \
+            thd_pass(); \
+            goto try_again; \
+        } else { \
+            *__lock = 1; \
+        } \
+    } while (0)
 
 /* Free a lock */
 #define spinlock_unlock(A) do { \
-		*(A) = 0; \
-	} while (0)
+        *(A) = 0; \
+    } while (0)
 
 __END_DECLS
 
 /* Determine if a lock is locked */
 #define spinlock_is_locked(A) ( *(A) != 0 )
 
-#endif	/* __ARCH_SPINLOCK_H */
+#endif  /* __ARCH_SPINLOCK_H */
 

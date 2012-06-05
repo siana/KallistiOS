@@ -139,7 +139,7 @@ struct sockaddr_in6 {
     It functions similarly to INADDR_ANY for IPv4.
 */
 #define IN6ADDR_ANY_INIT {{{ 0, 0, 0, 0, 0, 0, 0, 0, \
-                             0, 0, 0, 0, 0, 0, 0, 0 }}}
+                0, 0, 0, 0, 0, 0, 0, 0 }}}
 
 /** \brief  Initialize an IPv6 loopback address.
 
@@ -147,7 +147,7 @@ struct sockaddr_in6 {
     address.
 */
 #define IN6ADDR_LOOPBACK_INIT {{{ 0, 0, 0, 0, 0, 0, 0, 0, \
-                                  0, 0, 0, 0, 0, 0, 0, 1 }}}
+                0, 0, 0, 0, 0, 0, 0, 1 }}}
 
 /** \brief  IPv6 local host address.
 

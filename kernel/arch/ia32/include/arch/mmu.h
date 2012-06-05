@@ -37,9 +37,9 @@ __BEGIN_DECLS
 
    Virtual addresses are broken up as follows:
 
-   Bits 31 - 22		10 bits top-level page directory
-   Bits 21 - 13		9 bits bottom-level page entry
-   Bits 11 - 0		Byte index into page
+   Bits 31 - 22     10 bits top-level page directory
+   Bits 21 - 13     9 bits bottom-level page entry
+   Bits 11 - 0      Byte index into page
 
    */
 
@@ -55,34 +55,34 @@ __BEGIN_DECLS
 
 /* MMU TLB entry for a single page (one 32-bit word) */
 typedef struct mmupage {
-	/* Explicit pieces, used for reference */
-	/*uint32	virtual; */	/* implicit */
-	uint32		physical:18;	/* Physical page ID	-- 18 bits */
-	uint32		prkey:2;	/* Protection key data	-- 2 bits  */
-	uint32		valid:1;	/* Valid mapping	-- 1 bit   */
-	uint32		shared:1;	/* Shared between procs	-- 1 bit   */
-	uint32		cache:1;	/* Cacheable		-- 1 bit   */
-	uint32		dirty:1;	/* Dirty		-- 1 bit   */
-	uint32		wthru:1;	/* Write-thru enable	-- 1 bit   */
-	uint32		blank:7;	/* Reserved		-- 7 bits */
+    /* Explicit pieces, used for reference */
+    /*uint32    virtual; */ /* implicit */
+    uint32      physical: 18;   /* Physical page ID -- 18 bits */
+    uint32      prkey: 2;   /* Protection key data  -- 2 bits  */
+    uint32      valid: 1;   /* Valid mapping    -- 1 bit   */
+    uint32      shared: 1;  /* Shared between procs -- 1 bit   */
+    uint32      cache: 1;   /* Cacheable        -- 1 bit   */
+    uint32      dirty: 1;   /* Dirty        -- 1 bit   */
+    uint32      wthru: 1;   /* Write-thru enable    -- 1 bit   */
+    uint32      blank: 7;   /* Reserved     -- 7 bits */
 
-	/* Pre-compiled pieces. These waste a bit of ram, but they also
-	   speed loading immensely at runtime. */
-	uint32		pteh, ptel;
+    /* Pre-compiled pieces. These waste a bit of ram, but they also
+       speed loading immensely at runtime. */
+    uint32      pteh, ptel;
 } mmupage_t;
 
 /* MMU sub-context type. We have two-level page tables on
    SH-4, and each sub-context contains 512 entries. */
-#define MMU_SUB_PAGES	512
+#define MMU_SUB_PAGES   512
 typedef struct mmusubcontext {
-	mmupage_t	page[MMU_SUB_PAGES];	/* 512 pages */
+    mmupage_t   page[MMU_SUB_PAGES];    /* 512 pages */
 } mmusubcontext_t;
 
 /* MMU Context type */
-#define MMU_PAGES	1024
+#define MMU_PAGES   1024
 typedef struct mmucontext {
-	mmusubcontext_t	*sub[MMU_PAGES];	/* 1024 sub-contexts */
-	int		asid;			/* Address Space ID */
+    mmusubcontext_t *sub[MMU_PAGES];    /* 1024 sub-contexts */
+    int     asid;           /* Address Space ID */
 } mmucontext_t;
 
 /* "Current" page tables (for TLB exception handling) */
@@ -115,32 +115,32 @@ void mmu_page_invalidate(mmucontext_t *context, int virtpage, int count);
 /* Set the given virtual page to map to the given physical page; implies
    turning on the "valid" bit. Also sets the other named attributes.*/
 void mmu_page_map(mmucontext_t *context, int virtpage, int physpage,
-	int count, int prot, int cache, int share, int dirty);
+                  int count, int prot, int cache, int share, int dirty);
 
 /* Set the page protection to the given values */
-#define MMU_KERNEL_RDONLY	0
-#define MMU_KERNEL_RDWR		1
-#define MMU_ALL_RDONLY		2
-#define MMU_ALL_RDWR		3
+#define MMU_KERNEL_RDONLY   0
+#define MMU_KERNEL_RDWR     1
+#define MMU_ALL_RDONLY      2
+#define MMU_ALL_RDWR        3
 void mmu_page_protect(mmucontext_t *context, int virtpage, int count,
-	int prot);
+                      int prot);
 
 /* Set the cacheing type to the given values */
-#define MMU_NO_CACHE		1
-#define MMU_CACHE_BACK		2	/* Write-back */
-#define MMU_CACHE_WT		3	/* Write-thru */
-#define MMU_CACHEABLE		MMU_CACHE_BACK
+#define MMU_NO_CACHE        1
+#define MMU_CACHE_BACK      2   /* Write-back */
+#define MMU_CACHE_WT        3   /* Write-thru */
+#define MMU_CACHEABLE       MMU_CACHE_BACK
 void mmu_page_cache(mmucontext_t *context, int virtpage, int count, int cache);
 
 /* Set a page as shared or not */
-#define MMU_NOT_SHARED		0
-#define MMU_SHARED		1
+#define MMU_NOT_SHARED      0
+#define MMU_SHARED      1
 void mmu_page_share(mmucontext_t *context, int virtpage, int count, int share);
 
 /* Read the "dirty" bit of the page; potentially reset the bit. */
-#define MMU_NO_CHANGE		0
-#define MMU_CLEAN		1
-#define MMU_DIRTY		2
+#define MMU_NO_CHANGE       0
+#define MMU_CLEAN       1
+#define MMU_DIRTY       2
 int mmu_page_dirty(mmucontext_t *context, int virtpage, int count, int reset);
 
 /* Copy a chunk of data from a process' address space into a
@@ -150,7 +150,7 @@ int mmu_copyin(mmucontext_t *context, uint32 srcaddr, uint32 srccnt, void *buffe
 /* Copy a chunk of data from one process' address space to another
    process' address space, taking into account page mappings. */
 int mmu_copyv(mmucontext_t *context1, iovec_t *iov1, int iovcnt1,
-	mmucontext_t *context2, iovec_t *iov2, int iovcnt2);
+              mmucontext_t *context2, iovec_t *iov2, int iovcnt2);
 
 /* MMU syscalls */
 void sc_mmu_mmap(uint32 dst, size_t len, uint32 src);
@@ -168,5 +168,5 @@ void mmu_shutdown();
 
 __END_DECLS
 
-#endif	/* __ARCH_MMU_H */
+#endif  /* __ARCH_MMU_H */
 

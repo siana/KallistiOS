@@ -9,14 +9,13 @@
 
 /* This variant was added by Dan Potter for its usefulness in
    working with GBA external hardware. */
-void * memcpy2(void *dest, const void *src, size_t count)
-{
-	unsigned short *tmp = (unsigned short *) dest;
-	unsigned short *s = (unsigned short *) src;
-	count = count/2;
+void * memcpy2(void *dest, const void *src, size_t count) {
+    unsigned short *tmp = (unsigned short *) dest;
+    unsigned short *s = (unsigned short *) src;
+    count = count / 2;
 
-	while (count--)
-		*tmp++ = *s++;
+    while(count--)
+        *tmp++ = *s++;
 
-	return dest;
+    return dest;
 }

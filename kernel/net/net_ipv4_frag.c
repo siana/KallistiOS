@@ -55,6 +55,7 @@ static void frag_thd_cb(void *data __attribute__((unused))) {
     /* Look at each fragment item, and see if the timer has expired. If so,
        remvoe it. */
     f = TAILQ_FIRST(&frags);
+
     while(f) {
         n = TAILQ_NEXT(f, listhnd);
 
@@ -94,6 +95,7 @@ static inline void set_bits(uint8 *bitfield, int start, int end) {
     /* Fall back to brute-forcing it for when the two are in the same byte. */
     else {
         --end;
+
         while(end >= start) {
             bitfield[end >> 3] |= (1 << (end & 0x07));
             --end;
@@ -162,7 +164,7 @@ static int frag_import(netif_t *src, ip_hdr_t *hdr, const uint8 *data,
     /* If the total length is not zero, and all the bits in the bitfield are
        set, we continue on. */
     if(frag->total_length &&
-       all_bits_set(frag->bitfield, frag->total_length >> 3)) {
+            all_bits_set(frag->bitfield, frag->total_length >> 3)) {
         /* Set the right length. Don't worry about updating the checksum, since
            net_ipv4_input_proto doesn't check it anyway. */
         frag->hdr.length = htons(frag->total_length +
@@ -264,7 +266,7 @@ int net_ipv4_reassemble(netif_t *src, ip_hdr_t *hdr, const uint8 *data,
     /* Find the packet if we already have this one in our data buffer. */
     TAILQ_FOREACH(f, &frags, listhnd) {
         if(f->src == hdr->src && f->dst == hdr->dest &&
-           f->ident == hdr->packet_id && f->proto == hdr->protocol) {
+                f->ident == hdr->packet_id && f->proto == hdr->protocol) {
             /* We've got it, import the data (this function handles unlocking
                the mutex when its done). */
             return frag_import(src, hdr, data, size, flags, f);
@@ -311,6 +313,7 @@ void net_ipv4_frag_shutdown() {
             net_thd_del_callback(cbid);
 
         c = TAILQ_FIRST(&frags);
+
         while(c) {
             n = TAILQ_NEXT(c, listhnd);
             free(c->data);

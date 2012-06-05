@@ -22,32 +22,32 @@
 
 /* Check GCC version */
 #ifndef _arch_ps2
-#	if __GNUC__ < 2
-#		warning Your GCC is too old. This will probably not work right.
-#	endif
+#   if __GNUC__ < 2
+#       warning Your GCC is too old. This will probably not work right.
+#   endif
 
-#	if __GNUC__ == 2 && __GNUC_MINOR__ < 97
-#		warning Your GCC is too old. This will probably not work right.
-#	endif
-#endif	/* _arch_ps2 */
+#   if __GNUC__ == 2 && __GNUC_MINOR__ < 97
+#       warning Your GCC is too old. This will probably not work right.
+#   endif
+#endif  /* _arch_ps2 */
 
 /* Special function/variable attributes */
 
 /** \brief  Identify a function that will never return. */
-#define __noreturn	__attribute__((__noreturn__))
+#define __noreturn  __attribute__((__noreturn__))
 
 /** \brief  Identify a function that has no side effects other than its return,
             and only uses its arguments for any work. */
-#define __pure		__attribute__((__const__))
+#define __pure      __attribute__((__const__))
 
 /** \brief  Identify a function or variable that may be unused. */
-#define __unused	__attribute__((__unused__))
+#define __unused    __attribute__((__unused__))
 
 /** \brief  Alias for \ref __noreturn. For BSD compatibility. */
-#define __dead2		__noreturn	/* BSD compat */
+#define __dead2     __noreturn  /* BSD compat */
 
 /** \brief  Alias for \ref __pure. Fore BSD compatibility. */
-#define __pure2		__pure		/* ditto */
+#define __pure2     __pure      /* ditto */
 
 /* Printf/Scanf-like declaration */
 /** \brief  Identify a function as accepting formatting like printf().
@@ -59,7 +59,7 @@
     \param  firstvararg     The argument number of the first vararg (the ...).
 */
 #define __printflike(fmtarg, firstvararg) \
-	__attribute__((__format__ (__printf__, fmtarg, firstvararg)))
+    __attribute__((__format__ (__printf__, fmtarg, firstvararg)))
 
 /** \brief  Identify a function as accepting formatting like scanf().
 
@@ -70,11 +70,11 @@
     \param  firstvararg     The argument number of the first vararg (the ...).
 */
 #define __scanflike(fmtarg, firstvararg) \
-	__attribute__((__format__ (__scanf__, fmtarg, firstvararg)))
+    __attribute__((__format__ (__scanf__, fmtarg, firstvararg)))
 
 /* GCC macros for special cases */
 /* #if __GNUC__ ==  */
 
-#endif	/* __KOS_CDEFS_H */
+#endif  /* __KOS_CDEFS_H */
 
 

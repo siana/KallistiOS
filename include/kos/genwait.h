@@ -108,5 +108,5 @@ void genwait_shutdown();
 
 __END_DECLS
 
-#endif	/* __KOS_GENWAIT_H */
+#endif  /* __KOS_GENWAIT_H */
 

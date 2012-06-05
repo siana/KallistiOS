@@ -9,5 +9,5 @@
 #include <sys/reent.h>
 
 int _getpid_r(struct _reent * re) {
-	return thd_current->tid;
+    return thd_current->tid;
 }

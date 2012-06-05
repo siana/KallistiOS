@@ -44,36 +44,36 @@ __BEGIN_DECLS
 
 /** \brief  Pause after setting UBC parameters. */
 static inline void ubc_pause() {
-	__asm__ __volatile__("nop\n"
-	    "nop\n"
-	    "nop\n"
-	    "nop\n"
-	    "nop\n"
-	    "nop\n"
-	    "nop\n"
-	    "nop\n"
-	    "nop\n"
-	    "nop\n"
-	    "nop\n");
+    __asm__ __volatile__("nop\n"
+                         "nop\n"
+                         "nop\n"
+                         "nop\n"
+                         "nop\n"
+                         "nop\n"
+                         "nop\n"
+                         "nop\n"
+                         "nop\n"
+                         "nop\n"
+                         "nop\n");
 }
 
 /** \brief Disable all UBC breakpoints. */
 static inline void ubc_disable_all() {
-	BBRA = 0;
-	BBRB = 0;
-	ubc_pause();
+    BBRA = 0;
+    BBRB = 0;
+    ubc_pause();
 }
 
 /** \brief  Set a UBC data-write breakpoint at the given address.
     \param  address         The address to set the breakpoint at
 */
 static inline void ubc_break_data_write(uint32 address) {
-	BASRA = 0;		/* ASID = 0 */
-	BARA = address;		/* Break address */
-	BAMRA = 4;		/* Mask the ASID */
-	BRCR = 0;		/* Nothing special, clear all flags */
-	BBRA = 0x28;		/* Operand write cycle, no size constraint */
-	ubc_pause();
+    BASRA = 0;      /* ASID = 0 */
+    BARA = address;     /* Break address */
+    BAMRA = 4;      /* Mask the ASID */
+    BRCR = 0;       /* Nothing special, clear all flags */
+    BBRA = 0x28;        /* Operand write cycle, no size constraint */
+    ubc_pause();
 }
 
 /** \brief  Set a UBC instruction access breakpoint at the given address.
@@ -100,5 +100,5 @@ static inline void ubc_break_inst(uint32 address, int use_dbr) {
 
 __END_DECLS
 
-#endif	/* __DC_UBC_H */
+#endif  /* __DC_UBC_H */
 

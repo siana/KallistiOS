@@ -19,4 +19,4 @@
 #define MAX_FN_LEN  256     /**< \brief Max filename length */
 #define PATH_MAX    4095    /**< \brief Max path length */
 
-#endif	/* __KOS_LIMITS_H */
+#endif  /* __KOS_LIMITS_H */

@@ -212,7 +212,7 @@ typedef struct {
                                      \see   pvr_blend_switch */
         int     dst_enable;     /**< \brief Dest blending enable outside modifier
                                      \see   pvr_blend_switch */
-	} blend;
+    } blend;
     struct {
         int     comparison;     /**< \brief Depth comparison mode
                                      \see pvr_depth_modes */
@@ -295,9 +295,9 @@ typedef struct {
     @{
 */
 #define PVR_CULLING_NONE        0   /**< \brief Disable culling */
-#define PVR_CULLING_SMALL		1   /**< \brief Cull if small */
-#define PVR_CULLING_CCW			2   /**< \brief Cull if counterclockwise */
-#define PVR_CULLING_CW			3   /**< \brief Cull if clockwise */
+#define PVR_CULLING_SMALL       1   /**< \brief Cull if small */
+#define PVR_CULLING_CCW         2   /**< \brief Cull if counterclockwise */
+#define PVR_CULLING_CW          3   /**< \brief Cull if clockwise */
 /** @} */
 
 /** \defgroup pvr_depth_switch      Enable or disable PVR depth writes
@@ -426,31 +426,31 @@ typedef struct {
 /** \defgroup pvr_mip_bias          PVR mipmap bias modes
     @{
 */
-#define PVR_MIPBIAS_NORMAL		PVR_MIPBIAS_1_00	/* txr_mipmap_bias */
-#define PVR_MIPBIAS_0_25		1
-#define PVR_MIPBIAS_0_50		2
-#define PVR_MIPBIAS_0_75		3
-#define PVR_MIPBIAS_1_00		4
-#define PVR_MIPBIAS_1_25		5
-#define PVR_MIPBIAS_1_50		6
-#define PVR_MIPBIAS_1_75		7
-#define PVR_MIPBIAS_2_00		8
-#define PVR_MIPBIAS_2_25		9
-#define PVR_MIPBIAS_2_50		10
-#define PVR_MIPBIAS_2_75		11
-#define PVR_MIPBIAS_3_00		12
-#define PVR_MIPBIAS_3_25		13
-#define PVR_MIPBIAS_3_50		14
-#define PVR_MIPBIAS_3_75		15
+#define PVR_MIPBIAS_NORMAL      PVR_MIPBIAS_1_00    /* txr_mipmap_bias */
+#define PVR_MIPBIAS_0_25        1
+#define PVR_MIPBIAS_0_50        2
+#define PVR_MIPBIAS_0_75        3
+#define PVR_MIPBIAS_1_00        4
+#define PVR_MIPBIAS_1_25        5
+#define PVR_MIPBIAS_1_50        6
+#define PVR_MIPBIAS_1_75        7
+#define PVR_MIPBIAS_2_00        8
+#define PVR_MIPBIAS_2_25        9
+#define PVR_MIPBIAS_2_50        10
+#define PVR_MIPBIAS_2_75        11
+#define PVR_MIPBIAS_3_00        12
+#define PVR_MIPBIAS_3_25        13
+#define PVR_MIPBIAS_3_50        14
+#define PVR_MIPBIAS_3_75        15
 /** @} */
 
 /** \defgroup pvr_txrenv_modes      Texture color calculation modes
     @{
 */
-#define PVR_TXRENV_REPLACE          0	/**< \brief C = Ct, A = At */
-#define PVR_TXRENV_MODULATE         1	/**< \brief  C = Cs * Ct, A = At */
-#define PVR_TXRENV_DECAL            2	/**< \brief C = (Cs * At) + (Cs * (1-At)), A = As */
-#define PVR_TXRENV_MODULATEALPHA    3	/**< \brief C = Cs * Ct, A = As * At */
+#define PVR_TXRENV_REPLACE          0   /**< \brief C = Ct, A = At */
+#define PVR_TXRENV_MODULATE         1   /**< \brief  C = Cs * Ct, A = At */
+#define PVR_TXRENV_DECAL            2   /**< \brief C = (Cs * At) + (Cs * (1-At)), A = As */
+#define PVR_TXRENV_MODULATEALPHA    3   /**< \brief C = Cs * Ct, A = As * At */
 /** @} */
 
 /** \defgroup pvr_mip_switch        Enable or disable PVR mipmap processing
@@ -503,7 +503,7 @@ typedef struct {
 #define PVR_CLRFMT_ARGBPACKED       0   /**< \brief 32-bit integer ARGB */
 #define PVR_CLRFMT_4FLOATS          1   /**< \brief 4 floating point values */
 #define PVR_CLRFMT_INTENSITY        2   /**< \brief Intensity color */
-#define PVR_CLRFMT_INTENSITY_PREV	3   /**< \brief Use last intensity */
+#define PVR_CLRFMT_INTENSITY_PREV   3   /**< \brief Use last intensity */
 /** @} */
 
 /** \defgroup pvr_uv_fmts           PVR U/V data format control
@@ -520,8 +520,8 @@ typedef struct {
 #define PVR_MODIFIER_ENABLE     1   /**< \brief Enable modifier effects */
 /** @} */
 
-#define PVR_MODIFIER_CHEAP_SHADOW	0
-#define PVR_MODIFIER_NORMAL		1
+#define PVR_MODIFIER_CHEAP_SHADOW   0
+#define PVR_MODIFIER_NORMAL     1
 
 /** \defgroup pvr_mod_modes         Modifier volume mode parameters
 
@@ -533,7 +533,7 @@ typedef struct {
 */
 #define PVR_MODIFIER_OTHER_POLY         0   /**< \brief Not the last polygon in the volume */
 #define PVR_MODIFIER_INCLUDE_LAST_POLY  1   /**< \brief Last polygon, inclusion volume */
-#define PVR_MODIFIER_EXCLUDE_LAST_POLY  2	/**< \brief Last polygon, exclusion volume */
+#define PVR_MODIFIER_EXCLUDE_LAST_POLY  2   /**< \brief Last polygon, exclusion volume */
 /** @} */
 
 
@@ -716,10 +716,10 @@ typedef struct {
     float   cz;                 /**< \brief Third Z coordinate */
     float   dx;                 /**< \brief Fourth X coordinate */
     float   dy;                 /**< \brief Fourth Y coordinate */
-	uint32 dummy;               /**< \brief Dummy value */
-	uint32 auv;                 /**< \brief First U/V texture coordinates */
-	uint32 buv;                 /**< \brief Second U/V texture coordinates */
-	uint32 cuv;                 /**< \brief Third U/V texture coordinates */
+    uint32 dummy;               /**< \brief Dummy value */
+    uint32 auv;                 /**< \brief First U/V texture coordinates */
+    uint32 buv;                 /**< \brief Second U/V texture coordinates */
+    uint32 cuv;                 /**< \brief Third U/V texture coordinates */
 } pvr_sprite_txr_t;
 
 /** \brief  PVR vertex type: Untextured sprite.
@@ -781,10 +781,10 @@ typedef struct {
     \return                 The packed color value
 */
 #define PVR_PACK_COLOR(a, r, g, b) ( \
-	( ((uint8)( a * 255 ) ) << 24 ) | \
-	( ((uint8)( r * 255 ) ) << 16 ) | \
-	( ((uint8)( g * 255 ) ) << 8 ) | \
-	( ((uint8)( b * 255 ) ) << 0 ) )
+                                     ( ((uint8)( a * 255 ) ) << 24 ) | \
+                                     ( ((uint8)( r * 255 ) ) << 16 ) | \
+                                     ( ((uint8)( g * 255 ) ) << 8 ) | \
+                                     ( ((uint8)( b * 255 ) ) << 0 ) )
 
 /** \brief  Pack two floating point coordinates into one 32-bit value,
             truncating them to 16-bits each.
@@ -794,8 +794,8 @@ typedef struct {
     \return                 The packed coordinates
 */
 static inline uint32 PVR_PACK_16BIT_UV(float u, float v) {
-	return ( ((*((uint32 *) &u)) >> 0  ) & 0xFFFF0000 ) |
-	       ( ((*((uint32 *) &v)) >> 16 ) & 0x0000FFFF );
+    return (((*((uint32 *) &u)) >> 0) & 0xFFFF0000) |
+           (((*((uint32 *) &v)) >> 16) & 0x0000FFFF);
 }
 
 /* ... other vertex structs omitted for now ... */
@@ -807,8 +807,8 @@ static inline uint32 PVR_PACK_16BIT_UV(float u, float v) {
 
     @{
 */
-#define PVR_CMD_POLYHDR     0x80840000	/**< \brief PVR polygon header.
-                                             Striplength set to 2 */
+#define PVR_CMD_POLYHDR     0x80840000  /**< \brief PVR polygon header.
+Striplength set to 2 */
 #define PVR_CMD_VERTEX      0xe0000000  /**< \brief PVR vertex data */
 #define PVR_CMD_VERTEX_EOL  0xf0000000  /**< \brief PVR vertex, end of strip */
 #define PVR_CMD_USERCLIP    0x20000000  /**< \brief PVR user clipping area */
@@ -824,92 +824,92 @@ static inline uint32 PVR_PACK_16BIT_UV(float u, float v) {
 
     @{
 */
-#define PVR_TA_CMD_TYPE_SHIFT		24
-#define PVR_TA_CMD_TYPE_MASK		(7 << PVR_TA_CMD_TYPE_SHIFT)
+#define PVR_TA_CMD_TYPE_SHIFT       24
+#define PVR_TA_CMD_TYPE_MASK        (7 << PVR_TA_CMD_TYPE_SHIFT)
 
-#define PVR_TA_CMD_USERCLIP_SHIFT	16
-#define PVR_TA_CMD_USERCLIP_MASK	(3 << PVR_TA_CMD_USERCLIP_SHIFT)
+#define PVR_TA_CMD_USERCLIP_SHIFT   16
+#define PVR_TA_CMD_USERCLIP_MASK    (3 << PVR_TA_CMD_USERCLIP_SHIFT)
 
-#define PVR_TA_CMD_CLRFMT_SHIFT		4
-#define PVR_TA_CMD_CLRFMT_MASK		(7 << PVR_TA_CMD_CLRFMT_SHIFT)
+#define PVR_TA_CMD_CLRFMT_SHIFT     4
+#define PVR_TA_CMD_CLRFMT_MASK      (7 << PVR_TA_CMD_CLRFMT_SHIFT)
 
-#define PVR_TA_CMD_SHADE_SHIFT		1
-#define PVR_TA_CMD_SHADE_MASK		(1 << PVR_TA_CMD_SHADE_SHIFT)
+#define PVR_TA_CMD_SHADE_SHIFT      1
+#define PVR_TA_CMD_SHADE_MASK       (1 << PVR_TA_CMD_SHADE_SHIFT)
 
-#define PVR_TA_CMD_UVFMT_SHIFT		0
-#define PVR_TA_CMD_UVFMT_MASK		(1 << PVR_TA_CMD_UVFMT_SHIFT)
+#define PVR_TA_CMD_UVFMT_SHIFT      0
+#define PVR_TA_CMD_UVFMT_MASK       (1 << PVR_TA_CMD_UVFMT_SHIFT)
 
-#define PVR_TA_CMD_MODIFIER_SHIFT	7
-#define PVR_TA_CMD_MODIFIER_MASK	(1 <<  PVR_TA_CMD_MODIFIER_SHIFT)
+#define PVR_TA_CMD_MODIFIER_SHIFT   7
+#define PVR_TA_CMD_MODIFIER_MASK    (1 <<  PVR_TA_CMD_MODIFIER_SHIFT)
 
-#define PVR_TA_CMD_MODIFIERMODE_SHIFT	6
-#define PVR_TA_CMD_MODIFIERMODE_MASK	(1 <<  PVR_TA_CMD_MODIFIERMODE_SHIFT)
+#define PVR_TA_CMD_MODIFIERMODE_SHIFT   6
+#define PVR_TA_CMD_MODIFIERMODE_MASK    (1 <<  PVR_TA_CMD_MODIFIERMODE_SHIFT)
 
-#define PVR_TA_PM1_DEPTHCMP_SHIFT	29
-#define PVR_TA_PM1_DEPTHCMP_MASK	(7 << PVR_TA_PM1_DEPTHCMP_SHIFT)
+#define PVR_TA_PM1_DEPTHCMP_SHIFT   29
+#define PVR_TA_PM1_DEPTHCMP_MASK    (7 << PVR_TA_PM1_DEPTHCMP_SHIFT)
 
-#define PVR_TA_PM1_CULLING_SHIFT	27
-#define PVR_TA_PM1_CULLING_MASK		(3 << PVR_TA_PM1_CULLING_SHIFT)
+#define PVR_TA_PM1_CULLING_SHIFT    27
+#define PVR_TA_PM1_CULLING_MASK     (3 << PVR_TA_PM1_CULLING_SHIFT)
 
-#define PVR_TA_PM1_DEPTHWRITE_SHIFT	26
-#define PVR_TA_PM1_DEPTHWRITE_MASK	(1 << PVR_TA_PM1_DEPTHWRITE_SHIFT)
+#define PVR_TA_PM1_DEPTHWRITE_SHIFT 26
+#define PVR_TA_PM1_DEPTHWRITE_MASK  (1 << PVR_TA_PM1_DEPTHWRITE_SHIFT)
 
-#define PVR_TA_PM1_TXRENABLE_SHIFT	25
-#define PVR_TA_PM1_TXRENABLE_MASK	(1 << PVR_TA_PM1_TXRENABLE_SHIFT)
+#define PVR_TA_PM1_TXRENABLE_SHIFT  25
+#define PVR_TA_PM1_TXRENABLE_MASK   (1 << PVR_TA_PM1_TXRENABLE_SHIFT)
 
-#define PVR_TA_PM1_MODIFIERINST_SHIFT	29
-#define PVR_TA_PM1_MODIFIERINST_MASK	(3 <<  PVR_TA_PM1_MODIFIERINST_SHIFT)
+#define PVR_TA_PM1_MODIFIERINST_SHIFT   29
+#define PVR_TA_PM1_MODIFIERINST_MASK    (3 <<  PVR_TA_PM1_MODIFIERINST_SHIFT)
 
-#define PVR_TA_PM2_SRCBLEND_SHIFT	29
-#define PVR_TA_PM2_SRCBLEND_MASK	(7 << PVR_TA_PM2_SRCBLEND_SHIFT)
+#define PVR_TA_PM2_SRCBLEND_SHIFT   29
+#define PVR_TA_PM2_SRCBLEND_MASK    (7 << PVR_TA_PM2_SRCBLEND_SHIFT)
 
-#define PVR_TA_PM2_DSTBLEND_SHIFT	26
-#define PVR_TA_PM2_DSTBLEND_MASK	(7 << PVR_TA_PM2_DSTBLEND_SHIFT)
+#define PVR_TA_PM2_DSTBLEND_SHIFT   26
+#define PVR_TA_PM2_DSTBLEND_MASK    (7 << PVR_TA_PM2_DSTBLEND_SHIFT)
 
-#define PVR_TA_PM2_SRCENABLE_SHIFT	25
-#define PVR_TA_PM2_SRCENABLE_MASK	(1 << PVR_TA_PM2_SRCENABLE_SHIFT)
+#define PVR_TA_PM2_SRCENABLE_SHIFT  25
+#define PVR_TA_PM2_SRCENABLE_MASK   (1 << PVR_TA_PM2_SRCENABLE_SHIFT)
 
-#define PVR_TA_PM2_DSTENABLE_SHIFT	24
-#define PVR_TA_PM2_DSTENABLE_MASK	(1 << PVR_TA_PM2_DSTENABLE_SHIFT)
+#define PVR_TA_PM2_DSTENABLE_SHIFT  24
+#define PVR_TA_PM2_DSTENABLE_MASK   (1 << PVR_TA_PM2_DSTENABLE_SHIFT)
 
-#define PVR_TA_PM2_FOG_SHIFT		22
-#define PVR_TA_PM2_FOG_MASK		(3 << PVR_TA_PM2_FOG_SHIFT)
+#define PVR_TA_PM2_FOG_SHIFT        22
+#define PVR_TA_PM2_FOG_MASK     (3 << PVR_TA_PM2_FOG_SHIFT)
 
-#define PVR_TA_PM2_CLAMP_SHIFT		21
-#define PVR_TA_PM2_CLAMP_MASK		(1 << PVR_TA_PM2_CLAMP_SHIFT)
+#define PVR_TA_PM2_CLAMP_SHIFT      21
+#define PVR_TA_PM2_CLAMP_MASK       (1 << PVR_TA_PM2_CLAMP_SHIFT)
 
-#define PVR_TA_PM2_ALPHA_SHIFT		20
-#define PVR_TA_PM2_ALPHA_MASK		(1 << PVR_TA_PM2_ALPHA_SHIFT)
+#define PVR_TA_PM2_ALPHA_SHIFT      20
+#define PVR_TA_PM2_ALPHA_MASK       (1 << PVR_TA_PM2_ALPHA_SHIFT)
 
-#define PVR_TA_PM2_TXRALPHA_SHIFT	19
-#define PVR_TA_PM2_TXRALPHA_MASK	(1 << PVR_TA_PM2_TXRALPHA_SHIFT)
+#define PVR_TA_PM2_TXRALPHA_SHIFT   19
+#define PVR_TA_PM2_TXRALPHA_MASK    (1 << PVR_TA_PM2_TXRALPHA_SHIFT)
 
-#define PVR_TA_PM2_UVFLIP_SHIFT		17
-#define PVR_TA_PM2_UVFLIP_MASK		(3 << PVR_TA_PM2_UVFLIP_SHIFT)
+#define PVR_TA_PM2_UVFLIP_SHIFT     17
+#define PVR_TA_PM2_UVFLIP_MASK      (3 << PVR_TA_PM2_UVFLIP_SHIFT)
 
-#define PVR_TA_PM2_UVCLAMP_SHIFT	15
-#define PVR_TA_PM2_UVCLAMP_MASK		(3 << PVR_TA_PM2_UVCLAMP_SHIFT)
+#define PVR_TA_PM2_UVCLAMP_SHIFT    15
+#define PVR_TA_PM2_UVCLAMP_MASK     (3 << PVR_TA_PM2_UVCLAMP_SHIFT)
 
-#define PVR_TA_PM2_FILTER_SHIFT		12
-#define PVR_TA_PM2_FILTER_MASK		(7 << PVR_TA_PM2_FILTER_SHIFT)
+#define PVR_TA_PM2_FILTER_SHIFT     12
+#define PVR_TA_PM2_FILTER_MASK      (7 << PVR_TA_PM2_FILTER_SHIFT)
 
-#define PVR_TA_PM2_MIPBIAS_SHIFT	8
-#define PVR_TA_PM2_MIPBIAS_MASK		(15 << PVR_TA_PM2_MIPBIAS_SHIFT)
+#define PVR_TA_PM2_MIPBIAS_SHIFT    8
+#define PVR_TA_PM2_MIPBIAS_MASK     (15 << PVR_TA_PM2_MIPBIAS_SHIFT)
 
-#define PVR_TA_PM2_TXRENV_SHIFT		6
-#define PVR_TA_PM2_TXRENV_MASK		(3 << PVR_TA_PM2_TXRENV_SHIFT)
+#define PVR_TA_PM2_TXRENV_SHIFT     6
+#define PVR_TA_PM2_TXRENV_MASK      (3 << PVR_TA_PM2_TXRENV_SHIFT)
 
-#define PVR_TA_PM2_USIZE_SHIFT		3
-#define PVR_TA_PM2_USIZE_MASK		(7 << PVR_TA_PM2_USIZE_SHIFT)
+#define PVR_TA_PM2_USIZE_SHIFT      3
+#define PVR_TA_PM2_USIZE_MASK       (7 << PVR_TA_PM2_USIZE_SHIFT)
 
-#define PVR_TA_PM2_VSIZE_SHIFT		0
-#define PVR_TA_PM2_VSIZE_MASK		(7 << PVR_TA_PM2_VSIZE_SHIFT)
+#define PVR_TA_PM2_VSIZE_SHIFT      0
+#define PVR_TA_PM2_VSIZE_MASK       (7 << PVR_TA_PM2_VSIZE_SHIFT)
 
-#define PVR_TA_PM3_MIPMAP_SHIFT		31
-#define PVR_TA_PM3_MIPMAP_MASK		(1 << PVR_TA_PM3_MIPMAP_SHIFT)
+#define PVR_TA_PM3_MIPMAP_SHIFT     31
+#define PVR_TA_PM3_MIPMAP_MASK      (1 << PVR_TA_PM3_MIPMAP_SHIFT)
 
-#define PVR_TA_PM3_TXRFMT_SHIFT		0
-#define PVR_TA_PM3_TXRFMT_MASK		0xffffffff
+#define PVR_TA_PM3_TXRFMT_SHIFT     0
+#define PVR_TA_PM3_TXRFMT_MASK      0xffffffff
 /** @} */
 
 /**** Register macros ***************************************************/
@@ -1020,9 +1020,9 @@ static inline uint32 PVR_PACK_16BIT_UV(float u, float v) {
 #define PVR_RESET_ISPTSP    0x00000002  /**< \brief Reset only the ISP/TSP */
 /** @} */
 
-#define PVR_ISP_START_GO	0xffffffff	/**< \brief Write to the PVR_ISP_START register to start rendering */
+#define PVR_ISP_START_GO    0xffffffff  /**< \brief Write to the PVR_ISP_START register to start rendering */
 
-#define PVR_TA_INIT_GO		0x80000000	/**< \brief Write to the PVR_TA_INIT register to confirm settings */
+#define PVR_TA_INIT_GO      0x80000000  /**< \brief Write to the PVR_TA_INIT register to confirm settings */
 
 
 /* Initialization ****************************************************/
@@ -1219,7 +1219,7 @@ void pvr_set_pal_format(int fmt);
     \param  value           The color value to set in that palette entry
 */
 static inline void pvr_set_pal_entry(uint32 idx, uint32 value) {
-	PVR_SET(PVR_PALETTE_TABLE_BASE + 4*idx, value);
+    PVR_SET(PVR_PALETTE_TABLE_BASE + 4 * idx, value);
 }
 
 
@@ -1520,10 +1520,10 @@ typedef uint32 pvr_dr_state_t;
     \param  vtx_buf_ptr     A variable of type pvr_dr_state_t to init.
 */
 #define pvr_dr_init(vtx_buf_ptr) do { \
-	(vtx_buf_ptr) = 0; \
-	QACR0 = ((((uint32)PVR_TA_INPUT) >> 26) << 2) & 0x1c; \
-	QACR1 = ((((uint32)PVR_TA_INPUT) >> 26) << 2) & 0x1c; \
-} while (0)
+        (vtx_buf_ptr) = 0; \
+        QACR0 = ((((uint32)PVR_TA_INPUT) >> 26) << 2) & 0x1c; \
+        QACR1 = ((((uint32)PVR_TA_INPUT) >> 26) << 2) & 0x1c; \
+    } while (0)
 
 /** \brief  Obtain the target address for Direct Rendering.
 
@@ -1535,9 +1535,9 @@ typedef uint32 pvr_dr_state_t;
                             TA in DR mode.
 */
 #define pvr_dr_target(vtx_buf_ptr) \
-	({ (vtx_buf_ptr) ^= 32; \
-	   (pvr_vertex_t *)(0xe0000000 | (vtx_buf_ptr)); \
-	})
+    ({ (vtx_buf_ptr) ^= 32; \
+        (pvr_vertex_t *)(0xe0000000 | (vtx_buf_ptr)); \
+    })
 
 /** \brief  Commit a primitive written into the Direct Rendering target address.
 
@@ -1649,8 +1649,8 @@ void pvr_poly_cxt_col(pvr_poly_cxt_t *dst, pvr_list_t list);
     \see    pvr_filter_modes
 */
 void pvr_poly_cxt_txr(pvr_poly_cxt_t *dst, pvr_list_t list,
-	int textureformat, int tw, int th, pvr_ptr_t textureaddr,
-	int filtering);
+                      int textureformat, int tw, int th, pvr_ptr_t textureaddr,
+                      int filtering);
 
 /** \brief  Compile a sprite context into a sprite header.
 
@@ -1661,7 +1661,7 @@ void pvr_poly_cxt_txr(pvr_poly_cxt_t *dst, pvr_list_t list,
     \param  src             The context to compile.
 */
 void pvr_sprite_compile(pvr_sprite_hdr_t *dst,
-	pvr_sprite_cxt_t *src);
+                        pvr_sprite_cxt_t *src);
 
 /** \brief  Fill in a sprite context for non-textured sprites.
 
@@ -1690,8 +1690,8 @@ void pvr_sprite_cxt_col(pvr_sprite_cxt_t *dst, pvr_list_t list);
     \see    pvr_filter_modes
 */
 void pvr_sprite_cxt_txr(pvr_sprite_cxt_t *dst, pvr_list_t list,
-	int textureformat, int tw, int th, pvr_ptr_t textureaddr,
-	int filtering);
+                        int textureformat, int tw, int th, pvr_ptr_t textureaddr,
+                        int filtering);
 
 /** \brief  Create a modifier volume header.
 
@@ -1792,14 +1792,14 @@ void pvr_txr_load(void * src, pvr_ptr_t dst, uint32 count);
 #define PVR_TXRLOAD_16BPP           0x03    /**< \brief 16BPP format */
 #define PVR_TXRLOAD_FMT_MASK        0x0f    /**< \brief Bits used for basic formats */
 
-#define PVR_TXRLOAD_VQ_LOAD         0x10	/**< \brief Do VQ encoding (not supported yet, if ever) */
-#define PVR_TXRLOAD_INVERT_Y        0x20	/**< \brief Invert the Y axis while loading */
-#define PVR_TXRLOAD_FMT_VQ          0x40	/**< \brief Texture is already VQ encoded */
-#define PVR_TXRLOAD_FMT_TWIDDLED    0x80	/**< \brief Texture is already twiddled */
-#define PVR_TXRLOAD_FMT_NOTWIDDLE   0x80	/**< \brief Don't twiddle the texture while loading */
-#define PVR_TXRLOAD_DMA             0x8000	/**< \brief Use DMA to load the texture */
-#define PVR_TXRLOAD_NONBLOCK        0x4000	/**< \brief Use non-blocking loads (only for DMA) */
-#define PVR_TXRLOAD_SQ              0x2000	/**< \brief Use store queues to load */
+#define PVR_TXRLOAD_VQ_LOAD         0x10    /**< \brief Do VQ encoding (not supported yet, if ever) */
+#define PVR_TXRLOAD_INVERT_Y        0x20    /**< \brief Invert the Y axis while loading */
+#define PVR_TXRLOAD_FMT_VQ          0x40    /**< \brief Texture is already VQ encoded */
+#define PVR_TXRLOAD_FMT_TWIDDLED    0x80    /**< \brief Texture is already twiddled */
+#define PVR_TXRLOAD_FMT_NOTWIDDLE   0x80    /**< \brief Don't twiddle the texture while loading */
+#define PVR_TXRLOAD_DMA             0x8000  /**< \brief Use DMA to load the texture */
+#define PVR_TXRLOAD_NONBLOCK        0x4000  /**< \brief Use non-blocking loads (only for DMA) */
+#define PVR_TXRLOAD_SQ              0x2000  /**< \brief Use store queues to load */
 /** @} */
 
 /** \brief  Load texture data from an SH-4 buffer into PVR RAM, twiddling it in
@@ -1883,7 +1883,7 @@ typedef void (*pvr_dma_callback_t)(ptr_t data);
     \see    pvr_dma_modes
 */
 int pvr_dma_transfer(void * src, uint32 dest, uint32 count, int type,
-	int block, pvr_dma_callback_t callback, ptr_t cbdata);
+                     int block, pvr_dma_callback_t callback, ptr_t cbdata);
 
 /** \defgroup pvr_dma_modes         Transfer modes with PVR DMA
     @{
@@ -1915,7 +1915,7 @@ int pvr_dma_transfer(void * src, uint32 dest, uint32 count, int type,
     \em     EIO - I/O error
 */
 int pvr_txr_load_dma(void * src, pvr_ptr_t dest, uint32 count, int block,
-	pvr_dma_callback_t callback, ptr_t cbdata);
+                     pvr_dma_callback_t callback, ptr_t cbdata);
 
 /** \brief  Load vertex data to the TA using PVR DMA.
 
@@ -1938,7 +1938,7 @@ int pvr_txr_load_dma(void * src, pvr_ptr_t dest, uint32 count, int block,
     \em     EIO - I/O error
  */
 int pvr_dma_load_ta(void * src, uint32 count, int block,
-	pvr_dma_callback_t callback, ptr_t cbdata);
+                    pvr_dma_callback_t callback, ptr_t cbdata);
 
 /** \brief  Is PVR DMA is inactive?
     \return                 Non-zero if there is no PVR DMA active, thus a DMA

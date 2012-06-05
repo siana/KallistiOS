@@ -9,14 +9,13 @@
 
 /* This variant was added by Dan Potter for its usefulness in
    working with Dreamcast external hardware. */
-void * memcpy4(void *dest, const void *src, size_t count)
-{
-	unsigned long *tmp = (unsigned long *) dest;
-	unsigned long *s = (unsigned long *) src;
-	count = count/4;
+void * memcpy4(void *dest, const void *src, size_t count) {
+    unsigned long *tmp = (unsigned long *) dest;
+    unsigned long *s = (unsigned long *) src;
+    count = count / 4;
 
-	while (count--)
-		*tmp++ = *s++;
+    while(count--)
+        *tmp++ = *s++;
 
-	return dest;
+    return dest;
 }

@@ -58,18 +58,18 @@ typedef uint32 ptr_t;               /**< \brief Pointer arithmetic type */
 #define __uint_defined
 /* \endcond */
 
-typedef unsigned char	u_char;     /**< \brief BSD-style unsigned char */
-typedef unsigned short	u_short;    /**< \brief BSD-style unsigned short */
-typedef unsigned int	u_int;      /**< \brief BSD-style unsigned integer */
-typedef unsigned long	u_long;     /**< \brief BSD-style unsigned long */
-typedef unsigned short	ushort;     /**< \brief BSD-style unsigned short */
-typedef unsigned int	uint;       /**< \brief BSD-style unsigned integer */
+typedef unsigned char   u_char;     /**< \brief BSD-style unsigned char */
+typedef unsigned short  u_short;    /**< \brief BSD-style unsigned short */
+typedef unsigned int    u_int;      /**< \brief BSD-style unsigned integer */
+typedef unsigned long   u_long;     /**< \brief BSD-style unsigned long */
+typedef unsigned short  ushort;     /**< \brief BSD-style unsigned short */
+typedef unsigned int    uint;       /**< \brief BSD-style unsigned integer */
 
 /* \cond */
 #define _BSDTYPES_DEFINED
 /* \endcond */
 
-#endif	/* _BSDTYPES_DEFINED */
+#endif  /* _BSDTYPES_DEFINED */
 
 /* This type may be used for any generic handle type that is allowed
    to be negative (for errors) and has no specific bit count
@@ -90,5 +90,5 @@ typedef handle_t prio_t;            /**< \brief Priority value type */
 
 __END_DECLS
 
-#endif	/* __ARCH_TYPES_H */
+#endif  /* __ARCH_TYPES_H */
 

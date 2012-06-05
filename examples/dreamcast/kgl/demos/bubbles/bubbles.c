@@ -59,235 +59,245 @@ translucent polys, so the difference is quite marked.
 static float phase = 0.0f;
 static pvr_poly_cxt_t cxt;
 static pvr_poly_hdr_t hdr;
-static void sphere( float radius, int slices, int stacks ) {
-	int	i, j;
-	float	pitch, pitch2;
-	float	x, y, z, g, b;
-	float	yaw, yaw2;
-	pvr_vertex_t	*vert;
-	pvr_dr_state_t	dr_state;
+static void sphere(float radius, int slices, int stacks) {
+    int i, j;
+    float   pitch, pitch2;
+    float   x, y, z, g, b;
+    float   yaw, yaw2;
+    pvr_vertex_t    *vert;
+    pvr_dr_state_t  dr_state;
 
-	/* Setup our Direct Render state: pick a store queue and setup QACR0/1 */
-	pvr_dr_init(dr_state);
+    /* Setup our Direct Render state: pick a store queue and setup QACR0/1 */
+    pvr_dr_init(dr_state);
 
-	/* Initialize xmtrx with the values from KGL */
-	glKosMatrixIdent();
-	glKosMatrixApply(GL_KOS_SCREENVIEW);
-	glKosMatrixApply(GL_PROJECTION);
-	glKosMatrixApply(GL_MODELVIEW);
+    /* Initialize xmtrx with the values from KGL */
+    glKosMatrixIdent();
+    glKosMatrixApply(GL_KOS_SCREENVIEW);
+    glKosMatrixApply(GL_PROJECTION);
+    glKosMatrixApply(GL_MODELVIEW);
 
-	/* Put our own polygon header */
-	pvr_prim(&hdr, sizeof(hdr));
+    /* Put our own polygon header */
+    pvr_prim(&hdr, sizeof(hdr));
 
-	/* Iterate over stacks */
-	for ( i=0; i<stacks; i++ ) {
-		pitch = 2*M_PI * ( (float)i/(float)stacks );
-		pitch2 = 2*M_PI * ( (float)(i+1)/(float)stacks );
+    /* Iterate over stacks */
+    for(i = 0; i < stacks; i++) {
+        pitch = 2 * M_PI * ((float)i / (float)stacks);
+        pitch2 = 2 * M_PI * ((float)(i + 1) / (float)stacks);
 
-		/* Iterate over slices: each entire stack will be one
-		   long triangle strip. */
-		for ( j=0; j<=slices/2; j++ ) {
-			yaw = 2*M_PI * ( (float)j/(float)slices );
-			yaw2 = 2*M_PI * ( (float)(j+1)/(float)slices );
+        /* Iterate over slices: each entire stack will be one
+           long triangle strip. */
+        for(j = 0; j <= slices / 2; j++) {
+            yaw = 2 * M_PI * ((float)j / (float)slices);
+            yaw2 = 2 * M_PI * ((float)(j + 1) / (float)slices);
 
-			/* x, y+1 */
-			x = radius * fcos( yaw ) * fcos( pitch2 );
-			y = radius * fsin( pitch2 );
-			z = radius * fsin( yaw ) * fcos( pitch2 );
-			mat_trans_single(x, y, z);			/* Use ftrv to transform */
-			g = fcos( yaw*2 ) / 2.0f + 0.5f;
-			b = fsin( phase + pitch2 ) / 2.0f + 0.5f;
-			vert = pvr_dr_target(dr_state);			/* Get a store queue address */
-			vert->flags = PVR_CMD_VERTEX;
-			vert->x = x;
-			vert->y = y;
-			vert->z = z;
-			vert->u = 0.0f;
-			vert->v = 0.0f;
-			vert->argb = PVR_PACK_COLOR(0.5f, 0.0f, g, b);
-			vert->oargb = 0xff000000;
-			pvr_dr_commit(vert);				/* Prefetch the SQ */
+            /* x, y+1 */
+            x = radius * fcos(yaw) * fcos(pitch2);
+            y = radius * fsin(pitch2);
+            z = radius * fsin(yaw) * fcos(pitch2);
+            mat_trans_single(x, y, z);          /* Use ftrv to transform */
+            g = fcos(yaw * 2) / 2.0f + 0.5f;
+            b = fsin(phase + pitch2) / 2.0f + 0.5f;
+            vert = pvr_dr_target(dr_state);         /* Get a store queue address */
+            vert->flags = PVR_CMD_VERTEX;
+            vert->x = x;
+            vert->y = y;
+            vert->z = z;
+            vert->u = 0.0f;
+            vert->v = 0.0f;
+            vert->argb = PVR_PACK_COLOR(0.5f, 0.0f, g, b);
+            vert->oargb = 0xff000000;
+            pvr_dr_commit(vert);                /* Prefetch the SQ */
 
-			/* x, y */
-			x = radius * fcos( yaw ) * fcos( pitch );
-			y = radius * fsin( pitch );
-			z = radius * fsin( yaw ) * fcos( pitch );
-			mat_trans_single(x, y, z);
-			g = fcos( yaw*2 ) / 2.0f + 0.5f;
-			b = fsin( phase + pitch ) / 2.0f + 0.5f;
-			vert = pvr_dr_target(dr_state);
-			if (j == (slices/2))
-				vert->flags = PVR_CMD_VERTEX_EOL;
-			else
-				vert->flags = PVR_CMD_VERTEX;
-			vert->x = x;
-			vert->y = y;
-			vert->z = z;
-			vert->u = 0.0f;
-			vert->v = 0.0f;
-			vert->argb = PVR_PACK_COLOR(0.5f, 0.0f, g, b);
-			vert->oargb = 0xff000000;
-			pvr_dr_commit(vert);
-		}
-	}
+            /* x, y */
+            x = radius * fcos(yaw) * fcos(pitch);
+            y = radius * fsin(pitch);
+            z = radius * fsin(yaw) * fcos(pitch);
+            mat_trans_single(x, y, z);
+            g = fcos(yaw * 2) / 2.0f + 0.5f;
+            b = fsin(phase + pitch) / 2.0f + 0.5f;
+            vert = pvr_dr_target(dr_state);
+
+            if(j == (slices / 2))
+                vert->flags = PVR_CMD_VERTEX_EOL;
+            else
+                vert->flags = PVR_CMD_VERTEX;
+
+            vert->x = x;
+            vert->y = y;
+            vert->z = z;
+            vert->u = 0.0f;
+            vert->v = 0.0f;
+            vert->argb = PVR_PACK_COLOR(0.5f, 0.0f, g, b);
+            vert->oargb = 0xff000000;
+            pvr_dr_commit(vert);
+        }
+    }
 }
 
 #define SPHERE_CNT 12
 static int r = 0;
 
 static void sphere_frame_opaque() {
-	int i;
+    int i;
 
-	vid_border_color(255, 0, 0);
-	glKosBeginFrame();
+    vid_border_color(255, 0, 0);
+    glKosBeginFrame();
 
-	vid_border_color(0, 255, 0);
+    vid_border_color(0, 255, 0);
 
-	glLoadIdentity();
-	glTranslatef(0.0f, 0.0f, -12.0f);
-	glRotatef(r * 2, 0.75f, 1.0f, 0.5f);
-	glDisable(GL_CULL_FACE);
+    glLoadIdentity();
+    glTranslatef(0.0f, 0.0f, -12.0f);
+    glRotatef(r * 2, 0.75f, 1.0f, 0.5f);
+    glDisable(GL_CULL_FACE);
 
-	for (i=0; i<SPHERE_CNT; i++) {
-		glPushMatrix();
-		glTranslatef(6.0f * fcos(i * 2*M_PI / SPHERE_CNT), 0.0f, 6.0f * fsin(i * 2*M_PI / SPHERE_CNT));
-		glRotatef(r, 1.0f, 1.0f, 1.0f);
-		sphere(1.2f, 20, 20);
-		glPopMatrix();
-	}
+    for(i = 0; i < SPHERE_CNT; i++) {
+        glPushMatrix();
+        glTranslatef(6.0f * fcos(i * 2 * M_PI / SPHERE_CNT), 0.0f, 6.0f * fsin(i * 2 * M_PI / SPHERE_CNT));
+        glRotatef(r, 1.0f, 1.0f, 1.0f);
+        sphere(1.2f, 20, 20);
+        glPopMatrix();
+    }
 
-	glLoadIdentity();
-	glTranslatef(0.0f, 0.0f, -12.0f);
-	glRotatef(-r * 2, 0.75f, 1.0f, 0.5f);
-	glDisable(GL_CULL_FACE);
+    glLoadIdentity();
+    glTranslatef(0.0f, 0.0f, -12.0f);
+    glRotatef(-r * 2, 0.75f, 1.0f, 0.5f);
+    glDisable(GL_CULL_FACE);
 
-	for (i=0; i<SPHERE_CNT; i++) {
-		glPushMatrix();
-		glTranslatef(3.0f * fcos(i * 2*M_PI / SPHERE_CNT), 0.0f, 3.0f * fsin(i * 2*M_PI / SPHERE_CNT));
-		glRotatef(r, 1.0f, 1.0f, 1.0f);
-		sphere(0.8f, 20, 20);
-		glPopMatrix();
-	}
+    for(i = 0; i < SPHERE_CNT; i++) {
+        glPushMatrix();
+        glTranslatef(3.0f * fcos(i * 2 * M_PI / SPHERE_CNT), 0.0f, 3.0f * fsin(i * 2 * M_PI / SPHERE_CNT));
+        glRotatef(r, 1.0f, 1.0f, 1.0f);
+        sphere(0.8f, 20, 20);
+        glPopMatrix();
+    }
 
-	glKosFinishList();
+    glKosFinishList();
 
-	vid_border_color(0, 0, 255);
-	glKosFinishFrame();
-	r++;
-	phase += 2*M_PI / 240.0f;
+    vid_border_color(0, 0, 255);
+    glKosFinishFrame();
+    r++;
+    phase += 2 * M_PI / 240.0f;
 }
 
 static void sphere_frame_trans() {
-	int i;
+    int i;
 
-	glKosBeginFrame();
+    glKosBeginFrame();
 
-	glKosFinishList();
+    glKosFinishList();
 
-	vid_border_color(0, 255, 0);
-	glLoadIdentity();
-	glTranslatef(0.0f, 0.0f, -10.0f);
-	glRotatef(15, 1.0f, 0.0f, 0.0f);
-	glRotatef(r * 2, 0.75f, 1.0f, 0.5f);
-	glDisable(GL_CULL_FACE);
+    vid_border_color(0, 255, 0);
+    glLoadIdentity();
+    glTranslatef(0.0f, 0.0f, -10.0f);
+    glRotatef(15, 1.0f, 0.0f, 0.0f);
+    glRotatef(r * 2, 0.75f, 1.0f, 0.5f);
+    glDisable(GL_CULL_FACE);
 
-	for (i=0; i<SPHERE_CNT; i++) {
-		glPushMatrix();
-		glTranslatef(4.0f * fcos(i * 2*M_PI / SPHERE_CNT), 0.0f, 4.0f * fsin(i * 2*M_PI / SPHERE_CNT));
-		glRotatef(r, 1.0f, 1.0f, 1.0f);
-		sphere(1.0f, 20, 20);
-		glPopMatrix();
-	}
+    for(i = 0; i < SPHERE_CNT; i++) {
+        glPushMatrix();
+        glTranslatef(4.0f * fcos(i * 2 * M_PI / SPHERE_CNT), 0.0f, 4.0f * fsin(i * 2 * M_PI / SPHERE_CNT));
+        glRotatef(r, 1.0f, 1.0f, 1.0f);
+        sphere(1.0f, 20, 20);
+        glPopMatrix();
+    }
 
-	vid_border_color(0, 0, 255);
-	glKosFinishFrame();
-	vid_border_color(255, 0, 0);
-	r++;
-	phase += 2*M_PI / 240.0f;
+    vid_border_color(0, 0, 255);
+    glKosFinishFrame();
+    vid_border_color(255, 0, 0);
+    r++;
+    phase += 2 * M_PI / 240.0f;
 }
 
 void do_sphere_test() {
-	maple_device_t *cont;
-	cont_state_t *state;
-	int		mode = 0;
-	int		a_was_down = 0;
+    maple_device_t *cont;
+    cont_state_t *state;
+    int     mode = 0;
+    int     a_was_down = 0;
 
-	glClearColor(0.2f, 0.0f, 0.4f, 1.0f);
-	glDisable(GL_TEXTURE_2D);
+    glClearColor(0.2f, 0.0f, 0.4f, 1.0f);
+    glDisable(GL_TEXTURE_2D);
 
-	pvr_poly_cxt_col(&cxt, PVR_LIST_OP_POLY);
-	cxt.gen.culling = PVR_CULLING_NONE;
-	pvr_poly_compile(&hdr, &cxt);
+    pvr_poly_cxt_col(&cxt, PVR_LIST_OP_POLY);
+    cxt.gen.culling = PVR_CULLING_NONE;
+    pvr_poly_compile(&hdr, &cxt);
 
-	for (;;) {
-		if (!mode)
-			sphere_frame_opaque();
-		else
-			sphere_frame_trans();
+    for(;;) {
+        if(!mode)
+            sphere_frame_opaque();
+        else
+            sphere_frame_trans();
 
-		cont = maple_enum_type(0, MAPLE_FUNC_CONTROLLER);
-		if (!cont)
-			continue;
-		state = (cont_state_t *)maple_dev_status(cont);
-		if (!state)
-			continue;
-		if (state->buttons & CONT_START) {
-			return;
-		}
-		if (state->buttons & CONT_A) {
-			if (a_was_down) continue;
-			a_was_down = 1;
-			mode ^= 1;
-			switch(mode) {
-			case 0:	/* Opaque */
-				pvr_poly_cxt_col(&cxt, PVR_LIST_OP_POLY);
-				cxt.gen.culling = PVR_CULLING_NONE;
-				pvr_poly_compile(&hdr, &cxt);
-				break;
-			case 1:	/* Translucent */
-				pvr_poly_cxt_col(&cxt, PVR_LIST_TR_POLY);
-				cxt.gen.culling = PVR_CULLING_NONE;
-				pvr_poly_compile(&hdr, &cxt);
-				break;
-			}
-		} else {
-			a_was_down = 0;
-		}
-	}
+        cont = maple_enum_type(0, MAPLE_FUNC_CONTROLLER);
+
+        if(!cont)
+            continue;
+
+        state = (cont_state_t *)maple_dev_status(cont);
+
+        if(!state)
+            continue;
+
+        if(state->buttons & CONT_START) {
+            return;
+        }
+
+        if(state->buttons & CONT_A) {
+            if(a_was_down) continue;
+
+            a_was_down = 1;
+            mode ^= 1;
+
+            switch(mode) {
+                case 0: /* Opaque */
+                    pvr_poly_cxt_col(&cxt, PVR_LIST_OP_POLY);
+                    cxt.gen.culling = PVR_CULLING_NONE;
+                    pvr_poly_compile(&hdr, &cxt);
+                    break;
+                case 1: /* Translucent */
+                    pvr_poly_cxt_col(&cxt, PVR_LIST_TR_POLY);
+                    cxt.gen.culling = PVR_CULLING_NONE;
+                    pvr_poly_compile(&hdr, &cxt);
+                    break;
+            }
+        }
+        else {
+            a_was_down = 0;
+        }
+    }
 }
 
 pvr_init_params_t params = {
-	/* Enable opaque and translucent polygons with size 16 */
-	{ PVR_BINSIZE_16, PVR_BINSIZE_0, PVR_BINSIZE_16, PVR_BINSIZE_0, PVR_BINSIZE_0 },
+    /* Enable opaque and translucent polygons with size 16 */
+    { PVR_BINSIZE_16, PVR_BINSIZE_0, PVR_BINSIZE_16, PVR_BINSIZE_0, PVR_BINSIZE_0 },
 
-	/* Vertex buffer size 512K */
-	512*1024
+    /* Vertex buffer size 512K */
+    512 * 1024
 };
 
 int main(int argc, char **argv) {
-	/* Init PVR API */
-	if (pvr_init(&params) < 0)
-		return -1;
+    /* Init PVR API */
+    if(pvr_init(&params) < 0)
+        return -1;
 
-	/* Init KGL */
-	glKosInit();
-	glMatrixMode(GL_PROJECTION);
-	glLoadIdentity();
-	gluPerspective(45.0f, 640.0f / 480.0f, 0.1f, 100.0f);
-	glMatrixMode(GL_MODELVIEW);
-	glEnable(GL_TEXTURE_2D);
+    /* Init KGL */
+    glKosInit();
+    glMatrixMode(GL_PROJECTION);
+    glLoadIdentity();
+    gluPerspective(45.0f, 640.0f / 480.0f, 0.1f, 100.0f);
+    glMatrixMode(GL_MODELVIEW);
+    glEnable(GL_TEXTURE_2D);
 
-	/* Expect CW verts */
-	glFrontFace(GL_CW);
+    /* Expect CW verts */
+    glFrontFace(GL_CW);
 
-	/* Enable Transparancy */
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE);
-	glEnable(GL_DEPTH_TEST);
+    /* Enable Transparancy */
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE);
+    glEnable(GL_DEPTH_TEST);
 
-	/* Do the test */
-	printf("Bubbles KGL sample: press START to exit, A to toggle sphere type\n");
-	do_sphere_test();
+    /* Do the test */
+    printf("Bubbles KGL sample: press START to exit, A to toggle sphere type\n");
+    do_sphere_test();
 
-	return 0;
+    return 0;
 }
 

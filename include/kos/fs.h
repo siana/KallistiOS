@@ -99,7 +99,7 @@ typedef struct {
 typedef int file_t;
 
 /** \brief  Invalid file handle constant (for open failure, etc) */
-#define FILEHND_INVALID	((file_t)-1)
+#define FILEHND_INVALID ((file_t)-1)
 
 /** \brief  VFS handler interface.
 
@@ -130,10 +130,10 @@ typedef struct vfs_handler {
     ssize_t (*write)(void *hnd, const void *buffer, size_t cnt);
 
     /** \brief Seek in a previously opened file */
-    off_t (*seek)(void *hnd, off_t offset, int whence);
+    off_t(*seek)(void *hnd, off_t offset, int whence);
 
     /** \brief Return the current position in a previously opened file */
-    off_t (*tell)(void *hnd);
+    off_t(*tell)(void *hnd);
 
     /** \brief Return the total size of a previously opened file */
     size_t (*total)(void *hnd);
@@ -172,7 +172,7 @@ typedef struct vfs_handler {
 /** \brief  The number of distinct file descriptors that can be in use at a
             time.
 */
-#define FD_SETSIZE	1024
+#define FD_SETSIZE  1024
 
 /** \cond */
 /* This is the private struct that will be used as raw file handles
@@ -189,10 +189,10 @@ extern struct fs_hnd *fd_table[FD_SETSIZE];
 
     @{
 */
-#define O_MODE_MASK 0x0f		/**< \brief Mask for mode numbers */
-//#define O_TRUNC		0x0100		/* Truncate */
+#define O_MODE_MASK 0x0f        /**< \brief Mask for mode numbers */
+//#define O_TRUNC       0x0100      /* Truncate */
 #define O_ASYNC     0x0200      /**< \brief Open for asynchronous I/O */
-//#define O_NONBLOCK	0x0400		/* Open for non-blocking I/O */
+//#define O_NONBLOCK    0x0400      /* Open for non-blocking I/O */
 #define O_DIR       0x1000      /**< \brief Open as directory */
 #define O_META      0x2000      /**< \brief Open as metadata */
 /** @} */
@@ -494,7 +494,7 @@ const char *fs_getwd();
     \param  dst             The filename to copy to.
     \return                 The number of bytes copied successfully.
 */
-ssize_t	fs_copy(const char *src, const char *dst);
+ssize_t fs_copy(const char *src, const char *dst);
 
 /** \brief  Open and read a whole file into RAM.
 
@@ -526,4 +526,4 @@ void fs_shutdown();
 
 __END_DECLS
 
-#endif	/* __KOS_FS_H */
+#endif  /* __KOS_FS_H */

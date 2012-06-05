@@ -57,5 +57,5 @@ void dcache_flush_range(uint32 start, uint32 count);
 
 __END_DECLS
 
-#endif	/* __ARCH_CACHE_H */
+#endif  /* __ARCH_CACHE_H */
 

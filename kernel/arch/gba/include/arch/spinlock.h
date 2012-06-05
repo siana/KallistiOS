@@ -28,21 +28,21 @@ typedef char spinlock_t;
 
 /* Spin on a lock */
 /* #define spinlock_lock(A) do { \
-		if (*(A)) { \
-			while (*(A)) \
-				; \
-			*(A) = 1; \
-		} \
-	} while (0) */
+        if (*(A)) { \
+            while (*(A)) \
+                ; \
+            *(A) = 1; \
+        } \
+    } while (0) */
 #define spinlock_lock(A) do { } while (0)
 
 /* Free a lock */
 /* #define spinlock_unlock(A) do { \
-		*(A) = 0; \
-	} while (0) */
+        *(A) = 0; \
+    } while (0) */
 #define spinlock_unlock(A) do { } while (0)
 
 __END_DECLS
 
-#endif	/* __ARCH_SPINLOCK_H */
+#endif  /* __ARCH_SPINLOCK_H */
 

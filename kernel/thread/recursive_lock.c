@@ -21,6 +21,7 @@ recursive_lock_t *rlock_create() {
     recursive_lock_t *rv;
 
     rv = (recursive_lock_t *)malloc(sizeof(recursive_lock_t));
+
     if(!rv) {
         errno = ENOMEM;
         return NULL;

@@ -49,6 +49,7 @@ void net_ndp_gc() {
     uint64 now = timer_ms_gettime64();
 
     i = LIST_FIRST(&ndp_cache);
+
     while(i) {
         tmp = LIST_NEXT(i, entry);
 
@@ -56,13 +57,13 @@ void net_ndp_gc() {
            pretty safe to remove it. Also, remove any incomplete entries that
            are still incomplete after a few seconds have passed. */
         if(i->last_reachable + 600000 < now ||
-           (i->state == NDP_STATE_INCOMPLETE &&
-            i->last_reachable + 2000 < now)) {
+                (i->state == NDP_STATE_INCOMPLETE &&
+                 i->last_reachable + 2000 < now)) {
             LIST_REMOVE(i, entry);
 
             if(i->pkt) {
-               free(i->pkt);
-               free(i->data);
+                free(i->pkt);
+                free(i->data);
             }
 
             free(i);
@@ -225,6 +226,7 @@ void net_ndp_shutdown() {
     ndp_entry_t *i, *tmp;
 
     i = LIST_FIRST(&ndp_cache);
+
     while(i) {
         tmp = LIST_NEXT(i, entry);
 

@@ -62,17 +62,17 @@ typedef volatile int spinlock_t;
     \param  A               A pointer to the spinlock to be locked.
 */
 #define spinlock_lock(A) do { \
-	spinlock_t * __lock = A; \
-	int __gotlock = 0; \
-	while(1) { \
-		asm volatile ("tas.b @%1\n\t" \
-			      "movt %0\n\t" \
-				: "=r" (__gotlock) : "r" (__lock) : "t", "memory"); \
-		if (!__gotlock) \
-			thd_pass(); \
-		else break; \
-	} \
-} while (0)
+        spinlock_t * __lock = A; \
+        int __gotlock = 0; \
+        while(1) { \
+            asm volatile ("tas.b @%1\n\t" \
+                          "movt %0\n\t" \
+                          : "=r" (__gotlock) : "r" (__lock) : "t", "memory"); \
+            if (!__gotlock) \
+                thd_pass(); \
+            else break; \
+        } \
+    } while (0)
 
 /** \brief  Free a lock.
 
@@ -82,8 +82,8 @@ typedef volatile int spinlock_t;
     \param  A               A pointer to the spinlock to be unlocked.
 */
 #define spinlock_unlock(A) do { \
-		*(A) = 0; \
-	} while (0)
+        *(A) = 0; \
+    } while (0)
 
 /** \brief  Determine if a lock is locked.
 
@@ -97,5 +97,5 @@ typedef volatile int spinlock_t;
 
 __END_DECLS
 
-#endif	/* __ARCH_SPINLOCK_H */
+#endif  /* __ARCH_SPINLOCK_H */
 

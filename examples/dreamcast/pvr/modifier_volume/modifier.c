@@ -82,9 +82,10 @@ int check_start() {
 
     cont = maple_enum_type(0, MAPLE_FUNC_CONTROLLER);
 
-    if (cont) {
+    if(cont) {
         state = (cont_state_t *)maple_dev_status(cont);
-        if (!state)
+
+        if(!state)
             return 0;
 
         if(state->buttons & CONT_START)
@@ -92,16 +93,19 @@ int check_start() {
 
         if(state->buttons & CONT_DPAD_UP)
             my -= 1.0f;
+
         if(state->buttons & CONT_DPAD_DOWN)
             my += 1.0f;
+
         if(state->buttons & CONT_DPAD_LEFT)
             mx -= 1.0f;
+
         if(state->buttons & CONT_DPAD_RIGHT)
             mx += 1.0f;
 
         if((state->buttons & CONT_A) && !taken) {
             list = list == PVR_LIST_OP_POLY ? PVR_LIST_TR_POLY :
-                PVR_LIST_OP_POLY;
+                   PVR_LIST_OP_POLY;
             setup();
             taken = 1;
         }
@@ -171,9 +175,11 @@ void do_frame() {
 static pvr_init_params_t pvr_params = {
     /* Enable Opaque, Opaque modifiers, Translucent, and Translucent
     modifiers. */
-    { PVR_BINSIZE_16, PVR_BINSIZE_16, PVR_BINSIZE_16, PVR_BINSIZE_16,
-      PVR_BINSIZE_0 },
-	512 * 1024
+    {
+        PVR_BINSIZE_16, PVR_BINSIZE_16, PVR_BINSIZE_16, PVR_BINSIZE_16,
+        PVR_BINSIZE_0
+    },
+    512 * 1024
 };
 
 int main(int argc, char *argv[]) {

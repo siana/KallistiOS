@@ -9,14 +9,13 @@
 
 /* This variant was added by Dan Potter for its usefulness in
    working with Dreamcast external hardware. */
-void * memset4(void *s, unsigned long c, size_t count)
-{
-	unsigned long *xs = (unsigned long *) s;
-	count = count / 4;
+void * memset4(void *s, unsigned long c, size_t count) {
+    unsigned long *xs = (unsigned long *) s;
+    count = count / 4;
 
-	while (count--)
-		*xs++ = c;
+    while(count--)
+        *xs++ = c;
 
-	return s;
+    return s;
 }
 

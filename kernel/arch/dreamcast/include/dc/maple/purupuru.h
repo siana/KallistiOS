@@ -45,16 +45,16 @@ __BEGIN_DECLS
 */
 typedef struct purupuru_effect  {
     /** \brief  The duration of the effect. No idea on units... */
-	uint8 duration;
+    uint8 duration;
 
     /** \brief  2nd effect field. */
-	uint8 effect2;
+    uint8 effect2;
 
     /** \brief  1st effect field. */
-	uint8 effect1;
+    uint8 effect1;
 
     /** \brief  Special effects field. */
-	uint8 special;
+    uint8 special;
 } purupuru_effect_t;
 
 /* Set one of each of the following in the effect2 field of the
@@ -184,5 +184,5 @@ void purupuru_shutdown();
 
 __END_DECLS
 
-#endif	/* __DC_MAPLE_PURUPURU_H */
+#endif  /* __DC_MAPLE_PURUPURU_H */
 

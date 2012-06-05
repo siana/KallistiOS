@@ -74,6 +74,7 @@ int main(int argc, char *argv[]) {
            net_default_dev->ip_addr[3]);
 
     sock = socket(PF_INET6, SOCK_DGRAM, IPPROTO_UDP);
+
     if(sock < 0) {
         perror("socket");
         ERR_EXIT();
@@ -93,6 +94,7 @@ int main(int argc, char *argv[]) {
 
     for(;;) {
         alen = sizeof(struct sockaddr_in6);
+
         if((sz = recvfrom(sock, data, DATA_SIZE, 0, (struct sockaddr *)&addr,
                           &alen)) < 0) {
             perror("recvfrom");

@@ -145,7 +145,7 @@ void * mm_sbrk(unsigned long increment);
 
     \param  flags           Parts of KOS to init.
 */
-#define KOS_INIT_FLAGS(flags)	uint32 __kos_init_flags = (flags)
+#define KOS_INIT_FLAGS(flags)   uint32 __kos_init_flags = (flags)
 
 /** \brief  The init flags. Do not modify this directly! */
 extern uint32 __kos_init_flags;
@@ -153,13 +153,13 @@ extern uint32 __kos_init_flags;
 /** \brief  Define a romdisk for your program, if you'd like one.
     \param  rd              Pointer to the romdisk image in your code.
 */
-#define KOS_INIT_ROMDISK(rd)	void * __kos_romdisk = (rd)
+#define KOS_INIT_ROMDISK(rd)    void * __kos_romdisk = (rd)
 
 /** \brief  Built-in romdisk. Do not modify this directly! */
 extern void * __kos_romdisk;
 
 /** \brief  State that you don't want a romdisk. */
-#define KOS_INIT_ROMDISK_NONE	NULL
+#define KOS_INIT_ROMDISK_NONE   NULL
 
 /** \defgroup arch_initflags        Available flags for initialization
 
@@ -220,20 +220,20 @@ void hardware_shutdown();
 
 /** \brief  Dreamcast specific sleep mode "function". */
 #define arch_sleep() do { \
-		__asm__ __volatile__("sleep"); \
-	} while(0)
+        __asm__ __volatile__("sleep"); \
+    } while(0)
 
 /** \brief  DC specific "function" to get the return address from the current
             function.
     \return                 The return address of the current function.
 */
 #define arch_get_ret_addr() ({ \
-		uint32 pr; \
-		__asm__ __volatile__("sts	pr,%0\n" \
-			: "=&z" (pr) \
-			: /* no inputs */ \
-			: "memory" ); \
-	pr; })
+        uint32 pr; \
+        __asm__ __volatile__("sts	pr,%0\n" \
+                             : "=&z" (pr) \
+                             : /* no inputs */ \
+                             : "memory" ); \
+        pr; })
 
 /* Please note that all of the following frame pointer macros are ONLY
    valid if you have compiled your code WITHOUT -fomit-frame-pointer. These
@@ -245,12 +245,12 @@ void hardware_shutdown();
     \note                   This only works if you don't disable frame pointers.
 */
 #define arch_get_fptr() ({ \
-		uint32 fp; \
-		__asm__ __volatile__("mov	r14,%0\n" \
-			: "=&z" (fp) \
-			: /* no inputs */ \
-			: "memory" ); \
-	fp; })
+        uint32 fp; \
+        __asm__ __volatile__("mov	r14,%0\n" \
+                             : "=&z" (fp) \
+                             : /* no inputs */ \
+                             : "memory" ); \
+        fp; })
 
 /** \brief  Pass in a frame pointer value to get the return address for the
             given frame.
@@ -278,5 +278,5 @@ void hardware_shutdown();
 
 __END_DECLS
 
-#endif	/* __ARCH_ARCH_H */
+#endif  /* __ARCH_ARCH_H */
 

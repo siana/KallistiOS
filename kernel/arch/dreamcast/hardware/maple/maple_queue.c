@@ -12,111 +12,113 @@
 
 /* Send all queued frames */
 void maple_queue_flush() {
-	int		cnt, amt;
-	uint32		*out, *last;
-	maple_frame_t	*i;
+    int     cnt, amt;
+    uint32      *out, *last;
+    maple_frame_t   *i;
 
-	cnt = amt = 0;
-	out = (uint32 *)maple_state.dma_buffer; last = NULL;
+    cnt = amt = 0;
+    out = (uint32 *)maple_state.dma_buffer;
+    last = NULL;
 
-	/* Go through and process each frame... */
-	TAILQ_FOREACH(i, &maple_state.frame_queue, frameq) {
-		/* Are we running out of space? */
-		if ((i->length*4 + amt) > MAPLE_DMA_SIZE)
-			break;
+    /* Go through and process each frame... */
+    TAILQ_FOREACH(i, &maple_state.frame_queue, frameq) {
+        /* Are we running out of space? */
+        if((i->length * 4 + amt) > MAPLE_DMA_SIZE)
+            break;
 
-		/* Is this frame stale? */
-		if (i->state != MAPLE_FRAME_UNSENT)
-			continue;
-		i->state = MAPLE_FRAME_SENT;
+        /* Is this frame stale? */
+        if(i->state != MAPLE_FRAME_UNSENT)
+            continue;
 
-		/* Save the last descriptor head for the "last" flag */
-		last = out;
+        i->state = MAPLE_FRAME_SENT;
 
-		/* First word: message length and destination port */
-		*out++ = i->length | (i->dst_port << 16);
+        /* Save the last descriptor head for the "last" flag */
+        last = out;
 
-		/* Second word: receive buffer physical address */
-		*out++ = ((uint32)i->recv_buf) & 0x1fffffff;
+        /* First word: message length and destination port */
+        *out++ = i->length | (i->dst_port << 16);
 
-		/* Third word: command, addressing, packet length */
-		*out++ = (i->cmd & 0xff) | (maple_addr(i->dst_port, i->dst_unit) << 8)
-			| ((i->dst_port << 6) << 16)
-			| ((i->length & 0xff) << 24);
+        /* Second word: receive buffer physical address */
+        *out++ = ((uint32)i->recv_buf) & 0x1fffffff;
 
-		/* Finally, parameter words, if any */
-		if (i->length > 0) {
-			assert(i->send_buf != NULL);
-			memcpy(out, i->send_buf, i->length * 4);
-			out += i->length;
-		}
+        /* Third word: command, addressing, packet length */
+        *out++ = (i->cmd & 0xff) | (maple_addr(i->dst_port, i->dst_unit) << 8)
+                 | ((i->dst_port << 6) << 16)
+                 | ((i->length & 0xff) << 24);
 
-		cnt++;
-		amt += i->length * 4;
-	}
+        /* Finally, parameter words, if any */
+        if(i->length > 0) {
+            assert(i->send_buf != NULL);
+            memcpy(out, i->send_buf, i->length * 4);
+            out += i->length;
+        }
 
-	/* Did we actually do anything...? */
-	if (cnt > 0) {
-		/* Tack on the "last" bit to the last one */
-		assert( last != NULL );
-		*last |= 0x80000000;
+        cnt++;
+        amt += i->length * 4;
+    }
 
-		/* Start a DMA transfer */
-		maple_dma_addr(maple_state.dma_buffer);
-		maple_dma_start();
-		maple_state.dma_in_progress = 1;
-	}
+    /* Did we actually do anything...? */
+    if(cnt > 0) {
+        /* Tack on the "last" bit to the last one */
+        assert(last != NULL);
+        *last |= 0x80000000;
+
+        /* Start a DMA transfer */
+        maple_dma_addr(maple_state.dma_buffer);
+        maple_dma_start();
+        maple_state.dma_in_progress = 1;
+    }
 }
 
 /* Submit a frame for queueing; see header for notes */
 int maple_queue_frame(maple_frame_t *frame) {
-	uint32 save = 0;
+    uint32 save = 0;
 
-	/* Don't add it twice */
-	if (frame->queued)
-		return -1;
+    /* Don't add it twice */
+    if(frame->queued)
+        return -1;
 
-	/* If we're not running inside an interrupt, then disable interrupts
-	   so the list won't change underneath us */
-	if (!irq_inside_int())
-		save = irq_disable();
+    /* If we're not running inside an interrupt, then disable interrupts
+       so the list won't change underneath us */
+    if(!irq_inside_int())
+        save = irq_disable();
 
-	/* Assign it a device, if applicable */
-	frame->dev = &maple_state.ports[frame->dst_port].units[frame->dst_unit];
+    /* Assign it a device, if applicable */
+    frame->dev = &maple_state.ports[frame->dst_port].units[frame->dst_unit];
 
-	/* Put it on the queue */
-	TAILQ_INSERT_TAIL(&maple_state.frame_queue, frame, frameq);
-	frame->queued = 1;
+    /* Put it on the queue */
+    TAILQ_INSERT_TAIL(&maple_state.frame_queue, frame, frameq);
+    frame->queued = 1;
 
-	/* Restore interrupts */
-	if (!irq_inside_int())
-		irq_restore(save);
+    /* Restore interrupts */
+    if(!irq_inside_int())
+        irq_restore(save);
 
-	return 0;
+    return 0;
 }
 
 /* Remove a used frame from the queue */
 int maple_queue_remove(maple_frame_t *frame) {
-	uint32 save = 0;
+    uint32 save = 0;
 
-	/* Don't remove twice */
-	if (!frame->queued)
-		return -1;
+    /* Don't remove twice */
+    if(!frame->queued)
+        return -1;
 
-	/* If we're not running inside an interrupt, then disable interrupts
-	   so the list won't change underneath us */
-	if (!irq_inside_int())
-		save = irq_disable();
+    /* If we're not running inside an interrupt, then disable interrupts
+       so the list won't change underneath us */
+    if(!irq_inside_int())
+        save = irq_disable();
 
-	/* Remove it from the queue */
-	TAILQ_REMOVE(&maple_state.frame_queue, frame, frameq);
-	frame->queued = 0;
+    /* Remove it from the queue */
+    TAILQ_REMOVE(&maple_state.frame_queue, frame, frameq);
+    frame->queued = 0;
 
-	/* Restore interrupts */
-	if (!irq_inside_int())
-		irq_restore(save);
+    /* Restore interrupts */
+    if(!irq_inside_int())
+        irq_restore(save);
 
-	return 0;
+    return 0;
 }
 
 /* Initialize a new frame to prepare it to be placed on the queue; call
@@ -127,63 +129,65 @@ int maple_queue_remove(maple_frame_t *frame) {
    the old system I put it inside a big chunk of memory so it couldn't do
    that, and that seems to be the only working fix here too. *shrug* */
 void maple_frame_init(maple_frame_t *frame) {
-	uint32 buf_ptr;
+    uint32 buf_ptr;
 
-	assert( frame->state == MAPLE_FRAME_UNSENT );
-	assert( !frame->queued );
+    assert(frame->state == MAPLE_FRAME_UNSENT);
+    assert(!frame->queued);
 
-	/* Setup the buffer pointer (64-byte align and force -> P2) */
-	buf_ptr = (uint32)frame->recv_buf_arr;
-	if (buf_ptr & 0x1f)
-		buf_ptr = (buf_ptr & ~0x1f) + 0x20;
+    /* Setup the buffer pointer (64-byte align and force -> P2) */
+    buf_ptr = (uint32)frame->recv_buf_arr;
+
+    if(buf_ptr & 0x1f)
+        buf_ptr = (buf_ptr & ~0x1f) + 0x20;
+
 #if MAPLE_DMA_DEBUG
-	buf_ptr += 512;
+    buf_ptr += 512;
 #endif
-	buf_ptr = (buf_ptr & 0x1fffffff) | 0xa0000000;
-	frame->recv_buf = (uint8*)buf_ptr;
+    buf_ptr = (buf_ptr & 0x1fffffff) | 0xa0000000;
+    frame->recv_buf = (uint8*)buf_ptr;
 
-	/* Clear out the receive buffer */
+    /* Clear out the receive buffer */
 #if MAPLE_DMA_DEBUG
-	maple_sentinel_setup(frame->recv_buf - 512, 1024 + 1024);
+    maple_sentinel_setup(frame->recv_buf - 512, 1024 + 1024);
 #else
-	memset(frame->recv_buf, 0, 1024);
+    memset(frame->recv_buf, 0, 1024);
 #endif
 
-	/* Initialize other state stuff */
-	frame->cmd = -1;
-	frame->dst_port = frame->dst_unit = 0;
-	frame->length = 0;
-	frame->queued = 0;
-	frame->dev = NULL;
-	frame->send_buf = NULL;
-	frame->callback = NULL;
+    /* Initialize other state stuff */
+    frame->cmd = -1;
+    frame->dst_port = frame->dst_unit = 0;
+    frame->length = 0;
+    frame->queued = 0;
+    frame->dev = NULL;
+    frame->send_buf = NULL;
+    frame->callback = NULL;
 }
 
 /* Lock a frame so that someone else can't use it in the mean time; if the
    frame is already locked, an error will be returned. */
 int maple_frame_lock(maple_frame_t *frame) {
-	uint32	save = 0;
-	int	rv;
+    uint32  save = 0;
+    int rv;
 
-	if (!irq_inside_int())
-		save = irq_disable();
+    if(!irq_inside_int())
+        save = irq_disable();
 
-	if (frame->queued || frame->state != MAPLE_FRAME_VACANT)
-		rv = -1;
-	else {
-		frame->state = MAPLE_FRAME_UNSENT;
-		rv = 0;
-	}
+    if(frame->queued || frame->state != MAPLE_FRAME_VACANT)
+        rv = -1;
+    else {
+        frame->state = MAPLE_FRAME_UNSENT;
+        rv = 0;
+    }
 
-	if (!irq_inside_int())
-		irq_restore(save);
+    if(!irq_inside_int())
+        irq_restore(save);
 
-	return rv;
+    return rv;
 }
 
 /* Unlock a frame */
 void maple_frame_unlock(maple_frame_t *frame) {
-	assert(frame->state == MAPLE_FRAME_RESPONDED);
-	frame->state = MAPLE_FRAME_VACANT;
+    assert(frame->state == MAPLE_FRAME_RESPONDED);
+    frame->state = MAPLE_FRAME_VACANT;
 }
 

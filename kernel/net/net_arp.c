@@ -78,10 +78,11 @@ int net_arp_gc() {
     netarp_t *a1, *a2;
 
     a1 = LIST_FIRST(&net_arp_cache);
-    while (a1 != NULL) {
+
+    while(a1 != NULL) {
         a2 = LIST_NEXT(a1, ac_list);
 
-        if (a1->timestamp && jiffies >= (a1->timestamp + 600*HZ)) {
+        if(a1->timestamp && jiffies >= (a1->timestamp + 600 * HZ)) {
             LIST_REMOVE(a1, ac_list);
 
             if(a1->pkt) {
@@ -91,6 +92,7 @@ int net_arp_gc() {
 
             free(a1);
         }
+
         a1 = a2;
     }
 
@@ -104,7 +106,7 @@ int net_arp_insert(netif_t *nif, const uint8 mac[6], const uint8 ip[4],
 
     /* First make sure the entry isn't already there */
     LIST_FOREACH(cur, &net_arp_cache, ac_list) {
-        if (!memcmp(ip, cur->ip, 4)) {
+        if(!memcmp(ip, cur->ip, 4)) {
             memcpy(cur->mac, mac, 6);
             cur->timestamp = timestamp;
 
@@ -152,16 +154,18 @@ int net_arp_lookup(netif_t *nif, const uint8 ip_in[4], uint8 mac_out[6],
 
     /* Look for the entry */
     LIST_FOREACH(cur, &net_arp_cache, ac_list) {
-        if (!memcmp(ip_in, cur->ip, 4)) {
+        if(!memcmp(ip_in, cur->ip, 4)) {
             if(cur->mac[0] == 0 && cur->mac[1] == 0 &&
-               cur->mac[2] == 0 && cur->mac[3] == 0 &&
-               cur->mac[4] == 0 && cur->mac[5] == 0) {
+                    cur->mac[2] == 0 && cur->mac[3] == 0 &&
+                    cur->mac[4] == 0 && cur->mac[5] == 0) {
                 return -1;
             }
 
             memcpy(mac_out, cur->mac, 6);
-            if (cur->timestamp != 0)
+
+            if(cur->timestamp != 0)
                 cur->timestamp = jiffies;
+
             return 0;
         }
     }
@@ -208,10 +212,12 @@ int net_arp_revlookup(netif_t *nif, uint8 ip_out[4], const uint8 mac_in[6]) {
 
     /* Look for the entry */
     LIST_FOREACH(cur, &net_arp_cache, ac_list) {
-        if (!memcmp(mac_in, cur->mac, 6)) {
+        if(!memcmp(mac_in, cur->mac, 6)) {
             memcpy(ip_out, cur->ip, 4);
-            if (cur->timestamp != 0)
+
+            if(cur->timestamp != 0)
                 cur->timestamp = jiffies;
+
             return 0;
         }
     }
@@ -220,7 +226,7 @@ int net_arp_revlookup(netif_t *nif, uint8 ip_out[4], const uint8 mac_in[6]) {
 }
 
 /* Send an ARP reply packet on the specified network adapter */
-static int net_arp_send(netif_t *nif, arp_pkt_t *pkt)	{
+static int net_arp_send(netif_t *nif, arp_pkt_t *pkt)   {
     arp_pkt_t pkt_out;
     eth_hdr_t eth_hdr;
     uint8 buf[sizeof(arp_pkt_t) + sizeof(eth_hdr_t)];
@@ -338,12 +344,15 @@ void net_arp_shutdown() {
     netarp_t *a1, *a2;
 
     a1 = LIST_FIRST(&net_arp_cache);
-    while (a1 != NULL) {
+
+    while(a1 != NULL) {
         a2 = LIST_NEXT(a1, ac_list);
+
         if(a1->pkt) {
             free(a1->pkt);
             free(a1->data);
         }
+
         free(a1);
         a1 = a2;
     }
