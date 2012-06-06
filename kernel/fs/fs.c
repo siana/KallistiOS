@@ -615,9 +615,8 @@ int fs_rmdir(const char * fn) {
     }
 }
 
-int fs_fcntl(file_t fd, int cmd, ...) {
+int fs_vfcntl(file_t fd, int cmd, va_list ap) {
     fs_hnd_t *h = fs_map_hnd(fd);
-    va_list ap;
     int rv;
 
     if(!h) {
@@ -630,10 +629,18 @@ int fs_fcntl(file_t fd, int cmd, ...) {
         return -1;
     }
 
-    va_start(ap, cmd);
     rv = h->handler->fcntl(h->hnd, cmd, ap);
-    va_end(ap);
 
+    return rv;
+}
+
+int fs_fcntl(file_t fd, int cmd, ...) {
+    va_list ap;
+    int rv;
+
+    va_start(ap, cmd);
+    rv = fs_vfcntl(fd, cmd, ap);
+    va_end(ap);
     return rv;
 }
 
