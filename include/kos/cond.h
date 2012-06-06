@@ -66,6 +66,9 @@ typedef struct condvar {
 LIST_HEAD(condlist, condvar);
 /* \endcond */
 
+/** \brief  Initializer for a transient condvar. */
+#define COND_INITIALIZER    { { 0 } }
+
 /** \brief  Allocate a new condition variable.
 
     This function allocates and initializes a new condition variable for use.

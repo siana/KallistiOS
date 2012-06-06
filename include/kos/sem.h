@@ -52,6 +52,10 @@ typedef struct semaphore {
 LIST_HEAD(semlist, semaphore);
 /** \endcond */
 
+/** \brief  Initializer for a transient semaphore.
+    \param  value           The initial count of the semaphore. */
+#define SEM_INITIALIZER(value) { { 0 }, value }
+
 /** \brief  Allocate a new semaphore.
 
     This function allocates and initializes a new semaphore for use.

@@ -39,6 +39,9 @@ __BEGIN_DECLS
 */
 typedef semaphore_t mutex_t;
 
+/** \brief  Initializer for a transient mutex. */
+#define MUTEX_INITIALIZER   SEM_INITIALIZER(1)
+
 /** \brief  Allocate a new mutex.
 
     This function allocates and initializes a new mutex for use.
