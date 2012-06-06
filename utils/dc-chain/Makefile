@@ -21,7 +21,7 @@
 
 # User configuration
 sh_target=sh-elf
-arm_target=arm-elf
+arm_target=arm-eabi
 sh_prefix  := /opt/toolchains/dc/$(sh_target)
 arm_prefix := /opt/toolchains/dc/$(arm_target)
 # kos_root: KOS subversion root (contains kos/ and kos-ports/)
@@ -29,8 +29,8 @@ kos_root=$(CURDIR)/../../..
 # kos_base: equivalent of KOS_BASE (contains include/ and kernel/)
 kos_base=$(kos_root)/kos
 binutils_ver=2.22
-gcc_ver=4.5.2
-newlib_ver=1.19.0
+gcc_ver=4.7.0
+newlib_ver=1.20.0
 gdb_ver=6.7.1
 insight_ver=6.7.1
 # With GCC 4.x versions, the patches provide a kos thread model, so you should
@@ -124,7 +124,7 @@ $(build_binutils): logdir
 	@echo "+++ Building $(src_dir) to $(build)..."
 	-mkdir -p $(build)
 	> $(log)
-	cd $(build); ../$(src_dir)/configure --target=$(target) --prefix=$(prefix) --enable-install-libbfd $(to_log)
+	cd $(build); ../$(src_dir)/configure --target=$(target) --prefix=$(prefix) $(to_log)
 	make -C $(build) all install DESTDIR=$(DESTDIR) $(to_log) 
 	$(clean_up)
 
