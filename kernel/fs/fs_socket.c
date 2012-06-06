@@ -79,6 +79,11 @@ static int fs_socket_fcntl(void *hnd, int cmd, va_list ap) {
     return sock->protocol->fcntl(sock, cmd, ap);
 }
 
+static short fs_socket_poll(void *hnd, short events) {
+    net_socket_t *sock = (net_socket_t *)hnd;
+    return sock->protocol->poll(sock, events);
+}
+
 /* VFS handler */
 static vfs_handler_t vh = {
     /* Name handler */
@@ -109,7 +114,8 @@ static vfs_handler_t vh = {
     NULL,            /* stat */
     NULL,            /* mkdir */
     NULL,            /* rmdir */
-    fs_socket_fcntl  /* fcntl */
+    fs_socket_fcntl, /* fcntl */
+    fs_socket_poll   /* poll */
 };
 
 /* Have we been initialized? */

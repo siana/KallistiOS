@@ -9,6 +9,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <errno.h>
+#include <poll.h>
 #include <arpa/inet.h>
 #include <kos/net.h>
 #include <kos/mutex.h>
@@ -50,6 +51,7 @@ struct udp_sock {
     uint32 flags;
     int domain;
     int hop_limit;
+    file_t sock;
 
     struct udp_pkt_queue packets;
 };
@@ -183,6 +185,8 @@ static int net_udp_bind(net_socket_t *hnd, const struct sockaddr *addr,
         udpsock->local_addr = realaddr6;
         udpsock->local_addr.sin6_port = htons(port);
     }
+
+    udpsock->sock = hnd->fd;
 
     mutex_unlock(udp_mutex);
 
@@ -867,6 +871,33 @@ out:
     return rv;
 }
 
+static short net_udp_poll(net_socket_t *hnd, short events) {
+    struct udp_sock *sock;
+    short rv = POLLWRNORM;
+
+    if(irq_inside_int()) {
+        if(mutex_trylock(udp_mutex) == -1)
+            return 0;
+    }
+    else {
+        mutex_lock(udp_mutex);
+    }
+
+    if(!(sock = (struct udp_sock *)hnd->data)) {
+        mutex_unlock(udp_mutex);
+        return POLLNVAL;
+    }
+
+    if(!TAILQ_EMPTY(&sock->packets))
+        rv |= POLLRDNORM;
+
+    mutex_unlock(udp_mutex);
+
+    return rv & events;
+}
+
+extern void __poll_event_trigger(int fd, short event);
+
 static int net_udp_input4(netif_t *src, const ip_hdr_t *ip, const uint8 *data,
                           int size) {
     udp_hdr_t *hdr = (udp_hdr_t *)data;
@@ -947,6 +978,7 @@ static int net_udp_input4(netif_t *src, const ip_hdr_t *ip, const uint8 *data,
         TAILQ_INSERT_TAIL(&sock->packets, pkt, pkt_queue);
 
         ++udp_stats.pkt_recv;
+        __poll_event_trigger(sock->sock, POLLRDNORM);
         genwait_wake_one(sock);
         mutex_unlock(udp_mutex);
 
@@ -1039,6 +1071,7 @@ static int net_udp_input6(netif_t *src, const ipv6_hdr_t *ip, const uint8 *data,
         TAILQ_INSERT_TAIL(&sock->packets, pkt, pkt_queue);
 
         ++udp_stats.pkt_recv;
+        __poll_event_trigger(sock->sock, POLLRDNORM);
         genwait_wake_one(sock);
         mutex_unlock(udp_mutex);
 
@@ -1164,7 +1197,8 @@ static fs_socket_proto_t proto = {
     net_udp_input,
     net_udp_getsockopt,
     net_udp_setsockopt,
-    net_udp_fcntl
+    net_udp_fcntl,
+    net_udp_poll
 };
 
 int net_udp_init() {

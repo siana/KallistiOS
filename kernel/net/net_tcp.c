@@ -9,6 +9,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdint.h>
+#include <poll.h>
 #include <sys/socket.h>
 
 #include <kos/fs.h>
@@ -1916,6 +1917,82 @@ out:
     return rv;
 }
 
+static short net_tcp_poll(net_socket_t *hnd, short events) {
+    struct tcp_sock *sock;
+    short rv = 0;
+
+    if(irq_inside_int()) {
+        if(rwsem_read_trylock(tcp_sem)) {
+            return 0;
+        }
+    }
+    else {
+        rwsem_read_lock(tcp_sem);
+    }
+
+    /* Lock the mutex on the socket itself first. We need to pull some data from
+       it that doesn't affect the rest of the list, so let's start there... */
+    if(!(sock = (struct tcp_sock *)hnd->data)) {
+        rwsem_read_unlock(tcp_sem);
+        return POLLNVAL;
+    }
+
+    if(irq_inside_int()) {
+        if(mutex_trylock(sock->mutex)) {
+            rwsem_read_unlock(tcp_sem);
+            return 0;
+        }
+    }
+    else {
+        mutex_lock(sock->mutex);
+    }
+
+    switch(sock->state) {
+        case TCP_STATE_LISTEN:
+            if(sock->listen.count)
+                rv = POLLRDNORM;
+            break;
+
+        case TCP_STATE_CLOSED | TCP_STATE_RESET:
+            rv = POLLHUP;
+
+            if(sock->data.rcvbuf_cur_sz)
+                rv |= POLLRDNORM;
+            break;
+
+        case TCP_STATE_CLOSED:
+        case TCP_STATE_SYN_SENT:
+            break;
+
+        case TCP_STATE_CLOSE_WAIT:
+            if(sock->data.sndbuf_cur_sz < sock->sndbuf_sz)
+                rv |= POLLWRNORM | POLLWRBAND;
+            /* Fall through... */
+
+        case TCP_STATE_TIME_WAIT:
+        case TCP_STATE_CLOSING:
+            rv = POLLRDNORM;
+            break;
+
+        case TCP_STATE_SYN_RECEIVED:
+        case TCP_STATE_ESTABLISHED:
+            if(sock->data.sndbuf_cur_sz < sock->sndbuf_sz)
+                rv |= POLLWRNORM | POLLWRBAND;
+            /* Fall through... */
+
+        case TCP_STATE_FIN_WAIT_1:
+        case TCP_STATE_FIN_WAIT_2:
+        case TCP_STATE_LAST_ACK:
+            if(sock->data.rcvbuf_cur_sz)
+                rv |= POLLRDNORM;
+            break;
+    }
+
+    mutex_unlock(sock->mutex);
+    rwsem_read_unlock(tcp_sem);
+    return rv & (events | POLLHUP | POLLERR);
+}
+
 static void tcp_rst(netif_t *net, const struct in6_addr *src,
                     const struct in6_addr *dst, uint16_t src_port,
                     uint16_t dst_port, uint16_t flags, uint32_t seq,
@@ -2209,6 +2286,8 @@ static struct tcp_sock *find_sock(const struct in6_addr *src,
     return NULL;
 }
 
+extern void __poll_event_trigger(int fd, short event);
+
 /* This function is basically a direct implementation of the first two and a
    half steps of the SEGMENT ARRIVES event processing defined in RFC 793 on
    pages 65 and 66. There are a few parts that are omitted and some are put off
@@ -2218,7 +2297,7 @@ static int listen_pkt(netif_t *src, const struct in6_addr *srca,
                       struct tcp_sock *s, uint16_t flags, int size) {
     int j = 0;
     int end_of_opts;
-    uint16_t mss;
+    uint16_t mss = 576;
 
     /* Incoming segments with a RST should be ignored */
     if(flags & TCP_FLAG_RST)
@@ -2242,7 +2321,6 @@ static int listen_pkt(netif_t *src, const struct in6_addr *srca,
                 break;
 
             case TCP_OPT_MSS:
-
                 if(j + 4 > end_of_opts || tcp->options[j + 1] != 4)
                     return -1;
 
@@ -2299,6 +2377,7 @@ static int listen_pkt(netif_t *src, const struct in6_addr *srca,
         s->listen.tail = 0;
 
     /* Signal the condvar, in case anyone's waiting */
+    __poll_event_trigger(s->sock, POLLRDNORM);
     cond_signal(s->listen.cv);
 
     /* We're done, return success. */
@@ -2332,6 +2411,7 @@ static int synsent_pkt(netif_t *src, const struct in6_addr *srca,
     if(flags & TCP_FLAG_RST) {
         if(gotack) {
             s->state = TCP_STATE_CLOSED | TCP_STATE_RESET;
+            __poll_event_trigger(s->sock, POLLHUP);
             cond_signal(s->data.recv_cv);
             cond_signal(s->data.send_cv);
             return 0;
@@ -2388,12 +2468,14 @@ static int synsent_pkt(netif_t *src, const struct in6_addr *srca,
             if(SEQ_GT(ack, s->data.snd.iss)) {
                 s->state = TCP_STATE_ESTABLISHED;
                 tcp_send_ack(s);
+                __poll_event_trigger(s->sock, POLLWRNORM | POLLWRBAND);
                 cond_signal(s->data.send_cv);
             }
         }
         else {
             s->state = TCP_STATE_SYN_RECEIVED;
             tcp_send_syn(s, 1);
+            __poll_event_trigger(s->sock, POLLWRNORM | POLLWRBAND);
             cond_signal(s->data.send_cv);
         }
     }
@@ -2463,6 +2545,7 @@ static int process_pkt(netif_t *src, const struct in6_addr *srca,
         }
         else {
             s->state = TCP_STATE_RESET | TCP_STATE_CLOSED;
+            __poll_event_trigger(s->sock, POLLHUP);
             cond_signal(s->data.recv_cv);
             cond_signal(s->data.send_cv);
             return 0;
@@ -2501,6 +2584,7 @@ static int process_pkt(netif_t *src, const struct in6_addr *srca,
         s->data.sndbuf_acked += (int32_t)(ack - s->data.snd.una - acksyn);
         s->data.sndbuf_cur_sz -= (int32_t)(ack - s->data.snd.una - acksyn);
         s->data.snd.una = ack;
+        __poll_event_trigger(s->sock, POLLWRNORM | POLLWRBAND);
         cond_signal(s->data.send_cv);
 
         if(s->data.sndbuf_acked >= s->sndbuf_sz)
@@ -2600,6 +2684,7 @@ static int process_pkt(netif_t *src, const struct in6_addr *srca,
             }
 
             /* Signal any waiting thread and send an ack for what we read */
+            __poll_event_trigger(s->sock, POLLRDNORM);
             cond_signal(s->data.recv_cv);
             tcp_send_ack(s);
         }
@@ -2616,6 +2701,7 @@ static int process_pkt(netif_t *src, const struct in6_addr *srca,
         /* ACK the FIN */
         ++s->data.rcv.nxt;
         tcp_send_ack(s);
+        __poll_event_trigger(s->sock, POLLRDNORM);
         cond_signal(s->data.recv_cv);
 
         /* Do the various processing that needs to be done based on our state */
@@ -2874,7 +2960,8 @@ static fs_socket_proto_t proto = {
     net_tcp_input,                      /* input */
     net_tcp_getsockopt,                 /* getsockopt */
     net_tcp_setsockopt,                 /* setsockopt */
-    net_tcp_fcntl                       /* fcntl */
+    net_tcp_fcntl,                      /* fcntl */
+    net_tcp_poll                        /* poll */
 };
 
 int net_tcp_init() {

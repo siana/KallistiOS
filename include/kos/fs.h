@@ -167,6 +167,9 @@ typedef struct vfs_handler {
 
     /** \brief Manipulate file control flags on the given file. */
     int (*fcntl)(void *fd, int cmd, va_list ap);
+
+    /** \brief Check if an event is pending on the given file. */
+    short (*poll)(void *fd, short events);
 } vfs_handler_t;
 
 /** \brief  The number of distinct file descriptors that can be in use at a

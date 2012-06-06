@@ -320,6 +320,20 @@ typedef struct fs_socket_proto {
         \retval -1          On error (generally, set errno appropriately).
     */
     int (*fcntl)(net_socket_t *s, int cmd, va_list ap);
+
+    /** \brief  Poll for events.
+
+        This function should check the given socket for any events that may have
+        already occured that are specified. This is used to back the ::poll()
+        system call. This function should not block to wait for any events. This
+        function may be called in an interrupt.
+
+        \param  s           The socket to poll.
+        \param  events      The events to check for.
+        \retval             A mask of any of the events specified that are
+                            currently true in the socket. 0 if none are true.
+    */
+    short (*poll)(net_socket_t *s, short events);
 } fs_socket_proto_t;
 
 /** \brief  Initializer for the entry field in the fs_socket_proto_t struct. */
