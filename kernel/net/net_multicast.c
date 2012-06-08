@@ -24,7 +24,7 @@ typedef struct mc_entry {
 LIST_HEAD(mc_list, mc_entry);
 static struct mc_list multicasts = LIST_HEAD_INITIALIZER(0);
 static int mc_count = 0;
-static mutex_t *mc_mutex = NULL;
+static mutex_t mc_mutex = MUTEX_INITIALIZER;
 
 static void multicast_commit() {
     mc_entry_t *i;
@@ -56,20 +56,20 @@ int net_multicast_add(const uint8 mac[6]) {
     memcpy(ent->mac, mac, 6);
 
     if(irq_inside_int()) {
-        if(mutex_trylock(mc_mutex)) {
+        if(mutex_trylock(&mc_mutex)) {
             free(ent);
             return -1;
         }
     }
     else {
-        mutex_lock(mc_mutex);
+        mutex_lock(&mc_mutex);
     }
 
     LIST_INSERT_HEAD(&multicasts, ent, entry);
     ++mc_count;
 
     multicast_commit();
-    mutex_unlock(mc_mutex);
+    mutex_unlock(&mc_mutex);
 
     return 0;
 }
@@ -78,12 +78,12 @@ int net_multicast_del(const uint8 mac[6]) {
     mc_entry_t *i, *tmp;
 
     if(irq_inside_int()) {
-        if(mutex_trylock(mc_mutex)) {
+        if(mutex_trylock(&mc_mutex)) {
             return -1;
         }
     }
     else {
-        mutex_lock(mc_mutex);
+        mutex_lock(&mc_mutex);
     }
 
     /* Look for the one in question */
@@ -103,7 +103,7 @@ int net_multicast_del(const uint8 mac[6]) {
 
     multicast_commit();
 
-    mutex_unlock(mc_mutex);
+    mutex_unlock(&mc_mutex);
 
     return 0;
 }
@@ -113,12 +113,12 @@ int net_multicast_check(const uint8 mac[6]) {
     int rv = 0;
 
     if(irq_inside_int()) {
-        if(mutex_trylock(mc_mutex)) {
+        if(mutex_trylock(&mc_mutex)) {
             return -1;
         }
     }
     else {
-        mutex_lock(mc_mutex);
+        mutex_lock(&mc_mutex);
     }
 
     /* Look for the one in question */
@@ -129,13 +129,12 @@ int net_multicast_check(const uint8 mac[6]) {
         }
     }
 
-    mutex_unlock(mc_mutex);
+    mutex_unlock(&mc_mutex);
     return rv;
 }
 
 int net_multicast_init() {
-    mc_mutex = mutex_create();
-    return mc_mutex != NULL;
+    return 0;
 }
 
 void net_multicast_shutdown() {
@@ -152,10 +151,6 @@ void net_multicast_shutdown() {
 
     LIST_INIT(&multicasts);
     mc_count = 0;
-
-    /* Destroy the mutex */
-    mutex_destroy(mc_mutex);
-    mc_mutex = NULL;
 
     /* Clear the device's multicast list */
     if(net_default_dev) {

@@ -5,7 +5,7 @@
 
 */
 
-#include <kos/recursive_lock.h>
+#include <kos/mutex.h>
 #include <kos/fs.h>
 #include <kos/fs_socket.h>
 #include <kos/net.h>
@@ -26,24 +26,24 @@ LIST_HEAD(socket_list, net_socket);
 
 static struct proto_list protocols;
 static struct socket_list sockets;
-static recursive_lock_t *proto_rlock = NULL;
-static recursive_lock_t *list_rlock = NULL;
+static mutex_t proto_rlock = RECURSIVE_MUTEX_INITIALIZER;
+static mutex_t list_rlock = RECURSIVE_MUTEX_INITIALIZER;
 
 static void fs_socket_close(void *hnd) {
     net_socket_t *sock = (net_socket_t *)hnd;
 
     if(irq_inside_int()) {
-        if(rlock_trylock(list_rlock)) {
+        if(mutex_trylock(&list_rlock)) {
             errno = EWOULDBLOCK;
             return;
         }
     }
     else {
-        rlock_lock(list_rlock);
+        mutex_lock(&list_rlock);
     }
 
     LIST_REMOVE(sock, sock_list);
-    rlock_unlock(list_rlock);
+    mutex_unlock(&list_rlock);
 
     /* Protect against botched socket() calls */
     if(sock->protocol)
@@ -128,12 +128,6 @@ int fs_socket_init() {
     TAILQ_INIT(&protocols);
     LIST_INIT(&sockets);
 
-    list_rlock = rlock_create();
-    proto_rlock = rlock_create();
-
-    if(!list_rlock || !proto_rlock)
-        return -1;
-
     if(nmmgr_handler_add(&vh.nmmgr) < 0)
         return -1;
 
@@ -160,8 +154,6 @@ int fs_socket_shutdown() {
     if(nmmgr_handler_remove(&vh.nmmgr) < 0)
         return -1;
 
-    rlock_destroy(list_rlock);
-
     i = TAILQ_FIRST(&protocols);
 
     while(i != NULL) {
@@ -170,10 +162,6 @@ int fs_socket_shutdown() {
         i = j;
     }
 
-    rlock_destroy(proto_rlock);
-
-    list_rlock = NULL;
-    proto_rlock = NULL;
     TAILQ_INIT(&protocols);
     LIST_INIT(&sockets);
     initted = 0;
@@ -191,12 +179,12 @@ int fs_socket_input(netif_t *src, int domain, int protocol, const void *hdr,
 
     /* Find the protocol handler and call its input function... */
     if(irq_inside_int()) {
-        if(rlock_trylock(proto_rlock)) {
+        if(mutex_trylock(&proto_rlock)) {
             return -1;
         }
     }
     else {
-        rlock_lock(proto_rlock);
+        mutex_lock(&proto_rlock);
     }
 
     TAILQ_FOREACH(i, &protocols, entry) {
@@ -206,7 +194,7 @@ int fs_socket_input(netif_t *src, int domain, int protocol, const void *hdr,
         }
     }
 
-    rlock_unlock(proto_rlock);
+    mutex_unlock(&proto_rlock);
 
     return rv;
 }
@@ -216,16 +204,16 @@ int fs_socket_proto_add(fs_socket_proto_t *proto) {
         return -1;
 
     if(irq_inside_int()) {
-        if(rlock_trylock(proto_rlock)) {
+        if(mutex_trylock(&proto_rlock)) {
             return -1;
         }
     }
     else {
-        rlock_lock(proto_rlock);
+        mutex_lock(&proto_rlock);
     }
 
     TAILQ_INSERT_TAIL(&protocols, proto, entry);
-    rlock_unlock(proto_rlock);
+    mutex_unlock(&proto_rlock);
 
     return 0;
 }
@@ -239,12 +227,12 @@ int fs_socket_proto_remove(fs_socket_proto_t *proto) {
 
     /* Make sure its registered. */
     if(irq_inside_int()) {
-        if(rlock_trylock(proto_rlock)) {
+        if(mutex_trylock(&proto_rlock)) {
             return -1;
         }
     }
     else {
-        rlock_lock(proto_rlock);
+        mutex_lock(&proto_rlock);
     }
 
     TAILQ_FOREACH(i, &protocols, entry) {
@@ -256,7 +244,7 @@ int fs_socket_proto_remove(fs_socket_proto_t *proto) {
         }
     }
 
-    rlock_unlock(proto_rlock);
+    mutex_unlock(&proto_rlock);
 
     return rv;
 }
@@ -272,13 +260,13 @@ int socket(int domain, int type, int protocol) {
     }
 
     if(irq_inside_int()) {
-        if(rlock_trylock(proto_rlock)) {
+        if(mutex_trylock(&proto_rlock)) {
             errno = EWOULDBLOCK;
             return -1;
         }
     }
     else {
-        rlock_lock(proto_rlock);
+        mutex_lock(&proto_rlock);
     }
 
     /* Look for a matching protocol entry. */
@@ -291,7 +279,7 @@ int socket(int domain, int type, int protocol) {
     /* If i is NULL, we got through the whole list without finding anything. */
     if(!i) {
         errno = EPROTONOSUPPORT;
-        rlock_unlock(proto_rlock);
+        mutex_unlock(&proto_rlock);
         return -1;
     }
 
@@ -300,7 +288,7 @@ int socket(int domain, int type, int protocol) {
 
     if(!sock) {
         errno = ENOMEM;
-        rlock_unlock(proto_rlock);
+        mutex_unlock(&proto_rlock);
         return -1;
     }
 
@@ -309,35 +297,35 @@ int socket(int domain, int type, int protocol) {
 
     if(sock->fd < 0) {
         free(sock);
-        rlock_unlock(proto_rlock);
+        mutex_unlock(&proto_rlock);
         return -1;
     }
 
     /* Initialize protocol-specific data */
     if(i->socket(sock, domain, type, protocol) == -1) {
         fs_close(sock->fd);
-        rlock_unlock(proto_rlock);
+        mutex_unlock(&proto_rlock);
         return -1;
     }
 
     /* Finish initialization */
     sock->protocol = i;
-    rlock_unlock(proto_rlock);
+    mutex_unlock(&proto_rlock);
 
     /* Add this socket into the list of sockets, and return */
     if(irq_inside_int()) {
-        if(rlock_trylock(list_rlock)) {
+        if(mutex_trylock(&list_rlock)) {
             free(sock);
             errno = EWOULDBLOCK;
             return -1;
         }
     }
     else {
-        rlock_lock(list_rlock);
+        mutex_lock(&list_rlock);
     }
 
     LIST_INSERT_HEAD(&sockets, sock, sock_list);
-    rlock_unlock(list_rlock);
+    mutex_unlock(&list_rlock);
 
     return sock->fd;
 }
@@ -366,18 +354,18 @@ net_socket_t *fs_socket_open_sock(fs_socket_proto_t *proto) {
 
     /* Add this socket into the list of sockets, and return */
     if(irq_inside_int()) {
-        if(rlock_trylock(list_rlock)) {
+        if(mutex_trylock(&list_rlock)) {
             free(sock);
             errno = EWOULDBLOCK;
             return NULL;
         }
     }
     else {
-        rlock_lock(list_rlock);
+        mutex_lock(&list_rlock);
     }
 
     LIST_INSERT_HEAD(&sockets, sock, sock_list);
-    rlock_unlock(list_rlock);
+    mutex_unlock(&list_rlock);
 
     return sock;
 }

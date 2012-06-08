@@ -66,7 +66,7 @@ void *thd_2(void *v) {
 }
 
 /* Condvar/mutex used for timing below */
-mutex_t * mut;
+mutex_t mut = MUTEX_INITIALIZER;
 condvar_t * cv;
 volatile int cv_ready = 0, cv_cnt = 0, cv_quit = 0;
 
@@ -74,11 +74,11 @@ volatile int cv_ready = 0, cv_cnt = 0, cv_quit = 0;
 void *thd_3(void *v) {
     printf("Thread %d started\n", (int)v);
 
-    mutex_lock(mut);
+    mutex_lock(&mut);
 
     for(; ;) {
         while(!cv_ready && !cv_quit) {
-            cond_wait(cv, mut);
+            cond_wait(cv, &mut);
         }
 
         if(!cv_quit) {
@@ -91,7 +91,7 @@ void *thd_3(void *v) {
 
     }
 
-    mutex_unlock(mut);
+    mutex_unlock(&mut);
 
     printf("Thread %d exiting\n", (int)v);
     return NULL;
@@ -151,7 +151,6 @@ int main(int argc, char **argv) {
 
     printf("\n\nCondvar test; starting threads\n");
     printf("Main thread is %p\n", thd_current);
-    mut = mutex_create();
     cv = cond_create();
 
     for(i = 0; i < 10; i++) {
@@ -164,40 +163,40 @@ int main(int argc, char **argv) {
     printf("\nOne-by-one test:\n");
 
     for(i = 0; i < 10; i++) {
-        mutex_lock(mut);
+        mutex_lock(&mut);
         cv_ready = 1;
         printf("Signaling %d:\n", i);
         cond_signal(cv);
-        mutex_unlock(mut);
+        mutex_unlock(&mut);
         thd_sleep(100);
     }
 
     printf("\nAgain, without waiting:\n");
 
     for(i = 0; i < 10; i++) {
-        mutex_lock(mut);
+        mutex_lock(&mut);
         cv_ready = 1;
         printf("Signaling %d:\n", i);
         cond_signal(cv);
-        mutex_unlock(mut);
+        mutex_unlock(&mut);
     }
 
     thd_sleep(100);
     printf("  (might not be the full 10)\n");
 
     printf("\nBroadcast test:\n");
-    mutex_lock(mut);
+    mutex_lock(&mut);
     cv_ready = 1;
     cond_broadcast(cv);
-    mutex_unlock(mut);
+    mutex_unlock(&mut);
     thd_sleep(100);
     printf("  (only one should have gotten through)\n");
 
     printf("\nKilling all condvar threads:\n");
-    mutex_lock(mut);
+    mutex_lock(&mut);
     cv_quit = 1;
     cond_broadcast(cv);
-    mutex_unlock(mut);
+    mutex_unlock(&mut);
 
     for(i = 0; i < 10; i++)
         thd_join(t3[i], NULL);

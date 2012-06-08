@@ -1,7 +1,7 @@
 /* KallistiOS ##version##
 
    include/kos/recursive_lock.h
-   Copyright (C) 2008, 2010 Lawrence Sebald
+   Copyright (C) 2008, 2010, 2012 Lawrence Sebald
 
 */
 
@@ -13,6 +13,10 @@
     limited to holding the lock at a time, but it can hold it an "unlimited"
     number of times (actually limited to INT_MAX, but who's counting).
 
+    These are now just wrappers around the MUTEX_TYPE_RECURSIVE that is now
+    provided and will be removed at some point in the future. Please update your
+    code to use that type instead.
+
     \author Lawrence Sebald
 */
 
@@ -23,23 +27,16 @@
 
 __BEGIN_DECLS
 
-#include <sys/queue.h>
-#include <kos/thread.h>
+#include <kos/mutex.h>
 
 /** \brief  Recursive lock structure.
 
-    All members of this structure should be considered to be private, it is not
-    safe to change anything in here yourself.
+    Recursive locks are just a simple wrapper around mutexes at this point. You
+    should not use this type in any new code.
 
     \headerfile kos/recursive_lock.h
 */
-typedef struct recursive_lock {
-    /** \brief  The thread that currently holds the lock, if any. */
-    kthread_t *holder;
-
-    /** \brief  The number of times the holding thread has locked this lock. */
-    int count;
-} recursive_lock_t;
+typedef mutex_t recursive_lock_t;
 
 /** \brief  Allocate a new recursive lock.
 
@@ -48,7 +45,7 @@ typedef struct recursive_lock {
     \return The created lock, or NULL on failure (errno will be set to ENOMEM to
             indicate that the system appears to be out of memory).
 */
-recursive_lock_t *rlock_create();
+recursive_lock_t *rlock_create() __attribute__((deprecated));
 
 /** \brief  Destroy a recursive lock.
 
@@ -57,7 +54,7 @@ recursive_lock_t *rlock_create();
 
     \param  l       The recursive lock to destroy. It must be unlocked.
 */
-void rlock_destroy(recursive_lock_t *l);
+void rlock_destroy(recursive_lock_t *l) __attribute__((deprecated));
 
 /** \brief  Lock a recursive lock.
 
@@ -71,7 +68,7 @@ void rlock_destroy(recursive_lock_t *l);
     \sa rlock_trylock
     \sa rlock_lock_timed
 */
-int rlock_lock(recursive_lock_t *l);
+int rlock_lock(recursive_lock_t *l) __attribute__((deprecated));
 
 /** \brief  Lock a recursive lock (with a timeout).
 
@@ -89,7 +86,8 @@ int rlock_lock(recursive_lock_t *l);
     \sa rlock_trylock
     \sa rlock_lock_timed
 */
-int rlock_lock_timed(recursive_lock_t *l, int timeout);
+int rlock_lock_timed(recursive_lock_t *l, int timeout)
+    __attribute__((deprecated));
 
 /** \brief  Unlock a recursive lock.
 
@@ -100,7 +98,7 @@ int rlock_lock_timed(recursive_lock_t *l, int timeout);
                     by the calling thread.
     \retval 0       On success.
 */
-int rlock_unlock(recursive_lock_t *l);
+int rlock_unlock(recursive_lock_t *l) __attribute__((deprecated));
 
 /** \brief  Attempt to lock a recursive lock without blocking.
 
@@ -115,7 +113,7 @@ int rlock_unlock(recursive_lock_t *l);
     \sa rlock_lock
     \sa rlock_lock_timed
 */
-int rlock_trylock(recursive_lock_t *l);
+int rlock_trylock(recursive_lock_t *l) __attribute__((deprecated));
 
 /** \brief  Check if a recursive lock is currently held by any thread.
 
@@ -127,13 +125,7 @@ int rlock_trylock(recursive_lock_t *l);
     \retval TRUE    If the lock is held by any thread.
     \retval FALSE   If the lock is not currently held by any thread.
 */
-int rlock_is_locked(recursive_lock_t *l);
-
-/* Init / shutdown */
-/** \cond */
-int rlock_init();
-void rlock_shutdown();
-/** \endcond */
+int rlock_is_locked(recursive_lock_t *l) __attribute__((deprecated));
 
 __END_DECLS
 

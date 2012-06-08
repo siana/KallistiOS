@@ -44,7 +44,7 @@ Function comments located in vmufs.h.
 /* We need some sort of access control here for threads. This is somewhat
    less than optimal (one mutex for all VMUs) but I doubt it'll really
    be much of an issue :) */
-static mutex_t * mutex;
+static mutex_t mutex;
 
 /* Convert a decimal number to BCD; max of two digits */
 static uint8 dec_to_bcd(int dec) {
@@ -485,16 +485,12 @@ int vmufs_dir_free(vmu_root_t * root, vmu_dir_t * dir) {
 }
 
 int vmufs_mutex_lock() {
-    mutex_lock(mutex);
-    return 0;
+    return mutex_lock(&mutex);
 }
 
 int vmufs_mutex_unlock() {
-    mutex_unlock(mutex);
-    return 0;
+    return mutex_unlock(&mutex);
 }
-
-
 
 /* ****************** Higher level functions ******************** */
 
@@ -836,18 +832,11 @@ int vmufs_free_blocks(maple_device_t * dev) {
 
 
 int vmufs_init() {
-    if(!mutex)
-        mutex = mutex_create();
-
+    mutex_init(&mutex, MUTEX_TYPE_NORMAL);
     return 0;
 }
 
 int vmufs_shutdown() {
-    if(mutex) {
-        mutex_destroy(mutex);
-        mutex = NULL;
-    }
-
+    mutex_destroy(&mutex);
     return 0;
 }
-

@@ -40,7 +40,6 @@ __BEGIN_DECLS
 #include <kos/thread.h>
 #include <kos/sem.h>
 #include <kos/rwsem.h>
-#include <kos/recursive_lock.h>
 #include <kos/once.h>
 #include <kos/tls.h>
 #include <kos/mutex.h>

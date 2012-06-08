@@ -23,7 +23,7 @@ interface at the front of their struct.
 #include <kos/exports.h>
 
 /* Thread mutex for our name handler list */
-static mutex_t * mutex;
+static mutex_t mutex = MUTEX_INITIALIZER;
 
 /* Name handler structures; these structs contain path/type pairs that
    describe how to handle a given path name. */
@@ -53,11 +53,11 @@ nmmgr_list_t * nmmgr_get_list() {
 
 /* Add a name handler */
 int nmmgr_handler_add(nmmgr_handler_t *hnd) {
-    mutex_lock(mutex);
+    mutex_lock(&mutex);
 
     LIST_INSERT_HEAD(&nmmgr_handlers, hnd, list_ent);
 
-    mutex_unlock(mutex);
+    mutex_unlock(&mutex);
 
     return 0;
 }
@@ -67,7 +67,7 @@ int nmmgr_handler_remove(nmmgr_handler_t *hnd) {
     nmmgr_handler_t *c;
     int rv = -1;
 
-    mutex_lock(mutex);
+    mutex_lock(&mutex);
 
     /* Verify that it's actually in there */
     LIST_FOREACH(c, &nmmgr_handlers, list_ent) {
@@ -78,7 +78,7 @@ int nmmgr_handler_remove(nmmgr_handler_t *hnd) {
         }
     }
 
-    mutex_unlock(mutex);
+    mutex_unlock(&mutex);
 
     return rv;
 }
@@ -89,9 +89,6 @@ int nmmgr_init() {
 
     /* Start with no handlers */
     LIST_INIT(&nmmgr_handlers);
-
-    /* Init thread mutex */
-    mutex = mutex_create();
 
     /* Initialize our internal exports */
     export_init();
@@ -112,6 +109,4 @@ void nmmgr_shutdown() {
 
         c = n;
     }
-
-    mutex_destroy(mutex);
 }

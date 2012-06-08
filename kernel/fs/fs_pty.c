@@ -59,14 +59,14 @@ typedef struct ptyhalf {
 
     int id;
 
-    mutex_t     * mutex;
+    mutex_t     mutex;
     condvar_t   * ready_read, * ready_write;
 } ptyhalf_t;
 
 /* Our global pty list */
 static ptylist_t ptys;
 static int pty_id_highest;
-static mutex_t * list_mutex;
+static mutex_t list_mutex;
 
 /* This struct is used for traversing the directory listing */
 typedef struct diritem {
@@ -80,7 +80,7 @@ typedef struct dirlist {
 
     dirent_t    dirent;
 
-    mutex_t     * mutex;
+    mutex_t     mutex;
 } dirlist_t;
 
 /* We'll have one of these for each opened pipe */
@@ -148,20 +148,20 @@ int fs_pty_create(char * buffer, int maxbuflen, file_t * master_out, file_t * sl
     master->refcnt = slave->refcnt = 0;
 
     /* Allocate a mutex for each for multiple readers or writers */
-    master->mutex = mutex_create();
+    mutex_init(&master->mutex, MUTEX_TYPE_NORMAL);
     master->ready_read = cond_create();
     master->ready_write = cond_create();
-    slave->mutex = mutex_create();
+    mutex_init(&slave->mutex, MUTEX_TYPE_NORMAL);
     slave->ready_read = cond_create();
     slave->ready_write = cond_create();
 
     /* Add it to the list */
-    mutex_lock(list_mutex);
+    mutex_lock(&list_mutex);
     master->id = ++pty_id_highest;
     slave->id = master->id;
     LIST_INSERT_HEAD(&ptys, master, list);
     LIST_INSERT_HEAD(&ptys, slave, list);
-    mutex_unlock(list_mutex);
+    mutex_unlock(&list_mutex);
 
 
     /* Call back up to fs to open two file descriptors */
@@ -189,7 +189,7 @@ static void pty_destroy_unused() {
 
     /* Make sure no one else is messing with the list and then disable
        everything for a bit */
-    mutex_lock(list_mutex);
+    mutex_lock(&list_mutex);
     old = irq_disable();
 
 again:
@@ -199,7 +199,7 @@ again:
         n = LIST_NEXT(c, list);
 
         /* Don't mess with the kernel console or locked items */
-        if(c->id == 0 || mutex_is_locked(c->mutex))
+        if(c->id == 0 || mutex_is_locked(&c->mutex))
             goto next;
 
         /* Not in use? */
@@ -211,7 +211,7 @@ again:
             /* Free all our structs */
             cond_destroy(c->ready_read);
             cond_destroy(c->ready_write);
-            mutex_destroy(c->mutex);
+            mutex_destroy(&c->mutex);
 
             /* Remove us from the list */
             LIST_REMOVE(c, list);
@@ -219,7 +219,7 @@ again:
             /* Now to deal with our partner... */
             cond_destroy(c->other->ready_read);
             cond_destroy(c->other->ready_write);
-            mutex_destroy(c->other->mutex);
+            mutex_destroy(&c->other->mutex);
 
             /* Remove it from the list */
             LIST_REMOVE(c->other, list);
@@ -237,7 +237,7 @@ again:
     }
 
     irq_restore(old);
-    mutex_unlock(list_mutex);
+    mutex_unlock(&list_mutex);
 }
 
 static void * pty_open_dir(const char * fn, int mode) {
@@ -246,7 +246,7 @@ static void * pty_open_dir(const char * fn, int mode) {
     int     cnt;
     pipefd_t    * fdobj = NULL;
 
-    mutex_lock(list_mutex);
+    mutex_lock(&list_mutex);
 
     /* Go through and count the number of items */
     cnt = 0;
@@ -295,7 +295,7 @@ static void * pty_open_dir(const char * fn, int mode) {
     fdobj->mode = mode;
 
 done:
-    mutex_unlock(list_mutex);
+    mutex_unlock(&list_mutex);
     return (void *)fdobj;
 }
 
@@ -327,12 +327,12 @@ static void * pty_open_file(const char * fn, int mode) {
     id = strtol(fn + 2, NULL, 16);
 
     /* Do we have that pty? */
-    mutex_lock(list_mutex);
+    mutex_lock(&list_mutex);
     LIST_FOREACH(ph, &ptys, list) {
         if(ph->id == id)
             break;
     }
-    mutex_unlock(list_mutex);
+    mutex_unlock(&list_mutex);
 
     if(!ph) {
         errno = ENOENT;
@@ -350,9 +350,9 @@ static void * pty_open_file(const char * fn, int mode) {
     }
 
     /* Now add a refcnt and return it */
-    mutex_lock(ph->mutex);
+    mutex_lock(&ph->mutex);
     ph->refcnt++;
-    mutex_unlock(ph->mutex);
+    mutex_unlock(&ph->mutex);
 
     fdobj = malloc(sizeof(pipefd_t));
     memset(fdobj, 0, sizeof(pipefd_t));
@@ -394,7 +394,7 @@ static void pty_close(void * h) {
 
     if(fdobj->type == PF_PTY) {
         /* De-ref this end of it */
-        mutex_lock(fdobj->d.p->mutex);
+        mutex_lock(&fdobj->d.p->mutex);
         fdobj->d.p->refcnt--;
 
         if(fdobj->d.p->refcnt <= 0) {
@@ -403,7 +403,7 @@ static void pty_close(void * h) {
             cond_broadcast(fdobj->d.p->ready_write);
         }
 
-        mutex_unlock(fdobj->d.p->mutex);
+        mutex_unlock(&fdobj->d.p->mutex);
 
         pty_destroy_unused();
     }
@@ -479,7 +479,7 @@ static ssize_t pty_read(void * h, void * buf, size_t bytes) {
         return pty_read_serial(fdobj, ph, buf, bytes);
 
     /* Lock the ptyhalf */
-    mutex_lock(ph->mutex);
+    mutex_lock(&ph->mutex);
 
     /* Is there anything to read? */
     while(!ph->cnt && ph->other->refcnt > 0) {
@@ -490,7 +490,7 @@ static ssize_t pty_read(void * h, void * buf, size_t bytes) {
             goto done;
         }
 
-        cond_wait(ph->ready_read, ph->mutex);
+        cond_wait(ph->ready_read, &ph->mutex);
     }
 
     /* Figure out how much to read */
@@ -516,7 +516,7 @@ static ssize_t pty_read(void * h, void * buf, size_t bytes) {
     cond_broadcast(ph->ready_write);
 
 done:
-    mutex_unlock(ph->mutex);
+    mutex_unlock(&ph->mutex);
     return bytes;
 }
 
@@ -546,7 +546,7 @@ static ssize_t pty_write(void * h, const void * buf, size_t bytes) {
     ph = ph->other;
     assert(ph);
 
-    mutex_lock(ph->mutex);
+    mutex_lock(&ph->mutex);
 
     /* Is there any room to write? */
     while(ph->cnt >= PTY_BUFFER_SIZE && ph->refcnt > 0) {
@@ -557,7 +557,7 @@ static ssize_t pty_write(void * h, const void * buf, size_t bytes) {
             goto done;
         }
 
-        cond_wait(ph->ready_write, ph->mutex);
+        cond_wait(ph->ready_write, &ph->mutex);
     }
 
     /* Figure out how much to write */
@@ -583,7 +583,7 @@ static ssize_t pty_write(void * h, const void * buf, size_t bytes) {
     cond_broadcast(ph->ready_read);
 
 done:
-    mutex_unlock(ph->mutex);
+    mutex_unlock(&ph->mutex);
     return bytes;
 }
 
@@ -719,7 +719,7 @@ int fs_pty_init() {
     if(nmmgr_handler_add(&vh.nmmgr) < 0)
         return -1;
 
-    list_mutex = mutex_create();
+    mutex_init(&list_mutex, MUTEX_TYPE_NORMAL);
     initted = 1;
 
     /* Start out with a console pty */
@@ -743,7 +743,7 @@ int fs_pty_shutdown() {
         return 0;
 
     /* Go through and free all the pty entries */
-    mutex_lock(list_mutex);
+    mutex_lock(&list_mutex);
     c = LIST_FIRST(&ptys);
 
     while(c != NULL) {
@@ -751,7 +751,7 @@ int fs_pty_shutdown() {
 
         cond_destroy(c->ready_read);
         cond_destroy(c->ready_write);
-        mutex_destroy(c->mutex);
+        mutex_destroy(&c->mutex);
         free(c);
 
         c = n;
@@ -759,7 +759,7 @@ int fs_pty_shutdown() {
 
     nmmgr_handler_remove(&vh.nmmgr);
 
-    mutex_destroy(list_mutex);
+    mutex_destroy(&list_mutex);
 
     initted = 0;
 

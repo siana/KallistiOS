@@ -86,7 +86,8 @@ static void gdc_abort_cmd(int cmd) {
 #endif
 
 /* The CD access mutex */
-static mutex_t * mutex = NULL;
+static mutex_t mutex;
+static int initted = 0;
 static int sector_size = 2048;   /*default 2048, 2352 for raw data reading*/
 
 void cdrom_set_sector_size(int size) {
@@ -138,11 +139,11 @@ int cdrom_get_status(int *status, int *disc_type) {
        flushing, so make sure we're not interrupting something
        already in progress. */
     if(irq_inside_int()) {
-        if(mutex_is_locked(mutex))
+        if(mutex_is_locked(&mutex))
             return -1;
     }
     else {
-        mutex_lock(mutex);
+        mutex_lock(&mutex);
     }
 
     rv = gdc_get_drv_stat(params);
@@ -163,7 +164,7 @@ int cdrom_get_status(int *status, int *disc_type) {
     }
 
     if(!irq_inside_int())
-        mutex_unlock(mutex);
+        mutex_unlock(&mutex);
 
     return rv;
 }
@@ -175,7 +176,7 @@ int cdrom_reinit() {
     uint32  params[4];
     int timeout;
 
-    mutex_lock(mutex);
+    mutex_lock(&mutex);
 
     /* Try a few times; it might be busy. If it's still busy
        after this loop then it's probably really dead. */
@@ -219,7 +220,7 @@ int cdrom_reinit() {
     }
 
 exit:
-    mutex_unlock(mutex);
+    mutex_unlock(&mutex);
     return rv;
 }
 
@@ -231,13 +232,13 @@ int cdrom_read_toc(CDROM_TOC *toc_buffer, int session) {
     } params;
     int rv;
 
-    mutex_lock(mutex);
+    mutex_lock(&mutex);
 
     params.session = session;
     params.buffer = toc_buffer;
     rv = cdrom_exec_cmd(CMD_GETTOC2, &params);
 
-    mutex_unlock(mutex);
+    mutex_unlock(&mutex);
     return rv;
 }
 
@@ -250,7 +251,7 @@ int cdrom_read_sectors(void *buffer, int sector, int cnt) {
     } params;
     int rv;
 
-    mutex_lock(mutex);
+    mutex_lock(&mutex);
 
     params.sec = sector;    /* Starting sector */
     params.num = cnt;   /* Number of sectors */
@@ -258,7 +259,7 @@ int cdrom_read_sectors(void *buffer, int sector, int cnt) {
     params.dunno = 0;   /* ? */
     rv = cdrom_exec_cmd(CMD_PIOREAD, &params);
 
-    mutex_unlock(mutex);
+    mutex_unlock(&mutex);
     return rv;
 }
 
@@ -303,14 +304,14 @@ int cdrom_cdda_play(uint32 start, uint32 end, uint32 repeat, int mode) {
     params.end = end;
     params.repeat = repeat;
 
-    mutex_lock(mutex);
+    mutex_lock(&mutex);
 
     if(mode == CDDA_TRACKS)
         rv = cdrom_exec_cmd(CMD_PLAY, &params);
     else
         rv = cdrom_exec_cmd(CMD_PLAY2, &params);
 
-    mutex_unlock(mutex);
+    mutex_unlock(&mutex);
 
     return rv;
 }
@@ -319,9 +320,9 @@ int cdrom_cdda_play(uint32 start, uint32 end, uint32 repeat, int mode) {
 int cdrom_cdda_pause() {
     int rv;
 
-    mutex_lock(mutex);
+    mutex_lock(&mutex);
     rv = cdrom_exec_cmd(CMD_PAUSE, NULL);
-    mutex_unlock(mutex);
+    mutex_unlock(&mutex);
 
     return rv;
 }
@@ -330,9 +331,9 @@ int cdrom_cdda_pause() {
 int cdrom_cdda_resume() {
     int rv;
 
-    mutex_lock(mutex);
+    mutex_lock(&mutex);
     rv = cdrom_exec_cmd(CMD_RELEASE, NULL);
-    mutex_unlock(mutex);
+    mutex_unlock(&mutex);
 
     return rv;
 }
@@ -341,9 +342,9 @@ int cdrom_cdda_resume() {
 int cdrom_spin_down() {
     int rv;
 
-    mutex_lock(mutex);
+    mutex_lock(&mutex);
     rv = cdrom_exec_cmd(CMD_STOP, NULL);
-    mutex_unlock(mutex);
+    mutex_unlock(&mutex);
 
     return rv;
 }
@@ -354,7 +355,7 @@ int cdrom_init() {
     volatile uint32 *react = (uint32*)0xa05f74e4,
                      *bios = (uint32*)0xa0000000;
 
-    if(mutex != NULL)
+    if(initted)
         return -1;
 
     /* Reactivate drive: send the BIOS size and then read each
@@ -369,7 +370,7 @@ int cdrom_init() {
     gdc_init_system();
 
     /* Initialize mutex */
-    mutex = mutex_create();
+    mutex_init(&mutex, MUTEX_TYPE_NORMAL);
 
     /* Do an initial initialization */
     cdrom_reinit();
@@ -378,10 +379,10 @@ int cdrom_init() {
 }
 
 void cdrom_shutdown() {
-    if(mutex == NULL)
+    if(!initted)
         return;
 
-    mutex_destroy(mutex);
-    mutex = NULL;
+    mutex_destroy(&mutex);
+    initted = 0;
 }
 

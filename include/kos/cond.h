@@ -33,6 +33,11 @@
     Condition variables can be quite useful when used properly, and provide a
     fairly easy way to wait for work to be ready to be done.
 
+    Condition variables should never be used with mutexes that are of the type
+    MUTEX_TYPE_RECURSIVE. The lock will only be released once by the wait
+    function, and thus you will end up deadlocking if you use a recursive mutex
+    that has been locked more than once.
+
     \author Dan Potter
 */
 
@@ -46,7 +51,6 @@ __BEGIN_DECLS
 #include <sys/queue.h>
 #include <kos/thread.h>
 #include <kos/mutex.h>
-#include <kos/recursive_lock.h>
 
 /** \brief  Condition variable.
 
@@ -107,27 +111,6 @@ void cond_destroy(condvar_t *cv);
 */
 int cond_wait(condvar_t *cv, mutex_t * m);
 
-/** \brief  Wait on a condition variable, using a recursive_lock_t.
-
-    This function acts exactly like the cond_wait() function, except instead of
-    a mutex_t as its lock, it uses a recursive_lock_t. Generally, this should
-    not be preferred, as deadlock may occur if the calling thread has locked
-    the lock more than once (since this function only unlocks it once). This was
-    added specifically because it was required for GCC's C++0x threading code.
-
-    \param  cv              The condition to wait on
-    \param  l               The associated lock
-    \retval 0               On success
-    \retval -1              On error, sets errno as appropriate
-
-    \par    Error Conditions:
-    \em     EPERM - Called inside an interrupt \n
-    \em     EINTR - Was interrupted
-
-    \author Lawrence Sebald
-*/
-int cond_wait_recursive(condvar_t *cv, recursive_lock_t *l);
-
 /** \brief  Wait on a condition variable with a timeout.
 
     This function will wait on the condition variable, unlocking the mutex and
@@ -148,30 +131,6 @@ int cond_wait_recursive(condvar_t *cv, recursive_lock_t *l);
     \em     EAGAIN - timed out
 */
 int cond_wait_timed(condvar_t *cv, mutex_t * m, int timeout);
-
-/** \brief  Wait on a condition variable with a timeout, using a recursive lock.
-
-    This function will wait on the condition variable, unlocking the lock and
-    putting the calling thread to sleep as one atomic operation. If the timeout
-    elapses before the condition is signalled, this function will return error.
-    If a timeout of 0 is given, the call is equivalent to cond_wait() (there is
-    no timeout). The rant about cond_wait_recursive() being evil applies here
-    as well.
-
-    \param  cv              The condition to wait on
-    \param  l               The associated recursive lock.
-    \param  timeout         The number of milliseconds before timeout
-    \retval 0               On success
-    \retval -1              On error, sets errno as appropriate
-
-    \par    Error Conditions:
-    \em     EPERM - Called inside an interrupt \n
-    \em     EINTR - Was interrupted \n
-    \em     EAGAIN - timed out
-
-    \author Lawrence Sebald
-*/
-int cond_wait_timed_recursive(condvar_t *cv, recursive_lock_t *l, int timeout);
 
 /** \brief  Signal a single thread waiting on the condition variable.
 

@@ -66,7 +66,7 @@ typedef struct {
 // Map over KOS types. The mutex/condvar maps have to be pointers
 // because we allow _INIT #defines to work.
 typedef kthread_t * pthread_t;      /**< \brief POSIX thread type */
-typedef mutex_t * pthread_mutex_t;  /**< \brief POSIX mutex type */
+typedef mutex_t pthread_mutex_t;    /**< \brief POSIX mutex type */
 typedef condvar_t * pthread_cond_t; /**< \brief POSIX condition type */
 
 // These, on the other hand, map right over.

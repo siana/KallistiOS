@@ -1,9 +1,13 @@
 /* KallistiOS ##version##
 
    include/kos/mutex.h
-   Copyright (C)2001,2003 Dan Potter
+   Copyright (C) 2001, 2003 Dan Potter
+   Copyright (C) 2012 Lawrence Sebald
 
 */
+
+/* Other than the old function names, there's basically nothing left of the old
+   version of mutexes... */
 
 /** \file   kos/mutex.h
     \brief  Mutual exclusion locks.
@@ -15,10 +19,35 @@
     a block of code to prevent two threads from interfereing with one another
     when only one would be appropriate to be in the block at a time.
 
-    KallistiOS simply implements its mutexes as a wrapper around semaphores with
-    an initial count of 1.
+    KallistiOS implments 3 types of mutexes, to bring it roughly in-line with
+    POSIX. The types of mutexes that can be made are normal, error-checking, and
+    recursive. Each has its own strengths and weaknesses, which are briefly
+    discussed below.
 
-    \author Dan Potter
+    A normal mutex (MUTEX_TYPE_NORMAL) is the fastest and simplest mutex of the
+    bunch. This is roughly equivalent to a semaphore that has been initialized
+    with a count of 1. There is no protection against threads unlocking normal
+    mutexes they didn't lock, nor is there any protection against deadlocks that
+    would arise from locking the mutex twice.
+
+    An error-checking mutex (MUTEX_TYPE_ERRORCHECK) adds a small amount of error
+    checking on top of a normal mutex. This type will not allow you to lock the
+    mutex twice (it will return an error if the same thread tries to lock it two
+    times so it will not deadlock), and it will not allow a different thread to
+    unlock the mutex if it isn't the one holding the lock.
+
+    A recursive mutex (MUTEX_TYPE_RECURSIVE) extends the error checking mutex
+    by allowing you to lock the mutex twice in the same thread, but you must
+    also unlock it twice (this works for any number of locks -- lock it n times,
+    you must unlock it n times). Still only one thread can hold the lock, but it
+    may hold it as many times as it needs to. This is equivalent to the
+    recursive_lock_t type that was available in KallistiOS for a while (before
+    it was basically merged back into a normal mutex).
+
+    There is a fourth type of mutex defined (MUTEX_TYPE_DEFAULT), which maps to
+    the MUTEX_TYPE_NORMAL type. This is simply for alignment with POSIX.
+
+    \author Lawrence Sebald
     \see    kos/sem.h
 */
 
@@ -26,41 +55,96 @@
 #define __KOS_MUTEX_H
 
 #include <sys/cdefs.h>
+
 __BEGIN_DECLS
 
-/* These are just wrappers around semaphores */
-#include <kos/sem.h>
+#include <kos/thread.h>
 
 /** \brief  Mutual exclusion lock type.
 
-    KOS mutexes are just wrappers around semaphores.
+    All members of this structure should be considered to be private. It is
+    unsafe to change anything in here yourself.
 
     \headerfile kos/mutex.h
 */
-typedef semaphore_t mutex_t;
+typedef struct kos_mutex {
+    /** \cond */
+    int type;
+    int dynamic;
+    kthread_t *holder;
+    int count;
+    /** \endcond */
+} mutex_t;
+
+/** \defgroup mutex_types               Mutex types
+
+    The types defined in here are the various types of mutexes that KallistiOS
+    supports.
+
+    @{
+*/
+#define MUTEX_TYPE_NORMAL       1   /**< \brief Normal mutex type */
+#define MUTEX_TYPE_ERRORCHECK   2   /**< \brief Error-checking mutex type */
+#define MUTEX_TYPE_RECURSIVE    3   /**< \brief Recursive mutex type */
+
+/** \brief Default mutex type */
+#define MUTEX_TYPE_DEFAULT      MUTEX_TYPE_NORMAL
+/** @} */
 
 /** \brief  Initializer for a transient mutex. */
-#define MUTEX_INITIALIZER   SEM_INITIALIZER(1)
+#define MUTEX_INITIALIZER               { MUTEX_TYPE_NORMAL, 0, NULL, 0 }
+
+/** \brief  Initializer for a transient error-checking mutex. */
+#define ERRORCHECK_MUTEX_INITIALIZER    { MUTEX_TYPE_ERRORCHECK, 0, NULL, 0 }
+
+/** \brief  Initializer for a transient recursive mutex. */
+#define RECURSIVE_MUTEX_INITIALIZER     { MUTEX_TYPE_RECURSIVE, 0, NULL, 0 }
 
 /** \brief  Allocate a new mutex.
 
-    This function allocates and initializes a new mutex for use.
+    This function allocates and initializes a new mutex for use. This function
+    will always create mutexes of the type MUTEX_TYPE_NORMAL.
 
-    \return                 The created mutex on success. NULL is returned on
-                            failure and errno is set as appropriate.
+    \return                 The newly created mutex on success, or NULL on
+                            failure (errno will be set as appropriate).
+
+    \note                   This function is formally deprecated. It should not
+                            be used in any future code, and may be removed in
+                            the future. You should instead use mutex_init().
+*/
+mutex_t *mutex_create() __attribute__((deprecated));
+
+/** \brief  Initialize a new mutex.
+
+    This function initializes a new mutex for use.
+
+    \param  m               The mutex to initialize
+    \param  mtype           The type of the mutex to initialize it to
+
+    \retval 0               On success
+    \retval -1              On error, errno will be set as appropriate
 
     \par    Error Conditions:
-    \em     ENOMEM - out of memory
+    \em     EINVAL - an invalid type of mutex was specified
 */
-mutex_t * mutex_create();
+int mutex_init(mutex_t *m, int mtype);
 
-/** \brief  Free a mutex.
+/** \brief  Destroy a mutex.
 
-    This function frees a mutex, releasing all memory associated with it. It is
-    your responsibility to make sure that all threads waiting on the mutex are
-    taken care of before destroying the mutex.
+    This function destroys a mutex, releasing any memory that may have been
+    allocated internally for it. It is your responsibility to make sure that all
+    threads waiting on the mutex are taken care of before destroying the mutex.
+
+    This function can be called on statically initialized, as well as
+    dynamically initialized ones.
+
+    \retval 0               On success
+    \retval -1              On error, errno will be set as appropriate
+
+    \par    Error Conditions:
+    \em     EBUSY - the mutex is currently locked
 */
-void mutex_destroy(mutex_t * m);
+int mutex_destroy(mutex_t *m);
 
 /** \brief  Lock a mutex.
 
@@ -68,9 +152,7 @@ void mutex_destroy(mutex_t * m);
     thread. If it is locked by another thread already, this function will block
     until the mutex has been acquired for the calling thread.
 
-    This does not protect against a thread obtaining the same mutex twice or any
-    other deadlock conditions. Also, this function is not safe to call inside an
-    interrupt. For mutex locks inside interrupts, use mutex_trylock().
+    The semantics of this function depend on the type of mutex that is used.
 
     \param  m               The mutex to acquire
     \retval 0               On success
@@ -78,9 +160,11 @@ void mutex_destroy(mutex_t * m);
 
     \par    Error Conditions:
     \em     EPERM - called inside an interrupt \n
-    \em     EINTR - was interrupted
+    \em     EINVAL - the mutex has not been initialized properly \n
+    \em     EAGAIN - lock has been acquired too many times (recursive) \n
+    \em     EDEADLK - would deadlock (error-checking)
 */
-int mutex_lock(mutex_t * m);
+int mutex_lock(mutex_t *m);
 
 /** \brief  Lock a mutex (with a timeout).
 
@@ -90,9 +174,6 @@ int mutex_lock(mutex_t * m);
     If the lock cannot be acquired in this timeframe, this function will return
     an error.
 
-    Much like mutex_lock(), this function does not protect against deadlocks
-    and is not safe to call in an interrupt.
-
     \param  m               The mutex to acquire
     \param  timeout         The number of milliseconds to wait for the lock
     \retval 0               On success
@@ -100,10 +181,13 @@ int mutex_lock(mutex_t * m);
 
     \par    Error Conditions:
     \em     EPERM - called inside an interrupt \n
-    \em     EINTR - was interrupted \n
-    \em     EAGAIN - timed out while blocking
+    \em     EINVAL - the mutex has not been initialized properly \n
+    \em     EINVAL - the timeout value was invalid (less than 0) \n
+    \em     ETIMEDOUT - the timeout expired \n
+    \em     EAGAIN - lock has been acquired too many times (recursive) \n
+    \em     EDEADLK - would deadlock (error-checking)
 */
-int mutex_lock_timed(mutex_t * m, int timeout);
+int mutex_lock_timed(mutex_t *m, int timeout);
 
 /** \brief  Check if a mutex is locked.
 
@@ -116,7 +200,7 @@ int mutex_lock_timed(mutex_t * m, int timeout);
     \retval 0               If the mutex is not currently locked
     \retval 1               If the mutex is currently locked
 */
-int mutex_is_locked(mutex_t * m);
+int mutex_is_locked(mutex_t *m);
 
 /** \brief  Attempt to lock a mutex.
 
@@ -132,19 +216,26 @@ int mutex_is_locked(mutex_t * m);
 
     \par    Error Conditions:
     \em     EAGAIN - the mutex is already locked (mutex_lock() would block)
+    \em     EINVAL - the mutex has not been initialized properly \n
+    \em     EAGAIN - lock has been acquired too many times (recursive) \n
+    \em     EDEADLK - would deadlock (error-checking)
 */
-int mutex_trylock(mutex_t * m);
+int mutex_trylock(mutex_t *m);
 
 /** \brief  Unlock a mutex.
 
     This function will unlock a mutex, allowing other threads to acquire it.
-    This function does not check if the thread that is calling it holds the
-    mutex. It is your responsibility to make sure you only unlock mutexes that
-    you have locked.
+    The semantics of this operation depend on the mutex type in use.
 
     \param  m               The mutex to unlock
+    \retval 0               On success
+    \retval -1              On error, errno will be set as appropriate.
+
+    \par    Error Conditions:
+    \em     EPERM - the current thread does not own the mutex (error-checking or
+                    recursive)
 */
-void mutex_unlock(mutex_t * m);
+int mutex_unlock(mutex_t *m);
 
 __END_DECLS
 

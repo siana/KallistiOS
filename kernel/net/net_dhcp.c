@@ -18,7 +18,7 @@
 
 #include <kos/net.h>
 #include <kos/genwait.h>
-#include <kos/recursive_lock.h>
+#include <kos/mutex.h>
 #include <kos/fs_socket.h>
 
 #include <arch/timer.h>
@@ -44,7 +44,7 @@ struct dhcp_pkt_out {
 STAILQ_HEAD(dhcp_pkt_queue, dhcp_pkt_out);
 
 static struct dhcp_pkt_queue dhcp_pkts = STAILQ_HEAD_INITIALIZER(dhcp_pkts);
-static recursive_lock_t *dhcp_lock = NULL;
+static mutex_t dhcp_lock = RECURSIVE_MUTEX_INITIALIZER;
 static int dhcp_cbid = -1;
 static uint64 renew_time = 0xFFFFFFFFFFFFFFFFULL;
 static uint64 rebind_time = 0xFFFFFFFFFFFFFFFFULL;
@@ -206,10 +206,10 @@ int net_dhcp_request() {
     }
 
     if(!irq_inside_int()) {
-        rlock_lock(dhcp_lock);
+        mutex_lock(&dhcp_lock);
     }
     else {
-        if(rlock_trylock(dhcp_lock)) {
+        if(mutex_trylock(&dhcp_lock)) {
             return -1;
         }
     }
@@ -240,7 +240,7 @@ int net_dhcp_request() {
     qpkt = (struct dhcp_pkt_out *)malloc(sizeof(struct dhcp_pkt_out));
 
     if(!qpkt) {
-        rlock_unlock(dhcp_lock);
+        mutex_unlock(&dhcp_lock);
         return -1;
     }
 
@@ -248,7 +248,7 @@ int net_dhcp_request() {
 
     if(!qpkt->buf) {
         free(qpkt);
-        rlock_unlock(dhcp_lock);
+        mutex_unlock(&dhcp_lock);
         return -1;
     }
 
@@ -261,7 +261,7 @@ int net_dhcp_request() {
     STAILQ_INSERT_TAIL(&dhcp_pkts, qpkt, pkt_queue);
 
     state = DHCP_STATE_SELECTING;
-    rlock_unlock(dhcp_lock);
+    mutex_unlock(&dhcp_lock);
 
     /* We need to wait til we're either bound to an IP address, or until we give
        up all hope of doing so (give us 60 seconds). */
@@ -484,7 +484,7 @@ static void net_dhcp_thd(void *obj __attribute__((unused))) {
     now = timer_ms_gettime64();
     len = 0;
 
-    rlock_lock(dhcp_lock);
+    mutex_lock(&dhcp_lock);
 
     /* Make sure we don't need to renew our lease */
     if(lease_expires <= now && (state == DHCP_STATE_BOUND ||
@@ -607,18 +607,11 @@ static void net_dhcp_thd(void *obj __attribute__((unused))) {
         }
     }
 
-    rlock_unlock(dhcp_lock);
+    mutex_unlock(&dhcp_lock);
 }
 
 int net_dhcp_init() {
     struct sockaddr_in addr;
-
-    /* Create our lock */
-    dhcp_lock = rlock_create();
-
-    if(dhcp_lock == NULL) {
-        return -1;
-    }
 
     /* Create the DHCP socket */
     dhcp_sock = socket(PF_INET, SOCK_DGRAM, IPPROTO_UDP);
@@ -661,10 +654,5 @@ void net_dhcp_shutdown() {
     if(dhcp_sock != -1) {
         close(dhcp_sock);
         dhcp_sock = -1;
-    }
-
-    if(dhcp_lock) {
-        rlock_destroy(dhcp_lock);
-        dhcp_lock = NULL;
     }
 }

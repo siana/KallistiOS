@@ -80,7 +80,7 @@ int pthread_cond_wait(pthread_cond_t *cond, pthread_mutex_t *mutex) {
 
     CHK_AND_CREATE;
 
-    rv = cond_wait(*cond, *mutex);
+    rv = cond_wait(*cond, mutex);
 
     // XXX this probably isn't proper
     if(rv)
@@ -111,7 +111,7 @@ int pthread_cond_timedwait(pthread_cond_t *cond, pthread_mutex_t *mutex,
     if(tmo == 0)
         return ETIMEDOUT;
 
-    rv = cond_wait_timed(*cond, *mutex, tmo);
+    rv = cond_wait_timed(*cond, mutex, tmo);
 
     if(rv >= 0)
         return 0;

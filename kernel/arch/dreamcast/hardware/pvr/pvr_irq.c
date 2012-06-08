@@ -60,7 +60,7 @@ static void dma_next_list(ptr_t data) {
         //DBG(("dma_complete(buf %d)\n", pvr_state.ram_target ^ 1));
 
         // Unlock
-        mutex_unlock(pvr_state.dma_lock);
+        mutex_unlock((mutex_t *)&pvr_state.dma_lock);
         pvr_state.lists_dmaed = 0;
 
         // Buffers are now empty again
@@ -181,7 +181,7 @@ void pvr_int_handler(uint32 code) {
     if(pvr_state.dma_mode
             && !pvr_state.ta_busy
             && pvr_state.dma_buffers[pvr_state.ram_target ^ 1].ready
-            && mutex_trylock(pvr_state.dma_lock) >= 0) {
+            && mutex_trylock((mutex_t *)&pvr_state.dma_lock) >= 0) {
         pvr_sync_stats(PVR_SYNC_REGSTART);
 
         // Begin DMAing the first list.

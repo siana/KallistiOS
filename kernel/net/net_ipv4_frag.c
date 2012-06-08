@@ -40,8 +40,9 @@ struct ip_frag {
 TAILQ_HEAD(ip_frag_list, ip_frag);
 
 static struct ip_frag_list frags;
-static mutex_t *frag_mutex = NULL;
+static mutex_t frag_mutex = MUTEX_INITIALIZER;
 static int cbid = -1;
+static int initted = 0;
 
 /* IP fragment "thread" -- this thread is set up to delete fragments for which
    the "death_time" has passed. This is run approximately once every two
@@ -50,7 +51,7 @@ static void frag_thd_cb(void *data __attribute__((unused))) {
     struct ip_frag *f, *n;
     uint64 now = timer_ms_gettime64();
 
-    mutex_lock(frag_mutex);
+    mutex_lock(&frag_mutex);
 
     /* Look at each fragment item, and see if the timer has expired. If so,
        remvoe it. */
@@ -68,7 +69,7 @@ static void frag_thd_cb(void *data __attribute__((unused))) {
         f = n;
     }
 
-    mutex_unlock(frag_mutex);
+    mutex_unlock(&frag_mutex);
 }
 
 /* Set the bits in the bitfield for the given set of fragment blocks. */
@@ -184,7 +185,7 @@ static int frag_import(netif_t *src, ip_hdr_t *hdr, const uint8 *data,
     frag->death_time = MAX(frag->death_time, (now + hdr->ttl * 1000));
 
 out:
-    mutex_unlock(frag_mutex);
+    mutex_unlock(&frag_mutex);
     return rv;
 }
 
@@ -254,13 +255,13 @@ int net_ipv4_reassemble(netif_t *src, ip_hdr_t *hdr, const uint8 *data,
     /* This is usually called inside an interrupt, so try to safely lock the
        mutex, and bail if we can't. */
     if(irq_inside_int()) {
-        if(mutex_trylock(frag_mutex) == -1) {
+        if(mutex_trylock(&frag_mutex) == -1) {
             errno = EWOULDBLOCK;
             return -1;
         }
     }
     else {
-        mutex_lock(frag_mutex);
+        mutex_lock(&frag_mutex);
     }
 
     /* Find the packet if we already have this one in our data buffer. */
@@ -296,19 +297,19 @@ int net_ipv4_reassemble(netif_t *src, ip_hdr_t *hdr, const uint8 *data,
 }
 
 int net_ipv4_frag_init() {
-    if(!frag_mutex) {
-        frag_mutex = mutex_create();
+    if(!initted) {
         cbid = net_thd_add_callback(&frag_thd_cb, NULL, 2000);
         TAILQ_INIT(&frags);
     }
 
-    return frag_mutex != NULL;
+    initted = 1;
+    return 0;
 }
 
 void net_ipv4_frag_shutdown() {
     struct ip_frag *c, *n;
 
-    if(frag_mutex) {
+    if(initted) {
         if(cbid != -1)
             net_thd_del_callback(cbid);
 
@@ -320,11 +321,9 @@ void net_ipv4_frag_shutdown() {
             free(c->bitfield);
             c = n;
         }
-
-        mutex_destroy(frag_mutex);
     }
 
     cbid = -1;
-    frag_mutex = NULL;
+    initted = 0;
     TAILQ_INIT(&frags);
 }

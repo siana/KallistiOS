@@ -70,7 +70,7 @@ extern int dcload_type;
 static int initted = 0;
 static int escape = 0;
 static int retval = 0;
-static mutex_t *mutex;
+static mutex_t mutex;
 static char *dcload_path = NULL;
 static uint8 pktbuf[1024 + sizeof(command_t)];
 
@@ -210,14 +210,14 @@ static void *dcls_open(struct vfs_handler *vfs, const char *fn, int mode) {
     int dcload_mode = 0;
     command_t *cmd = (command_t *)pktbuf;
 
-    locked = mutex_trylock(mutex);
+    locked = mutex_trylock(&mutex);
 
     if(locked == -1 && irq_inside_int()) {
         errno = EAGAIN;
         return 0;
     }
     else if(locked == -1) {
-        mutex_lock(mutex);
+        mutex_lock(&mutex);
     }
 
     if(mode & O_DIR) {
@@ -276,7 +276,7 @@ static void *dcls_open(struct vfs_handler *vfs, const char *fn, int mode) {
         hnd = retval + 1;
     }
 
-    mutex_unlock(mutex);
+    mutex_unlock(&mutex);
 
     return (void *)hnd;
 }
@@ -285,14 +285,14 @@ static void dcls_close(void *hnd) {
     int fd = (int) hnd, locked;
     command_int_t *cmd = (command_int_t *)pktbuf;
 
-    locked = mutex_trylock(mutex);
+    locked = mutex_trylock(&mutex);
 
     if(locked == -1 && irq_inside_int()) {
         errno = EAGAIN;
         return;
     }
     else if(locked == -1) {
-        mutex_lock(mutex);
+        mutex_lock(&mutex);
     }
 
     if(fd > 100) {
@@ -312,7 +312,7 @@ static void dcls_close(void *hnd) {
         dcls_recv_loop();
     }
 
-    mutex_unlock(mutex);
+    mutex_unlock(&mutex);
 }
 
 static ssize_t dcls_read(void *hnd, void *buf, size_t cnt) {
@@ -323,14 +323,14 @@ static ssize_t dcls_read(void *hnd, void *buf, size_t cnt) {
     if(!fd)
         return -1;
 
-    locked = mutex_trylock(mutex);
+    locked = mutex_trylock(&mutex);
 
     if(locked == -1 && irq_inside_int()) {
         errno = EAGAIN;
         return -1;
     }
     else if(locked == -1) {
-        mutex_lock(mutex);
+        mutex_lock(&mutex);
     }
 
     --fd;
@@ -343,7 +343,7 @@ static ssize_t dcls_read(void *hnd, void *buf, size_t cnt) {
     send(dcls_socket, cmd, sizeof(command_3int_t), 0);
     dcls_recv_loop();
 
-    mutex_unlock(mutex);
+    mutex_unlock(&mutex);
 
     return retval;
 }
@@ -356,14 +356,14 @@ static ssize_t dcls_write(void *hnd, const void *buf, size_t cnt) {
     if(!fd)
         return -1;
 
-    locked = mutex_trylock(mutex);
+    locked = mutex_trylock(&mutex);
 
     if(locked == -1 && irq_inside_int()) {
         errno = EAGAIN;
         return -1;
     }
     else if(locked == -1) {
-        mutex_lock(mutex);
+        mutex_lock(&mutex);
     }
 
     --fd;
@@ -376,7 +376,7 @@ static ssize_t dcls_write(void *hnd, const void *buf, size_t cnt) {
     send(dcls_socket, cmd, sizeof(command_3int_t), 0);
     dcls_recv_loop();
 
-    mutex_unlock(mutex);
+    mutex_unlock(&mutex);
 
     return retval;
 }
@@ -388,14 +388,14 @@ static off_t dcls_seek(void *hnd, off_t offset, int whence) {
     if(!hnd)
         return -1;
 
-    locked = mutex_trylock(mutex);
+    locked = mutex_trylock(&mutex);
 
     if(locked == -1 && irq_inside_int()) {
         errno = EAGAIN;
         return -1;
     }
     else if(locked == -1) {
-        mutex_lock(mutex);
+        mutex_lock(&mutex);
     }
 
     --hnd;
@@ -408,7 +408,7 @@ static off_t dcls_seek(void *hnd, off_t offset, int whence) {
     send(dcls_socket, command, sizeof(command_3int_t), 0);
     dcls_recv_loop();
 
-    mutex_unlock(mutex);
+    mutex_unlock(&mutex);
 
     return retval;
 }
@@ -438,14 +438,14 @@ static dirent_t *dcls_readdir(void *hnd) {
     if(fd < 100)
         return NULL;
 
-    locked = mutex_trylock(mutex);
+    locked = mutex_trylock(&mutex);
 
     if(locked == -1 && irq_inside_int()) {
         errno = EAGAIN;
         return NULL;
     }
     else if(locked == -1) {
-        mutex_lock(mutex);
+        mutex_lock(&mutex);
     }
 
     memcpy(cmd->id, "DC18", 4);
@@ -490,25 +490,25 @@ static dirent_t *dcls_readdir(void *hnd) {
             their_dir.time = filestat.st_mtime;
         }
 
-        mutex_unlock(mutex);
+        mutex_unlock(&mutex);
         return &their_dir;
     }
 
-    mutex_unlock(mutex);
+    mutex_unlock(&mutex);
     return NULL;
 }
 
 static int dcls_rename(vfs_handler_t *vfs, const char *fn1, const char *fn2) {
     int len1 = strlen(fn1), len2 = strlen(fn2), locked;
 
-    locked = mutex_trylock(mutex);
+    locked = mutex_trylock(&mutex);
 
     if(locked == -1 && irq_inside_int()) {
         errno = EAGAIN;
         return -1;
     }
     else if(locked == -1) {
-        mutex_lock(mutex);
+        mutex_lock(&mutex);
     }
 
     memcpy(pktbuf, "DC07", 4);
@@ -528,7 +528,7 @@ static int dcls_rename(vfs_handler_t *vfs, const char *fn1, const char *fn2) {
         dcls_recv_loop();
     }
 
-    mutex_unlock(mutex);
+    mutex_unlock(&mutex);
 
     return retval;
 }
@@ -536,14 +536,14 @@ static int dcls_rename(vfs_handler_t *vfs, const char *fn1, const char *fn2) {
 static int dcls_unlink(vfs_handler_t *vfs, const char *fn) {
     int len = strlen(fn) + 5, locked;
 
-    locked = mutex_trylock(mutex);
+    locked = mutex_trylock(&mutex);
 
     if(locked == -1 && irq_inside_int()) {
         errno = EAGAIN;
         return -1;
     }
     else if(locked == -1) {
-        mutex_lock(mutex);
+        mutex_lock(&mutex);
     }
 
     memcpy(pktbuf, "DC08", 4);
@@ -553,7 +553,7 @@ static int dcls_unlink(vfs_handler_t *vfs, const char *fn) {
 
     dcls_recv_loop();
 
-    mutex_unlock(mutex);
+    mutex_unlock(&mutex);
 
     return retval;
 }
@@ -567,14 +567,14 @@ static int dcls_stat(vfs_handler_t *vfs, const char *fn, stat_t *rv) {
         return -1;
     }
 
-    locked = mutex_trylock(mutex);
+    locked = mutex_trylock(&mutex);
 
     if(locked == -1 && irq_inside_int()) {
         errno = EAGAIN;
         return -1;
     }
     else if(locked == -1) {
-        mutex_lock(mutex);
+        mutex_lock(&mutex);
     }
 
     memcpy(cmd->id, "DC13", 4);
@@ -601,11 +601,11 @@ static int dcls_stat(vfs_handler_t *vfs, const char *fn, stat_t *rv) {
 
         rv->time = filestat.st_mtime;
 
-        mutex_unlock(mutex);
+        mutex_unlock(&mutex);
         return 0;
     }
 
-    mutex_unlock(mutex);
+    mutex_unlock(&mutex);
     return -1;
 }
 
@@ -629,14 +629,14 @@ static int dcls_writebuf(const uint8 *buf, int len, int xlat) {
     if(initted < 2)
         return -1;
 
-    locked = mutex_trylock(mutex);
+    locked = mutex_trylock(&mutex);
 
     if(locked == -1 && irq_inside_int()) {
         errno = EAGAIN;
         return -1;
     }
     else if(locked == -1) {
-        mutex_lock(mutex);
+        mutex_lock(&mutex);
     }
 
     memcpy(cmd.id, "DD02", 4);
@@ -648,7 +648,7 @@ static int dcls_writebuf(const uint8 *buf, int len, int xlat) {
 
     dcls_recv_loop();
 
-    mutex_unlock(mutex);
+    mutex_unlock(&mutex);
 
     return retval;
 }
@@ -793,9 +793,7 @@ int fs_dclsocket_init() {
     if(err == -1)
         goto error;
 
-    mutex = mutex_create();
-
-    if(!mutex)
+    if(mutex_init(&mutex, MUTEX_TYPE_NORMAL))
         goto error;
 
     initted = 2;
@@ -831,7 +829,7 @@ int fs_dclsocket_shutdown() {
     old = irq_disable();
 
     /* Destroy our mutex, and set us as uninitted */
-    mutex_destroy(mutex);
+    mutex_destroy(&mutex);
     initted = 0;
 
     irq_enable(old);

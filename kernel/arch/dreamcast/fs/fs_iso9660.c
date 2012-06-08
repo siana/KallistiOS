@@ -205,18 +205,18 @@ static cache_block_t *icache[NUM_CACHE_BLOCKS];     /* inode cache */
 static cache_block_t *dcache[NUM_CACHE_BLOCKS];     /* data cache */
 
 /* Cache modification mutex */
-static mutex_t * cache_mutex;
+static mutex_t cache_mutex;
 
 /* Clears all cache blocks */
 static void bclear_cache(cache_block_t **cache) {
     int i;
 
-    mutex_lock(cache_mutex);
+    mutex_lock(&cache_mutex);
 
     for(i = 0; i < NUM_CACHE_BLOCKS; i++)
         cache[i]->sector = -1;
 
-    mutex_unlock(cache_mutex);
+    mutex_unlock(&cache_mutex);
 }
 
 /* Graduate a block from its current position to the MRU end of the cache */
@@ -244,7 +244,7 @@ static int bread_cache(cache_block_t **cache, uint32 sector) {
     int i, j, rv;
 
     rv = -1;
-    mutex_lock(cache_mutex);
+    mutex_lock(&cache_mutex);
 
     /* Look for a pre-existing cache block */
     for(i = NUM_CACHE_BLOCKS - 1; i >= 0; i--) {
@@ -287,7 +287,7 @@ static int bread_cache(cache_block_t **cache, uint32 sector) {
 
     /* Return the new cache block index */
 bread_exit:
-    mutex_unlock(cache_mutex);
+    mutex_unlock(&cache_mutex);
     return rv;
 }
 
@@ -576,7 +576,7 @@ static struct {
 } fh[MAX_ISO_FILES];
 
 /* Mutex for file handles */
-static mutex_t * fh_mutex;
+static mutex_t fh_mutex;
 
 /* Break all of our open file descriptor. This is necessary when the disc
    is changed so that we don't accidentally try to keep on doing stuff
@@ -585,12 +585,12 @@ static mutex_t * fh_mutex;
 static void iso_break_all() {
     int i;
 
-    mutex_lock(fh_mutex);
+    mutex_lock(&fh_mutex);
 
     for(i = 0; i < MAX_ISO_FILES; i++)
         fh[i].broken = 1;
 
-    mutex_unlock(fh_mutex);
+    mutex_unlock(&fh_mutex);
 }
 
 /* Open a file or directory */
@@ -614,7 +614,7 @@ static void * iso_open(vfs_handler_t * vfs, const char *fn, int mode) {
     if(!de) return 0;
 
     /* Find a free file handle */
-    mutex_lock(fh_mutex);
+    mutex_lock(&fh_mutex);
 
     for(fd = 0; fd < MAX_ISO_FILES; fd++)
         if(fh[fd].first_extent == 0) {
@@ -622,7 +622,7 @@ static void * iso_open(vfs_handler_t * vfs, const char *fn, int mode) {
             break;
         }
 
-    mutex_unlock(fh_mutex);
+    mutex_unlock(&fh_mutex);
 
     if(fd >= MAX_ISO_FILES)
         return 0;
@@ -986,8 +986,8 @@ int fs_iso9660_init() {
     fh[0].first_extent = -1;
 
     /* Init thread mutexes */
-    cache_mutex = mutex_create();
-    fh_mutex = mutex_create();
+    mutex_init(&cache_mutex, MUTEX_TYPE_NORMAL);
+    mutex_init(&fh_mutex, MUTEX_TYPE_NORMAL);
 
     /* Allocate cache block space */
     for(i = 0; i < NUM_CACHE_BLOCKS; i++) {
@@ -1021,13 +1021,8 @@ int fs_iso9660_shutdown() {
     }
 
     /* Free muteces */
-    if(cache_mutex != NULL)
-        mutex_destroy(cache_mutex);
-
-    if(fh_mutex != NULL)
-        mutex_destroy(fh_mutex);
-
-    cache_mutex = fh_mutex = NULL;
+    mutex_destroy(&cache_mutex);
+    mutex_destroy(&fh_mutex);
 
     return nmmgr_handler_remove(&vh.nmmgr);
 }

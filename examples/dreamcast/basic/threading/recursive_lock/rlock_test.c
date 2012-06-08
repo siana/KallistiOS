@@ -5,14 +5,17 @@
 
 */
 
-/* This program is a test for the recursive locks added in KOS 1.3.0. This
+/* This program is a test for the recursive locks added in KOS 2.0.0. This
    synchronization primitive works essentially the same as a mutex, but allows
-   the thread that owns the lock to acquire it as many times as it wants. */
+   the thread that owns the lock to acquire it as many times as it wants.
+
+   Note that during the development of KOS 2.0.0, the recursive lock type got
+   merged into the mutex type (when it was rewritten). */
 
 #include <stdio.h>
 
 #include <kos/thread.h>
-#include <kos/recursive_lock.h>
+#include <kos/mutex.h>
 
 #include <arch/arch.h>
 #include <dc/maple.h>
@@ -20,7 +23,7 @@
 
 #define UNUSED __attribute__((unused))
 
-recursive_lock_t *l = NULL;
+mutex_t l = RECURSIVE_MUTEX_INITIALIZER;
 
 void *thd0(void *param UNUSED) {
     int i;
@@ -28,45 +31,45 @@ void *thd0(void *param UNUSED) {
     printf("Thd 0: About to obtain lock 10 times\n");
 
     for(i = 0; i < 10; ++i) {
-        rlock_lock(l);
+        mutex_lock(&l);
     }
 
-    printf("Thd 0: Lock acquired %d times\n", l->count);
+    printf("Thd 0: Lock acquired %d times\n", l.count);
     printf("Thd 0: About to sleep\n");
     thd_sleep(100);
 
     printf("Thd 0: Awake, about to release lock 9 times\n");
 
     for(i = 0; i < 9; ++i) {
-        rlock_unlock(l);
+        mutex_unlock(&l);
     }
 
     printf("Thd 0: About to sleep again\n");
     thd_sleep(10);
 
     printf("Thd 0: Awake, about to release lock\n");
-    rlock_unlock(l);
+    mutex_unlock(&l);
     printf("Thd 0: done\n");
     return NULL;
 }
 
 void *thd1(void *param UNUSED) {
     printf("Thd 1: About to obtain lock 2 times\n");
-    rlock_lock(l);
-    rlock_lock(l);
+    mutex_lock(&l);
+    mutex_lock(&l);
 
     printf("Thd 1: About to pass timeslice\n");
     thd_pass();
 
     printf("Thd 1: Awake, going to release lock 2 times\n");
-    rlock_unlock(l);
-    rlock_unlock(l);
+    mutex_unlock(&l);
+    mutex_unlock(&l);
 
     printf("Thd 1: About to obtain lock 1 time\n");
-    rlock_lock(l);
+    mutex_lock(&l);
 
     printf("Thd 1: About to release lock\n");
-    rlock_unlock(l);
+    mutex_unlock(&l);
     printf("Thd 1: done\n");
     return NULL;
 }
@@ -77,13 +80,13 @@ void *thd2(void *param UNUSED) {
     printf("Thd 2: About to obtain lock 200 times\n");
 
     for(i = 0; i < 200; ++i) {
-        rlock_lock(l);
+        mutex_lock(&l);
     }
 
     printf("Thd 2: About to release lock 200 times\n");
 
     for(i = 0; i < 200; ++i) {
-        rlock_unlock(l);
+        mutex_unlock(&l);
     }
 
     printf("Thd 2: done\n");
@@ -101,14 +104,6 @@ int main(int argc, char *argv[]) {
 
     printf("KallistiOS Recursive Lock test program\n");
 
-    /* Create the recursive lock */
-    l = rlock_create();
-
-    if(!l) {
-        printf("Could not create recursive lock, bailing out!\n");
-        arch_exit();
-    }
-
     printf("About to create threads\n");
     t0 = thd_create(0, thd0, NULL);
     t1 = thd_create(0, thd1, NULL);
@@ -119,12 +114,12 @@ int main(int argc, char *argv[]) {
     thd_join(t1, NULL);
     thd_join(t2, NULL);
 
-    if(rlock_is_locked(l)) {
+    if(mutex_is_locked(&l)) {
         printf("Lock is still locked!\n");
         arch_exit();
     }
 
-    rlock_destroy(l);
+    mutex_destroy(&l);
 
     printf("Recursive lock tests completed successfully!\n");
     return 0;

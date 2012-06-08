@@ -84,7 +84,7 @@ extern "C" {
         pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
      */
 
-#define PTHREAD_MUTEX_INITIALIZER  ((pthread_mutex_t) 0xFFFFFFFF)
+#define PTHREAD_MUTEX_INITIALIZER  MUTEX_INITIALIZER
 
     /*  Locking and Unlocking a Mutex, P1003.1c/Draft 10, p. 93
         NOTE: P1003.4b/D8 adds pthread_mutex_timedlock(), p. 29 */

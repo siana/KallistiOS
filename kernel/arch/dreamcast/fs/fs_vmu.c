@@ -79,7 +79,7 @@ typedef struct vmu_dh_str {
 TAILQ_HEAD(vmu_fh_list, vmu_fh_str) vmu_fh;
 
 /* Thread mutex for vmu_fh access */
-static mutex_t * fh_mutex;
+static mutex_t fh_mutex;
 
 
 /* Take a VMUFS path and return the requested address */
@@ -264,9 +264,9 @@ static void * vmu_open(vfs_handler_t * vfs, const char *path, int mode) {
     if(fh == NULL) return 0;
 
     /* link the fh onto the top of the list */
-    mutex_lock(fh_mutex);
+    mutex_lock(&fh_mutex);
     TAILQ_INSERT_TAIL(&vmu_fh, fh, listent);
-    mutex_unlock(fh_mutex);
+    mutex_unlock(&fh_mutex);
 
     return (void *)fh;
 }
@@ -278,14 +278,14 @@ static int vmu_verify_hnd(void * hnd, int type) {
 
     rv = 0;
 
-    mutex_lock(fh_mutex);
+    mutex_lock(&fh_mutex);
     TAILQ_FOREACH(cur, &vmu_fh, listent) {
         if((void *)cur == hnd) {
             rv = 1;
             break;
         }
     }
-    mutex_unlock(fh_mutex);
+    mutex_unlock(&fh_mutex);
 
     if(rv)
         return type == VMU_ANY ? 1 : (cur->strtype == type);
@@ -334,9 +334,9 @@ static void vmu_close(void * hnd) {
     }
 
     /* Look for the one to get rid of */
-    mutex_lock(fh_mutex);
+    mutex_lock(&fh_mutex);
     TAILQ_REMOVE(&vmu_fh, fh, listent);
-    mutex_unlock(fh_mutex);
+    mutex_unlock(&fh_mutex);
 
     free(fh);
 }
@@ -644,7 +644,7 @@ static vfs_handler_t vh = {
 
 int fs_vmu_init() {
     TAILQ_INIT(&vmu_fh);
-    fh_mutex = mutex_create();
+    mutex_init(&fh_mutex, MUTEX_TYPE_NORMAL);
     return nmmgr_handler_add(&vh.nmmgr);
 }
 
@@ -678,11 +678,7 @@ int fs_vmu_shutdown() {
         c = n;
     }
 
-    if(fh_mutex != NULL)
-        mutex_destroy(fh_mutex);
-
-    fh_mutex = NULL;
+    mutex_destroy(&fh_mutex);
 
     return nmmgr_handler_remove(&vh.nmmgr);
 }
-

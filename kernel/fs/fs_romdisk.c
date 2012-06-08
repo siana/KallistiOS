@@ -90,7 +90,7 @@ static struct {
 } fh[MAX_RD_FILES];
 
 /* Mutex for file handles */
-static mutex_t * fh_mutex = NULL;
+static mutex_t fh_mutex;
 
 /* Given a filename and a starting romdisk directory listing (byte offset),
    search for the entry in the directory and return the byte offset to its
@@ -214,7 +214,7 @@ static void * romdisk_open(vfs_handler_t * vfs, const char *fn, int mode) {
     }
 
     /* Find a free file handle */
-    mutex_lock(fh_mutex);
+    mutex_lock(&fh_mutex);
 
     for(fd = 0; fd < MAX_RD_FILES; fd++)
         if(fh[fd].index == 0) {
@@ -222,7 +222,7 @@ static void * romdisk_open(vfs_handler_t * vfs, const char *fn, int mode) {
             break;
         }
 
-    mutex_unlock(fh_mutex);
+    mutex_unlock(&fh_mutex);
 
     if(fd >= MAX_RD_FILES) {
         errno = ENFILE;
@@ -463,7 +463,7 @@ int fs_romdisk_init() {
     fh[0].index = -1;
 
     /* Init thread mutexes */
-    fh_mutex = mutex_create();
+    mutex_init(&fh_mutex, MUTEX_TYPE_NORMAL);
 
     initted = 1;
 
@@ -502,10 +502,7 @@ int fs_romdisk_shutdown() {
     }
 
     /* Free mutex */
-    if(fh_mutex != NULL)
-        mutex_destroy(fh_mutex);
-
-    fh_mutex = NULL;
+    mutex_destroy(&fh_mutex);
 
     initted = 0;
 
@@ -555,9 +552,9 @@ int fs_romdisk_mount(const char * mountpoint, const uint8 *img, int own_buffer) 
     assert((void *)&mnt->vfsh->nmmgr == (void *)mnt->vfsh);
 
     /* Add it to our mount list */
-    mutex_lock(fh_mutex);
+    mutex_lock(&fh_mutex);
     LIST_INSERT_HEAD(&romdisks, mnt, list_ent);
-    mutex_unlock(fh_mutex);
+    mutex_unlock(&fh_mutex);
 
     /* Register with VFS */
     return nmmgr_handler_add(&vfsh->nmmgr);
@@ -569,7 +566,7 @@ int fs_romdisk_unmount(const char * mountpoint) {
     int     found = 0;
     int     rv = 0;
 
-    mutex_lock(fh_mutex);
+    mutex_lock(&fh_mutex);
 
     LIST_FOREACH(n, &romdisks, list_ent) {
         if(!strcmp(mountpoint, n->vfsh->nmmgr.pathname)) {
@@ -605,6 +602,6 @@ int fs_romdisk_unmount(const char * mountpoint) {
         rv = -1;
     }
 
-    mutex_unlock(fh_mutex);
+    mutex_unlock(&fh_mutex);
     return rv;
 }
