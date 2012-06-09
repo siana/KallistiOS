@@ -1,7 +1,8 @@
 /* KallistiOS ##version##
 
    genwait.c
-   Copyright (c)2002,2003 Dan Potter
+   Copyright (C) 2002, 2003 Dan Potter
+   Copyright (C) 2012 Lawrence Sebald
 */
 
 /* This is a generic wait system, much like that used in the BSD kernel.
@@ -128,7 +129,7 @@ static void genwait_unqueue(kthread_t * thd) {
     }
 }
 
-int genwait_wake_cnt(void * obj, int cntmax) {
+int genwait_wake_cnt(void * obj, int cntmax, int err) {
     kthread_t       * t, * nt;
     struct slpquehead   * qp;
     int         cnt, old;
@@ -149,8 +150,14 @@ int genwait_wake_cnt(void * obj, int cntmax) {
             /* Yes, remove it from the wait queue */
             genwait_unqueue(t);
 
-            /* Set a successful wake return value */
-            CONTEXT_RET(t->context) = 0;
+            /* Set the wake return value */
+            if(err) {
+                CONTEXT_RET(t->context) = -1;
+                t->thd_errno = err;
+            }
+            else {
+                CONTEXT_RET(t->context) = 0;
+            }
 
             /* Check to see if we've filled our quota */
             if(cntmax > 0) {
@@ -169,11 +176,19 @@ int genwait_wake_cnt(void * obj, int cntmax) {
 }
 
 void genwait_wake_all(void * obj) {
-    genwait_wake_cnt(obj, -1);
+    genwait_wake_cnt(obj, -1, 0);
 }
 
 void genwait_wake_one(void * obj) {
-    genwait_wake_cnt(obj, 1);
+    genwait_wake_cnt(obj, 1, 0);
+}
+
+void genwait_wake_one_err(void *obj, int err) {
+    genwait_wake_cnt(obj, 1, err);
+}
+
+void genwait_wake_all_err(void *obj, int err) {
+    genwait_wake_cnt(obj, -1, err);
 }
 
 void genwait_check_timeouts(uint64 tm) {

@@ -149,7 +149,7 @@ int rwsem_write_unlock(rw_semaphore_t *s) {
     s->write_lock = 0;
 
     /* Give writers priority, attempt to wake any writers first. */
-    woken = genwait_wake_cnt(&s->write_lock, 1);
+    woken = genwait_wake_cnt(&s->write_lock, 1, 0);
 
     if(!woken) {
         /* No writers were waiting, wake up any readers. */

@@ -60,7 +60,7 @@ typedef struct ptyhalf {
     int id;
 
     mutex_t     mutex;
-    condvar_t   * ready_read, * ready_write;
+    condvar_t   ready_read, ready_write;
 } ptyhalf_t;
 
 /* Our global pty list */
@@ -149,11 +149,11 @@ int fs_pty_create(char * buffer, int maxbuflen, file_t * master_out, file_t * sl
 
     /* Allocate a mutex for each for multiple readers or writers */
     mutex_init(&master->mutex, MUTEX_TYPE_NORMAL);
-    master->ready_read = cond_create();
-    master->ready_write = cond_create();
+    cond_init(&master->ready_read);
+    cond_init(&master->ready_write);
     mutex_init(&slave->mutex, MUTEX_TYPE_NORMAL);
-    slave->ready_read = cond_create();
-    slave->ready_write = cond_create();
+    cond_init(&slave->ready_read);
+    cond_init(&slave->ready_write);
 
     /* Add it to the list */
     mutex_lock(&list_mutex);
@@ -209,16 +209,16 @@ again:
                 goto next;
 
             /* Free all our structs */
-            cond_destroy(c->ready_read);
-            cond_destroy(c->ready_write);
+            cond_destroy(&c->ready_read);
+            cond_destroy(&c->ready_write);
             mutex_destroy(&c->mutex);
 
             /* Remove us from the list */
             LIST_REMOVE(c, list);
 
             /* Now to deal with our partner... */
-            cond_destroy(c->other->ready_read);
-            cond_destroy(c->other->ready_write);
+            cond_destroy(&c->other->ready_read);
+            cond_destroy(&c->other->ready_write);
             mutex_destroy(&c->other->mutex);
 
             /* Remove it from the list */
@@ -399,8 +399,8 @@ static void pty_close(void * h) {
 
         if(fdobj->d.p->refcnt <= 0) {
             /* Unblock anyone who might be waiting on the other end */
-            cond_broadcast(fdobj->d.p->other->ready_read);
-            cond_broadcast(fdobj->d.p->ready_write);
+            cond_broadcast(&fdobj->d.p->other->ready_read);
+            cond_broadcast(&fdobj->d.p->ready_write);
         }
 
         mutex_unlock(&fdobj->d.p->mutex);
@@ -490,7 +490,7 @@ static ssize_t pty_read(void * h, void * buf, size_t bytes) {
             goto done;
         }
 
-        cond_wait(ph->ready_read, &ph->mutex);
+        cond_wait(&ph->ready_read, &ph->mutex);
     }
 
     /* Figure out how much to read */
@@ -513,7 +513,7 @@ static ssize_t pty_read(void * h, void * buf, size_t bytes) {
     assert(ph->cnt >= 0);
 
     /* Wake anyone waiting for write space */
-    cond_broadcast(ph->ready_write);
+    cond_broadcast(&ph->ready_write);
 
 done:
     mutex_unlock(&ph->mutex);
@@ -557,7 +557,7 @@ static ssize_t pty_write(void * h, const void * buf, size_t bytes) {
             goto done;
         }
 
-        cond_wait(ph->ready_write, &ph->mutex);
+        cond_wait(&ph->ready_write, &ph->mutex);
     }
 
     /* Figure out how much to write */
@@ -580,7 +580,7 @@ static ssize_t pty_write(void * h, const void * buf, size_t bytes) {
     assert(ph->cnt <= PTY_BUFFER_SIZE);
 
     /* Wake anyone waiting on read */
-    cond_broadcast(ph->ready_read);
+    cond_broadcast(&ph->ready_read);
 
 done:
     mutex_unlock(&ph->mutex);
@@ -749,8 +749,8 @@ int fs_pty_shutdown() {
     while(c != NULL) {
         n = LIST_NEXT(c, list);
 
-        cond_destroy(c->ready_read);
-        cond_destroy(c->ready_write);
+        cond_destroy(&c->ready_read);
+        cond_destroy(&c->ready_write);
         mutex_destroy(&c->mutex);
         free(c);
 

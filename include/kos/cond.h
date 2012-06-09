@@ -48,7 +48,6 @@
 __BEGIN_DECLS
 
 #include <arch/types.h>
-#include <sys/queue.h>
 #include <kos/thread.h>
 #include <kos/mutex.h>
 
@@ -60,22 +59,20 @@ __BEGIN_DECLS
     \headerfile kos/cond.h
 */
 typedef struct condvar {
-    /** \cond */
-    /* List entry for the global list of condvars */
-    LIST_ENTRY(condvar) g_list;
-    /** \endcond */
+    int initted;
+    int dynamic;
 } condvar_t;
 
-/* \cond */
-LIST_HEAD(condlist, condvar);
-/* \endcond */
-
 /** \brief  Initializer for a transient condvar. */
-#define COND_INITIALIZER    { { 0 } }
+#define COND_INITIALIZER    { 1, 0 }
 
 /** \brief  Allocate a new condition variable.
 
     This function allocates and initializes a new condition variable for use.
+
+    This function is formally deprecated and should not be used in new code.
+    Instead you should use either the static initializer or the cond_init()
+    function.
 
     \return                 The created condvar on success. NULL is returned on
                             failure and errno is set as appropriate.
@@ -83,7 +80,17 @@ LIST_HEAD(condlist, condvar);
     \par    Error Conditions:
     \em     ENOMEM - out of memory
 */
-condvar_t *cond_create();
+condvar_t *cond_create() __attribute__((deprecated));
+
+/** \brief  Initialize a condition variable.
+
+    This function initializes a new condition variable for use.
+
+    \param  cv              The condition variable to initialize
+    \retval 0               On success
+    \retval -1              On error, sets errno as appropriate
+*/
+int cond_init(condvar_t *cv);
 
 /** \brief  Free a condition variable.
 
@@ -99,6 +106,9 @@ void cond_destroy(condvar_t *cv);
     putting the calling thread to sleep as one atomic operation. The wait in
     this function has no timeout, and will sleep forever if the condition is not
     signalled.
+
+    The mutex will be locked and owned by the calling thread on return,
+    regardless of whether it is a successful or error return.
 
     \param  cv              The condition to wait on
     \param  m               The associated mutex
@@ -118,6 +128,9 @@ int cond_wait(condvar_t *cv, mutex_t * m);
     elapses before the condition is signalled, this function will return error.
     If a timeout of 0 is given, the call is equivalent to cond_wait() (there is
     no timeout).
+
+    The mutex will be locked and owned by the calling thread on return,
+    regardless of whether it is a successful or error return.
 
     \param  cv              The condition to wait on
     \param  m               The associated mutex
@@ -151,12 +164,6 @@ void cond_signal(condvar_t *cv);
     \param  cv              The condition to signal
 */
 void cond_broadcast(condvar_t *cv);
-
-/* Init / shutdown */
-/** \cond */
-int cond_init();
-void cond_shutdown();
-/** \endcond */
 
 __END_DECLS
 

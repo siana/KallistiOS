@@ -1,7 +1,8 @@
 /* KallistiOS ##version##
 
    include/kos/genwait.h
-   Copyright (c)2003 Dan Potter
+   Copyright (C) 2003 Dan Potter
+   Copyright (C) 2012 Lawrence Sebald
 
 */
 
@@ -15,6 +16,7 @@
     it can be used for some fairly useful things.
 
     \author Dan Potter
+    \author Lawrence Sebald
 */
 
 #ifndef __KOS_GENWAIT_H
@@ -55,27 +57,54 @@ int genwait_wait(void * obj, const char * mesg, int timeout, void (*callback)(vo
 
     \param  obj             The object to wake threads that are sleeping on it
     \param  cnt             The number of threads to wake, if <= 0, wake all
+    \param  err             The errno code to set as the errno value on the
+                            woken threads. If this is 0 (EOK), then the thread's
+                            errno will not be changed, and the thread will get a
+                            return value of 0 from the genwait_wait(). If it is
+                            non-zero, the thread will get a return value of -1
+                            and errno will be set to this value for the woken
+                            threads.
     \return                 The number of threads woken
 */
-int genwait_wake_cnt(void * obj, int cnt);
+int genwait_wake_cnt(void * obj, int cnt, int err);
 
 /** \brief  Wake up all threads sleeping on an object.
 
-    This function simply calls genwait_wake_cnt(obj, -1).
+    This function simply calls genwait_wake_cnt(obj, -1, 0).
 
-    \param  obj             The thread to wake threads that are sleeping on it
+    \param  obj             The object to wake threads that are sleeping on it
     \see    genwait_wake_cnt()
 */
 void genwait_wake_all(void * obj);
 
 /** \brief  Wake up one thread sleeping on an object.
 
-    This function simply calls genwait_wake_cnt(obj, 1).
+    This function simply calls genwait_wake_cnt(obj, 1, 0).
 
-    \param  obj             The thread to wake threads that are sleeping on it
+    \param  obj             The object to wake threads that are sleeping on it
     \see    genwait_wake_cnt()
 */
 void genwait_wake_one(void * obj);
+
+/** \brief  Wake up all threads sleeping on an object, with an error.
+
+    This function simply calls genwait_wake_cnt(obj, -1, err).
+
+    \param  obj             The object to wake threads that are sleeping on it
+    \param  err             The value to set in the threads' errno values
+    \see    genwait_wake_cnt()
+*/
+void genwait_wake_all_err(void *obj, int err);
+
+/** \brief  Wake up one thread sleeping on an object, with an error.
+ 
+    This function simply calls genwait_wake_cnt(obj, 1, err).
+ 
+    \param  obj             The object to wake threads that are sleeping on it
+    \param  err             The value to set in the threads' errno values
+    \see    genwait_wake_cnt()
+*/
+void genwait_wake_one_err(void *obj, int err);
 
 /** \brief  Look for timed out genwait_wait() calls.
 

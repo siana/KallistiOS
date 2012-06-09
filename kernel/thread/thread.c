@@ -871,7 +871,6 @@ int thd_init(int mode) {
     genwait_init();
     rwsem_init();
     sem_init();
-    cond_init();
 
     /* Setup our pre-emption handler */
     timer_primary_set_callback(thd_timer_hnd);
@@ -911,7 +910,6 @@ void thd_shutdown() {
     /* Shutdown thread sync primitives */
     rwsem_shutdown();
     sem_shutdown();
-    cond_shutdown();
     genwait_shutdown();
 
     kthread_tls_shutdown();

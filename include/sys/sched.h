@@ -67,7 +67,7 @@ typedef struct {
 // because we allow _INIT #defines to work.
 typedef kthread_t * pthread_t;      /**< \brief POSIX thread type */
 typedef mutex_t pthread_mutex_t;    /**< \brief POSIX mutex type */
-typedef condvar_t * pthread_cond_t; /**< \brief POSIX condition type */
+typedef condvar_t pthread_cond_t;   /**< \brief POSIX condition type */
 
 // These, on the other hand, map right over.
 typedef kthread_once_t pthread_once_t;  /**< \brief POSIX once control */

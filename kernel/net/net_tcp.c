@@ -153,7 +153,7 @@ struct tcp_sock {
             int tail;
             int count;
             struct lsock *queue;
-            condvar_t *cv;
+            condvar_t cv;
         } listen;
         struct {
             netif_t *net;
@@ -169,8 +169,8 @@ struct tcp_sock {
             uint32_t sndbuf_acked;
             uint32_t sndbuf_tail;
             uint64_t timer;
-            condvar_t *send_cv;
-            condvar_t *recv_cv;
+            condvar_t send_cv;
+            condvar_t recv_cv;
         } data;
     };
 };
@@ -367,14 +367,14 @@ retry:
             }
 
             free(sock->listen.queue);
-            cond_destroy(sock->listen.cv);
+            cond_destroy(&sock->listen.cv);
             goto ret_remove;
 
         case TCP_STATE_SYN_SENT:
             free(sock->data.rcvbuf);
             free(sock->data.sndbuf);
-            cond_destroy(sock->data.send_cv);
-            cond_destroy(sock->data.recv_cv);
+            cond_destroy(&sock->data.send_cv);
+            cond_destroy(&sock->data.recv_cv);
             goto ret_remove;
 
         case TCP_STATE_ESTABLISHED:
@@ -513,7 +513,7 @@ static int net_tcp_accept(net_socket_t *hnd, struct sockaddr *addr,
         /* There are no waiting connections and we can block, so block while we
            wait for an incoming connection. */
         sock->intflags |= TCP_IFLAG_ACCEPTWAIT;
-        cond_wait(sock->listen.cv, &sock->mutex);
+        cond_wait(&sock->listen.cv, &sock->mutex);
 
         /* If we come out of the wait in the closed state, that means that the
            user has run a close() on the socket in another thread. Bail out in a
@@ -523,7 +523,7 @@ static int net_tcp_accept(net_socket_t *hnd, struct sockaddr *addr,
             rwsem_write_lock(tcp_sem);
             mutex_lock(&sock->mutex);
             free(sock->listen.queue);
-            cond_destroy(sock->listen.cv);
+            cond_destroy(&sock->listen.cv);
             LIST_REMOVE(sock, sock_list);
             mutex_unlock(&sock->mutex);
             mutex_destroy(&sock->mutex);
@@ -577,7 +577,7 @@ static int net_tcp_accept(net_socket_t *hnd, struct sockaddr *addr,
         return -1;
     }
 
-    if(!(sock2->data.send_cv = cond_create())) {
+    if(cond_init(&sock2->data.send_cv)) {
         errno = ENOMEM;
         mutex_unlock(&sock->mutex);
         free(sock2->data.sndbuf);
@@ -587,10 +587,10 @@ static int net_tcp_accept(net_socket_t *hnd, struct sockaddr *addr,
         return -1;
     }
 
-    if(!(sock2->data.recv_cv = cond_create())) {
+    if(cond_init(&sock2->data.recv_cv)) {
         errno = ENOMEM;
         mutex_unlock(&sock->mutex);
-        cond_destroy(sock2->data.send_cv);
+        cond_destroy(&sock2->data.send_cv);
         free(sock2->data.sndbuf);
         free(sock2->data.rcvbuf);
         mutex_destroy(&sock2->mutex);
@@ -601,8 +601,8 @@ static int net_tcp_accept(net_socket_t *hnd, struct sockaddr *addr,
     /* Create a partial socket */
     if(!(newhnd = fs_socket_open_sock(&proto))) {
         mutex_unlock(&sock->mutex);
-        cond_destroy(sock2->data.recv_cv);
-        cond_destroy(sock2->data.send_cv);
+        cond_destroy(&sock2->data.recv_cv);
+        cond_destroy(&sock2->data.send_cv);
         free(sock2->data.sndbuf);
         free(sock2->data.rcvbuf);
         mutex_destroy(&sock2->mutex);
@@ -665,8 +665,8 @@ static int net_tcp_accept(net_socket_t *hnd, struct sockaddr *addr,
 
             newhnd->protocol = NULL;
             fs_close(sock2->sock);
-            cond_destroy(sock2->data.recv_cv);
-            cond_destroy(sock2->data.send_cv);
+            cond_destroy(&sock2->data.recv_cv);
+            cond_destroy(&sock2->data.send_cv);
             free(sock2->data.sndbuf);
             free(sock2->data.rcvbuf);
             mutex_destroy(&sock2->mutex);
@@ -1099,7 +1099,7 @@ static int net_tcp_connect(net_socket_t *hnd, const struct sockaddr *addr,
         return -1;
     }
 
-    if(!(sock->data.send_cv = cond_create())) {
+    if(cond_init(&sock->data.send_cv)) {
         errno = ENOBUFS;
         mutex_unlock(&sock->mutex);
         rwsem_write_unlock(tcp_sem);
@@ -1108,11 +1108,11 @@ static int net_tcp_connect(net_socket_t *hnd, const struct sockaddr *addr,
         return -1;
     }
 
-    if(!(sock->data.recv_cv = cond_create())) {
+    if(cond_init(&sock->data.recv_cv)) {
         errno = ENOBUFS;
         mutex_unlock(&sock->mutex);
         rwsem_write_unlock(tcp_sem);
-        cond_destroy(sock->data.send_cv);
+        cond_destroy(&sock->data.send_cv);
         free(sock->data.sndbuf);
         free(sock->data.rcvbuf);
         return -1;
@@ -1146,7 +1146,8 @@ static int net_tcp_connect(net_socket_t *hnd, const struct sockaddr *addr,
     }
 
     /* Block until the connection can be established... */
-    if(cond_wait_timed(sock->data.send_cv, &sock->mutex, 2 * TCP_DEFAULT_MSL)) {
+    if(cond_wait_timed(&sock->data.send_cv, &sock->mutex,
+                       2 * TCP_DEFAULT_MSL)) {
         errno = ETIMEDOUT;
         sock->state = TCP_STATE_CLOSED;
         mutex_unlock(&sock->mutex);
@@ -1228,7 +1229,7 @@ static int net_tcp_listen(net_socket_t *hnd, int backlog) {
         return -1;
     }
 
-    if(!(sock->listen.cv = cond_create())) {
+    if(cond_init(&sock->listen.cv)) {
         free(sock->listen.queue);
         sock->listen.queue = NULL;
         mutex_unlock(&sock->mutex);
@@ -1324,7 +1325,7 @@ static ssize_t net_tcp_recvfrom(net_socket_t *hnd, void *buffer, size_t length,
             goto out;
         }
 
-        cond_wait(sock->data.recv_cv, &sock->mutex);
+        cond_wait(&sock->data.recv_cv, &sock->mutex);
     }
 
     /* Once we get here, we should have data, unless the other side has closed
@@ -1499,7 +1500,7 @@ static ssize_t net_tcp_sendto(net_socket_t *hnd, const void *message,
             goto out;
         }
 
-        cond_wait(sock->data.send_cv, &sock->mutex);
+        cond_wait(&sock->data.send_cv, &sock->mutex);
 
         /* If we still don't have any buffer space, its because the connection
            has either been closed or reset by the other side... */
@@ -2378,7 +2379,7 @@ static int listen_pkt(netif_t *src, const struct in6_addr *srca,
 
     /* Signal the condvar, in case anyone's waiting */
     __poll_event_trigger(s->sock, POLLRDNORM);
-    cond_signal(s->listen.cv);
+    cond_signal(&s->listen.cv);
 
     /* We're done, return success. */
     return 0;
@@ -2412,8 +2413,8 @@ static int synsent_pkt(netif_t *src, const struct in6_addr *srca,
         if(gotack) {
             s->state = TCP_STATE_CLOSED | TCP_STATE_RESET;
             __poll_event_trigger(s->sock, POLLHUP);
-            cond_signal(s->data.recv_cv);
-            cond_signal(s->data.send_cv);
+            cond_signal(&s->data.recv_cv);
+            cond_signal(&s->data.send_cv);
             return 0;
         }
     }
@@ -2469,14 +2470,14 @@ static int synsent_pkt(netif_t *src, const struct in6_addr *srca,
                 s->state = TCP_STATE_ESTABLISHED;
                 tcp_send_ack(s);
                 __poll_event_trigger(s->sock, POLLWRNORM | POLLWRBAND);
-                cond_signal(s->data.send_cv);
+                cond_signal(&s->data.send_cv);
             }
         }
         else {
             s->state = TCP_STATE_SYN_RECEIVED;
             tcp_send_syn(s, 1);
             __poll_event_trigger(s->sock, POLLWRNORM | POLLWRBAND);
-            cond_signal(s->data.send_cv);
+            cond_signal(&s->data.send_cv);
         }
     }
 
@@ -2546,8 +2547,8 @@ static int process_pkt(netif_t *src, const struct in6_addr *srca,
         else {
             s->state = TCP_STATE_RESET | TCP_STATE_CLOSED;
             __poll_event_trigger(s->sock, POLLHUP);
-            cond_signal(s->data.recv_cv);
-            cond_signal(s->data.send_cv);
+            cond_signal(&s->data.recv_cv);
+            cond_signal(&s->data.send_cv);
             return 0;
         }
     }
@@ -2585,7 +2586,7 @@ static int process_pkt(netif_t *src, const struct in6_addr *srca,
         s->data.sndbuf_cur_sz -= (int32_t)(ack - s->data.snd.una - acksyn);
         s->data.snd.una = ack;
         __poll_event_trigger(s->sock, POLLWRNORM | POLLWRBAND);
-        cond_signal(s->data.send_cv);
+        cond_signal(&s->data.send_cv);
 
         if(s->data.sndbuf_acked >= s->sndbuf_sz)
             s->data.sndbuf_acked -= s->sndbuf_sz;
@@ -2685,7 +2686,7 @@ static int process_pkt(netif_t *src, const struct in6_addr *srca,
 
             /* Signal any waiting thread and send an ack for what we read */
             __poll_event_trigger(s->sock, POLLRDNORM);
-            cond_signal(s->data.recv_cv);
+            cond_signal(&s->data.recv_cv);
             tcp_send_ack(s);
         }
     }
@@ -2702,7 +2703,7 @@ static int process_pkt(netif_t *src, const struct in6_addr *srca,
         ++s->data.rcv.nxt;
         tcp_send_ack(s);
         __poll_event_trigger(s->sock, POLLRDNORM);
-        cond_signal(s->data.recv_cv);
+        cond_signal(&s->data.recv_cv);
 
         /* Do the various processing that needs to be done based on our state */
         switch(s->state) {
@@ -2928,8 +2929,8 @@ static void tcp_thd_cb(void *arg) {
         if((i->intflags & TCP_IFLAG_CANBEDEL) &&
                 (i->state & 0x0F) == TCP_STATE_CLOSED) {
             LIST_REMOVE(i, sock_list);
-            cond_destroy(i->data.send_cv);
-            cond_destroy(i->data.recv_cv);
+            cond_destroy(&i->data.send_cv);
+            cond_destroy(&i->data.recv_cv);
             mutex_destroy(&i->mutex);
             free(i->data.sndbuf);
             free(i->data.rcvbuf);
@@ -2998,8 +2999,8 @@ void net_tcp_shutdown() {
         }
         else {
             LIST_REMOVE(i, sock_list);
-            cond_destroy(i->data.send_cv);
-            cond_destroy(i->data.recv_cv);
+            cond_destroy(&i->data.send_cv);
+            cond_destroy(&i->data.recv_cv);
             mutex_destroy(&i->mutex);
             free(i->data.sndbuf);
             free(i->data.rcvbuf);

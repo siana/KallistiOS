@@ -1,14 +1,14 @@
 /* KallistiOS ##version##
 
    cond.c
-   Copyright (c)2001,2003 Dan Potter
+   Copyright (C) 2001, 2003 Dan Potter
+   Copyright (C) 2012 Lawrence Sebald
 */
 
 /* Defines condition variables, which are like semaphores that automatically
    signal all waiting processes when a signal() is called. */
 
-#include <string.h>
-#include <malloc.h>
+#include <stdlib.h>
 #include <stdio.h>
 #include <assert.h>
 #include <errno.h>
@@ -17,50 +17,45 @@
 #include <kos/limits.h>
 #include <kos/cond.h>
 #include <kos/genwait.h>
-#include <sys/queue.h>
+
+#include <kos/dbglog.h>
 
 /**************************************/
 
-/* Global list of condvars */
-static struct condlist cond_list;
-
-/* Allocate a new condvar; the condvar will be assigned
-   to the calling process and when that process dies, the condvar
-   will also die. */
+/* Allocate a new condvar */
 condvar_t *cond_create() {
-    condvar_t   *cv;
-    int     old = 0;
+    condvar_t *cv;
+
+    dbglog(DBG_WARNING, "Creating condvar with deprecated cond_create(). "
+           "Please update your code!\n");
 
     /* Create a condvar structure */
-    cv = (condvar_t*)malloc(sizeof(condvar_t));
-
-    if(!cv) {
+    if(!(cv = (condvar_t *)malloc(sizeof(condvar_t)))) {
         errno = ENOMEM;
         return NULL;
     }
 
-    /* Add to the global list */
-    old = irq_disable();
-    LIST_INSERT_HEAD(&cond_list, cv, g_list);
-    irq_restore(old);
+    cv->initted = 1;
+    cv->dynamic = 1;
 
     return cv;
 }
 
+int cond_init(condvar_t *cv) {
+    cv->initted = 1;
+    return 0;
+}
+
 /* Free a condvar */
 void cond_destroy(condvar_t *cv) {
-    int     old = 0;
+    /* Give all sleeping threads a timed out error */
+    genwait_wake_all_err(cv, ETIMEDOUT);
 
-    /* XXX Do something better with queued threads */
-    genwait_wake_all(cv);
-
-    /* Remove it from the global list */
-    old = irq_disable();
-    LIST_REMOVE(cv, g_list);
-    irq_restore(old);
+    cv->initted = 0;
 
     /* Free the memory */
-    free(cv);
+    if(cv->dynamic)
+        free(cv);
 }
 
 int cond_wait_timed(condvar_t *cv, mutex_t *m, int timeout) {
@@ -79,12 +74,11 @@ int cond_wait_timed(condvar_t *cv, mutex_t *m, int timeout) {
     mutex_unlock(m);
 
     /* Now block us until we're signaled */
-    rv = genwait_wait(cv, timeout ? "cond_wait_timed" : "cond_wait", timeout, NULL);
+    rv = genwait_wait(cv, timeout ? "cond_wait_timed" : "cond_wait", timeout,
+                      NULL);
 
     /* Re-lock our mutex */
-    if(rv >= 0 || errno == EAGAIN) {
-        mutex_lock(m);
-    }
+    mutex_lock(m);
 
     /* Ok, ready to return */
     irq_restore(old);
@@ -116,15 +110,4 @@ void cond_broadcast(condvar_t *cv) {
     genwait_wake_all(cv);
 
     irq_restore(old);
-}
-
-/* Initialize condvar structures */
-int cond_init() {
-    LIST_INIT(&cond_list);
-    return 0;
-}
-
-/* Shut down condvar structures */
-void cond_shutdown() {
-    /* XXX Destroy all condvars here */
 }

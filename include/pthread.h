@@ -120,7 +120,7 @@ extern "C" {
         pthread_cond_t cond = PTHREAD_COND_INITIALIZER;
      */
 
-#define PTHREAD_COND_INITIALIZER  ((pthread_cond_t) 0xFFFFFFFF)
+#define PTHREAD_COND_INITIALIZER  COND_INITIALIZER
 
     /* Broadcasting and Signaling a Condition, P1003.1c/Draft 10, p. 101 */
 
