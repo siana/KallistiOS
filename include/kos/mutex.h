@@ -68,17 +68,15 @@ __BEGIN_DECLS
     \headerfile kos/mutex.h
 */
 typedef struct kos_mutex {
-    /** \cond */
     int type;
     int dynamic;
     kthread_t *holder;
     int count;
-    /** \endcond */
 } mutex_t;
 
 /** \defgroup mutex_types               Mutex types
 
-    The types defined in here are the various types of mutexes that KallistiOS
+    The values defined in here are the various types of mutexes that KallistiOS
     supports.
 
     @{
@@ -126,6 +124,8 @@ mutex_t *mutex_create() __attribute__((deprecated));
 
     \par    Error Conditions:
     \em     EINVAL - an invalid type of mutex was specified
+
+    \sa     mutex_types
 */
 int mutex_init(mutex_t *m, int mtype);
 
@@ -215,7 +215,7 @@ int mutex_is_locked(mutex_t *m);
     \retval -1              If the mutex cannot be acquired without blocking
 
     \par    Error Conditions:
-    \em     EAGAIN - the mutex is already locked (mutex_lock() would block)
+    \em     EAGAIN - the mutex is already locked (mutex_lock() would block) \n
     \em     EINVAL - the mutex has not been initialized properly \n
     \em     EAGAIN - lock has been acquired too many times (recursive) \n
     \em     EDEADLK - would deadlock (error-checking)

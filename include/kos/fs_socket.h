@@ -311,7 +311,7 @@ typedef struct fs_socket_proto {
 
     /** \brief  Manipulate file options.
 
-        This function should implement the ::fcntl() system call for the given
+        This function should implement the fcntl() system call for the given
         protocol. The semantics are exactly as defined for that function.
 
         \param  s           The socket to manipulate.

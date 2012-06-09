@@ -316,7 +316,7 @@ int socket(int domain, int type, int protocol);
     shall attempt to retrieve the specified option (at the specified level) from
     the given socket.
 
-    \param  sock            The socket to get options for.
+    \param  socket          The socket to get options for.
     \param  level           The protocol level to get options at.
     \param  option_name     The option to look up.
     \param  option_value    Storage for the value of the option.
@@ -337,7 +337,7 @@ int getsockopt(int socket, int level, int option_name, void *option_value,
     attempt to set the specified option (at the specified level) from the given
     socket.
 
-    \param  sock            The socket to set options for.
+    \param  socket          The socket to set options for.
     \param  level           The protocol level to set options at.
     \param  option_name     The option to set.
     \param  option_value    The value to set for the option.

@@ -85,7 +85,7 @@ LIST_HEAD(ktlist, kthread);
     data associated with the thread. There are various functions to manipulate
     the data in here, so you shouldn't generally do so manually.
 
-    \headerfile dc/thread.h
+    \headerfile kos/thread.h
 */
 typedef struct kthread {
     /** \brief  Thread list handle. Not a function. */
