@@ -25,7 +25,6 @@
 #include <sys/cdefs.h>
 __BEGIN_DECLS
 
-#include <sys/queue.h>
 #include <kos/thread.h>
 
 /** \brief  Sleep on an object.
@@ -105,6 +104,25 @@ void genwait_wake_all_err(void *obj, int err);
     \see    genwait_wake_cnt()
 */
 void genwait_wake_one_err(void *obj, int err);
+
+/** \brief  Wake up a specific thread that is sleeping on an object.
+
+    This function wakes up the specfied thread, assuming it is sleeping on the
+    specified object.
+
+    \param  obj             The object to wake the thread from
+    \param  thd             The specific thread to wake
+    \param  err             The errno code to set as the errno value on the
+                            woken thread. If this is 0 (EOK), then the thread's
+                            errno will not be changed, and the thread will get a
+                            return value of 0 from the genwait_wait(). If it is
+                            non-zero, the thread will get a return value of -1
+                            and errno will be set to this value for the woken
+                            threads.
+    \return                 The number of threads woken, which should be 1 on
+                            success.
+*/
+int genwait_wake_thd(void *obj, kthread_t *thd, int err);
 
 /** \brief  Look for timed out genwait_wait() calls.
 

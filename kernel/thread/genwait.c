@@ -191,6 +191,48 @@ void genwait_wake_all_err(void *obj, int err) {
     genwait_wake_cnt(obj, -1, err);
 }
 
+int genwait_wake_thd(void *obj, kthread_t *thd, int err) {
+    kthread_t *t, *nt;
+    struct slpquehead *qp;
+    int old, rv = 0;
+
+    /* Twiddle interrupt state */
+    old = irq_disable();
+
+    /* Find the queue */
+    qp = &slpque[LOOKUP(obj)];
+
+    /* Go through and find any matching entries */
+    for(t = TAILQ_FIRST(qp); t != NULL; t = nt) {
+        /* Get the next thread up front */
+        nt = TAILQ_NEXT(t, thdq);
+
+        /* Is this thread a match? */
+        if(t->wait_obj == obj && t == thd) {
+            /* Yes, remove it from the wait queue */
+            genwait_unqueue(t);
+
+            /* Set the wake return value */
+            if(err) {
+                CONTEXT_RET(t->context) = -1;
+                t->thd_errno = err;
+            }
+            else {
+                CONTEXT_RET(t->context) = 0;
+            }
+
+            /* We found it, so we're done... */
+            rv = 1;
+            break;
+        }
+    }
+
+    /* Re-fix IRQs */
+    irq_restore(old);
+
+    return rv;
+}
+
 void genwait_check_timeouts(uint64 tm) {
     kthread_t   *t;
 
