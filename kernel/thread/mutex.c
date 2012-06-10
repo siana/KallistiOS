@@ -91,6 +91,11 @@ int mutex_lock_timed(mutex_t *m, int timeout) {
         return -1;
     }
 
+    if(timeout < 0) {
+        errno = EINVAL;
+        return -1;
+    }
+
     old = irq_disable();
 
     if(m->type < MUTEX_TYPE_NORMAL || m->type > MUTEX_TYPE_RECURSIVE) {
