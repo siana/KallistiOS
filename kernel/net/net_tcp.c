@@ -178,7 +178,7 @@ struct tcp_sock {
 LIST_HEAD(tcp_sock_list, tcp_sock);
 
 static struct tcp_sock_list tcp_socks = LIST_HEAD_INITIALIZER(0);
-static rw_semaphore_t *tcp_sem = NULL;
+static rw_semaphore_t tcp_sem = RWSEM_INITIALIZER;
 static int thd_cb_id = 0;
 
 /* Default starting window size for connections. This should be big enough as a
@@ -276,20 +276,20 @@ static int net_tcp_socket(net_socket_t *hnd, int domain, int type, int proto) {
     sock->sndbuf_sz = TCP_DEFAULT_WINDOW;
 
     if(irq_inside_int()) {
-        if(rwsem_write_trylock(tcp_sem)) {
+        if(rwsem_write_trylock(&tcp_sem)) {
             free(sock);
             errno = EWOULDBLOCK;
             return -1;
         }
     }
     else {
-        rwsem_write_lock(tcp_sem);
+        rwsem_write_lock(&tcp_sem);
     }
 
     hnd->data = sock;
 
     LIST_INSERT_HEAD(&tcp_socks, sock, sock_list);
-    rwsem_write_unlock(tcp_sem);
+    rwsem_write_unlock(&tcp_sem);
 
     return 0;
 }
@@ -302,17 +302,17 @@ static void net_tcp_close(net_socket_t *hnd) {
 retry:
 
     if(irq_inside_int()) {
-        if(rwsem_write_trylock(tcp_sem)) {
+        if(rwsem_write_trylock(&tcp_sem)) {
             errno = EWOULDBLOCK;
             return;
         }
     }
     else {
-        rwsem_write_lock(tcp_sem);
+        rwsem_write_lock(&tcp_sem);
     }
 
     if(!(sock = (struct tcp_sock *)hnd->data)) {
-        rwsem_write_unlock(tcp_sem);
+        rwsem_write_unlock(&tcp_sem);
         errno = EBADF;
         return;
     }
@@ -320,7 +320,7 @@ retry:
     if(irq_inside_int()) {
         if(mutex_trylock(&sock->mutex)) {
             errno = EWOULDBLOCK;
-            rwsem_write_unlock(tcp_sem);
+            rwsem_write_unlock(&tcp_sem);
             return;
         }
     }
@@ -333,7 +333,7 @@ retry:
        happening if you're sane... */
     if(sock->state == (TCP_STATE_LISTEN | TCP_STATE_ACCEPTING)) {
         mutex_unlock(&sock->mutex);
-        rwsem_write_unlock(tcp_sem);
+        rwsem_write_unlock(&tcp_sem);
 
         if(irq_inside_int()) {
             errno = EWOULDBLOCK;
@@ -427,11 +427,10 @@ ret_remove:
     mutex_destroy(&sock->mutex);
     free(sock);
 
-    rwsem_write_unlock(tcp_sem);
+    rwsem_write_unlock(&tcp_sem);
     return;
 
 ret_no_remove:
-
     if(sock->state != TCP_STATE_LISTEN)
         sock->intflags = TCP_IFLAG_CANBEDEL;
 
@@ -444,7 +443,7 @@ ret_no_remove:
     /* Don't free anything here, it will be dealt with later on in the
        net_thd callback. */
     mutex_unlock(&sock->mutex);
-    rwsem_write_unlock(tcp_sem);
+    rwsem_write_unlock(&tcp_sem);
     return;
 }
 
@@ -462,20 +461,20 @@ static int net_tcp_accept(net_socket_t *hnd, struct sockaddr *addr,
     }
 
     if(irq_inside_int()) {
-        if(rwsem_read_trylock(tcp_sem)) {
+        if(rwsem_read_trylock(&tcp_sem)) {
             errno = EWOULDBLOCK;
             return -1;
         }
     }
     else {
-        rwsem_read_lock(tcp_sem);
+        rwsem_read_lock(&tcp_sem);
     }
 
     /* Lock the mutex on the socket itself first. We need to pull some data from
        it that doesn't affect the rest of the list, so let's start there... */
     if(!(sock = (struct tcp_sock *)hnd->data)) {
         errno = EBADF;
-        rwsem_read_unlock(tcp_sem);
+        rwsem_read_unlock(&tcp_sem);
         return -1;
     }
 
@@ -484,7 +483,7 @@ static int net_tcp_accept(net_socket_t *hnd, struct sockaddr *addr,
 
         if(mutex_trylock(&sock->mutex)) {
             errno = EWOULDBLOCK;
-            rwsem_read_unlock(tcp_sem);
+            rwsem_read_unlock(&tcp_sem);
             return -1;
         }
     }
@@ -493,7 +492,7 @@ static int net_tcp_accept(net_socket_t *hnd, struct sockaddr *addr,
         canblock = !(sock->flags & FS_SOCKET_NONBLOCK);
     }
 
-    rwsem_read_unlock(tcp_sem);
+    rwsem_read_unlock(&tcp_sem);
 
     /* Make sure the socket is listening... */
     if(sock->state != TCP_STATE_LISTEN) {
@@ -520,7 +519,7 @@ static int net_tcp_accept(net_socket_t *hnd, struct sockaddr *addr,
            graceful fashion. */
         if(sock->state == TCP_STATE_CLOSED) {
             mutex_unlock(&sock->mutex);
-            rwsem_write_lock(tcp_sem);
+            rwsem_write_lock(&tcp_sem);
             mutex_lock(&sock->mutex);
             free(sock->listen.queue);
             cond_destroy(&sock->listen.cv);
@@ -529,7 +528,7 @@ static int net_tcp_accept(net_socket_t *hnd, struct sockaddr *addr,
             mutex_destroy(&sock->mutex);
             free(sock);
 
-            rwsem_write_unlock(tcp_sem);
+            rwsem_write_unlock(&tcp_sem);
 
             errno = EINTR;              /* Close enough, I suppose. */
             return -1;
@@ -659,7 +658,7 @@ static int net_tcp_accept(net_socket_t *hnd, struct sockaddr *addr,
     }
 
     if(irq_inside_int()) {
-        if(rwsem_write_trylock(tcp_sem)) {
+        if(rwsem_write_trylock(&tcp_sem)) {
             /* Kabuki dance to clean things up... */
             mutex_unlock(&sock->mutex);
 
@@ -704,7 +703,7 @@ static int net_tcp_accept(net_socket_t *hnd, struct sockaddr *addr,
     else {
         sock->state |= TCP_STATE_ACCEPTING;
         mutex_unlock(&sock->mutex);
-        rwsem_write_lock(tcp_sem);
+        rwsem_write_lock(&tcp_sem);
         mutex_lock(&sock->mutex);
     }
 
@@ -733,7 +732,7 @@ static int net_tcp_accept(net_socket_t *hnd, struct sockaddr *addr,
 
     sock->state &= ~TCP_STATE_ACCEPTING;
     mutex_unlock(&sock->mutex);
-    rwsem_write_unlock(tcp_sem);
+    rwsem_write_unlock(&tcp_sem);
 
     return fd;
 }
@@ -791,23 +790,24 @@ static int net_tcp_bind(net_socket_t *hnd, const struct sockaddr *addr,
     }
 
     if(irq_inside_int()) {
-        if(rwsem_write_trylock(tcp_sem)) {
+        if(rwsem_write_trylock(&tcp_sem)) {
             errno = EWOULDBLOCK;
             return -1;
         }
     }
     else {
-        rwsem_write_lock(tcp_sem);
+        rwsem_write_lock(&tcp_sem);
     }
 
     if(!(sock = (struct tcp_sock *)hnd->data)) {
-        rwsem_write_unlock(tcp_sem);
+        rwsem_write_unlock(&tcp_sem);
         errno = EBADF;
         return -1;
     }
 
     if(irq_inside_int()) {
         if(mutex_trylock(&sock->mutex)) {
+            rwsem_write_unlock(&tcp_sem);
             errno = EWOULDBLOCK;
             return -1;
         }
@@ -820,19 +820,19 @@ static int net_tcp_bind(net_socket_t *hnd, const struct sockaddr *addr,
        bound. */
     if(sock->state == TCP_STATE_LISTEN) {
         mutex_unlock(&sock->mutex);
-        rwsem_write_unlock(tcp_sem);
+        rwsem_write_unlock(&tcp_sem);
         errno = EINVAL;
         return -1;
     }
     else if(sock->state != TCP_STATE_CLOSED) {
         mutex_unlock(&sock->mutex);
-        rwsem_write_unlock(tcp_sem);
+        rwsem_write_unlock(&tcp_sem);
         errno = EISCONN;
         return -1;
     }
     else if(sock->local_addr.sin6_port) {
         mutex_unlock(&sock->mutex);
-        rwsem_write_unlock(tcp_sem);
+        rwsem_write_unlock(&tcp_sem);
         errno = EINVAL;
         return -1;
     }
@@ -841,7 +841,7 @@ static int net_tcp_bind(net_socket_t *hnd, const struct sockaddr *addr,
        on the socket itself */
     if(addr->sa_family != sock->domain) {
         mutex_unlock(&sock->mutex);
-        rwsem_write_unlock(tcp_sem);
+        rwsem_write_unlock(&tcp_sem);
         errno = EINVAL;
         return -1;
     }
@@ -857,7 +857,7 @@ static int net_tcp_bind(net_socket_t *hnd, const struct sockaddr *addr,
             if(irq_inside_int()) {
                 if(mutex_trylock(&iter->mutex)) {
                     mutex_unlock(&sock->mutex);
-                    rwsem_write_unlock(tcp_sem);
+                    rwsem_write_unlock(&tcp_sem);
                     errno = EWOULDBLOCK;
                     return -1;
                 }
@@ -869,7 +869,7 @@ static int net_tcp_bind(net_socket_t *hnd, const struct sockaddr *addr,
             if(iter->local_addr.sin6_port == realaddr6.sin6_port) {
                 mutex_unlock(&iter->mutex);
                 mutex_unlock(&sock->mutex);
-                rwsem_write_unlock(tcp_sem);
+                rwsem_write_unlock(&tcp_sem);
                 errno = EADDRINUSE;
                 return -1;
             }
@@ -893,7 +893,7 @@ static int net_tcp_bind(net_socket_t *hnd, const struct sockaddr *addr,
                 if(irq_inside_int()) {
                     if(mutex_trylock(&iter->mutex)) {
                         mutex_unlock(&sock->mutex);
-                        rwsem_write_unlock(tcp_sem);
+                        rwsem_write_unlock(&tcp_sem);
                         errno = EWOULDBLOCK;
                         return -1;
                     }
@@ -917,7 +917,7 @@ static int net_tcp_bind(net_socket_t *hnd, const struct sockaddr *addr,
 
     /* Release the locks, we're done */
     mutex_unlock(&sock->mutex);
-    rwsem_write_unlock(tcp_sem);
+    rwsem_write_unlock(&tcp_sem);
 
     return 0;
 }
@@ -978,23 +978,24 @@ static int net_tcp_connect(net_socket_t *hnd, const struct sockaddr *addr,
     }
 
     if(irq_inside_int()) {
-        if(rwsem_write_trylock(tcp_sem)) {
+        if(rwsem_write_trylock(&tcp_sem)) {
             errno = EWOULDBLOCK;
             return -1;
         }
     }
     else {
-        rwsem_write_lock(tcp_sem);
+        rwsem_write_lock(&tcp_sem);
     }
 
     if(!(sock = (struct tcp_sock *)hnd->data)) {
-        rwsem_write_unlock(tcp_sem);
+        rwsem_write_unlock(&tcp_sem);
         errno = EBADF;
         return -1;
     }
 
     if(irq_inside_int()) {
         if(mutex_trylock(&sock->mutex)) {
+            rwsem_write_unlock(&tcp_sem);
             errno = EWOULDBLOCK;
             return -1;
         }
@@ -1016,7 +1017,7 @@ static int net_tcp_connect(net_socket_t *hnd, const struct sockaddr *addr,
         }
 
         mutex_unlock(&sock->mutex);
-        rwsem_write_unlock(tcp_sem);
+        rwsem_write_unlock(&tcp_sem);
         return -1;
     }
 
@@ -1024,7 +1025,7 @@ static int net_tcp_connect(net_socket_t *hnd, const struct sockaddr *addr,
        on the socket itself */
     if(addr->sa_family != sock->domain) {
         mutex_unlock(&sock->mutex);
-        rwsem_write_unlock(tcp_sem);
+        rwsem_write_unlock(&tcp_sem);
         errno = EINVAL;
         return -1;
     }
@@ -1033,7 +1034,7 @@ static int net_tcp_connect(net_socket_t *hnd, const struct sockaddr *addr,
     if(IN6_IS_ADDR_UNSPECIFIED(&realaddr6.sin6_addr) ||
             realaddr6.sin6_port == 0) {
         mutex_unlock(&sock->mutex);
-        rwsem_write_unlock(tcp_sem);
+        rwsem_write_unlock(&tcp_sem);
         errno = EADDRNOTAVAIL;
         return -1;
     }
@@ -1053,7 +1054,7 @@ static int net_tcp_connect(net_socket_t *hnd, const struct sockaddr *addr,
                 if(irq_inside_int()) {
                     if(mutex_trylock(&iter->mutex)) {
                         mutex_unlock(&sock->mutex);
-                        rwsem_write_unlock(tcp_sem);
+                        rwsem_write_unlock(&tcp_sem);
                         errno = EWOULDBLOCK;
                         return -1;
                     }
@@ -1087,14 +1088,14 @@ static int net_tcp_connect(net_socket_t *hnd, const struct sockaddr *addr,
     if(!(sock->data.rcvbuf = (uint8_t *)malloc(sock->rcvbuf_sz))) {
         errno = ENOBUFS;
         mutex_unlock(&sock->mutex);
-        rwsem_write_unlock(tcp_sem);
+        rwsem_write_unlock(&tcp_sem);
         return -1;
     }
 
     if(!(sock->data.sndbuf = (uint8_t *)malloc(sock->sndbuf_sz))) {
         errno = ENOBUFS;
         mutex_unlock(&sock->mutex);
-        rwsem_write_unlock(tcp_sem);
+        rwsem_write_unlock(&tcp_sem);
         free(sock->data.rcvbuf);
         return -1;
     }
@@ -1102,7 +1103,7 @@ static int net_tcp_connect(net_socket_t *hnd, const struct sockaddr *addr,
     if(cond_init(&sock->data.send_cv)) {
         errno = ENOBUFS;
         mutex_unlock(&sock->mutex);
-        rwsem_write_unlock(tcp_sem);
+        rwsem_write_unlock(&tcp_sem);
         free(sock->data.sndbuf);
         free(sock->data.rcvbuf);
         return -1;
@@ -1111,7 +1112,7 @@ static int net_tcp_connect(net_socket_t *hnd, const struct sockaddr *addr,
     if(cond_init(&sock->data.recv_cv)) {
         errno = ENOBUFS;
         mutex_unlock(&sock->mutex);
-        rwsem_write_unlock(tcp_sem);
+        rwsem_write_unlock(&tcp_sem);
         cond_destroy(&sock->data.send_cv);
         free(sock->data.sndbuf);
         free(sock->data.rcvbuf);
@@ -1128,13 +1129,13 @@ static int net_tcp_connect(net_socket_t *hnd, const struct sockaddr *addr,
 
     /* Send a <SYN> packet */
     if(tcp_send_syn(sock, 0) == -1) {
-        rwsem_write_unlock(tcp_sem);
+        rwsem_write_unlock(&tcp_sem);
         mutex_unlock(&sock->mutex);
         return -1;
     }
 
     /* Release the write lock... */
-    rwsem_write_unlock(tcp_sem);
+    rwsem_write_unlock(&tcp_sem);
 
     /* Now, lets see if this is socket is non-blocking... */
     if(sock->flags & FS_SOCKET_NONBLOCK || irq_inside_int()) {
@@ -1174,17 +1175,17 @@ static int net_tcp_listen(net_socket_t *hnd, int backlog) {
         backlog = 1;
 
     if(irq_inside_int()) {
-        if(rwsem_read_trylock(tcp_sem)) {
+        if(rwsem_read_trylock(&tcp_sem)) {
             errno = EWOULDBLOCK;
             return -1;
         }
     }
     else {
-        rwsem_read_lock(tcp_sem);
+        rwsem_read_lock(&tcp_sem);
     }
 
     if(!(sock = (struct tcp_sock *)hnd->data)) {
-        rwsem_read_unlock(tcp_sem);
+        rwsem_read_unlock(&tcp_sem);
         errno = EBADF;
         return -1;
     }
@@ -1193,7 +1194,7 @@ static int net_tcp_listen(net_socket_t *hnd, int backlog) {
        in here... */
     if(irq_inside_int()) {
         if(mutex_trylock(&sock->mutex)) {
-            rwsem_read_unlock(tcp_sem);
+            rwsem_read_unlock(&tcp_sem);
             errno = EWOULDBLOCK;
             return -1;
         }
@@ -1206,7 +1207,7 @@ static int net_tcp_listen(net_socket_t *hnd, int backlog) {
        actually move it to the listening state */
     if(sock->state != TCP_STATE_CLOSED) {
         mutex_unlock(&sock->mutex);
-        rwsem_read_unlock(tcp_sem);
+        rwsem_read_unlock(&tcp_sem);
         errno = EINVAL;
         return -1;
     }
@@ -1214,7 +1215,7 @@ static int net_tcp_listen(net_socket_t *hnd, int backlog) {
     /* Make sure the socket has been bound */
     if(!sock->local_addr.sin6_port) {
         mutex_unlock(&sock->mutex);
-        rwsem_read_unlock(tcp_sem);
+        rwsem_read_unlock(&tcp_sem);
         errno = EDESTADDRREQ;
         return -1;
     }
@@ -1224,7 +1225,7 @@ static int net_tcp_listen(net_socket_t *hnd, int backlog) {
 
     if(!sock->listen.queue) {
         mutex_unlock(&sock->mutex);
-        rwsem_read_unlock(tcp_sem);
+        rwsem_read_unlock(&tcp_sem);
         errno = ENOBUFS;
         return -1;
     }
@@ -1233,7 +1234,7 @@ static int net_tcp_listen(net_socket_t *hnd, int backlog) {
         free(sock->listen.queue);
         sock->listen.queue = NULL;
         mutex_unlock(&sock->mutex);
-        rwsem_read_unlock(tcp_sem);
+        rwsem_read_unlock(&tcp_sem);
         errno = ENOBUFS;
         return -1;
     }
@@ -1244,7 +1245,7 @@ static int net_tcp_listen(net_socket_t *hnd, int backlog) {
 
     /* We're done now, clean up the locks */
     mutex_unlock(&sock->mutex);
-    rwsem_read_unlock(tcp_sem);
+    rwsem_read_unlock(&tcp_sem);
 
     return 0;
 }
@@ -1265,17 +1266,17 @@ static ssize_t net_tcp_recvfrom(net_socket_t *hnd, void *buffer, size_t length,
     }
 
     if(irq_inside_int()) {
-        if(rwsem_read_trylock(tcp_sem)) {
+        if(rwsem_read_trylock(&tcp_sem)) {
             errno = EWOULDBLOCK;
             return -1;
         }
     }
     else {
-        rwsem_read_lock(tcp_sem);
+        rwsem_read_lock(&tcp_sem);
     }
 
     if(!(sock = (struct tcp_sock *)hnd->data)) {
-        rwsem_read_unlock(tcp_sem);
+        rwsem_read_unlock(&tcp_sem);
         errno = EBADF;
         return -1;
     }
@@ -1284,7 +1285,7 @@ static ssize_t net_tcp_recvfrom(net_socket_t *hnd, void *buffer, size_t length,
        in here... */
     if(irq_inside_int()) {
         if(mutex_trylock(&sock->mutex)) {
-            rwsem_read_unlock(tcp_sem);
+            rwsem_read_unlock(&tcp_sem);
             errno = EWOULDBLOCK;
             return -1;
         }
@@ -1293,7 +1294,7 @@ static ssize_t net_tcp_recvfrom(net_socket_t *hnd, void *buffer, size_t length,
         mutex_lock(&sock->mutex);
     }
 
-    rwsem_read_unlock(tcp_sem);
+    rwsem_read_unlock(&tcp_sem);
 
     /* Make sure they haven't shut down the socket... */
     if(sock->flags & (SHUT_RD << 24)) {
@@ -1424,17 +1425,17 @@ static ssize_t net_tcp_sendto(net_socket_t *hnd, const void *message,
     }
 
     if(irq_inside_int()) {
-        if(rwsem_read_trylock(tcp_sem)) {
+        if(rwsem_read_trylock(&tcp_sem)) {
             errno = EWOULDBLOCK;
             return -1;
         }
     }
     else {
-        rwsem_read_lock(tcp_sem);
+        rwsem_read_lock(&tcp_sem);
     }
 
     if(!(sock = (struct tcp_sock *)hnd->data)) {
-        rwsem_read_unlock(tcp_sem);
+        rwsem_read_unlock(&tcp_sem);
         errno = EBADF;
         return -1;
     }
@@ -1443,7 +1444,7 @@ static ssize_t net_tcp_sendto(net_socket_t *hnd, const void *message,
        in here... */
     if(irq_inside_int()) {
         if(mutex_trylock(&sock->mutex)) {
-            rwsem_read_unlock(tcp_sem);
+            rwsem_read_unlock(&tcp_sem);
             errno = EWOULDBLOCK;
             return -1;
         }
@@ -1452,7 +1453,7 @@ static ssize_t net_tcp_sendto(net_socket_t *hnd, const void *message,
         mutex_lock(&sock->mutex);
     }
 
-    rwsem_read_unlock(tcp_sem);
+    rwsem_read_unlock(&tcp_sem);
 
     /* Check if the socket has been shut down for writing. */
     if(sock->flags & (SHUT_WR << 24)) {
@@ -1560,24 +1561,24 @@ static int net_tcp_shutdownsock(net_socket_t *hnd, int how) {
     struct tcp_sock *sock;
 
     if(irq_inside_int()) {
-        if(rwsem_read_trylock(tcp_sem)) {
+        if(rwsem_read_trylock(&tcp_sem)) {
             errno = EWOULDBLOCK;
             return -1;
         }
     }
     else {
-        rwsem_read_lock(tcp_sem);
+        rwsem_read_lock(&tcp_sem);
     }
 
     if(!(sock = (struct tcp_sock *)hnd->data)) {
-        rwsem_read_unlock(tcp_sem);
+        rwsem_read_unlock(&tcp_sem);
         errno = EBADF;
         return -1;
     }
 
     if(irq_inside_int()) {
         if(mutex_trylock(&sock->mutex)) {
-            rwsem_read_unlock(tcp_sem);
+            rwsem_read_unlock(&tcp_sem);
             errno = EWOULDBLOCK;
             return -1;
         }
@@ -1588,7 +1589,7 @@ static int net_tcp_shutdownsock(net_socket_t *hnd, int how) {
 
     if(how & 0xFFFFFFFC) {
         mutex_unlock(&sock->mutex);
-        rwsem_read_unlock(tcp_sem);
+        rwsem_read_unlock(&tcp_sem);
         errno = EINVAL;
         return -1;
     }
@@ -1596,7 +1597,7 @@ static int net_tcp_shutdownsock(net_socket_t *hnd, int how) {
     sock->flags |= (how << 24);
 
     mutex_unlock(&sock->mutex);
-    rwsem_read_unlock(tcp_sem);
+    rwsem_read_unlock(&tcp_sem);
 
     return 0;
 }
@@ -1612,24 +1613,24 @@ static int net_tcp_getsockopt(net_socket_t *hnd, int level, int option_name,
     }
 
     if(irq_inside_int()) {
-        if(rwsem_read_trylock(tcp_sem)) {
+        if(rwsem_read_trylock(&tcp_sem)) {
             errno = EWOULDBLOCK;
             return -1;
         }
     }
     else {
-        rwsem_read_lock(tcp_sem);
+        rwsem_read_lock(&tcp_sem);
     }
 
     if(!(sock = (struct tcp_sock *)hnd->data)) {
-        rwsem_read_unlock(tcp_sem);
+        rwsem_read_unlock(&tcp_sem);
         errno = EBADF;
         return -1;
     }
 
     if(irq_inside_int()) {
         if(mutex_trylock(&sock->mutex)) {
-            rwsem_read_unlock(tcp_sem);
+            rwsem_read_unlock(&tcp_sem);
             errno = EWOULDBLOCK;
             return -1;
         }
@@ -1692,18 +1693,17 @@ static int net_tcp_getsockopt(net_socket_t *hnd, int level, int option_name,
 
     /* If it wasn't handled, return that error. */
     mutex_unlock(&sock->mutex);
-    rwsem_read_unlock(tcp_sem);
+    rwsem_read_unlock(&tcp_sem);
     errno = ENOPROTOOPT;
     return -1;
 
 ret_inval:
     mutex_unlock(&sock->mutex);
-    rwsem_read_unlock(tcp_sem);
+    rwsem_read_unlock(&tcp_sem);
     errno = EINVAL;
     return -1;
 
 copy_int:
-
     if(*option_len >= sizeof(int)) {
         memcpy(option_value, &tmp, sizeof(int));
         *option_len = sizeof(int);
@@ -1713,7 +1713,7 @@ copy_int:
     }
 
     mutex_unlock(&sock->mutex);
-    rwsem_read_unlock(tcp_sem);
+    rwsem_read_unlock(&tcp_sem);
     return 0;
 }
 
@@ -1728,24 +1728,24 @@ static int net_tcp_setsockopt(net_socket_t *hnd, int level, int option_name,
     }
 
     if(irq_inside_int()) {
-        if(rwsem_read_trylock(tcp_sem)) {
+        if(rwsem_read_trylock(&tcp_sem)) {
             errno = EWOULDBLOCK;
             return -1;
         }
     }
     else {
-        rwsem_read_lock(tcp_sem);
+        rwsem_read_lock(&tcp_sem);
     }
 
     if(!(sock = (struct tcp_sock *)hnd->data)) {
-        rwsem_read_unlock(tcp_sem);
+        rwsem_read_unlock(&tcp_sem);
         errno = EBADF;
         return -1;
     }
 
     if(irq_inside_int()) {
         if(mutex_trylock(&sock->mutex)) {
-            rwsem_read_unlock(tcp_sem);
+            rwsem_read_unlock(&tcp_sem);
             errno = EWOULDBLOCK;
             return -1;
         }
@@ -1833,19 +1833,19 @@ static int net_tcp_setsockopt(net_socket_t *hnd, int level, int option_name,
 
     /* If it wasn't handled, return that error. */
     mutex_unlock(&sock->mutex);
-    rwsem_read_unlock(tcp_sem);
+    rwsem_read_unlock(&tcp_sem);
     errno = ENOPROTOOPT;
     return -1;
 
 ret_inval:
     mutex_unlock(&sock->mutex);
-    rwsem_read_unlock(tcp_sem);
+    rwsem_read_unlock(&tcp_sem);
     errno = EINVAL;
     return -1;
 
 ret_success:
     mutex_unlock(&sock->mutex);
-    rwsem_read_unlock(tcp_sem);
+    rwsem_read_unlock(&tcp_sem);
     return 0;
 }
 
@@ -1856,17 +1856,17 @@ static int net_tcp_fcntl(net_socket_t *hnd, int cmd, va_list ap) {
     long val;
 
     if(irq_inside_int()) {
-        if(rwsem_read_trylock(tcp_sem)) {
+        if(rwsem_read_trylock(&tcp_sem)) {
             errno = EWOULDBLOCK;
             return -1;
         }
     }
     else {
-        rwsem_read_lock(tcp_sem);
+        rwsem_read_lock(&tcp_sem);
     }
 
     if(!(sock = (struct tcp_sock *)hnd->data)) {
-        rwsem_read_unlock(tcp_sem);
+        rwsem_read_unlock(&tcp_sem);
         errno = EBADF;
         return -1;
     }
@@ -1875,7 +1875,7 @@ static int net_tcp_fcntl(net_socket_t *hnd, int cmd, va_list ap) {
        in here... */
     if(irq_inside_int()) {
         if(mutex_trylock(&sock->mutex)) {
-            rwsem_read_unlock(tcp_sem);
+            rwsem_read_unlock(&tcp_sem);
             errno = EWOULDBLOCK;
             return -1;
         }
@@ -1914,7 +1914,7 @@ static int net_tcp_fcntl(net_socket_t *hnd, int cmd, va_list ap) {
 
 out:
     mutex_unlock(&sock->mutex);
-    rwsem_read_unlock(tcp_sem);
+    rwsem_read_unlock(&tcp_sem);
     return rv;
 }
 
@@ -1923,24 +1923,24 @@ static short net_tcp_poll(net_socket_t *hnd, short events) {
     short rv = 0;
 
     if(irq_inside_int()) {
-        if(rwsem_read_trylock(tcp_sem)) {
+        if(rwsem_read_trylock(&tcp_sem)) {
             return 0;
         }
     }
     else {
-        rwsem_read_lock(tcp_sem);
+        rwsem_read_lock(&tcp_sem);
     }
 
     /* Lock the mutex on the socket itself first. We need to pull some data from
        it that doesn't affect the rest of the list, so let's start there... */
     if(!(sock = (struct tcp_sock *)hnd->data)) {
-        rwsem_read_unlock(tcp_sem);
+        rwsem_read_unlock(&tcp_sem);
         return POLLNVAL;
     }
 
     if(irq_inside_int()) {
         if(mutex_trylock(&sock->mutex)) {
-            rwsem_read_unlock(tcp_sem);
+            rwsem_read_unlock(&tcp_sem);
             return 0;
         }
     }
@@ -1990,7 +1990,7 @@ static short net_tcp_poll(net_socket_t *hnd, short events) {
     }
 
     mutex_unlock(&sock->mutex);
-    rwsem_read_unlock(tcp_sem);
+    rwsem_read_unlock(&tcp_sem);
     return rv & (events | POLLHUP | POLLERR);
 }
 
@@ -2785,19 +2785,19 @@ static int net_tcp_input(netif_t *src, int domain, const void *hdr,
     flags = ntohs(tcp->off_flags);
 
     if(irq_inside_int()) {
-        if(rwsem_read_trylock(tcp_sem)) {
+        if(rwsem_read_trylock(&tcp_sem)) {
             return -1;
         }
     }
     else {
-        rwsem_read_lock(tcp_sem);
+        rwsem_read_lock(&tcp_sem);
     }
 
     /* Find a matching socket */
     if((s = find_sock(&srca, &dsta, tcp->src_port, tcp->dst_port, domain))) {
         /* Make sure we take care of busy sockets... */
         if(s == (struct tcp_sock *) - 1) {
-            rwsem_read_unlock(tcp_sem);
+            rwsem_read_unlock(&tcp_sem);
             return 0;
         }
 
@@ -2832,7 +2832,7 @@ static int net_tcp_input(netif_t *src, int domain, const void *hdr,
         mutex_unlock(&s->mutex);
     }
 
-    rwsem_read_unlock(tcp_sem);
+    rwsem_read_unlock(&tcp_sem);
 
     /* If we get in here, something went wrong... Send a RST. */
     if(rv && !(flags & TCP_FLAG_RST)) {
@@ -2846,7 +2846,7 @@ static void tcp_thd_cb(void *arg) {
     struct tcp_sock *i, *tmp;
     uint64_t timer;
 
-    rwsem_read_lock(tcp_sem);
+    rwsem_read_lock(&tcp_sem);
 
     LIST_FOREACH(i, &tcp_socks, sock_list) {
         mutex_lock(&i->mutex);
@@ -2916,10 +2916,10 @@ static void tcp_thd_cb(void *arg) {
         mutex_unlock(&i->mutex);
     }
 
-    rwsem_read_unlock(tcp_sem);
+    rwsem_read_unlock(&tcp_sem);
 
     /* Go through and clean up any sockets that need to be destroyed. */
-    rwsem_write_lock(tcp_sem);
+    rwsem_write_lock(&tcp_sem);
 
     i = LIST_FIRST(&tcp_socks);
 
@@ -2940,7 +2940,7 @@ static void tcp_thd_cb(void *arg) {
         i = tmp;
     }
 
-    rwsem_write_unlock(tcp_sem);
+    rwsem_write_unlock(&tcp_sem);
 }
 
 /* Protocol handler for fs_socket. */
@@ -2966,13 +2966,8 @@ static fs_socket_proto_t proto = {
 };
 
 int net_tcp_init() {
-    if(!(tcp_sem = rwsem_create()))
+    if((thd_cb_id = net_thd_add_callback(tcp_thd_cb, NULL, 50)) < 0)
         return -1;
-
-    if((thd_cb_id = net_thd_add_callback(tcp_thd_cb, NULL, 50)) < 0) {
-        rwsem_destroy(tcp_sem);
-        return -1;
-    }
 
     return fs_socket_proto_add(&proto);
 }
@@ -3014,11 +3009,6 @@ void net_tcp_shutdown() {
 
     /* Remove us from fs_socket and clean up the semaphore */
     fs_socket_proto_remove(&proto);
-
-    if(tcp_sem) {
-        rwsem_destroy(tcp_sem);
-        tcp_sem = NULL;
-    }
 
     irq_restore(old);
 }

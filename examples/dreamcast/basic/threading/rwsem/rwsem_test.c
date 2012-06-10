@@ -22,21 +22,22 @@
 
 #define UNUSED __attribute__((unused))
 
-rw_semaphore_t *s = NULL;
+rw_semaphore_t s = RWSEM_INITIALIZER;
 uint32 number = 0;
 
 void *writer0(void *param UNUSED) {
     int i;
 
     for(i = 0; i < 20; ++i) {
-        if(rwsem_write_lock(s)) {
+        if(rwsem_write_lock(&s)) {
             printf("Writer 0 could not obtain write lock!\n");
+            perror("rwsem_write_lock");
             return NULL;
         }
 
         printf("Writer 0 obtained write lock\n");
         number += 8;
-        rwsem_write_unlock(s);
+        rwsem_write_unlock(&s);
 
         thd_sleep(10);
     }
@@ -49,14 +50,15 @@ void *writer1(void *param UNUSED) {
     int i;
 
     for(i = 0; i < 17; ++i) {
-        if(rwsem_write_lock(s)) {
+        if(rwsem_write_lock(&s)) {
             printf("Writer 1 could not obtain write lock!\n");
+            perror("rwsem_write_lock");
             return NULL;
         }
 
         printf("Writer 1 obtained write lock\n");
         number *= 3;
-        rwsem_write_unlock(s);
+        rwsem_write_unlock(&s);
 
         thd_sleep(5);
     }
@@ -69,14 +71,15 @@ void *reader0(void *param UNUSED) {
     int i;
 
     for(i = 0; i < 12; ++i) {
-        if(rwsem_read_lock(s)) {
+        if(rwsem_read_lock(&s)) {
             printf("Reader 0 could not obtain read lock!\n");
+            perror("rwsem_read_lock");
             return NULL;
         }
 
         printf("Reader 0 obtained read lock\n");
         printf("Number: %lu\n", number);
-        rwsem_read_unlock(s);
+        rwsem_read_unlock(&s);
 
         thd_sleep(20);
     }
@@ -89,14 +92,15 @@ void *reader1(void *param UNUSED) {
     int i;
 
     for(i = 0; i < 23; ++i) {
-        if(rwsem_read_lock(s)) {
+        if(rwsem_read_lock(&s)) {
             printf("Reader 1 could not obtain read lock!\n");
+            perror("rwsem_read_lock");
             return NULL;
         }
 
         printf("Reader 1 obtained read lock\n");
         printf("Number * 2: %lu\n", number * 2);
-        rwsem_read_unlock(s);
+        rwsem_read_unlock(&s);
 
         thd_sleep(16);
     }
@@ -115,14 +119,6 @@ int main(int argc, char *argv[]) {
 
     printf("KallistiOS Reader/Writer Semaphore test program\n");
 
-    /* Create the reader/writer semaphore that will be used. */
-    s = rwsem_create();
-
-    if(!s) {
-        printf("Could not create RW semaphore, bailing out!\n");
-        arch_exit();
-    }
-
     printf("About to create threads\n");
     w0 = thd_create(0, writer0, NULL);
     w1 = thd_create(0, writer1, NULL);
@@ -135,15 +131,16 @@ int main(int argc, char *argv[]) {
     thd_join(r0, NULL);
     thd_join(r1, NULL);
 
-    if(rwsem_read_lock(s)) {
+    if(rwsem_read_lock(&s)) {
         printf("Could not obtain final read lock!\n");
+        perror("rwsem_read_lock");
         arch_exit();
     }
 
     printf("Final number: %lu\n", number);
 
-    rwsem_read_unlock(s);
-    rwsem_destroy(s);
+    rwsem_read_unlock(&s);
+    rwsem_destroy(&s);
 
     printf("Reader/Writer semaphore tests completed successfully!\n");
     return 0;

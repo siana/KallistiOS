@@ -869,7 +869,6 @@ int thd_init(int mode) {
 
     /* Initialize thread sync primitives */
     genwait_init();
-    rwsem_init();
     sem_init();
 
     /* Setup our pre-emption handler */
@@ -908,7 +907,6 @@ void thd_shutdown() {
     }
 
     /* Shutdown thread sync primitives */
-    rwsem_shutdown();
     sem_shutdown();
     genwait_shutdown();
 
