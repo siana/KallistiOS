@@ -37,6 +37,26 @@ struct timeval {
     suseconds_t tv_usec;    /**< \brief Microseconds */
 };
 
+/** \brief  Wait for activity on a group of file descriptors.
+
+    This function will check the specfied group of file descriptors for activity
+    and wait for activity (up to the timeout specified) if there is not any
+    pending events already.
+
+    \param  nfds        The maximum fd specified in any of the sets, plus 1.
+    \param  readfds     File descriptors to check for the ability to read
+                        without blocking.
+    \param  writefds    File descriptors to check for the ability to write
+                        without blocking.
+    \param  errorfds    File descriptors to check for error/exceptional
+                        conditions.
+    \param  timeout     Maximum amount of time to block. Passing a 0 timeout
+                        will make the funciton not block, Passing NULL here will
+                        make the function block indefinitely.
+    \return             -1 on error (sets errno as appropriate), or the number
+                        of bits set in the fd sets on success (this may be 0 if
+                        the timeout expires).
+*/
 int select(int nfds, fd_set *readfds, fd_set *writefds, fd_set *errorfds,
            struct timeval *timeout);
 
