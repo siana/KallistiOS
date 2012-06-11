@@ -296,7 +296,7 @@ int pvr_wait_ready() {
 
     assert(pvr_state.valid);
 
-    t = sem_wait_timed(pvr_state.ready_sem, 100);
+    t = sem_wait_timed((semaphore_t *)&pvr_state.ready_sem, 100);
 
     if(t < 0) {
 #if 0
@@ -320,7 +320,7 @@ int pvr_wait_ready() {
 int pvr_check_ready() {
     assert(pvr_state.valid);
 
-    if(sem_count(pvr_state.ready_sem) > 0)
+    if(sem_count((semaphore_t *)&pvr_state.ready_sem) > 0)
         return 0;
     else
         return -1;

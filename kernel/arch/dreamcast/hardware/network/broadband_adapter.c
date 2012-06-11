@@ -479,14 +479,14 @@ static int dma_used;
 static uint32 rx_size;
 
 static kthread_t * bba_rx_thread;
-static semaphore_t * bba_rx_sema;
+static semaphore_t bba_rx_sema;
 static int bba_rx_exit_thread;
-static semaphore_t * bba_rx_sema2;
+static semaphore_t bba_rx_sema2;
 
 static void bba_rx();
 
 #ifdef TX_SEMA
-static semaphore_t * tx_sema;
+static semaphore_t tx_sema;
 #endif
 
 static uint8 * next_dst;
@@ -500,7 +500,7 @@ static void rx_finish_enq(int room) {
 
     if(room > 0 && (((rxin + 1) % MAX_PKTS) != rxout)) {
         rxin = (rxin + 1) % MAX_PKTS;
-        sem_signal(bba_rx_sema);
+        sem_signal(&bba_rx_sema);
         thd_schedule(1, 0);
     }
     else
@@ -706,36 +706,36 @@ int bba_tx(const uint8 * pkt, int len, int wait) {
         /*     printf("bba_tx called from an irq !\n"); */
         /*     return 0; */
         //return bba_rtx(pkt, len, wait);
-        if(sem_trywait(tx_sema)) {
+        if(sem_trywait(&tx_sema)) {
             //printf("bba_tx called from an irq while a thread was running it !\n");
             return BBA_TX_OK;   /* sorry guys ... */
         }
     }
     else
-        sem_wait(tx_sema);
+        sem_wait(&tx_sema);
 
     res = bba_rtx(pkt, len, wait);
-    sem_signal(tx_sema);
+    sem_signal(&tx_sema);
 
     return res;
 }
 #endif
 
 void bba_lock() {
-    //sem_wait(bba_rx_sema2);
+    //sem_wait(&bba_rx_sema2);
     //asic_evt_disable(ASIC_EVT_EXP_PCI, BBA_ASIC_IRQ);
 }
 
 void bba_unlock() {
     //asic_evt_enable(ASIC_EVT_EXP_PCI, BBA_ASIC_IRQ);
-    //sem_signal(bba_rx_sema2);
+    //sem_signal(&bba_rx_sema2);
 }
 
 static int bcolor;
 static void *bba_rx_threadfunc(void *dummy) {
     while(!bba_rx_exit_thread) {
-        //sem_wait_timed(bba_rx_sema, 500);
-        sem_wait(bba_rx_sema);
+        //sem_wait_timed(&bba_rx_sema, 500);
+        sem_wait(&bba_rx_sema);
 
         if(bba_rx_exit_thread)
             break;
@@ -963,8 +963,8 @@ static int bba_if_start(netif_t *self) {
 
     // Start the BBA RX thread.
     assert(bba_rx_thread == NULL);
-    bba_rx_sema = sem_create(0);
-    bba_rx_sema2 = sem_create(1);
+    sem_init(&bba_rx_sema, 0);
+    sem_init(&bba_rx_sema2, 1);
     bba_rx_thread = thd_create(0, bba_rx_threadfunc, 0);
     bba_rx_thread->prio = 1;
     thd_set_label(bba_rx_thread, "BBA-rx-thd");
@@ -996,13 +996,12 @@ static int bba_if_stop(netif_t *self) {
     /* VP : Shutdown rx thread */
     assert(bba_rx_thread != NULL);
     bba_rx_exit_thread = 1;
-    sem_signal(bba_rx_sema);
-    sem_signal(bba_rx_sema2);
+    sem_signal(&bba_rx_sema);
+    sem_signal(&bba_rx_sema2);
     thd_join(bba_rx_thread, NULL);
-    sem_destroy(bba_rx_sema);
-    sem_destroy(bba_rx_sema2);
+    sem_destroy(&bba_rx_sema);
+    sem_destroy(&bba_rx_sema2);
 
-    bba_rx_sema = bba_rx_sema2 = NULL;
     bba_rx_thread = NULL;
 
     bba_if.flags &= ~NETIF_RUNNING;
@@ -1119,14 +1118,13 @@ int bba_init() {
     bba_set_rx_callback(bba_if_netinput);
 
 #ifdef TX_SEMA
-    tx_sema = sem_create(1);
+    sem_init(&tx_sema, 1);
 #endif
 
     /* VP : Initialize rx thread */
     // Note: The thread itself is not created here, but when we actually
     // activate the adapter. This way we don't have a spare thread
     // laying around unless it's actually needed.
-    bba_rx_sema = bba_rx_sema2 = NULL;
     bba_rx_thread = NULL;
 
     /* Setup the structure */
@@ -1198,7 +1196,7 @@ int bba_shutdown() {
     bba_if.if_shutdown(&bba_if);
 
 #ifdef TX_SEMA
-    sem_destroy(tx_sema);
+    sem_destroy(&tx_sema);
 #endif
 
     return 0;

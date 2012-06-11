@@ -174,7 +174,7 @@ int pvr_init(pvr_init_params_t *params) {
     pvr_dma_init();
 
     /* Setup our wait-ready semaphore */
-    pvr_state.ready_sem = sem_create(0);
+    sem_init((semaphore_t *)&pvr_state.ready_sem, 0);
 
     /* Set us as valid and return success */
     pvr_state.valid = 1;
@@ -225,7 +225,7 @@ int pvr_shutdown() {
     pvr_mem_reset();
 
     /* Destroy the semaphore */
-    sem_destroy(pvr_state.ready_sem);
+    sem_destroy((semaphore_t *)&pvr_state.ready_sem);
     mutex_destroy((mutex_t *)&pvr_state.dma_lock);
 
     /* Clear video memory */

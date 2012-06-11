@@ -61,7 +61,7 @@ kthread_t *thd_current = NULL;
 int thd_mode = THD_MODE_NONE;
 
 /* Reaper semaphore. Counts the number of threads waiting to be reaped. */
-static semaphore_t *thd_reap_sem;
+static semaphore_t thd_reap_sem;
 
 /* Number of threads active in the system. */
 static uint32 thd_count = 0;
@@ -194,7 +194,7 @@ static void *thd_reaper(void *param) {
 
     for(;;) {
         /* Wait til we have something to reap */
-        sem_wait(thd_reap_sem);
+        sem_wait(&thd_reap_sem);
 
         /* Find the first zombie thread and reap it (only do one at a time so
            that the semaphore stays current) */
@@ -238,7 +238,7 @@ void thd_exit(void *rv) {
         /* Call Dr. Kevorkian; after this executes we could be killed
            at any time. */
         thd_current->state = STATE_ZOMBIE;
-        sem_signal(thd_reap_sem);
+        sem_signal(&thd_reap_sem);
     }
     else {
         /* Mark the thread as finished and wake up anyone that has tried to join
@@ -545,7 +545,7 @@ void thd_schedule_next(kthread_t *thd) {
 
     /* Unfortunately we have to take care of this here */
     if(thd_current->state == STATE_ZOMBIE) {
-        sem_signal(thd_reap_sem);
+        sem_signal(&thd_reap_sem);
     }
     else if(thd_current->state == STATE_RUNNING) {
         thd_current->state = STATE_READY;
@@ -855,7 +855,7 @@ int thd_init(int mode) {
     idle->state = STATE_READY;
 
     /* Set up a thread to reap old zombies */
-    thd_reap_sem = sem_create(0);
+    sem_init(&thd_reap_sem, 0);
     reaper = thd_create(0, thd_reaper, NULL);
     strcpy(reaper->label, "[reaper]");
     thd_set_prio(reaper, 1);
@@ -869,7 +869,6 @@ int thd_init(int mode) {
 
     /* Initialize thread sync primitives */
     genwait_init();
-    sem_init();
 
     /* Setup our pre-emption handler */
     timer_primary_set_callback(thd_timer_hnd);
@@ -906,8 +905,9 @@ void thd_shutdown() {
         n1 = n2;
     }
 
+    sem_destroy(&thd_reap_sem);
+
     /* Shutdown thread sync primitives */
-    sem_shutdown();
     genwait_shutdown();
 
     kthread_tls_shutdown();

@@ -30,7 +30,7 @@ extern uint8 snd_stream_drv[];
 extern uint8 snd_stream_drv_end[];
 
 /* Thread semaphore */
-static semaphore_t * sem_qram;
+static semaphore_t sem_qram;
 
 /* Initialize driver; note that this replaces the AICA program so that
    if you had anything else going on, it's gone now! */
@@ -57,7 +57,7 @@ int snd_init() {
         snd_mem_init(AICA_RAM_START);
 
         /* Setup semaphores */
-        sem_qram = sem_create(1);
+        sem_init(&sem_qram, 1);
     }
 
     initted = 1;
@@ -69,7 +69,7 @@ int snd_init() {
 void snd_shutdown() {
     if(initted) {
         spu_disable();
-        sem_destroy(sem_qram);
+        sem_destroy(&sem_qram);
         snd_mem_shutdown();
         initted = 0;
     }
@@ -80,7 +80,7 @@ int snd_sh4_to_aica(void *packet, uint32 size) {
     uint32  qa, bot, start, top, *pkt32, cnt;
     assert_msg(size < 256, "SH4->AICA packets may not be >256 uint32's long");
 
-    sem_wait(sem_qram);
+    sem_wait(&sem_qram);
 
     /* Set these up for reference */
     qa = SPU_RAM_BASE + AICA_MEM_CMD_QUEUE;
@@ -118,7 +118,7 @@ int snd_sh4_to_aica(void *packet, uint32 size) {
     /* We could wait until head == tail here for processing, but there's
        not really much point; it'll just slow things down. */
 
-    sem_signal(sem_qram);
+    sem_signal(&sem_qram);
 
     return 0;
 }
@@ -140,7 +140,7 @@ void snd_sh4_to_aica_stop() {
 int snd_aica_to_sh4(void *packetout) {
     uint32  bot, start, stop, top, size, cnt, *pkt32;
 
-    sem_wait(sem_qram);
+    sem_wait(&sem_qram);
 
     /* Set these up for reference */
     bot = SPU_RAM_BASE + AICA_MEM_RESP_QUEUE;
@@ -154,7 +154,7 @@ int snd_aica_to_sh4(void *packetout) {
 
     /* Is there anything? */
     if(start == stop) {
-        sem_signal(sem_qram);
+        sem_signal(&sem_qram);
         return 0;
     }
 
@@ -162,7 +162,7 @@ int snd_aica_to_sh4(void *packetout) {
     size = g2_read_32(start + offsetof(aica_cmd_t, size));
 
     if(cnt >= AICA_CMD_MAX_SIZE) {
-        sem_signal(sem_qram);
+        sem_signal(&sem_qram);
         dbglog(DBG_ERROR, "snd_aica_to_sh4(): packet larger than %d dwords\n", AICA_CMD_MAX_SIZE);
         return -1;
     }
@@ -195,7 +195,7 @@ int snd_aica_to_sh4(void *packetout) {
     /* Finally, write a new tail value to signify that we've removed a packet */
     g2_write_32(bot + offsetof(aica_queue_t, tail), start - (SPU_RAM_BASE + AICA_MEM_RESP_QUEUE));
 
-    sem_signal(sem_qram);
+    sem_signal(&sem_qram);
 
     return 1;
 }

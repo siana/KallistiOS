@@ -1879,7 +1879,7 @@ diff -ruN gcc-4.5.2-orig/gcc/gthr-kos.h gcc-4.5.2/gcc/gthr-kos.h
 +static inline int __gthread_cond_wait_recursive(__gthread_cond_t *cond,
 +                                                __gthread_recursive_mutex_t *mutex) {
 +    assert(cond);
-+    return cond_wait_recursive(*cond, *mutex);
++    return cond_wait(*cond, *mutex);
 +}
 +
 +/* C++0x support functions */
@@ -1947,7 +1947,7 @@ diff -ruN gcc-4.5.2-orig/gcc/gthr-kos.h gcc-4.5.2/gcc/gthr-kos.h
 +                                                     const __gthread_time_t *timeout) {
 +    int t = (int)(timeout->tv_sec + (timeout->tv_nsec / 1000));
 +    assert(cond);
-+    return cond_wait_timed_recursive(*cond, *l, t);
++    return cond_wait_timed(*cond, *l, t);
 +}
 +
 +#endif /* _LIBOBJC */

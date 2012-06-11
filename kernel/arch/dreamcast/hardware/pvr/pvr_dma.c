@@ -18,7 +18,7 @@
 /* Modified for inclusion into KOS by Dan Potter */
 
 /* Signaling semaphore */
-static semaphore_t * dma_done;
+static semaphore_t dma_done;
 static int dma_blocking;
 static pvr_dma_callback_t dma_callback;
 static ptr_t dma_cbdata;
@@ -61,7 +61,7 @@ static void pvr_dma_irq_hnd(uint32 code) {
 
     // Signal the calling thread to continue, if any.
     if(dma_blocking) {
-        sem_signal(dma_done);
+        sem_signal(&dma_done);
         thd_schedule(1, 0);
         dma_blocking = 0;
     }
@@ -129,7 +129,7 @@ int pvr_dma_transfer(void * src, uint32 dest, uint32 count, int type,
 
     /* Wait for us to be signaled */
     if(block)
-        sem_wait(dma_done);
+        sem_wait(&dma_done);
 
     return 0;
 }
@@ -150,7 +150,7 @@ int pvr_dma_ready() {
 
 void pvr_dma_init() {
     /* Create an initially blocked semaphore */
-    dma_done = sem_create(0);
+    sem_init(&dma_done, 0);
     dma_blocking = 0;
     dma_callback = NULL;
     dma_cbdata = 0;
@@ -169,5 +169,5 @@ void pvr_dma_shutdown() {
     /* Clean up */
     asic_evt_disable(ASIC_EVT_PVR_DMA, ASIC_IRQ_DEFAULT);
     asic_evt_set_handler(ASIC_EVT_PVR_DMA, NULL);
-    sem_destroy(dma_done);
+    sem_destroy(&dma_done);
 }

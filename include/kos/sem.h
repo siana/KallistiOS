@@ -1,7 +1,8 @@
 /* KallistiOS ##version##
 
    include/kos/sem.h
-   Copyright (C)2001,2003 Dan Potter
+   Copyright (C) 2001, 2003 Dan Potter
+   Copyright (C) 2012 Lawrence Sebald
 
 */
 
@@ -14,9 +15,6 @@
     predetermined number of resources available, and the semaphore maintains the
     resources.
 
-    A special case of semaphores are mutual exclusion locks. Mutual exclusion
-    locks are simply semaphores that have a count of 1 initially.
-
     \author Dan Potter
     \see    kos/mutex.h
 */
@@ -25,11 +23,8 @@
 #define __KOS_SEM_H
 
 #include <sys/cdefs.h>
-__BEGIN_DECLS
 
-#include <arch/types.h>
-#include <sys/queue.h>
-#include <kos/thread.h>
+__BEGIN_DECLS
 
 /** \brief  Semaphore type.
 
@@ -39,26 +34,20 @@ __BEGIN_DECLS
     \headerfile kos/sem.h
 */
 typedef struct semaphore {
-    /** \cond */
-    /* List entry for the global list of semaphores */
-    LIST_ENTRY(semaphore)   g_list;
-
-    /* Basic semaphore info */
-    int     count;      /* The semaphore count */
-    /** \endcond */
+    int initialized;    /**< \brief Are we initialized? */
+    int count;          /**< \brief The semaphore count */
 } semaphore_t;
-
-/** \cond */
-LIST_HEAD(semlist, semaphore);
-/** \endcond */
 
 /** \brief  Initializer for a transient semaphore.
     \param  value           The initial count of the semaphore. */
-#define SEM_INITIALIZER(value) { { 0 }, value }
+#define SEM_INITIALIZER(value) { 1, value }
 
 /** \brief  Allocate a new semaphore.
 
     This function allocates and initializes a new semaphore for use.
+
+    This function is formally deprecated. Please update your code to use
+    sem_init() or static initialization with SEM_INITIALIZER instead.
 
     \param  value           The initial count of the semaphore (the number of
                             threads to allow in the critical section at a time)
@@ -67,17 +56,36 @@ LIST_HEAD(semlist, semaphore);
                             on failure and errno is set as appropriate.
 
     \par    Error Conditions:
-    \em     ENOMEM - out of memory
+    \em     ENOMEM - out of memory \n
+    \em     EINVAL - the semaphore's value is invalid (less than 0)
 */
-semaphore_t *sem_create(int value);
+semaphore_t *sem_create(int value) __attribute__((deprecated));
 
-/** \brief  Free a semaphore.
+/** \brief  Initialize a semaphore for use.
 
-    This function frees a semaphore, releasing all memory associated with it. It
-    is your responsibility to make sure that all threads waiting on the
-    semaphore are taken care of before destroying the semaphore.
+    This function initializes the semaphore passed in with the starting count
+    value specified.
+
+    \param  sm              The semaphore to initialize
+    \param  count           The initial count of the semaphore
+    \retval 0               On success
+    \retval -1              On error, errno will be set as appropriate
+
+    \par    Error Conditions:
+    \em     EINVAL - the semaphore's value is invalid (less than 0)
 */
-void sem_destroy(semaphore_t *sem);
+int sem_init(semaphore_t *sm, int count);
+
+/** \brief  Destroy a semaphore.
+
+    This function frees a semaphore, releasing any memory associated with it. If
+    there are any threads currently waiting on the semaphore, they will be woken
+    with an ENOTRECOVERABLE error.
+
+    \param  sm              The semaphore to destroy
+    \retval 0               On success (no error conditions currently defined)
+*/
+int sem_destroy(semaphore_t *sem);
 
 /** \brief  Wait on a semaphore.
 
@@ -95,7 +103,7 @@ void sem_destroy(semaphore_t *sem);
 
     \par    Error Conditions:
     \em     EPERM - called inside an interrupt \n
-    \em     EINTR - was interrupted
+    \em     EINVAL - the semaphore was not initialized
 */
 int sem_wait(semaphore_t *sem);
 
@@ -110,21 +118,19 @@ int sem_wait(semaphore_t *sem);
     sem_trywait() for a safe function to call in an interrupt.
 
     \param  sem             The semaphore to wait on
-    \param  timeout         The maximum number of milliseconds to block
+    \param  timeout         The maximum number of milliseconds to block (a value
+                            of 0 here will block indefinitely)
     \retval 0               On success
     \retval -1              On error, sets errno as appropriate
 
     \par    Error Conditions:
     \em     EPERM - called inside an interrupt \n
-    \em     EINTR - was interrupted \n
-    \em     EAGAIN - timed out while blocking
+    \em     EINVAL - the semaphore was not initialized \n
+    \em     EINVAL - the timeout value was invalid (less than 0) \n
+    \em     ETIMEDOUT - timed out while blocking
  */
 int sem_wait_timed(semaphore_t *sem, int timeout);
 
-/* Attempt to wait on a semaphore. If the semaphore would block,
-   then return an error instead of actually blocking. Note that this
-   function, unlike the other waits, DOES work inside an interrupt.
-     EAGAIN - would block */
 /** \brief  "Wait" on a semaphore without blocking.
 
     This function will decrement the semaphore's count and return, if resources
@@ -139,7 +145,8 @@ int sem_wait_timed(semaphore_t *sem, int timeout);
     \retval -1              On error, sets errno as appropriate
 
     \par    Error Conditions:
-    \em     EAGAIN - resources are not available (sem_wait() would block)
+    \em     EWOULDBLOCK - a call to sem_wait() would block \n
+    \em     EINVAL - the semaphore was not initialized
 */
 int sem_trywait(semaphore_t *sem);
 
@@ -150,8 +157,13 @@ int sem_trywait(semaphore_t *sem);
     responsibility to make sure you only release resources you have.
 
     \param  sem             The semaphore to signal
+    \retval 0               On success
+    \retval -1              On error, sets errno as appropriate
+
+    \par    Error Conditions:
+    \em     EINVAL - the semaphore was not initialized
 */
-void sem_signal(semaphore_t *sem);
+int sem_signal(semaphore_t *sem);
 
 /** \brief  Retrieve the number of available resources.
 
@@ -165,13 +177,6 @@ void sem_signal(semaphore_t *sem);
 */
 int sem_count(semaphore_t *sem);
 
-/** \cond */
-/* Init / shutdown */
-int sem_init();
-void sem_shutdown();
-/** \endcond */
-
 __END_DECLS
 
 #endif  /* __KOS_SEM_H */
-

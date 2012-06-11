@@ -89,7 +89,7 @@ static volatile g2_dma_reg_t * const extdma = (g2_dma_reg_t *)0xa05f7800;
 
 
 /* Signaling semaphore */
-static semaphore_t * dma_done[4];
+static semaphore_t dma_done[4];
 static int dma_blocking[4];
 static g2_dma_callback_t dma_callback[4];
 static ptr_t dma_cbdata[4];
@@ -130,7 +130,7 @@ static void g2_dma_irq(uint32 code) {
 
     // Signal the calling thread to continue, if any.
     if(dma_blocking[chn]) {
-        sem_signal(dma_done[chn]);
+        sem_signal(&dma_done[chn]);
         thd_schedule(1, 0);
         dma_blocking[chn] = 0;
     }
@@ -218,7 +218,7 @@ int g2_dma_transfer(void *from, void * dest, uint32 length, int block,
 
     /* Wait for us to be signaled */
     if(block)
-        sem_wait(dma_done[g2chn]);
+        sem_wait(&dma_done[g2chn]);
 
     return 0;
 }
@@ -243,7 +243,7 @@ int spu_dma_init() {
 
     for(i = 0; i < 4; i++) {
         /* Create an initially blocked semaphore */
-        dma_done[i] = sem_create(0);
+        sem_init(&dma_done[i], 0);
         dma_blocking[i] = 0;
         dma_callback[i] = NULL;
         dma_cbdata[i] = 0;
@@ -277,7 +277,7 @@ void spu_dma_shutdown() {
         asic_evt_set_handler(ASIC_EVT_SPU_DMA + i, NULL);
 
         /* Destroy the semaphore */
-        sem_destroy(dma_done[i]);
+        sem_destroy(&dma_done[i]);
 
         /* Turn off any remaining DMA */
         dma_disable(i);

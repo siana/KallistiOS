@@ -67,7 +67,7 @@ static void dma_next_list(ptr_t data) {
         pvr_state.dma_buffers[pvr_state.ram_target ^ 1].ready = 0;
 
         // Signal the client code to continue onwards.
-        sem_signal(pvr_state.ready_sem);
+        sem_signal((semaphore_t *)&pvr_state.ready_sem);
         thd_schedule(1, 0);
     }
 }
@@ -164,7 +164,7 @@ void pvr_int_handler(uint32 code) {
         // If we're not in DMA mode, then signal the client code
         // to continue onwards.
         if(!pvr_state.dma_mode) {
-            sem_signal(pvr_state.ready_sem);
+            sem_signal((semaphore_t *)&pvr_state.ready_sem);
             thd_schedule(1, 0);
         }
 

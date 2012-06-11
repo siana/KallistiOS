@@ -1,7 +1,8 @@
 /* KallistiOS ##version##
 
    sem.c
-   Copyright (c)2001,2002,2003 Dan Potter
+   Copyright (C) 2001, 2002, 2003 Dan Potter
+   Copyright (C) 2012 Lawrence Sebald
 */
 
 /* Defines semaphores */
@@ -18,16 +19,8 @@
 #include <kos/limits.h>
 #include <kos/sem.h>
 #include <kos/genwait.h>
-#include <sys/queue.h>
-#include <arch/spinlock.h>
 
 /**************************************/
-
-/* Semaphore list spinlock */
-static spinlock_t mutex;
-
-/* Global list of semaphores */
-static struct semlist sem_list;
 
 /* Allocate a new semaphore; the semaphore will be assigned
    to the calling process and when that process dies, the semaphore
@@ -35,81 +28,57 @@ static struct semlist sem_list;
 semaphore_t *sem_create(int value) {
     semaphore_t *sm;
 
-    /* Create a semaphore structure */
-    sm = (semaphore_t*)malloc(sizeof(semaphore_t));
+    dbglog(DBG_WARNING, "Creating semaphore with deprecated sem_create(). "
+           "Please update your code!\n");
 
-    if(!sm) {
+    if(value < 0) {
+        errno = EINVAL;
+        return NULL;
+    }
+
+    /* Create a semaphore structure */
+    if(!(sm = (semaphore_t*)malloc(sizeof(semaphore_t)))) {
         errno = ENOMEM;
         return NULL;
     }
 
     sm->count = value;
-
-    /* Add to the global list */
-    spinlock_lock(&mutex);
-    LIST_INSERT_HEAD(&sem_list, sm, g_list);
-    spinlock_unlock(&mutex);
+    sm->initialized = 2;
 
     return sm;
 }
 
-/* Take care of destroying a semaphore */
-void sem_destroy(semaphore_t *sm) {
-    /* XXX Do something with queued threads */
-
-    /* Remove it from the global list */
-    spinlock_lock(&mutex);
-    LIST_REMOVE(sm, g_list);
-    spinlock_unlock(&mutex);
-
-    /* Free the memory */
-    free(sm);
-}
-
-int sem_wait(semaphore_t *sm) {
-    int old, rv = 0;
-
-    if(irq_inside_int()) {
-        dbglog(DBG_WARNING, "sem_wait: called inside interrupt\n");
-        errno = EPERM;
+int sem_init(semaphore_t *sm, int count) {
+    if(sm->count < 0) {
+        errno = EINVAL;
         return -1;
     }
 
-    old = irq_disable();
-
-    /* If there's enough count left, then let the thread proceed */
-    if(sm->count > 0) {
-        sm->count--;
-    }
-    else {
-        /* Block us until we're signaled */
-        sm->count--;
-        rv = genwait_wait(sm, "sem_wait", 0, NULL);
-
-        /* Did we get interrupted? */
-        if(rv < 0) {
-            assert(errno == EINTR);
-            rv = -1;
-        }
-    }
-
-    irq_restore(old);
-
-    return rv;
+    sm->count = count;
+    sm->initialized = 1;
+    return 0;
 }
 
-/* This function will be called by genwait if we timeout. */
-static void sem_timeout(void * obj) {
-    /* Convert it back to a semaphore ptr */
-    semaphore_t * s = (semaphore_t *)obj;
+/* Take care of destroying a semaphore */
+int sem_destroy(semaphore_t *sm) {
+    /* Wake up any queued threads with an error */
+    genwait_wake_all_err(sm, ENOTRECOVERABLE);
 
-    /* Release a thread from the count */
-    s->count++;
+    if(sm->initialized == 2) {
+        /* Free the memory */
+        free(sm);
+    }
+    else {
+        sm->count = 0;
+        sm->initialized = 0;
+    }
+
+    return 0;
 }
 
 /* Wait on a semaphore, with timeout (in milliseconds) */
 int sem_wait_timed(semaphore_t *sem, int timeout) {
-    int old = 0, rv = 0;
+    int old, rv = 0;
 
     /* Make sure we're not inside an interrupt */
     if(irq_inside_int()) {
@@ -119,22 +88,36 @@ int sem_wait_timed(semaphore_t *sem, int timeout) {
     }
 
     /* Check for smarty clients */
-    if(timeout <= 0) {
-        return sem_wait(sem);
+    if(timeout < 0) {
+        errno = EINVAL;
+        return -1;
     }
 
     /* Disable interrupts */
     old = irq_disable();
 
+    if(sem->initialized != 1 && sem->initialized != 2) {
+        errno = EINVAL;
+        rv = -1;
+    }
     /* If there's enough count left, then let the thread proceed */
-    if(sem->count > 0) {
+    else if(sem->count > 0) {
         sem->count--;
-        rv = 0;
     }
     else {
         /* Block us until we're signaled */
         sem->count--;
-        rv = genwait_wait(sem, "sem_wait_timed", timeout, sem_timeout);
+        rv = genwait_wait(sem, timeout ? "sem_wait_timed" : "sem_wait", timeout,
+                          NULL);
+
+        /* Did we fail to get the lock? */
+        if(rv < 0) {
+            rv = -1;
+            ++sem->count;
+
+            if(errno == EAGAIN)
+                errno = ETIMEDOUT;
+        }
     }
 
     irq_restore(old);
@@ -142,38 +125,48 @@ int sem_wait_timed(semaphore_t *sem, int timeout) {
     return rv;
 }
 
+int sem_wait(semaphore_t *sm) {
+    return sem_wait_timed(sm, 0);
+}
+
 /* Attempt to wait on a semaphore. If the semaphore would block,
    then return an error instead of actually blocking. */
 int sem_trywait(semaphore_t *sm) {
-    int old = 0;
-    int succeeded;
+    int old, rv = 0;
 
     old = irq_disable();
 
+    if(sm->initialized != 1 && sm->initialized != 2) {
+        errno = EINVAL;
+        rv = -1;
+    }
     /* Is there enough count left? */
-    if(sm->count > 0) {
+    else if(sm->count > 0) {
         sm->count--;
-        succeeded = 0;
     }
     else {
-        succeeded = -1;
-        errno = EAGAIN;
+        rv = -1;
+        errno = EWOULDBLOCK;
     }
 
     /* Restore interrupts */
     irq_restore(old);
 
-    return succeeded;
+    return rv;
 }
 
 /* Signal a semaphore */
-void sem_signal(semaphore_t *sm) {
-    int     old = 0, woken;
+int sem_signal(semaphore_t *sm) {
+    int old, woken, rv = 0;
 
     old = irq_disable();
 
+    if(sm->initialized != 1 && sm->initialized != 2) {
+        errno = EINVAL;
+        rv = -1;
+    }
     /* Is there anyone waiting? If so, pass off to them */
-    if(sm->count < 0) {
+    else if(sm->count < 0) {
         woken = genwait_wake_cnt(sm, 1, 0);
         assert(woken == 1);
         sm->count++;
@@ -184,6 +177,8 @@ void sem_signal(semaphore_t *sm) {
     }
 
     irq_restore(old);
+
+    return rv;
 }
 
 /* Return the semaphore count */
@@ -191,15 +186,3 @@ int sem_count(semaphore_t *sm) {
     /* Look for the semaphore */
     return sm->count;
 }
-
-/* Initialize semaphore structures */
-int sem_init() {
-    LIST_INIT(&sem_list);
-    spinlock_init(&mutex);
-    return 0;
-}
-
-/* Shut down semaphore structures */
-void sem_shutdown() { }
-
-
