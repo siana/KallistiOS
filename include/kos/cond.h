@@ -59,7 +59,7 @@ __BEGIN_DECLS
     \headerfile kos/cond.h
 */
 typedef struct condvar {
-    int initted;
+    int initialized;
     int dynamic;
 } condvar_t;
 
@@ -97,8 +97,10 @@ int cond_init(condvar_t *cv);
     This function frees a condition variable, releasing all memory associated
     with it (but not with the mutex that is associated with it). This will also
     wake all threads waiting on the condition.
+
+    \retval 0               On success (no error conditions currently defined)
 */
-void cond_destroy(condvar_t *cv);
+int cond_destroy(condvar_t *cv);
 
 /** \brief  Wait on a condition variable.
 
@@ -116,8 +118,10 @@ void cond_destroy(condvar_t *cv);
     \retval -1              On error, sets errno as appropriate
 
     \par    Error Conditions:
-    \em     EPERM - Called inside an interrupt \n
-    \em     EINTR - Was interrupted
+    \em     EPERM - called inside an interrupt \n
+    \em     EINVAL - the condvar was not initialized \n
+    \em     EINVAL - the mutex is not initialized or not locked \n
+    \em     ENOTRECOVERABLE - the condvar was destroyed while waiting
 */
 int cond_wait(condvar_t *cv, mutex_t * m);
 
@@ -139,9 +143,11 @@ int cond_wait(condvar_t *cv, mutex_t * m);
     \retval -1              On error, sets errno as appropriate
 
     \par    Error Conditions:
-    \em     EPERM - Called inside an interrupt \n
-    \em     EINTR - Was interrupted \n
-    \em     EAGAIN - timed out
+    \em     EPERM - called inside an interrupt \n
+    \em     ETIMEDOUT - timed out \n
+    \em     EINVAL - the condvar was not initialized \n
+    \em     EINVAL - the mutex is not initialized or not locked \n
+    \em     ENOTRECOVERABLE - the condvar was destroyed while waiting
 */
 int cond_wait_timed(condvar_t *cv, mutex_t * m, int timeout);
 
@@ -152,8 +158,13 @@ int cond_wait_timed(condvar_t *cv, mutex_t * m, int timeout);
     before calling this to guarantee sane behavior.
 
     \param  cv              The condition to signal
+    \retval 0               On success
+    \retval -1              On error, errno will be set as appropriate
+
+    \par    Error Conditions:
+    \em     EINVAL - the condvar was not initialized
 */
-void cond_signal(condvar_t *cv);
+int cond_signal(condvar_t *cv);
 
 /** \brief  Signal all threads waiting on the condition variable.
 
@@ -162,8 +173,13 @@ void cond_signal(condvar_t *cv);
     before calling this to guarantee sane behavior.
 
     \param  cv              The condition to signal
+    \retval 0               On success
+    \retval -1              On error, errno will be set as appropriate
+
+    \par    Error Conditions:
+    \em     EINVAL - the condvar was not initialized
 */
-void cond_broadcast(condvar_t *cv);
+int cond_broadcast(condvar_t *cv);
 
 __END_DECLS
 
