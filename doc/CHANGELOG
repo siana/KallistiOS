@@ -2,7 +2,7 @@ Platform independent changes are marked with '***', otherwise the
 applicable platform is listed. If someone besides me found the bug or
 suggested the fix, I'll put their name in [ ].
 
-KallistiOS version 1.3.0 -----------------------------------------------
+KallistiOS version 2.0.0 -----------------------------------------------
 - DC  Broadband Adapter driver fixes [Dan Potter == DP]
 - *** Imported a new version of lwIP, with proper sockets lib [DP]
 - DC  Added new httpd example for lwIP [DP]
