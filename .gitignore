@@ -1,0 +1,17 @@
+*.o
+*.elf
+*~
+.*.swp
+doc/reference/
+environ.sh
+romdisk.img
+kernel/stubs/*.c
+kernel/exports/kernel_exports.c
+kernel/arch/dreamcast/kernel/arch_exports.c
+lib/dreamcast/*.a
+addons/lib/dreamcast/*.a
+utils/bincnv/bincnv
+utils/gba-crcfix/gba-crcfix
+utils/genromfs/genromfs
+utils/vqenc/vqenc
+utils/wav2adpcm/wav2adpcm
