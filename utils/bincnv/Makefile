@@ -9,3 +9,5 @@ all: bincnv
 bincnv: bincnv.c
 	gcc -g -o bincnv bincnv.c
 
+clean:
+	-rm -f bincnv

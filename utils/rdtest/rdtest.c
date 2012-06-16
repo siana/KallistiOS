@@ -30,8 +30,7 @@ typedef struct {
     uint32  time;
     uint32  attr;
 } dirent_t;
-typedef int ssize_t;
-typedef int off_t;
+
 typedef void *vfs_handler[];
 int fs_handler_add(char *fn, void *p) {
     return 0;
@@ -55,7 +54,7 @@ void thd_mutex_unlock(int *p) { }
 
 
 /* #include <kallisti/stdtypes.h> */
-#include <malloc.h>
+#include <stdlib.h>
 #include <string.h>
 
 /* Header definitions from Linux ROMFS documentation; all integer quantities are

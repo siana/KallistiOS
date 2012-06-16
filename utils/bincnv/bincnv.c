@@ -10,7 +10,7 @@
 */
 
 #include <stdio.h>
-#include <malloc.h>
+#include <stdlib.h>
 
 #define uint8 unsigned char
 #define uint16 unsigned short

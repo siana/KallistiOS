@@ -9,3 +9,6 @@ all: rdtest
 rdtest: rdtest.c
 	gcc -g -o rdtest rdtest.c
 
+clean:
+	-rm -f rdtest
+
