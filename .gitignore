@@ -15,3 +15,10 @@ utils/gba-crcfix/gba-crcfix
 utils/genromfs/genromfs
 utils/vqenc/vqenc
 utils/wav2adpcm/wav2adpcm
+utils/kmgenc/kmgenc
+utils/bin2c/bin2c
+utils/bincnv/bincnv
+utils/gentexfont/gentexfont
+utils/isotest/isotest
+utils/makejitter/makejitter
+
