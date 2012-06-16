@@ -23,8 +23,7 @@
 #include "vq_types.h"
 
 /* For outputting KMG files */
-/* XXX we really need a better way of finding this file */
-#include "../../../kos-ports/include/kmg/kmg.h"
+#include "kmg.h"
 
 static int use_mipmap = 0;
 static int use_twiddle = 0;

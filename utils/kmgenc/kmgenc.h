@@ -12,7 +12,7 @@
 
 // For outputting KMG files
 #define NEED_KOS_TYPES
-#include "../../../kos-ports/include/kmg/kmg.h"
+#include "kmg.h"
 
 // A single color value
 typedef struct fcolor {
