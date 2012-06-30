@@ -25,17 +25,13 @@
 __BEGIN_DECLS
 
 #include <time.h>
+#include <sys/time.h>
 
 /* <sys/types.h> defines fd_set and friends for us, so there's really not much
    that we have to do here... */
 
-/** \brief  Timeout value for the select() function.
-    \headerfile sys/select.h
-*/
-struct timeval {
-    time_t tv_sec;          /**< \brief Seconds */
-    suseconds_t tv_usec;    /**< \brief Microseconds */
-};
+/* Newlib apparently defines struct timeval in <sys/time.h>, so don't redefine
+   it if that header has been included already. */
 
 /** \brief  Wait for activity on a group of file descriptors.
 
