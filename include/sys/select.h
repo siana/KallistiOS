@@ -30,9 +30,6 @@ __BEGIN_DECLS
 /* <sys/types.h> defines fd_set and friends for us, so there's really not much
    that we have to do here... */
 
-/* Newlib apparently defines struct timeval in <sys/time.h>, so don't redefine
-   it if that header has been included already. */
-
 /** \brief  Wait for activity on a group of file descriptors.
 
     This function will check the specfied group of file descriptors for activity
