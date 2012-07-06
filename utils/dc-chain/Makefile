@@ -150,7 +150,7 @@ $(build_newlib): logdir
 	$(clean_up)
 
 fixup-sh4-newlib: newlib_inc=$(DESTDIR)$(sh_prefix)/$(sh_target)/include
-fixup-sh4-newlib:
+fixup-sh4-newlib: $(build_newlib)
 	@echo "+++ Fixing up sh4 newlib includes..."
 # KOS pthread.h is modified
 # to define _POSIX_THREADS
