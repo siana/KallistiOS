@@ -21,4 +21,11 @@ utils/bincnv/bincnv
 utils/gentexfont/gentexfont
 utils/isotest/isotest
 utils/makejitter/makejitter
+examples/dreamcast/basic/exec/romdisk/sub.bin
+examples/dreamcast/kgl/basic/vq/fruit.vq
+examples/dreamcast/conio/adventure/data.c
+examples/dreamcast/conio/adventure/setup
+examples/dreamcast/png/romdisk_boot.img
+examples/dreamcast/pvr/modifier_volume_tex/romdisk/fruit.kmg
+examples/dreamcast/pvr/texture_render/texture_render.bin
 
