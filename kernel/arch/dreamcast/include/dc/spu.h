@@ -77,9 +77,9 @@ typedef g2_dma_callback_t spu_dma_callback_t;
     DMA.
 
     \param  from            A pointer in main RAM to transfer from. Must be
-                            32-bit aligned.
+                            32-byte aligned.
     \param  dest            Offset in sound RAM to transfer to. Do not include
-                            the 0xA0800000 part, its implied. Must be 32-bit
+                            the 0xA0800000 part, its implied. Must be 32-byte
                             aligned.
     \param  length          Number of bytes to copy. Must be a multiple of 32.
     \param  block           1 if you want to wait for the transfer to complete,
