@@ -1,7 +1,8 @@
 /* KallistiOS ##version##
 
    keyboard.c
-   (C)2002 Dan Potter
+   Copyright (C) 2002 Dan Potter
+   Copyright (C) 2012 Lawrence Sebald
 */
 
 #include <assert.h>
@@ -63,17 +64,19 @@ static int kbd_enqueue(kbd_state_t *state, uint8 keycode) {
         /*53*/  0, '/', '*', '-', '+', 13, '1', '2', '3', '4', '5', '6',
         /*5f*/  '7', '8', '9', '0', '.', 0
     };
-    uint16 ascii;
+    uint16 ascii = 0;
 
     /* If queueing is turned off, don't bother */
     if(!kbd_queue_active)
         return 0;
 
     /* Figure out its key queue value */
-    if(state->shift_keys & (KBD_MOD_LSHIFT | KBD_MOD_RSHIFT))
-        ascii = keymap_shift[keycode];
-    else
-        ascii = keymap_noshift[keycode];
+    if(keycode <= 0x64) {
+        if(state->shift_keys & (KBD_MOD_LSHIFT | KBD_MOD_RSHIFT))
+            ascii = keymap_shift[keycode];
+        else
+            ascii = keymap_noshift[keycode];
+    }
 
     if(ascii == 0)
         ascii = ((uint16)keycode) << 8;
@@ -109,8 +112,8 @@ int kbd_get_key() {
    fairly periodically if you're expecting keyboard input. */
 static void kbd_check_poll(maple_frame_t *frm) {
     kbd_state_t *state;
-    kbd_cond_t  *cond;
-    int     i, p;
+    kbd_cond_t *cond;
+    int i, p;
 
     state = (kbd_state_t *)frm->dev->status;
     cond = (kbd_cond_t *)&state->cond;
@@ -142,10 +145,10 @@ static void kbd_check_poll(maple_frame_t *frm) {
 }
 
 static void kbd_reply(maple_frame_t *frm) {
-    maple_response_t    *resp;
-    uint32          *respbuf;
-    kbd_state_t     *state;
-    kbd_cond_t      *cond;
+    maple_response_t *resp;
+    uint32 *respbuf;
+    kbd_state_t *state;
+    kbd_cond_t *cond;
 
     /* Unlock the frame (it's ok, we're in an IRQ) */
     maple_frame_unlock(frm);
@@ -197,16 +200,11 @@ static void kbd_periodic(maple_driver_t *drv) {
 
 /* Device driver struct */
 static maple_driver_t kbd_drv = {
-functions:
-    MAPLE_FUNC_KEYBOARD,
-name:       "Keyboard Driver"
-    ,
-periodic:
-    kbd_periodic,
-attach:
-    NULL,
-detach:
-    NULL
+    functions:  MAPLE_FUNC_KEYBOARD,
+    name:       "Keyboard Driver",
+    periodic:   kbd_periodic,
+    attach:     NULL,
+    detach:     NULL
 };
 
 /* Add the keyboard to the driver chain */
@@ -217,7 +215,3 @@ int kbd_init() {
 void kbd_shutdown() {
     maple_driver_unreg(&kbd_drv);
 }
-
-
-
-
