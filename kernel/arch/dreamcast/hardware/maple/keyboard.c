@@ -198,12 +198,37 @@ static void kbd_periodic(maple_driver_t *drv) {
     maple_driver_foreach(drv, kbd_poll_intern);
 }
 
+static int kbd_attach(maple_driver_t *drv, maple_device_t *dev) {
+    kbd_state_t *state = (kbd_state_t *)dev->status;
+    uint32 f = dev->info.functions, tmp = MAPLE_FUNC_KEYBOARD;
+    int d = 0;
+
+    /* Figure out which function data we want to look at. This is borrowed from
+       the maple_enum_type_ex function and isn't really pretty... */
+    while(tmp != 0x80000000) {
+        if(f & 0x80000000) {
+            ++d;
+        }
+        
+        f <<= 1;
+        tmp <<= 1;
+    }
+
+    if(d > 2)
+        /* Punt. */
+        state->region = KBD_REGION_US;
+    else
+        state->region = dev->info.function_data[d] & 0xFF;
+
+    return 0;
+}
+
 /* Device driver struct */
 static maple_driver_t kbd_drv = {
     functions:  MAPLE_FUNC_KEYBOARD,
     name:       "Keyboard Driver",
     periodic:   kbd_periodic,
-    attach:     NULL,
+    attach:     kbd_attach,
     detach:     NULL
 };
 
