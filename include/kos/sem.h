@@ -82,7 +82,7 @@ int sem_init(semaphore_t *sm, int count);
     there are any threads currently waiting on the semaphore, they will be woken
     with an ENOTRECOVERABLE error.
 
-    \param  sm              The semaphore to destroy
+    \param  sem             The semaphore to destroy
     \retval 0               On success (no error conditions currently defined)
 */
 int sem_destroy(semaphore_t *sem);
