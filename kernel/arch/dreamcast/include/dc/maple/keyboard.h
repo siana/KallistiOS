@@ -170,7 +170,28 @@ __BEGIN_DECLS
 #define KBD_REGION_US       2           /**< \brief US keyboard */
 /** @} */
 
-/* Raw condition structure */
+/** \brief  Size of a keyboard queue.
+
+    Each keyboard queue will hold this many elements. Once the queue fills, no
+    new elements will be placed on the queue. As long as you check the queue
+    relatively frequently, the default of 16 should be plenty.
+
+    \note   This <strong>MUST</strong> be a power of two.
+*/
+#define KBD_QUEUE_SIZE 16
+
+/** \brief  Keyboard keymap.
+
+    This structure represents a mapping from raw key values to ASCII values, if
+    appropriate. This handles base values as well as shifted values.
+
+    \headerfile dc/maple/keyboard.h
+*/
+typedef struct kbd_keymap {
+    uint8 base[256];
+    uint8 shifted[256];
+} kbd_keymap_t;
+
 /** \brief  Keyboard raw condition structure.
 
     This structure is what the keyboard responds with as its current status.
@@ -183,8 +204,6 @@ typedef struct {
     uint8 keys[6];      /**< \brief Key codes for currently pressed keys. */
 } kbd_cond_t;
 
-/* This is the structure of the 'state' space. This is what you will
-   get back if you call maple_dev_state(). */
 /** \brief  Keyboard status structure.
 
     This structure holds information about the current status of the keyboard
@@ -199,7 +218,10 @@ typedef struct kbd_state {
     /** \brief  Key array.
 
         This array lists the state of all possible keys on the keyboard. It can
-        be used for key repeat and debouncing.
+        be used for key repeat and debouncing. This will be non-zero if the key
+        is currently being pressed.
+
+        \see    kbd_keys
     */
     uint8 matrix[256];
 
@@ -208,9 +230,17 @@ typedef struct kbd_state {
 
     /** \brief  Keyboard type/region. */
     int region;
+
+    /** \brief  Individual keyboard queue.
+        You should not access this variable directly. Please use the appropriate
+        function to access it. */
+    uint32 key_queue[KBD_QUEUE_SIZE];
+    int queue_tail;                     /**< \brief Key queue tail. */
+    int queue_head;                     /**< \brief Key queue head. */
+    int queue_len;                      /**< \brief Current length of queue. */
 } kbd_state_t;
 
-/** \brief  Activate or deactivate key queueing.
+/** \brief  Activate or deactivate global key queueing.
 
     This function will turn the internal keyboard queueing on or off. Note that
     there is only one queue for the whole system, no matter how many keyboards
@@ -228,20 +258,53 @@ typedef struct kbd_state {
                             keyboard layouts and is deprecated. Please use the
                             individual queues instead for future code.
 */
-void kbd_set_queue(int active);
+void kbd_set_queue(int active) __attribute__((deprecated));
 
-/** \brief  Pop a key off the keyboard queue.
+/** \brief  Pop a key off the global keyboard queue.
 
     This function pops the front off of the keyboard queue, and returns the
     value to the caller. The value returned will be the ASCII value of the key
     pressed (accounting for the shift keys being pressed).
 
+    If a key does not have an ASCII value associated with it, the raw key code
+    will be returned, shifted up by 8 bits.
+
     \return                 The value at the front of the queue, or -1 if there
                             are no keys in the queue or queueing is off.
     \note                   This function does not account for non-US keyboard
-                            layouts properly, and is deprecated.
+                            layouts properly (for compatibility with old code),
+                            and is deprecated. Use the individual keyboard
+                            queues instead to properly account for non-US
+                            keyboards.
+    \see                    kbd_queue_pop()
 */
-int kbd_get_key();
+int kbd_get_key() __attribute__((deprecated));
+
+/** \brief  Pop a key off a specific keyboard's queue.
+
+    This function pops the front element off of the specified keyboard queue,
+    and returns the value of that key to the caller.
+
+    If the xlat parameter is non-zero and the key represents an ISO-8859-1
+    character, that is the value that will be returned from this function.
+    Otherwise if xlat is non-zero, it will be the raw key code, shifted up by 8
+    bits.
+
+    If the xlat parameter is zero, the lower 8 bits of the returned value will
+    be the raw key code. The next 8 bits will be the modifier keys that were
+    down when the key was pressed (a bitfield of KBD_MOD_* values). The next 3
+    bits will be the lock key status (a bitfield of KBD_LED_* values).
+
+    \param  dev             The keyboard device to read from.
+    \param  xlat            Set to non-zero to do key translation. Otherwise,
+                            you'll simply get the raw key value. Raw key values
+                            are not mapped at all, so you are responsible for
+                            figuring out what it is by the region.
+
+    \return                 The value at the front of the queue, or -1 if there
+                            are no keys in the queue.
+*/
+int kbd_queue_pop(maple_device_t *dev, int xlat);
 
 /* \cond */
 /* Init / Shutdown */

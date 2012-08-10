@@ -20,9 +20,95 @@ repeat handling.
 
 */
 
+/* Built-in keymaps. */
+#define KBD_NUM_KEYMAPS 2
+static kbd_keymap_t keymaps[KBD_NUM_KEYMAPS] = {
+    {
+        /* Japanese keyboard */
+        {
+            /* Base values */
+            0, 0, 0, 0, 'a', 'b', 'c', 'd',                 /* 0x00 - 0x07 */
+            'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l',         /* 0x08 - 0x0F */
+            'm', 'n', 'o', 'p', 'q', 'r', 's', 't',         /* 0x10 - 0x17 */
+            'u', 'v', 'w', 'x', 'y', 'z', '1', '2',         /* 0x18 - 0x1F */
+            '3', '4', '5', '6', '7', '8', '9', '0',         /* 0x20 - 0x27 */
+            10, 27, 8, 9, ' ', '-', '^', '@',               /* 0x28 - 0x2F */
+            '[', 0, ']', ';', ':', 0, ',', '.',             /* 0x30 - 0x37 */
+            '/', 0, 0, 0, 0, 0, 0, 0,                       /* 0x38 - 0x3F */
+            0, 0, 0, 0, 0, 0, 0, 0,                         /* 0x40 - 0x47 */
+            0, 0, 0, 0, 0, 0, 0, 0,                         /* 0x48 - 0x4F */
+            0, 0, 0, 0, 0, 0, 0, 0,                         /* 0x50 - 0x57 */
+            0, 0, 0, 0, 0, 0, 0, 0,                         /* 0x58 - 0x5F */
+            0, 0, 0, 0, 0, 0, 0, 0,                         /* 0x60 - 0x67 */
+            0, 0, 0, 0, 0, 0, 0, 0,                         /* 0x68 - 0x6F */
+            0, 0, 0, 0, 0, 0, 0, 0,                         /* 0x70 - 0x77 */
+            0, 0, 0, 0, 0, 0, 0, 0,                         /* 0x78 - 0x7F */
+            0, 0, 0, 0, 0, 0, 0, '\\',                      /* 0x80 - 0x87 */
+            0, 165, 0, 0                                    /* 0x88 - 0x8A */
+            /* All the rest are unused, and will be 0. */
+        },
+        {
+            /* Shifted values */
+            0, 0, 0, 0, 'A', 'B', 'C', 'D',                 /* 0x00 - 0x07 */
+            'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L',         /* 0x08 - 0x0F */
+            'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T',         /* 0x10 - 0x17 */
+            'U', 'V', 'W', 'X', 'Y', 'Z', '!', '"',         /* 0x18 - 0x1F */
+            '#', '$', '%', '&', '\'', '(', ')', '~',        /* 0x20 - 0x27 */
+            10, 27, 8, 9, ' ', '=', 175, '`',               /* 0x28 - 0x2F */
+            '{', 0, '}', '+', '*', 0, '<', '>',             /* 0x30 - 0x37 */
+            '?', 0, 0, 0, 0, 0, 0, 0,                       /* 0x38 - 0x3F */
+            0, 0, 0, 0, 0, 0, 0, 0,                         /* 0x40 - 0x47 */
+            0, 0, 0, 0, 0, 0, 0, 0,                         /* 0x48 - 0x4F */
+            0, 0, 0, 0, 0, 0, 0, 0,                         /* 0x50 - 0x57 */
+            0, 0, 0, 0, 0, 0, 0, 0,                         /* 0x58 - 0x5F */
+            0, 0, 0, 0, 0, 0, 0, 0,                         /* 0x60 - 0x67 */
+            0, 0, 0, 0, 0, 0, 0, 0,                         /* 0x68 - 0x6F */
+            0, 0, 0, 0, 0, 0, 0, 0,                         /* 0x70 - 0x77 */
+            0, 0, 0, 0, 0, 0, 0, 0,                         /* 0x78 - 0x7F */
+            0, 0, 0, 0, 0, 0, 0, '_',                       /* 0x80 - 0x87 */
+            0, '|', 0, 0                                    /* 0x88 - 0x8A */
+            /* All the rest are unused, and will be 0. */
+        }
+    },
+    {
+        /* US/QWERTY keyboard */
+        {
+            0, 0, 0, 0, 'a', 'b', 'c', 'd',                 /* 0x00 - 0x07 */
+            'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l',         /* 0x08 - 0x0F */
+            'm', 'n', 'o', 'p', 'q', 'r', 's', 't',         /* 0x10 - 0x17 */
+            'u', 'v', 'w', 'x', 'y', 'z', '1', '2',         /* 0x18 - 0x1F */
+            '3', '4', '5', '6', '7', '8', '9', '0',         /* 0x20 - 0x27 */
+            10, 27, 8, 9, ' ', '-', '=', '[',               /* 0x28 - 0x2F */
+            ']', '\\', 0, ';', '\'', '`', ',', '.',         /* 0x30 - 0x37 */
+            '/', 0, 0, 0, 0, 0, 0, 0,                       /* 0x38 - 0x3F */
+            0, 0, 0, 0, 0, 0, 0, 0,                         /* 0x40 - 0x47 */
+            0, 0, 0, 0, 0, 0, 0, 0,                         /* 0x48 - 0x4F */
+            0, 0, 0, 0, '/', '*', '-', '+',                 /* 0x50 - 0x57 */
+            13, '1', '2', '3', '4', '5', '6', '7',          /* 0x58 - 0x5F */
+            '8', '9', '0', '.', 0, 0                        /* 0x60 - 0x65 */
+            /* All the rest are unused, and will be 0. */
+        },
+        {
+            0, 0, 0, 0, 'A', 'B', 'C', 'D',                 /* 0x00 - 0x07 */
+            'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L',         /* 0x08 - 0x0F */
+            'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T',         /* 0x10 - 0x17 */
+            'U', 'V', 'W', 'X', 'Y', 'Z', '!', '@',         /* 0x18 - 0x1F */
+            '#', '$', '%', '^', '&', '*', '(', ')',         /* 0x20 - 0x27 */
+            10, 27, 8, 9, ' ', '_', '+', '{',               /* 0x28 - 0x2F */
+            '}', '|', 0, ':', '"', '~', '<', '>',           /* 0x30 - 0x37 */
+            '?', 0, 0, 0, 0, 0, 0, 0,                       /* 0x38 - 0x3F */
+            0, 0, 0, 0, 0, 0, 0, 0,                         /* 0x40 - 0x47 */
+            0, 0, 0, 0, 0, 0, 0, 0,                         /* 0x48 - 0x4F */
+            0, 0, 0, 0, '/', '*', '-', '+',                 /* 0x50 - 0x57 */
+            13, '1', '2', '3', '4', '5', '6', '7',          /* 0x58 - 0x5F */
+            '8', '9', '0', '.', 0, 0                        /* 0x60 - 0x65 */
+            /* All the rest are unused, and will be 0. */
+        }
+    }
+};
+
 
 /* The keyboard queue (global for now) */
-#define KBD_QUEUE_SIZE 16
 static volatile int kbd_queue_active = 1;
 static volatile int kbd_queue_tail = 0, kbd_queue_head = 0;
 static volatile uint16  kbd_queue[KBD_QUEUE_SIZE];
@@ -41,7 +127,7 @@ void kbd_set_queue(int active) {
 
 /* Take a key scancode, encode it appropriately, and place it on the
    keyboard queue. At the moment we assume no key overflows. */
-static int kbd_enqueue(kbd_state_t *state, uint8 keycode) {
+static int kbd_enqueue(kbd_state_t *state, uint8 keycode, int mods) {
     static char keymap_noshift[] = {
         /*0*/   0, 0, 0, 0, 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i',
         'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't',
@@ -66,7 +152,18 @@ static int kbd_enqueue(kbd_state_t *state, uint8 keycode) {
     };
     uint16 ascii = 0;
 
-    /* If queueing is turned off, don't bother */
+    /* Don't bother with bad keycodes. */
+    if(keycode <= 1)
+        return 0;
+
+    /* Queue the key up on the device-specific queue. */
+    if(state->queue_len < KBD_QUEUE_SIZE) {
+        state->key_queue[state->queue_head] = keycode | (mods << 8);
+        state->queue_head = (state->queue_head + 1) & (KBD_QUEUE_SIZE - 1);
+        ++state->queue_len;
+    }
+
+    /* If queueing is turned off, don't bother with the global queue. */
     if(!kbd_queue_active)
         return 0;
 
@@ -81,9 +178,10 @@ static int kbd_enqueue(kbd_state_t *state, uint8 keycode) {
     if(ascii == 0)
         ascii = ((uint16)keycode) << 8;
 
-    /* Ok... now do the enqueue */
+    /* Ok... now do the enqueue to the global queue */
     kbd_queue[kbd_queue_head] = ascii;
     kbd_queue_head = (kbd_queue_head + 1) & (KBD_QUEUE_SIZE - 1);
+
 
     return 0;
 }
@@ -106,6 +204,38 @@ int kbd_get_key() {
     return rv;
 }
 
+/* Take a key off of a specific key queue. */
+int kbd_queue_pop(maple_device_t *dev, int xlat) {
+    kbd_state_t *state = (kbd_state_t *)dev->status;
+    uint32 rv, mods;
+    uint8 ascii;
+
+    if(!state->queue_len)
+        return -1;
+
+    rv = state->key_queue[state->queue_tail];
+    state->queue_tail = (state->queue_tail + 1) & (KBD_QUEUE_SIZE - 1);
+    --state->queue_len;
+
+    if(!xlat)
+        return (int)rv;
+
+    if(state->region < KBD_REGION_JP || state->region > KBD_NUM_KEYMAPS)
+        return (int)(rv & 0xFF) << 8;
+
+    mods = rv >> 8;
+
+    if(mods & (KBD_MOD_LSHIFT | KBD_MOD_RSHIFT | (1 << 9)))
+        ascii = keymaps[state->region - 1].shifted[(uint8)rv];
+    else
+        ascii = keymaps[state->region - 1].base[(uint8)rv];
+
+    if(ascii)
+        return (int)ascii;
+    else
+        return (int)((rv & 0xFF) << 8);
+}
+
 /* Update the keyboard status; this will handle debounce handling as well as
    queueing keypresses for later usage. The key press queue uses 16-bit
    words so that we can store "special" keys as such. This needs to be called
@@ -114,21 +244,23 @@ static void kbd_check_poll(maple_frame_t *frm) {
     kbd_state_t *state;
     kbd_cond_t *cond;
     int i, p;
+    int mods;
 
     state = (kbd_state_t *)frm->dev->status;
     cond = (kbd_cond_t *)&state->cond;
 
     /* Check the shift state */
     state->shift_keys = cond->modifiers;
+    mods = cond->modifiers | (cond->leds << 8);
 
     /* Process all pressed keys */
     for(i = 0; i < 6; i++) {
-        if(cond->keys[i] != 0) {
+        if(cond->keys[i] > 1) {
             p = state->matrix[cond->keys[i]];
             state->matrix[cond->keys[i]] = 2;   /* 2 == currently pressed */
 
             if(p == 0)
-                kbd_enqueue(state, cond->keys[i]);
+                kbd_enqueue(state, cond->keys[i], mods);
         }
     }
 
@@ -219,6 +351,9 @@ static int kbd_attach(maple_driver_t *drv, maple_device_t *dev) {
         state->region = KBD_REGION_US;
     else
         state->region = dev->info.function_data[d] & 0xFF;
+
+    /* Make sure all the queue variables are set up properly... */
+    state->queue_tail = state->queue_head = state->queue_len = 0;
 
     return 0;
 }
