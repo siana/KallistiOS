@@ -25,6 +25,7 @@
 __BEGIN_DECLS
 
 #include <arch/types.h>
+#include <dc/maple.h>
 
 /** \defgroup   kbd_mods    Keyboard modifier keys
 

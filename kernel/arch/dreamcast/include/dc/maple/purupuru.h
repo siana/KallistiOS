@@ -36,6 +36,7 @@
 __BEGIN_DECLS
 
 #include <arch/types.h>
+#include <dc/maple.h>
 
 /** \brief  Effect generation structure.
 

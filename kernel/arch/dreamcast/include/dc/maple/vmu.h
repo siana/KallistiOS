@@ -25,6 +25,7 @@
 __BEGIN_DECLS
 
 #include <arch/types.h>
+#include <dc/maple.h>
 
 /** \brief  Make a VMU beep.
 

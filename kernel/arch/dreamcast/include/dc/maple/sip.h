@@ -26,6 +26,7 @@
 __BEGIN_DECLS
 
 #include <sys/types.h>
+#include <dc/maple.h>
 
 /** \brief  SIP status structure.
 
