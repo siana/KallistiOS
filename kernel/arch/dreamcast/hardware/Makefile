@@ -20,7 +20,7 @@ OBJS += asic.o g2bus.o
 OBJS += video.o vblank.o
 
 # CPU-related
-OBJS += sq.o scif.o
+OBJS += sq.o scif.o scif-sd.o
 
 SUBDIRS = pvr network maple modem
 
