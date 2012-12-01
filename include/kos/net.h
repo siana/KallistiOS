@@ -666,6 +666,19 @@ uint32 net_crc32le(const uint8 *data, int size);
 */
 uint32 net_crc32be(const uint8 *data, int size);
 
+/** \brief  Calculate a CRC16-CCITT over a block of data.
+    \param  data            The data to calculate over.
+    \param  size            The size of the data, in bytes.
+    \param  start           The value to start with. This could be a previous
+                            return value from this function (if continuing a
+                            previous calculation) or some initial seed value
+                            (typically 0xFFFF or 0x0000).
+    \return                 The calculated CRC16-CCITT.
+    \note                   Based on code found online at
+                            http://www.ccsinfo.com/forum/viewtopic.php?t=24977
+*/
+uint16 net_crc16ccitt(const uint8 *data, int size, uint16 start);
+
 /***** net_multicast.c ****************************************************/
 
 /** \brief  Add a entry to our multicast list.

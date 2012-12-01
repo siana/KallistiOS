@@ -1,7 +1,7 @@
 /* KallistiOS ##version##
 
    kernel/net/net_crc.c
-   Copyright (C) 2009, 2010 Lawrence Sebald
+   Copyright (C) 2009, 2010, 2012 Lawrence Sebald
 
 */
 
@@ -43,6 +43,20 @@ uint32 net_crc32be(const uint8 *data, int size) {
             if(c)   rv = ((rv << 1) ^ 0x04C11DB6) | c;
             else    rv <<= 1;
         }
+    }
+
+    return rv;
+}
+
+/* Based on code found at: http://www.ccsinfo.com/forum/viewtopic.php?t=24977 */
+uint16 net_crc16ccitt(const uint8 *data, int size, uint16 start) {
+    uint16 rv = start, tmp;
+
+    while(size--) {
+        tmp = (rv >> 8) ^ *data++;
+        tmp ^= tmp >> 4;
+
+        rv = (rv << 8) ^ (tmp << 12) ^ (tmp << 5) ^ tmp;
     }
 
     return rv;
