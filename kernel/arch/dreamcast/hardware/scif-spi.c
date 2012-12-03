@@ -38,13 +38,14 @@
 static uint16 scsptr2 = 0;
 
 /* Re-initialize the state of SCIF to match what we need for communication with
-   the SD card. We basically take complete control of the pins of the port
+   the SPI device. We basically take complete control of the pins of the port
    directly, overriding the normal byte FIFO and whatnot. */
-int scif_sd_init(void) {
+int scif_spi_init(void) {
     /* Make sure we're not using dcload-serial. If we are, then we definitely do
-       not have a SD card on the serial port. */
+       not have a SPI device on the serial port. */
     if(*DCLOADMAGICADDR == DCLOADMAGICVALUE && dcload_type == DCLOAD_TYPE_SER) {
-        dbglog(DBG_KDEBUG, "scif_sd_init: no SD card -- using dcload-serial\n");
+        dbglog(DBG_KDEBUG, "scif_spi_init: no spi device -- using "
+               "dcload-serial\n");
         return -1;
     }
 
@@ -61,11 +62,11 @@ int scif_sd_init(void) {
     return 0;
 }
 
-int scif_sd_shutdown(void) {
+int scif_spi_shutdown(void) {
     return 0;
 }
 
-void scif_sd_set_cs(int v) {
+void scif_spi_set_cs(int v) {
     if(v)
         scsptr2 |= PTR2_RTSDT;
     else
@@ -73,7 +74,7 @@ void scif_sd_set_cs(int v) {
     SCSPTR2 = scsptr2;
 }
 
-uint8 scif_sd_rw_byte(uint8 b) {
+uint8 scif_spi_rw_byte(uint8 b) {
     uint16 tmp = scsptr2 & ~PTR2_CTSDT & ~PTR2_SPB2DT;
     uint8 bit;
     uint8 rv = 0;
@@ -131,7 +132,7 @@ static void slow_rw_delay(void) {
     timer_stop(TMU1);
 }
 
-uint8 scif_sd_slow_rw_byte(uint8 b) {
+uint8 scif_spi_slow_rw_byte(uint8 b) {
     int i;
     uint8 rv = 0;
     uint16 tmp = scsptr2 & ~PTR2_CTSDT & ~PTR2_SPB2DT;
@@ -148,7 +149,7 @@ uint8 scif_sd_slow_rw_byte(uint8 b) {
     return rv;
 }
 
-void scif_sd_write_byte(uint8 b) {
+void scif_spi_write_byte(uint8 b) {
     uint16 tmp = scsptr2 & ~PTR2_CTSDT & ~PTR2_SPB2DT;
     uint8 bit;
 
@@ -182,7 +183,7 @@ void scif_sd_write_byte(uint8 b) {
     SCSPTR2 = tmp;
 }
 
-uint8 scif_sd_read_byte(void) {
+uint8 scif_spi_read_byte(void) {
     uint8 rv = 0;
     uint16 tmp;
 

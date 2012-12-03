@@ -110,78 +110,81 @@ int scif_read_buffer(uint8 *data, int len);
 /** \brief  SCIF debug I/O handler. Do not modify! */
 extern dbgio_handler_t dbgio_scif;
 
-/* Low-level SD Card related functionality below here... */
-/** \brief  Initialize the SCIF port for use of the SD card adapter.
+/* Low-level SPI related functionality below here... */
+/** \brief  Initialize the SCIF port for use of an SPI peripheral.
 
-    This function initializes the SCIF port for accessing the an SD card that
-    has been connected to the serial port. The design of the adapter follows
-    that which is (at least now) somewhat commonly available online and is the
-    same as the one designed by jj1odm.
+    This function initializes the SCIF port for accessing the an SPI peripheral
+    that has been connected to the serial port. The design of the SCIF->SPI
+    wiring follows the wiring of the SD card adapter which is (at least now)
+    somewhat commonly available online and is the same as the one designed by
+    jj1odm.
 
     \retval 0               On success.
     \retval -1              On error (if dcload-serial is detected).
 */
-int scif_sd_init(void);
+int scif_spi_init(void);
 
-/** \brief  Shut down SD card support over the SCIF port.
+/** \brief  Shut down SPI card support over the SCIF port.
 
-    This function shuts down SD card support on the SCIF port. If you want to
-    get regular usage of the port back, you must call scif_init() after shutting
-    down the SD card support.
+    This function shuts down SPI support on the SCIF port. If you want to get
+    regular usage of the port back, you must call scif_init() after shutting
+    down SPI support.
 
     \retval 0               On success (no errors defined).
 */
-int scif_sd_shutdown(void);
+int scif_spi_shutdown(void);
 
-/** \brief  Set or clear the SD card /CS line.
+/** \brief  Set or clear the SPI /CS line.
 
     This function sets or clears the /CS line (connected to the RTS line of the
     SCIF port).
 
     \param  v               Non-zero to output 1 on the line, zero to output 0.
 */
-void scif_sd_set_cs(int v);
+void scif_spi_set_cs(int v);
 
-/** \brief  Read and write one byte from the SD card.
+/** \brief  Read and write one byte from the SPI port.
 
-    This function writes one byte and reads one back from the SD card
+    This function writes one byte and reads one back from the SPI device
     simultaneously.
 
     \param  b               The byte to write out to the port.
     \retval                 The byte returned from the card.
 */
-uint8 scif_sd_rw_byte(uint8 b);
+uint8 scif_spi_rw_byte(uint8 b);
 
-/** \brief  Read and write one byte from the SD card, slowly.
+/** \brief  Read and write one byte from the SPI device, slowly.
 
     This function does the same thing as the scif_sd_rw_byte() function, but
     with a 1.5usec delay between asserting the CLK line and reading back the bit
     and a 1.5usec delay between clearing the CLK line and writing the next bit
     out.
 
+    This ends up working out to a clock of about 333khz, or so.
+
     \param  b               The byte to write out to the port.
     \retval                 The byte returned from the card.
 */
-uint8 scif_sd_slow_rw_byte(uint8 b);
+uint8 scif_spi_slow_rw_byte(uint8 b);
 
 
-/** \brief  Write a byte to the SD card.
+/** \brief  Write a byte to the SPI device.
 
-    This function writes out the specified byte to the SD card, one bit at a
-    time. The timing follows that of the scif_sd_rw_byte() function.
+    This function writes out the specified byte to the SPI device, one bit at a
+    time. The timing follows that of the scif_spi_rw_byte() function.
 
     \param  b               The byte to write out to the port.
 */
-void scif_sd_write_byte(uint8 b);
+void scif_spi_write_byte(uint8 b);
 
-/** \brief  Read a byte from the SD card.
+/** \brief  Read a byte from the SPI device.
 
-    This function reads a byte from the SD card, one bit at a time. The timing
-    follows that of the scif_sd_rw_byte() function.
+    This function reads a byte from the SPI device, one bit at a time. The
+    timing follows that of the scif_spi_rw_byte() function.
 
     \retval                 The byte returned from the card.
 */
-uint8 scif_sd_read_byte(void);
+uint8 scif_spi_read_byte(void);
 
 __END_DECLS
 
