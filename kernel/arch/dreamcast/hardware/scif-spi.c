@@ -1,6 +1,6 @@
 /* KallistiOS ##version##
 
-   hardware/scif-sd.c
+   hardware/scif-spi.c
    Copyright (C) 2012 Lawrence Sebald
 */
 
@@ -86,7 +86,7 @@ uint8 scif_spi_rw_byte(uint8 b) {
     SCSPTR2 = tmp | (bit = (b >> 7) & 0x01);    /* write 7 */
     SCSPTR2 = tmp | bit | PTR2_CTSDT;
     SD_WAIT();
-    rv = SCSPTR2 & PTR2_CTSDT;                  /* read 7 */
+    rv = SCSPTR2 & PTR2_SPB2DT;                 /* read 7 */
     SCSPTR2 = tmp | (bit = (b >> 6) & 0x01);    /* write 6 */
     SCSPTR2 = tmp | bit | PTR2_CTSDT;
     SD_WAIT();
