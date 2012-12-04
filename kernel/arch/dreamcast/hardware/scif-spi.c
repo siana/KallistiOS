@@ -84,38 +84,37 @@ uint8 scif_spi_rw_byte(uint8 b) {
        For some reason, we have to have the bit set on the Tx line before we set
        CTS, otherwise it doesn't work -- that's why this looks so ugly... */
     SCSPTR2 = tmp | (bit = (b >> 7) & 0x01);    /* write 7 */
-    SCSPTR2 = tmp | bit | PTR2_CTSDT;
     SD_WAIT();
+    SCSPTR2 = tmp | bit | PTR2_CTSDT;
     rv = SCSPTR2 & PTR2_SPB2DT;                 /* read 7 */
     SCSPTR2 = tmp | (bit = (b >> 6) & 0x01);    /* write 6 */
-    SCSPTR2 = tmp | bit | PTR2_CTSDT;
     SD_WAIT();
+    SCSPTR2 = tmp | bit | PTR2_CTSDT;
     rv = (rv << 1) | (SCSPTR2 & PTR2_SPB2DT);   /* read 6 */
     SCSPTR2 = tmp | (bit = (b >> 5) & 0x01);    /* write 5 */
-    SCSPTR2 = tmp | bit | PTR2_CTSDT;
     SD_WAIT();
+    SCSPTR2 = tmp | bit | PTR2_CTSDT;
     rv = (rv << 1) | (SCSPTR2 & PTR2_SPB2DT);   /* read 5 */
     SCSPTR2 = tmp | (bit = (b >> 4) & 0x01);    /* write 4 */
-    SCSPTR2 = tmp | bit | PTR2_CTSDT;
     SD_WAIT();
+    SCSPTR2 = tmp | bit | PTR2_CTSDT;
     rv = (rv << 1) | (SCSPTR2 & PTR2_SPB2DT);   /* read 4 */
     SCSPTR2 = tmp | (bit = (b >> 3) & 0x01);    /* write 3 */
-    SCSPTR2 = tmp | bit | PTR2_CTSDT;
     SD_WAIT();
+    SCSPTR2 = tmp | bit | PTR2_CTSDT;
     rv = (rv << 1) | (SCSPTR2 & PTR2_SPB2DT);   /* read 3 */
     SCSPTR2 = tmp | (bit = (b >> 2) & 0x01);    /* write 2 */
-    SCSPTR2 = tmp | bit | PTR2_CTSDT;
     SD_WAIT();
+    SCSPTR2 = tmp | bit | PTR2_CTSDT;
     rv = (rv << 1) | (SCSPTR2 & PTR2_SPB2DT);   /* read 2 */
     SCSPTR2 = tmp | (bit = (b >> 1) & 0x01);    /* write 1 */
-    SCSPTR2 = tmp | bit | PTR2_CTSDT;
     SD_WAIT();
+    SCSPTR2 = tmp | bit | PTR2_CTSDT;
     rv = (rv << 1) | (SCSPTR2 & PTR2_SPB2DT);   /* read 1 */
     SCSPTR2 = tmp | (bit = (b >> 0) & 0x01);    /* write 0 */
-    SCSPTR2 = tmp | bit | PTR2_CTSDT;
     SD_WAIT();
+    SCSPTR2 = tmp | bit | PTR2_CTSDT;
     rv = (rv << 1) | (SCSPTR2 & PTR2_SPB2DT);   /* read 0 */
-    SCSPTR2 = tmp;
 
     return rv;
 }
