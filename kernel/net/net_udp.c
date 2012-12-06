@@ -333,7 +333,8 @@ static ssize_t net_udp_recvfrom(net_socket_t *hnd, void *buffer, size_t length,
     }
 
     if(TAILQ_EMPTY(&udpsock->packets) &&
-            ((udpsock->flags & FS_SOCKET_NONBLOCK) || irq_inside_int())) {
+       ((udpsock->flags & FS_SOCKET_NONBLOCK) || (flags & MSG_DONTWAIT) ||
+        irq_inside_int())) {
         mutex_unlock(&udp_mutex);
         errno = EWOULDBLOCK;
         return -1;
@@ -391,9 +392,12 @@ static ssize_t net_udp_recvfrom(net_socket_t *hnd, void *buffer, size_t length,
         }
     }
 
-    TAILQ_REMOVE(&udpsock->packets, pkt, pkt_queue);
-    free(pkt->data);
-    free(pkt);
+    /* Remove the packet if we're pulling data out of the queue. */
+    if(!(flags & MSG_PEEK)) {
+        TAILQ_REMOVE(&udpsock->packets, pkt, pkt_queue);
+        free(pkt->data);
+        free(pkt);
+    }
 
     mutex_unlock(&udp_mutex);
 

@@ -1313,14 +1313,15 @@ static ssize_t net_tcp_recvfrom(net_socket_t *hnd, void *buffer, size_t length,
         /* Check if we're in a state where there's not going to be any more
            messages coming in. */
         if(sock->state == TCP_STATE_CLOSED ||
-                sock->state == TCP_STATE_CLOSE_WAIT ||
-                sock->state == TCP_STATE_CLOSING ||
-                sock->state == TCP_STATE_LAST_ACK ||
-                sock->state == TCP_STATE_TIME_WAIT) {
+           sock->state == TCP_STATE_CLOSE_WAIT ||
+           sock->state == TCP_STATE_CLOSING ||
+           sock->state == TCP_STATE_LAST_ACK ||
+           sock->state == TCP_STATE_TIME_WAIT) {
             goto out;
         }
 
-        if(sock->flags & FS_SOCKET_NONBLOCK || irq_inside_int()) {
+        if((sock->flags & FS_SOCKET_NONBLOCK) || (flags & MSG_DONTWAIT) ||
+           irq_inside_int()) {
             errno = EWOULDBLOCK;
             size = -1;
             goto out;
@@ -1340,6 +1341,31 @@ static ssize_t net_tcp_recvfrom(net_socket_t *hnd, void *buffer, size_t length,
         goto out;
     }
 
+    /* If we're supposed to fill the whole buffer, see if we have enough. */
+    if((flags & MSG_WAITALL) && sock->data.rcvbuf_cur_sz < length) {
+        /* Check if we're in a state where there's not going to be any more
+           messages coming in. */
+        if(sock->state != TCP_STATE_CLOSED &&
+           sock->state != TCP_STATE_CLOSE_WAIT &&
+           sock->state != TCP_STATE_CLOSING &&
+           sock->state != TCP_STATE_LAST_ACK &&
+           sock->state != TCP_STATE_TIME_WAIT) {
+            /* If we can't block, return an error. */
+            if((sock->flags & FS_SOCKET_NONBLOCK) || (flags & MSG_DONTWAIT) ||
+               irq_inside_int()) {
+                errno = EWOULDBLOCK;
+                size = -1;
+                goto out;
+            }
+
+            /* Wait around until we have enough data in the queue to satisfy the
+               request... */
+            while(sock->data.rcvbuf_cur_sz < length) {
+                cond_wait(&sock->data.recv_cv, &sock->mutex);
+            }
+        }
+    }
+
     /* Figure out how much we're going to give the user. */
     if(length > sock->data.rcvbuf_cur_sz)
         size = sock->data.rcvbuf_cur_sz;
@@ -1347,21 +1373,30 @@ static ssize_t net_tcp_recvfrom(net_socket_t *hnd, void *buffer, size_t length,
         size = length;
 
     rb = sock->data.rcvbuf + sock->data.rcvbuf_head;
-    sock->data.rcv.wnd += size;
-    sock->data.rcvbuf_cur_sz -= size;
+
+    /* Advance the window if we're pulling data out of the queue. */
+    if(!(flags & MSG_PEEK)) {
+        sock->data.rcv.wnd += size;
+        sock->data.rcvbuf_cur_sz -= size;
+    }
 
     if(sock->data.rcvbuf_head + size <= sock->rcvbuf_sz) {
         memcpy(buf, rb, size);
-        sock->data.rcvbuf_head += size;
 
-        if(sock->data.rcvbuf_head == sock->rcvbuf_sz)
-            sock->data.rcvbuf_head = 0;
+        if(!(flags & MSG_PEEK)) {
+            sock->data.rcvbuf_head += size;
+
+            if(sock->data.rcvbuf_head == sock->rcvbuf_sz)
+                sock->data.rcvbuf_head = 0;
+        }
     }
     else {
         tmp = sock->rcvbuf_sz - sock->data.rcvbuf_head;
         memcpy(buf, rb, tmp);
         memcpy(buf + tmp, sock->data.rcvbuf, size - tmp);
-        sock->data.rcvbuf_head = size - tmp;
+
+        if(!(flags & MSG_PEEK))
+            sock->data.rcvbuf_head = size - tmp;
     }
 
     /* If we've got nothing left, move the pointers back to the beginning */
@@ -1495,7 +1530,9 @@ static ssize_t net_tcp_sendto(net_socket_t *hnd, const void *message,
 
     /* See if we have space to buffer at least some of the data... */
     if(sock->data.sndbuf_cur_sz == sock->sndbuf_sz) {
-        if((sock->flags & FS_SOCKET_NONBLOCK) || irq_inside_int()) {
+        /* Can we block? */
+        if((sock->flags & FS_SOCKET_NONBLOCK) || (flags & MSG_DONTWAIT) ||
+           irq_inside_int()) {
             errno = EWOULDBLOCK;
             size = -1;
             goto out;

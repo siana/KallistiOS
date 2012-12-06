@@ -134,6 +134,28 @@ struct sockaddr_storage {
 #define SO_TYPE         16  /**< \brief Socket type (get) */
 /** @} */
 
+/** \defgroup msg_flags                 Socket message flags
+
+    The following flags can be used with the recv(), recvfrom(), send(),
+    and sendto() functions as the flags parameter.
+
+    Note that not all of these are currently supported, but they are listed for
+    completeness. Those that are unsupported have (U) at the end of their
+    description. Also, for the time being, the supported flags are only
+    supported for TCP.
+
+    @{
+*/
+#define MSG_CTRUNC      0x01    /**< \brief Control data truncated (U) */
+#define MSG_DONTROUTE   0x02    /**< \brief Send without routing (U) */
+#define MSG_EOR         0x04    /**< \brief Terminate a record (U) */
+#define MSG_OOB         0x08    /**< \brief Out-of-band data (U) */
+#define MSG_PEEK        0x10    /**< \brief Leave received data in queue */
+#define MSG_TRUNC       0x20    /**< \brief Normal data truncated (U) */
+#define MSG_WAITALL     0x40    /**< \brief Attempt to fill read buffer */
+#define MSG_DONTWAIT    0x80    /**< \brief Make this call non-blocking (non-standard) */
+/** @} */
+
 /** \brief  Internet domain sockets for use with IPv4 addresses. */
 #define AF_INET     1
 
