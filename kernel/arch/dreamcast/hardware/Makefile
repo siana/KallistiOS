@@ -23,7 +23,7 @@ OBJS += video.o vblank.o
 OBJS += sq.o scif.o
 
 # SPI device support
-OBJS += scif-spi.o
+OBJS += scif-spi.o sd.o
 
 SUBDIRS = pvr network maple modem
 

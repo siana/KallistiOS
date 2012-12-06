@@ -149,7 +149,7 @@ void scif_spi_set_cs(int v);
     simultaneously.
 
     \param  b               The byte to write out to the port.
-    \retval                 The byte returned from the card.
+    \return                 The byte returned from the card.
 */
 uint8 scif_spi_rw_byte(uint8 b);
 
@@ -163,7 +163,7 @@ uint8 scif_spi_rw_byte(uint8 b);
     This ends up working out to a clock of about 333khz, or so.
 
     \param  b               The byte to write out to the port.
-    \retval                 The byte returned from the card.
+    \return                 The byte returned from the card.
 */
 uint8 scif_spi_slow_rw_byte(uint8 b);
 
@@ -182,7 +182,7 @@ void scif_spi_write_byte(uint8 b);
     This function reads a byte from the SPI device, one bit at a time. The
     timing follows that of the scif_spi_rw_byte() function.
 
-    \retval                 The byte returned from the card.
+    \return                 The byte returned from the card.
 */
 uint8 scif_spi_read_byte(void);
 
