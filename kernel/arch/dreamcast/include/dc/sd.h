@@ -138,4 +138,5 @@ int sd_write_blocks(uint32 block, size_t count, const uint8 *buf);
 */
 uint64 sd_get_size(void);
 
+__END_DECLS
 #endif /* !__DC_SD_H */
