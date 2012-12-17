@@ -73,19 +73,22 @@ typedef struct {
 
 /* stat_t.type */
 /** \brief stat_t.type: Unknown / undefined / not relevant */
-#define STAT_TYPE_NONE  0
+#define STAT_TYPE_NONE      0
 
 /** \brief stat_t.type: Standard file */
-#define STAT_TYPE_FILE  1
+#define STAT_TYPE_FILE      1
 
 /** \brief stat_t.type: Standard directory */
-#define STAT_TYPE_DIR   2
+#define STAT_TYPE_DIR       2
 
 /** \brief stat_t.type: A virtual device of some sort (pipe, socket, etc) */
-#define STAT_TYPE_PIPE  3
+#define STAT_TYPE_PIPE      3
 
 /** \brief stat_t.type: Meta data */
-#define STAT_TYPE_META  4
+#define STAT_TYPE_META      4
+
+/** \brief stat_t.type: Symbolic link */
+#define STAT_TYPE_SYMLINK   5
 
 /* stat_t.attr */
 #define STAT_ATTR_NONE  0x00    /**< \brief stat_t.attr: No attributes */
