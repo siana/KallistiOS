@@ -11,6 +11,7 @@
 __BEGIN_DECLS
 
 #include <arch/types.h>
+#include <kos/blockdev.h>
 
 /** \file   dc/sd.h
     \brief  Block-level access to an SD card attached to the SCIF port.
@@ -137,6 +138,33 @@ int sd_write_blocks(uint32 block, size_t count, const uint8 *buf);
     \em     ENXIO - SD card support was not initialized
 */
 uint64 sd_get_size(void);
+
+/** \brief  Get a block device for a given partition on the SD card.
+
+    This function creates a block device descriptor for the given partition on
+    the attached SD card. This block device is used to interface with various
+    filesystems on the device.
+
+    \param  partition       The partition number (0-3) to use.
+    \param  rv              Used to return the block device. Must be non-NULL.
+    \param  partition_type  Used to return the partition type. Must be non-NULL.
+    \retval 0               On success.
+    \retval -1              On error, errno will be set as appropriate.
+
+    \par    Error Conditions:
+    \em     ENXIO - SD card support was not initialized \n
+    \em     EIO - an I/O error occurred in reading data \n
+    \em     EINVAL - invalid partition number was given \n
+    \em     EFAULT - rv or partition_type was NULL \n
+    \em     ENOENT - no MBR found \n
+    \em     ENOENT - no partition at the specified position \n
+    \em     ENOMEM - out of memory
+
+    \note   This interface currently only supports MBR-formatted SD cards. There
+            is currently no support for GPT partition tables.
+*/
+int sd_blockdev_for_partition(int partition, kos_blockdev_t *rv,
+                              uint8 *partition_type);
 
 __END_DECLS
 #endif /* !__DC_SD_H */
