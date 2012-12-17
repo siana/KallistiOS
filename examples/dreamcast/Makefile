@@ -4,7 +4,8 @@
 # Copyright (C)2003 Dan Potter
 #
 
-DIRS = 2ndmix basic libdream kgl hello sound png network vmu conio pvr video lua parallax modem dreameye
+DIRS = 2ndmix basic libdream kgl hello sound png network vmu conio pvr video \
+	   lua parallax modem dreameye sd
 ifdef KOS_CCPLUS
 	DIRS += cpp tsunami
 endif
