@@ -9,6 +9,7 @@
 #include <string.h>
 #include <stdint.h>
 #include <errno.h>
+#include <limits.h>
 
 #include "inode.h"
 #include "utils.h"
@@ -174,14 +175,16 @@ static ext2_dirent_t *search_indir_23(ext2_fs_t *fs, const uint32_t *iblock,
 }
 
 int ext2_inode_by_path(ext2_fs_t *fs, const char *path, ext2_inode_t *rv,
-                       uint32_t *inode_num) {
-    ext2_inode_t *inode;
+                       uint32_t *inode_num, int rlink) {
+    ext2_inode_t *inode, *last;
     char *ipath, *cxt, *token;
     int blocks, i, block_size;
     uint8_t *buf;
     uint32_t *iblock;
     ext2_dirent_t *dent;
     int err = 0;
+    size_t tmp_sz;
+    char *symbuf;
 
     if(!path || !fs || !rv)
         return -EFAULT;
@@ -208,6 +211,8 @@ int ext2_inode_by_path(ext2_fs_t *fs, const char *path, ext2_inode_t *rv,
     block_size = fs->block_size;
 
     while(token) {
+        last = inode;
+
         /* If this isn't a directory, give up now. */
         if(!(inode->i_mode & EXT2_S_IFDIR)) {
             free(ipath);
@@ -309,6 +314,60 @@ next_token:
         if(!(inode = ext2_inode_read(fs, dent->inode))) {
             free(ipath);
             return -EIO;
+        }
+
+        /* Are we supposed to resolve symbolic links? If we have one and we're
+           supposed to resolve them, do it. */
+        if((inode->i_mode & 0xF000) == EXT2_S_IFLNK && rlink) {
+            tmp_sz = PATH_MAX;
+
+            if(!(symbuf = (char *)malloc(PATH_MAX))) {
+                free(ipath);
+                return -ENOMEM;
+            }
+
+            if(ext2_resolve_symlink(fs, inode, symbuf, &tmp_sz)) {
+                free(symbuf);
+                free(ipath);
+                return -EIO;
+            }
+
+            /* Make sure we got it all */
+            if(tmp_sz >= PATH_MAX) {
+                free(symbuf);
+                free(ipath);
+                return -ENAMETOOLONG;
+            }
+
+            /* For now, drop any absolute pathnames that we might encounter. At
+               some point, I'll probably revisit this decision, but for now
+               that's just how it is. */
+            if(symbuf[0] == '/') {
+                free(symbuf);
+                free(ipath);
+                return -EXDEV;
+            }
+
+            /* Tack on the rest of the path to the symbolic link. This is
+               horribly inefficient, but it should work fine. */
+            while(token) {
+                if((tmp_sz += strlen(token) + 1) >= PATH_MAX) {
+                    free(symbuf);
+                    free(ipath);
+                    return -ENAMETOOLONG;
+                }
+
+                strcat(symbuf, "/");
+                strcat(symbuf, token);
+                token = strtok_r(NULL, "/", &cxt);
+            }
+
+            /* Continue our search for the object in question, now that we've
+               resolved the link... */
+            free(ipath);
+            ipath = symbuf;
+            token = strtok_r(ipath, "/", &cxt);
+            inode = last;
         }
     }
 

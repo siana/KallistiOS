@@ -94,9 +94,13 @@ typedef struct ext2_inode {
 
 ext2_inode_t *ext2_inode_read(ext2_fs_t *fs, uint32_t inode_num);
 int ext2_inode_by_path(ext2_fs_t *fs, const char *path, ext2_inode_t *rv,
-                       uint32_t *inode_num);
+                       uint32_t *inode_num, int rlink);
 
 uint8_t *ext2_inode_read_block(ext2_fs_t *fs, const ext2_inode_t *inode,
                                uint32_t block_num);
+
+/* In symlink.c */
+int ext2_resolve_symlink(ext2_fs_t *fs, ext2_inode_t *inode, char *rv,
+                         size_t *rv_len);
 
 #endif /* !__EXT2_INODE_H */

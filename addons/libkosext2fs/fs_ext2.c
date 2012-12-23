@@ -14,6 +14,8 @@
 #include <kos/mutex.h>
 #include <kos/dbglog.h>
 
+#include <ext2/fs_ext2.h>
+
 #include "ext2fs.h"
 #include "inode.h"
 #include "directory.h"
@@ -70,7 +72,7 @@ static void *fs_ext2_open(vfs_handler_t *vfs, const char *fn, int mode) {
 
     /* Find the object in question */
     if((rv = ext2_inode_by_path(mnt->fs, fn, &fh[fd].inode,
-                                &fh[fd].inode_num))) {
+                                &fh[fd].inode_num, 1))) {
         fh[fd].inode_num = 0;
         mutex_unlock(&ext2_mutex);
 
@@ -91,6 +93,14 @@ static void *fs_ext2_open(vfs_handler_t *vfs, const char *fn, int mode) {
     if((fh[fd].inode.i_mode & EXT2_S_IFDIR) &&
        ((mode & O_WRONLY) || !(mode & O_DIR))) {
         errno = EISDIR;
+        fh[fd].inode_num = 0;
+        mutex_unlock(&ext2_mutex);
+        return NULL;
+    }
+
+    /* Make sure if we're trying to open a directory that we have a directory */
+    if((mode & O_DIR) && !(fh[fd].inode.i_mode & EXT2_S_IFDIR)) {
+        errno = ENOTDIR;
         fh[fd].inode_num = 0;
         mutex_unlock(&ext2_mutex);
         return NULL;
@@ -334,7 +344,7 @@ static int fs_ext2_stat(vfs_handler_t *vfs, const char *fn, stat_t *rv) {
     mutex_lock(&ext2_mutex);
 
     /* Find the object in question */
-    if((irv = ext2_inode_by_path(fs->fs, fn, &inode, &inode_num))) {
+    if((irv = ext2_inode_by_path(fs->fs, fn, &inode, &inode_num, 1))) {
         errno = -irv;
         return -1;
     }
@@ -460,6 +470,12 @@ int fs_ext2_mount(const char *mp, kos_blockdev_t *dev, uint32_t flags) {
 
     if(!initted)
         return -1;
+
+    if((flags & FS_EXT2_MOUNT_READWRITE) && !dev->write_blocks) {
+        dbglog(DBG_DEBUG, "fs_ext2: device does not support writing, cannot "
+               "mount filesystem as read-write\n");
+        return -1;
+    }
 
     mutex_lock(&ext2_mutex);
 

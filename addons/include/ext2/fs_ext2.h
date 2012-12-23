@@ -71,6 +71,24 @@ int fs_ext2_init(void);
 */
 int fs_ext2_shutdown(void);
 
+/** \defgroup ext2_mount_flags          Mount flags for fs_ext2
+
+    These values are the valid flags that can be passed for the flags parameter
+    to the fs_ext2_mount() function. Note that these can be combined, except for
+    the read-only flag.
+
+    Also, it is not possible to mount some filesystems as read-write. For
+    instance, if the filesystem was marked as not cleanly unmounted (from Linux
+    itself), the driver will fail to mount the device as read-write. Also, if
+    the block device does not support writing, then the filesystem will not be
+    mounted as read-write (for obvious reasons).
+
+    @{
+*/
+#define FS_EXT2_MOUNT_READONLY      0x00000000  /**< \brief Mount read-only */
+#define FS_EXT2_MOUNT_READWRITE     0x00000001  /**< \brief Mount read-write */
+/** @} */
+
 /** \brief  Mount an ext2 filesystem in the VFS.
 
     This function mounts an ext2 filesystem to the specified mount point on the
@@ -80,9 +98,13 @@ int fs_ext2_shutdown(void);
 
     \param  mp          The path to mount the filesystem at.
     \param  dev         The block device containing the filesystem.
-    \param  flags       Mount flags. Pass 0 for now.
+    \param  flags       Mount flags. Bitwise OR of values from ext2_mount_flags
     \retval 0           On success.
     \retval -1          On error.
+
+    \note               All filesystems will currently be mounted as read-only,
+                        regardless of the flags value. The lower-level ext2fs
+                        code does not support writing at this time.
 */
 int fs_ext2_mount(const char *mp, kos_blockdev_t *dev, uint32_t flags);
 
