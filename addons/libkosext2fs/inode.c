@@ -185,6 +185,7 @@ int ext2_inode_by_path(ext2_fs_t *fs, const char *path, ext2_inode_t *rv,
     int err = 0;
     size_t tmp_sz;
     char *symbuf;
+    int links_derefed = 0;
 
     if(!path || !fs || !rv)
         return -EFAULT;
@@ -319,6 +320,12 @@ next_token:
         /* Are we supposed to resolve symbolic links? If we have one and we're
            supposed to resolve them, do it. */
         if((inode->i_mode & 0xF000) == EXT2_S_IFLNK && rlink) {
+            /* Make sure we don't fall into an infinite loop... */
+            if(links_derefed++ > SYMLOOP_MAX) {
+                free(ipath);
+                return -ELOOP;
+            }
+
             tmp_sz = PATH_MAX;
 
             if(!(symbuf = (char *)malloc(PATH_MAX))) {
