@@ -319,7 +319,8 @@ next_token:
 
         /* Are we supposed to resolve symbolic links? If we have one and we're
            supposed to resolve them, do it. */
-        if((inode->i_mode & 0xF000) == EXT2_S_IFLNK && rlink) {
+        if((inode->i_mode & 0xF000) == EXT2_S_IFLNK &&
+           (rlink == 1 || (rlink == 2 && token))) {
             /* Make sure we don't fall into an infinite loop... */
             if(links_derefed++ > SYMLOOP_MAX) {
                 free(ipath);
