@@ -1,7 +1,7 @@
 /* KallistiOS ##version##
 
    inode.c
-   Copyright (C) 2012 Lawrence Sebald
+   Copyright (C) 2012, 2013 Lawrence Sebald
 */
 
 #include <stdio.h>
@@ -175,7 +175,7 @@ static ext2_dirent_t *search_indir_23(ext2_fs_t *fs, const uint32_t *iblock,
 }
 
 int ext2_inode_by_path(ext2_fs_t *fs, const char *path, ext2_inode_t *rv,
-                       uint32_t *inode_num, int rlink) {
+                       uint32_t *inode_num, int rlink, ext2_dirent_t **rdent) {
     ext2_inode_t *inode, *last;
     char *ipath, *cxt, *token;
     int blocks, i, block_size;
@@ -382,6 +382,9 @@ next_token:
     *rv = *inode;
     *inode_num = dent->inode;
     free(ipath);
+
+    if(rdent)
+        *rdent = dent;
     return 0;
 }
 

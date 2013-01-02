@@ -1,7 +1,7 @@
 /* KallistiOS ##version##
 
    inode.h
-   Copyright (C) 2012 Lawrence Sebald
+   Copyright (C) 2012, 2013 Lawrence Sebald
 */
 
 #ifndef __EXT2_INODE_H
@@ -13,6 +13,7 @@ __BEGIN_DECLS
 #include <stdint.h>
 
 #include "ext2fs.h"
+#include "directory.h"
 
 typedef struct ext2_inode {
     uint16_t i_mode;
@@ -94,7 +95,7 @@ typedef struct ext2_inode {
 
 ext2_inode_t *ext2_inode_read(ext2_fs_t *fs, uint32_t inode_num);
 int ext2_inode_by_path(ext2_fs_t *fs, const char *path, ext2_inode_t *rv,
-                       uint32_t *inode_num, int rlink);
+                       uint32_t *inode_num, int rlink, ext2_dirent_t **rdent);
 
 uint8_t *ext2_inode_read_block(ext2_fs_t *fs, const ext2_inode_t *inode,
                                uint32_t block_num);

@@ -1,7 +1,7 @@
 /* KallistiOS ##version##
 
    fs_ext2.c
-   Copyright (C) 2012 Lawrence Sebald
+   Copyright (C) 2012, 2013 Lawrence Sebald
 */
 
 #include <errno.h>
@@ -72,7 +72,7 @@ static void *fs_ext2_open(vfs_handler_t *vfs, const char *fn, int mode) {
 
     /* Find the object in question */
     if((rv = ext2_inode_by_path(mnt->fs, fn, &fh[fd].inode,
-                                &fh[fd].inode_num, 1))) {
+                                &fh[fd].inode_num, 1, NULL))) {
         fh[fd].inode_num = 0;
         mutex_unlock(&ext2_mutex);
 
@@ -211,6 +211,7 @@ static off_t fs_ext2_seek(void *h, off_t offset, int whence) {
             break;
 
         default:
+            mutex_unlock(&ext2_mutex);
             return -1;
     }
 
@@ -344,7 +345,8 @@ static int fs_ext2_stat(vfs_handler_t *vfs, const char *fn, stat_t *rv) {
     mutex_lock(&ext2_mutex);
 
     /* Find the object in question */
-    if((irv = ext2_inode_by_path(fs->fs, fn, &inode, &inode_num, 1))) {
+    if((irv = ext2_inode_by_path(fs->fs, fn, &inode, &inode_num, 1, NULL))) {
+        mutex_unlock(&ext2_mutex);
         errno = -irv;
         return -1;
     }
