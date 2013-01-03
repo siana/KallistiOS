@@ -206,6 +206,10 @@ int ext2_inode_by_path(ext2_fs_t *fs, const char *path, ext2_inode_t *rv,
     if(!token) {
         free(ipath);
         *rv = *inode;
+        *inode_num = EXT2_ROOT_INO;
+
+        if(rdent)
+            *rdent = NULL;
         return 0;
     }
 

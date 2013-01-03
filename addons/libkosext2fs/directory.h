@@ -1,7 +1,7 @@
 /* KallistiOS ##version##
 
    directory.h
-   Copyright (C) 2012 Lawrence Sebald
+   Copyright (C) 2012, 2013 Lawrence Sebald
 */
 
 #ifndef __EXT2_DIRECTORY_H
@@ -29,6 +29,13 @@ typedef struct ext2_dirent {
 #define EXT2_FT_FIFO        5
 #define EXT2_FT_SOCK        6
 #define EXT2_FT_SYMLINK     7
+
+/* Forward declaration... */
+struct ext2_inode;
+
+int ext2_dir_is_empty(ext2_fs_t *fs, const struct ext2_inode *dir);
+ext2_dirent_t *ext2_dir_entry(ext2_fs_t *fs, const struct ext2_inode *dir,
+                              const char *fn);
 
 __END_DECLS
 #endif /* !__EXT2_DIRECTORY_H */
