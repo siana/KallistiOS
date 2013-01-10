@@ -234,6 +234,8 @@ typedef struct {
                                      \see   pvr_uv_clamp */
         int     alpha;          /**< \brief Enable/disable texture alpha
                                      \see   pvr_txralpha_switch */
+        int     env;            /**< \brief Texture color contribution
+                                     \see   pvr_txrenv_modes */
         int     width;          /**< \brief Texture width (requires a power of 2) */
         int     height;         /**< \brief Texture height (requires a power of 2) */
         int     format;         /**< \brief Texture format
@@ -694,7 +696,7 @@ typedef struct {
 /** \brief  PVR vertex type: Textured sprite.
 
     This vertex type is to be used with the sprite polygon header and the sprite
-    related commands to draw textured sprites. Note that there is on fourth Z
+    related commands to draw textured sprites. Note that there is no fourth Z
     coordinate. I suppose it just gets interpolated?
 
     The U/V coordinates in here are in the 16-bit per coordinate form. Also,

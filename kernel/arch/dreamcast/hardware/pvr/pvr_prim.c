@@ -295,12 +295,14 @@ void pvr_sprite_cxt_txr(pvr_sprite_cxt_t *dst, pvr_list_t list,
         dst->txr.alpha = PVR_TXRALPHA_ENABLE;
         dst->blend.src = PVR_BLEND_ONE;
         dst->blend.dst = PVR_BLEND_ZERO;
+        dst->txr.env = PVR_TXRENV_MODULATE;
     }
     else {
         dst->gen.alpha = PVR_ALPHA_ENABLE;
         dst->txr.alpha = PVR_TXRALPHA_ENABLE;
         dst->blend.src = PVR_BLEND_SRCALPHA;
         dst->blend.dst = PVR_BLEND_INVSRCALPHA;
+        dst->txr.env = PVR_TXRENV_MODULATEALPHA;
     }
 
     dst->blend.src_enable = PVR_BLEND_DISABLE;
@@ -360,6 +362,7 @@ void pvr_sprite_compile(pvr_sprite_hdr_t *dst, pvr_sprite_cxt_t *src) {
         dst->mode2 |= (src->txr.uv_clamp << PVR_TA_PM2_UVCLAMP_SHIFT) & PVR_TA_PM2_UVCLAMP_MASK;
         dst->mode2 |= (src->txr.filter << PVR_TA_PM2_FILTER_SHIFT) & PVR_TA_PM2_FILTER_MASK;
         dst->mode2 |= (src->txr.mipmap_bias << PVR_TA_PM2_MIPBIAS_SHIFT) & PVR_TA_PM2_MIPBIAS_MASK;
+        dst->mode2 |= (src->txr.env << PVR_TA_PM2_TXRENV_SHIFT) & PVR_TA_PM2_TXRENV_MASK;
 
         switch(src->txr.width) {
             case 8:
