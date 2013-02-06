@@ -39,7 +39,7 @@ static struct {
     int mode;
     uint64_t ptr;
     dirent_t dent;
-    ext2_inode_t inode;
+    ext2_inode_t *inode;
     fs_ext2_fs_t *fs;
 } fh[MAX_EXT2_FILES];
 
@@ -74,6 +74,7 @@ static void *fs_ext2_open(vfs_handler_t *vfs, const char *fn, int mode) {
     if((rv = ext2_inode_by_path(mnt->fs, fn, &fh[fd].inode,
                                 &fh[fd].inode_num, 1, NULL))) {
         fh[fd].inode_num = 0;
+        ext2_inode_put(fh[fd].inode);
         mutex_unlock(&ext2_mutex);
 
         if(rv == -ENOENT) {
@@ -90,18 +91,20 @@ static void *fs_ext2_open(vfs_handler_t *vfs, const char *fn, int mode) {
     }
 
     /* Make sure we're not trying to open a directory for writing */
-    if((fh[fd].inode.i_mode & EXT2_S_IFDIR) &&
+    if((fh[fd].inode->i_mode & EXT2_S_IFDIR) &&
        ((mode & O_WRONLY) || !(mode & O_DIR))) {
         errno = EISDIR;
         fh[fd].inode_num = 0;
+        ext2_inode_put(fh[fd].inode);
         mutex_unlock(&ext2_mutex);
         return NULL;
     }
 
     /* Make sure if we're trying to open a directory that we have a directory */
-    if((mode & O_DIR) && !(fh[fd].inode.i_mode & EXT2_S_IFDIR)) {
+    if((mode & O_DIR) && !(fh[fd].inode->i_mode & EXT2_S_IFDIR)) {
         errno = ENOTDIR;
         fh[fd].inode_num = 0;
+        ext2_inode_put(fh[fd].inode);
         mutex_unlock(&ext2_mutex);
         return NULL;
     }
@@ -121,6 +124,7 @@ static void fs_ext2_close(void * h) {
     mutex_lock(&ext2_mutex);
 
     if(fd < MAX_EXT2_FILES && fh[fd].mode) {
+        ext2_inode_put(fh[fd].inode);
         fh[fd].inode_num = 0;
         fh[fd].mode = 0;
 
@@ -149,8 +153,8 @@ static ssize_t fs_ext2_read(void *h, void *buf, size_t cnt) {
     }
 
     /* Do we have enough left? */
-    if((fh[fd].ptr + cnt) > fh[fd].inode.i_size)
-        cnt = fh[fd].inode.i_size - fh[fd].ptr;
+    if((fh[fd].ptr + cnt) > fh[fd].inode->i_size)
+        cnt = fh[fd].inode->i_size - fh[fd].ptr;
 
     fs = fh[fd].fs->fs;
     bs = ext2_block_size(fs);
@@ -159,7 +163,7 @@ static ssize_t fs_ext2_read(void *h, void *buf, size_t cnt) {
 
     /* While we still have more to read, do it. */
     while(cnt) {
-        if(!(block = ext2_inode_read_block(fs, &fh[fd].inode,
+        if(!(block = ext2_inode_read_block(fs, fh[fd].inode,
                                            fh[fd].ptr >> lbs))) {
             mutex_unlock(&ext2_mutex);
             errno = EBADF;
@@ -207,7 +211,7 @@ static off_t fs_ext2_seek(void *h, off_t offset, int whence) {
             break;
 
         case SEEK_END:
-            fh[fd].ptr = fh[fd].inode.i_size + offset;
+            fh[fd].ptr = fh[fd].inode->i_size + offset;
             break;
 
         default:
@@ -216,7 +220,7 @@ static off_t fs_ext2_seek(void *h, off_t offset, int whence) {
     }
 
     /* Check bounds */    
-    if(fh[fd].ptr > fh[fd].inode.i_size) fh[fd].ptr = fh[fd].inode.i_size;
+    if(fh[fd].ptr > fh[fd].inode->i_size) fh[fd].ptr = fh[fd].inode->i_size;
 
     rv = (off_t)fh[fd].ptr;
     mutex_unlock(&ext2_mutex);
@@ -252,7 +256,7 @@ static size_t fs_ext2_total(void *h) {
         return -1;
     }
 
-    rv = fh[fd].inode.i_size;
+    rv = fh[fd].inode->i_size;
     mutex_unlock(&ext2_mutex);
     return rv;
 }
@@ -264,6 +268,7 @@ static dirent_t *fs_ext2_readdir(void *h) {
     uint8_t *block;
     ext2_dirent_t *dent;
     ext2_inode_t *inode;
+    int err;
 
     mutex_lock(&ext2_mutex);
 
@@ -280,12 +285,12 @@ static dirent_t *fs_ext2_readdir(void *h) {
 
 retry:
     /* Make sure we're not at the end of the directory */
-    if(fh[fd].ptr >= fh[fd].inode.i_size) {
+    if(fh[fd].ptr >= fh[fd].inode->i_size) {
         mutex_unlock(&ext2_mutex);
         return NULL;
     }
 
-    if(!(block = ext2_inode_read_block(fs, &fh[fd].inode, fh[fd].ptr >> lbs))) {
+    if(!(block = ext2_inode_read_block(fs, fh[fd].inode, fh[fd].ptr >> lbs))) {
         mutex_unlock(&ext2_mutex);
         errno = EBADF;
         return NULL;
@@ -308,7 +313,7 @@ retry:
     }
 
     /* Grab the inode of this entry */
-    if(!(inode = ext2_inode_read(fs, dent->inode))) {
+    if(!(inode = ext2_inode_get(fs, dent->inode, &err))) {
         mutex_unlock(&ext2_mutex);
         errno = EIO;
         return NULL;
@@ -327,6 +332,7 @@ retry:
     else
         fh[fd].dent.attr = 0;
 
+    ext2_inode_put(inode);
     mutex_unlock(&ext2_mutex);
     return &fh[fd].dent;
 }
@@ -334,7 +340,7 @@ retry:
 static int fs_ext2_stat(vfs_handler_t *vfs, const char *fn, stat_t *rv) {
     fs_ext2_fs_t *fs = (fs_ext2_fs_t *)vfs->privdata;
     int irv;
-    ext2_inode_t inode;
+    ext2_inode_t *inode;
     uint32_t inode_num;
 
     if(!rv) {
@@ -351,17 +357,15 @@ static int fs_ext2_stat(vfs_handler_t *vfs, const char *fn, stat_t *rv) {
         return -1;
     }
 
-    mutex_unlock(&ext2_mutex);
-
     /* Fill in the easy parts of the structure. */
     rv->dev = vfs;
     rv->unique = inode_num;
-    rv->size = inode.i_size;
-    rv->time = inode.i_mtime;
+    rv->size = inode->i_size;
+    rv->time = inode->i_mtime;
     rv->attr = 0;
 
     /* Parse out the ext2 mode bits */
-    switch(inode.i_mode & 0xF000) {
+    switch(inode->i_mode & 0xF000) {
         case EXT2_S_IFLNK:
             rv->type = STAT_TYPE_SYMLINK;
             break;
@@ -387,10 +391,13 @@ static int fs_ext2_stat(vfs_handler_t *vfs, const char *fn, stat_t *rv) {
     }
 
     /* Set the attribute bits based on the user permissions on the file. */
-    if(inode.i_mode & EXT2_S_IRUSR)
+    if(inode->i_mode & EXT2_S_IRUSR)
         rv->attr |= STAT_ATTR_R;
-    if(inode.i_mode & EXT2_S_IWUSR)
+    if(inode->i_mode & EXT2_S_IWUSR)
         rv->attr |= STAT_ATTR_W;
+
+    ext2_inode_put(inode);
+    mutex_unlock(&ext2_mutex);
 
     return 0;
 }

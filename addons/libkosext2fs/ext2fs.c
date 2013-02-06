@@ -1,7 +1,7 @@
 /* KallistiOS ##version##
 
    ext2fs.c
-   Copyright (C) 2012 Lawrence Sebald
+   Copyright (C) 2012, 2013 Lawrence Sebald
 */
 
 #include <stdio.h>
@@ -18,6 +18,8 @@
 #include "ext2fs.h"
 #include "directory.h"
 #include "ext2internal.h"
+
+static int initted = 0;
 
 /* This is basically the same as bgrad_cache from fs_iso9660 */
 static void make_mru(ext2_fs_t *fs, ext2_cache_t **cache, int block) {
@@ -129,6 +131,13 @@ uint32_t ext2_log_block_size(const ext2_fs_t *fs) {
     return fs->sb.s_log_block_size + 10;
 }
 
+int ext2_init(void) {
+    ext2_inode_init();
+    initted = 1;
+
+    return 0;
+}
+
 ext2_fs_t *ext2_fs_init(kos_blockdev_t *bd) {
     ext2_fs_t *rv;
     uint32_t bc;
@@ -139,6 +148,12 @@ ext2_fs_t *ext2_fs_init(kos_blockdev_t *bd) {
     uint32_t tmp;
     uint32_t p3 = 3, p5 = 5, p7 = 7, i;
 #endif
+
+    /* Make sure we've initialized any of the lower-level stuff. */
+    if(!initted) {
+        if(ext2_init())
+            return NULL;
+    }
 
     if(bd->init(bd))
         return NULL;

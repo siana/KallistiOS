@@ -93,9 +93,16 @@ typedef struct ext2_inode {
 #define EXT2_BOOT_LOADER_INO    5
 #define EXT2_UNDEL_DIR_INO      6
 
-ext2_inode_t *ext2_inode_read(ext2_fs_t *fs, uint32_t inode_num);
-int ext2_inode_by_path(ext2_fs_t *fs, const char *path, ext2_inode_t *rv,
+/* Initialize the inode cache. This will be called by ext2_init(). */
+void ext2_inode_init(void);
+
+/* Get a reference to an inode. When calling either of these, you must release
+   the inode you get back with ext2_inode_put. */
+ext2_inode_t *ext2_inode_get(ext2_fs_t *fs, uint32_t inode_num, int *err);
+int ext2_inode_by_path(ext2_fs_t *fs, const char *path, ext2_inode_t **rv,
                        uint32_t *inode_num, int rlink, ext2_dirent_t **rdent);
+
+void ext2_inode_put(ext2_inode_t *inode);
 
 uint8_t *ext2_inode_read_block(ext2_fs_t *fs, const ext2_inode_t *inode,
                                uint32_t block_num);

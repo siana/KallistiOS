@@ -8,8 +8,12 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdint.h>
+#include <stddef.h>
 #include <errno.h>
 #include <limits.h>
+#include <assert.h>
+#include <sys/queue.h>
+#include <inttypes.h>
 
 #include "inode.h"
 #include "utils.h"
@@ -17,7 +21,154 @@
 #include "ext2internal.h"
 #include "directory.h"
 
-ext2_inode_t *ext2_inode_read(ext2_fs_t *fs, uint32_t inode_num) {
+#define MAX_INODES      (1 << EXT2_LOG_MAX_INODES)
+#define INODE_HASH_SZ   (1 << EXT2_LOG_INODE_HASH)
+
+/* Internal inode storage structure. This is used for cacheing used inodes. */
+static struct int_inode {
+    /* Start with the on-disk inode itself to make the put() function easier. */
+    ext2_inode_t inode;
+
+    /* Hash table entry -- used at all points after the first time an inode is
+       placed into this entry. */
+    LIST_ENTRY(int_inode) entry;
+
+    /* Unused list entry -- used initially by all inodes, and later when the
+       inode has had its reference counter decremented to 0. Note that when the
+       second case there happens, the inode will still be in the inode hash
+       table. That way, if we happen to pull it back up again later, we still
+       can use the cached version and not have to re-read it from the block
+       device. */
+    TAILQ_ENTRY(int_inode) qentry;
+
+    /* Flags for this inode. */
+    uint32_t flags;
+
+    /* Reference count for the inode. */
+    uint32_t refcnt;
+
+    /* What filesystem is this inode on? */
+    ext2_fs_t *fs;
+
+    /* What inode number is this? */
+    uint32_t inode_num;
+} inodes[MAX_INODES];
+
+/* Head types */
+LIST_HEAD(inode_list, int_inode);
+TAILQ_HEAD(inode_queue, int_inode);
+
+/* Tail queue of free/unused inodes. */
+static struct inode_queue free_inodes;
+
+/* Hash table of inodes in use. */
+static struct inode_list inode_hash[INODE_HASH_SZ];
+
+/* Forward declaration... */
+static ext2_inode_t *ext2_inode_read(ext2_fs_t *fs, uint32_t inode_num);
+
+void ext2_inode_init(void) {
+    int i;
+
+    /* Initialize the hash table to its starting state */
+    for(i = 0; i < INODE_HASH_SZ; ++i) {
+        LIST_INIT(&inode_hash[i]);
+    }
+
+    /* Put all the inodes in the unused list */
+    TAILQ_INIT(&free_inodes);
+
+    for(i = 0; i < MAX_INODES; ++i) {
+        inodes[i].flags = 0;
+        inodes[i].inode_num = 0;
+        inodes[i].refcnt = 0;
+        TAILQ_INSERT_TAIL(&free_inodes, inodes + i, qentry);
+    }
+}
+
+ext2_inode_t *ext2_inode_get(ext2_fs_t *fs, uint32_t inode_num, int *err) {
+    int entry = inode_num & (INODE_HASH_SZ - 1);
+    struct int_inode *i;
+    ext2_inode_t *rinode;
+
+    /* Figure out if this inode is already in the hash table. */
+    LIST_FOREACH(i, &inode_hash[entry], entry) {
+        if(i->fs == fs && i->inode_num == inode_num) {
+            /* Increase the reference count, and see if it was free before. */
+            if(!i->refcnt++) {
+                /* It is in the free list. Remove it from the free list. */
+                TAILQ_REMOVE(&free_inodes, i, qentry);
+            }
+
+#ifdef EXT2FS_DEBUG
+            dbglog(DBG_KDEBUG, "ext2_inode_get: %" PRIu32 " (%" PRIu32
+                   " refs)\n", inode_num, i->refcnt);
+#endif
+            return (ext2_inode_t *)i;
+        }
+    }
+
+    /* Didn't find it... */
+    if(!(i = TAILQ_FIRST(&free_inodes))) {
+        /* Uh oh... No more free inodes... */
+        *err = -ENFILE;
+        return NULL;
+    }
+
+    /* Ok, at this point, we have a free inode, remove it from the free pool. */
+    TAILQ_REMOVE(&free_inodes, i, qentry);
+    i->refcnt = 1;
+    i->inode_num = inode_num;
+    i->fs = fs;
+
+    /* Read the inode in from the block device. */
+    if(!(rinode = ext2_inode_read(fs, inode_num))) {
+        /* Hrm... what to do about that... */
+        i->refcnt = 0;
+        i->inode_num = 0;
+        i->fs = NULL;
+        *err = -EIO;
+        return NULL;
+    }
+
+    /* Add it to the hash table. */
+    i->inode = *rinode;
+    LIST_INSERT_HEAD(&inode_hash[entry], i, entry);
+
+#ifdef EXT2FS_DEBUG
+    dbglog(DBG_KDEBUG, "ext2_inode_get: %" PRIu32 " (%" PRIu32 " refs)\n",
+           inode_num, i->refcnt);
+#endif
+
+    /* Ok... That should do it. */
+    return &i->inode;
+}
+
+void ext2_inode_put(ext2_inode_t *inode) {
+    struct int_inode *iinode = (struct int_inode *)inode;
+
+    /* Make sure we're not trying anything really mean. */
+    assert(iinode->refcnt != 0);
+
+    /* Decrement the reference counter, and see if we've got the last one. */
+    if(!--iinode->refcnt) {
+        /* Yep, we've gone and consumed the last reference, so put it on the
+           free list at the end (in case we want to bring it back from the dead
+           later on).
+           XXXX: We should write it back out to the disk if it is dirty, but
+           that is for another day. */
+        TAILQ_INSERT_TAIL(&free_inodes, iinode, qentry);
+    }
+
+#ifdef EXT2FS_DEBUG
+    /* Technically not thread-safe, but then again, there's many bigger issues
+       with thread-safety in this library than this. */
+    dbglog(DBG_KDEBUG, "ext2_inode_put: %" PRIu32 " (%" PRIu32 " refs)\n",
+           iinode->inode_num, iinode->refcnt);
+#endif
+}
+
+static ext2_inode_t *ext2_inode_read(ext2_fs_t *fs, uint32_t inode_num) {
     uint32_t bg, index;
     uint8_t *buf;
     int in_per_block;
@@ -174,7 +325,7 @@ static ext2_dirent_t *search_indir_23(ext2_fs_t *fs, const uint32_t *iblock,
     return NULL;
 }
 
-int ext2_inode_by_path(ext2_fs_t *fs, const char *path, ext2_inode_t *rv,
+int ext2_inode_by_path(ext2_fs_t *fs, const char *path, ext2_inode_t **rv,
                        uint32_t *inode_num, int rlink, ext2_dirent_t **rdent) {
     ext2_inode_t *inode, *last;
     char *ipath, *cxt, *token;
@@ -191,13 +342,15 @@ int ext2_inode_by_path(ext2_fs_t *fs, const char *path, ext2_inode_t *rv,
         return -EFAULT;
 
     /* Read the root directory inode first. */
-    if(!(inode = ext2_inode_read(fs, EXT2_ROOT_INO)))
-        return -EIO;
+    if(!(inode = ext2_inode_get(fs, EXT2_ROOT_INO, &err)))
+        return err;
 
     /* We're going to tokenize the string into its component parts, so make a
        copy of the path to go from here. */
-    if(!(ipath = strdup(path)))
+    if(!(ipath = strdup(path))) {
+        ext2_inode_put(inode);
         return -ENOMEM;
+    }
 
     token = strtok_r(ipath, "/", &cxt);
 
@@ -205,7 +358,7 @@ int ext2_inode_by_path(ext2_fs_t *fs, const char *path, ext2_inode_t *rv,
        directory inode. */
     if(!token) {
         free(ipath);
-        *rv = *inode;
+        *rv = inode;
         *inode_num = EXT2_ROOT_INO;
 
         if(rdent)
@@ -221,6 +374,7 @@ int ext2_inode_by_path(ext2_fs_t *fs, const char *path, ext2_inode_t *rv,
         /* If this isn't a directory, give up now. */
         if(!(inode->i_mode & EXT2_S_IFDIR)) {
             free(ipath);
+            ext2_inode_put(inode);
             return -ENOTDIR;
         }
 
@@ -232,6 +386,7 @@ int ext2_inode_by_path(ext2_fs_t *fs, const char *path, ext2_inode_t *rv,
             if(!(buf = ext2_block_read(fs, inode->i_block[i],
                                        EXT2_CACHE_DIR))) {
                 free(ipath);
+                ext2_inode_put(inode);
                 return -EIO;
             }
 
@@ -241,6 +396,7 @@ int ext2_inode_by_path(ext2_fs_t *fs, const char *path, ext2_inode_t *rv,
             }
             else if(err) {
                 free(ipath);
+                ext2_inode_put(inode);
                 return err;
             }
         }
@@ -253,6 +409,7 @@ int ext2_inode_by_path(ext2_fs_t *fs, const char *path, ext2_inode_t *rv,
         if(!(iblock = (uint32_t *)ext2_block_read(fs, inode->i_block[12],
                                                   EXT2_CACHE_DIR))) {
             free(ipath);
+            ext2_inode_put(inode);
             return -EIO;
         }
 
@@ -261,6 +418,7 @@ int ext2_inode_by_path(ext2_fs_t *fs, const char *path, ext2_inode_t *rv,
         }
         else if(err) {
             free(ipath);
+            ext2_inode_put(inode);
             return err;
         }
 
@@ -270,6 +428,7 @@ int ext2_inode_by_path(ext2_fs_t *fs, const char *path, ext2_inode_t *rv,
             if(!(iblock = (uint32_t *)ext2_block_read(fs, inode->i_block[13],
                                                       EXT2_CACHE_DIR))) {
                 free(ipath);
+                ext2_inode_put(inode);
                 return -EIO;
             }
 
@@ -279,6 +438,7 @@ int ext2_inode_by_path(ext2_fs_t *fs, const char *path, ext2_inode_t *rv,
             }
             else if(err) {
                 free(ipath);
+                ext2_inode_put(inode);
                 return err;
             }
         }
@@ -290,6 +450,7 @@ int ext2_inode_by_path(ext2_fs_t *fs, const char *path, ext2_inode_t *rv,
             if(!(iblock = (uint32_t *)ext2_block_read(fs, inode->i_block[14],
                                                       EXT2_CACHE_DIR))) {
                 free(ipath);
+                ext2_inode_put(inode);
                 return -EIO;
             }
 
@@ -299,12 +460,15 @@ int ext2_inode_by_path(ext2_fs_t *fs, const char *path, ext2_inode_t *rv,
             }
             else if(err) {
                 free(ipath);
+                ext2_inode_put(inode);
                 return err;
             }
         }
 
 out:
         /* If we get here, we didn't find the next entry. Return that error. */
+        ext2_inode_put(inode);
+
         if((token = strtok_r(NULL, "/", &cxt))) {
             free(ipath);
             return -ENOTDIR;
@@ -316,9 +480,11 @@ out:
 
 next_token:
         token = strtok_r(NULL, "/", &cxt);
-        if(!(inode = ext2_inode_read(fs, dent->inode))) {
+
+        if(!(inode = ext2_inode_get(fs, dent->inode, &err))) {
             free(ipath);
-            return -EIO;
+            ext2_inode_put(last);
+            return err;
         }
 
         /* Are we supposed to resolve symbolic links? If we have one and we're
@@ -328,6 +494,7 @@ next_token:
             /* Make sure we don't fall into an infinite loop... */
             if(links_derefed++ > SYMLOOP_MAX) {
                 free(ipath);
+                ext2_inode_put(inode);
                 return -ELOOP;
             }
 
@@ -335,12 +502,14 @@ next_token:
 
             if(!(symbuf = (char *)malloc(PATH_MAX))) {
                 free(ipath);
+                ext2_inode_put(inode);
                 return -ENOMEM;
             }
 
             if(ext2_resolve_symlink(fs, inode, symbuf, &tmp_sz)) {
                 free(symbuf);
                 free(ipath);
+                ext2_inode_put(inode);
                 return -EIO;
             }
 
@@ -348,6 +517,7 @@ next_token:
             if(tmp_sz >= PATH_MAX) {
                 free(symbuf);
                 free(ipath);
+                ext2_inode_put(inode);
                 return -ENAMETOOLONG;
             }
 
@@ -357,6 +527,7 @@ next_token:
             if(symbuf[0] == '/') {
                 free(symbuf);
                 free(ipath);
+                ext2_inode_put(inode);
                 return -EXDEV;
             }
 
@@ -366,6 +537,7 @@ next_token:
                 if((tmp_sz += strlen(token) + 1) >= PATH_MAX) {
                     free(symbuf);
                     free(ipath);
+                    ext2_inode_put(inode);
                     return -ENAMETOOLONG;
                 }
 
@@ -379,12 +551,16 @@ next_token:
             free(ipath);
             ipath = symbuf;
             token = strtok_r(ipath, "/", &cxt);
+            ext2_inode_put(inode);
             inode = last;
+        }
+        else {
+            ext2_inode_put(last);
         }
     }
 
     /* Well, looks like we have it, return the inode. */
-    *rv = *inode;
+    *rv = inode;
     *inode_num = dent->inode;
     free(ipath);
 
