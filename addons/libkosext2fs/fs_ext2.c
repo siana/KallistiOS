@@ -138,7 +138,7 @@ static void fs_ext2_close(void * h) {
 static ssize_t fs_ext2_read(void *h, void *buf, size_t cnt) {
     file_t fd = ((file_t)h) - 1;
     ext2_fs_t *fs;
-    uint32_t bs, lbs;
+    uint32_t bs, lbs, bo;
     uint8_t *block;
     uint8_t *bbuf = (uint8_t *)buf;
     ssize_t rv;
@@ -160,6 +160,29 @@ static ssize_t fs_ext2_read(void *h, void *buf, size_t cnt) {
     bs = ext2_block_size(fs);
     lbs = ext2_log_block_size(fs);
     rv = (ssize_t)cnt;
+    bo = fh[fd].ptr & ((1 << lbs) - 1);
+
+    /* Handle the first block specially if we are offset within it. */
+    if(bo) {
+        if(!(block = ext2_inode_read_block(fs, fh[fd].inode,
+                                           fh[fd].ptr >> lbs))) {
+            mutex_unlock(&ext2_mutex);
+            errno = EBADF;
+            return -1;
+        }
+        
+        if(cnt > bs - bo) {
+            memcpy(bbuf, block + bo, bs - bo);
+            fh[fd].ptr += bs - bo;
+            cnt -= bs - bo;
+            bbuf += bs - bo;
+        }
+        else {
+            memcpy(bbuf, block + bo, cnt);
+            fh[fd].ptr += cnt;
+            cnt = 0;
+        }
+    }
 
     /* While we still have more to read, do it. */
     while(cnt) {
@@ -174,6 +197,7 @@ static ssize_t fs_ext2_read(void *h, void *buf, size_t cnt) {
             memcpy(bbuf, block, bs);
             fh[fd].ptr += bs;
             cnt -= bs;
+            bbuf += bs;
         }
         else {
             memcpy(bbuf, block, cnt);
