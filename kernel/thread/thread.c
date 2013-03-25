@@ -66,6 +66,9 @@ static semaphore_t thd_reap_sem;
 /* Number of threads active in the system. */
 static uint32 thd_count = 0;
 
+/* The idle task */
+static kthread_t *thd_idle_thd = NULL;
+
 /*****************************************************************************/
 /* Debug */
 
@@ -485,9 +488,9 @@ void thd_schedule(int front_of_line, uint64 now) {
         arch_exit();
     }
 
-    /* Re-queue the last "current" thread onto the run queue if
-       it didn't die */
-    if(!dontenq && thd_current->state == STATE_RUNNING) {
+    /* If the current thread is supposed to be in the front of the line, and it
+       did not die, re-enqueue it to the front of the line now. */
+    if(front_of_line && !dontenq && thd_current->state == STATE_RUNNING) {
         thd_current->state = STATE_READY;
         thd_add_to_runnable(thd_current, front_of_line);
     }
@@ -502,6 +505,18 @@ void thd_schedule(int front_of_line, uint64 now) {
         /* Is it runnable? If not, keep going */
         if(thd->state == STATE_READY)
             break;
+    }
+
+    /* If we didn't already re-enqueue the thread and we are supposed to do so,
+       do it now. */
+    if(!front_of_line && !dontenq && thd_current->state == STATE_RUNNING) {
+        thd_current->state = STATE_READY;
+        thd_add_to_runnable(thd_current, front_of_line);
+
+        /* Make sure we have a thread, just in case we couldn't find anything
+           above. */
+        if(thd == NULL || thd == thd_idle_thd)
+            thd = thd_current;
     }
 
     /* Didn't find one? Big problem here... */
@@ -812,7 +827,7 @@ int kthread_key_delete(kthread_key_t key) {
 
 /* Init */
 int thd_init(int mode) {
-    kthread_t *idle, *kern, *reaper;
+    kthread_t *kern, *reaper;
 
     /* Make sure we're not already running */
     if(thd_mode != THD_MODE_NONE)
@@ -849,10 +864,10 @@ int thd_init(int mode) {
 
     /* Setup an idle task that is always ready to run, in case everyone
        else is blocked on something. */
-    idle = thd_create(0, thd_idle_task, NULL);
-    strcpy(idle->label, "[idle]");
-    thd_set_prio(idle, PRIO_MAX);
-    idle->state = STATE_READY;
+    thd_idle_thd = thd_create(0, thd_idle_task, NULL);
+    strcpy(thd_idle_thd->label, "[idle]");
+    thd_set_prio(thd_idle_thd, PRIO_MAX);
+    thd_idle_thd->state = STATE_READY;
 
     /* Set up a thread to reap old zombies */
     sem_init(&thd_reap_sem, 0);
