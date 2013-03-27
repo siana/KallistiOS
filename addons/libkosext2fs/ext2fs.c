@@ -41,13 +41,14 @@ static void make_mru(ext2_fs_t *fs, ext2_cache_t **cache, int block) {
 }
 
 /* XXXX: This needs locking! */
-static uint8_t *read_cache(ext2_fs_t *fs, ext2_cache_t **cache, uint32_t bl) {
+uint8_t *ext2_block_read(ext2_fs_t *fs, uint32_t bl) {
     int i;
     uint8_t *rv;
+    ext2_cache_t **cache = fs->bcache;
 
     /* Look through the cache from the most recently used to the least recently
        used entry. */
-    for(i = fs->cache_size - 1; i >= 0 && cache[i]->valid; --i) {
+    for(i = fs->cache_size - 1; i >= 0 && cache[i]->flags; --i) {
         if(cache[i]->block == bl) {
             rv = cache[i]->data;
             make_mru(fs, cache, i);
@@ -57,15 +58,30 @@ static uint8_t *read_cache(ext2_fs_t *fs, ext2_cache_t **cache, uint32_t bl) {
 
     /* If we didn't get anything, did we end up with an invalid entry or do we
        need to boot someone out? */
-    if(i < 0)
+    if(i < 0) {
         i = 0;
 
+        /* Make sure that if the block is dirty, we write it back out. */
+        if(cache[0]->flags & EXT2_CACHE_FLAG_DIRTY) {
+            if(ext2_block_write_nc(fs, cache[0]->block, cache[0]->data)) {
+                /* XXXX: Uh oh... */
+                errno = EIO;
+                return NULL;
+            }
+        }
+
+        printf("Throwing out block %" PRIu32 " flags: %08" PRIx32 "\n",
+               cache[0]->block, cache[0]->flags);
+    }
+
     /* Try to read the block in question. */
-    if(ext2_block_read_nc(fs, bl, cache[i]->data))
+    if(ext2_block_read_nc(fs, bl, cache[i]->data)) {
+        errno = EIO;
         return NULL;
+    }
 
     cache[i]->block = bl;
-    cache[i]->valid = 1;
+    cache[i]->flags = EXT2_CACHE_FLAG_VALID;
     rv = cache[i]->data;
     make_mru(fs, cache, i);
 
@@ -91,36 +107,22 @@ int ext2_block_read_nc(ext2_fs_t *fs, uint32_t block_num, uint8_t *rv) {
     return 0;
 }
 
-uint8_t *ext2_block_read(ext2_fs_t *fs, uint32_t block_num, int cache) {
-    uint8_t *rv;
-    ext2_cache_t **cb;
+int ext2_block_write_nc(ext2_fs_t *fs, uint32_t block_num, uint8_t *rv) {
+    int fs_per_block = fs->sb.s_log_block_size - fs->dev->l_block_size + 10;
 
-    /* Figure out what cache we're looking at */
-    switch(cache) {
-        case EXT2_CACHE_INODE:
-            cb = fs->icache;
-            break;
+    if(fs_per_block < 0)
+    /* This should never happen, as the ext2 block size must be at least
+       as large as the sector size of the block device itself. */
+        return -EINVAL;
 
-        case EXT2_CACHE_DIR:
-            cb = fs->dcache;
-            break;
+    if(fs->sb.s_blocks_count <= block_num)
+        return -EINVAL;
 
-        case EXT2_CACHE_DATA:
-            cb = fs->bcache;
-            break;
+    if(fs->dev->write_blocks(fs->dev, block_num << fs_per_block,
+                             1 << fs_per_block, rv))
+        return -EIO;
 
-        default:
-            errno = EINVAL;
-            return NULL;
-    }
-
-    /* Try to read from it. */
-    if(!(rv = read_cache(fs, cb, block_num))) {
-        errno = EIO;
-        return NULL;
-    }
-
-    return rv;
+    return 0;
 }
 
 uint32_t ext2_block_size(const ext2_fs_t *fs) {
@@ -139,6 +141,10 @@ int ext2_init(void) {
 }
 
 ext2_fs_t *ext2_fs_init(kos_blockdev_t *bd) {
+    return ext2_fs_init_ex(bd, EXT2_CACHE_BLOCKS);
+}
+
+ext2_fs_t *ext2_fs_init_ex(kos_blockdev_t *bd, int cache_sz) {
     ext2_fs_t *rv;
     uint32_t bc;
     int j;
@@ -266,77 +272,43 @@ ext2_fs_t *ext2_fs_init(kos_blockdev_t *bd) {
     }
 #endif /* EXT2FS_DEBUG */
 
-    /* Make space for the caches. */
-    if(!(rv->icache = (ext2_cache_t **)malloc(sizeof(ext2_cache_t *) * 16))) {
+    /* Make space for the block cache. */
+    if(!(rv->bcache = (ext2_cache_t **)malloc(sizeof(ext2_cache_t *) *
+                                              cache_sz))) {
         free(rv->bg);
         free(rv);
         bd->shutdown(bd);
         return NULL;
     }
 
-    if(!(rv->dcache = (ext2_cache_t **)malloc(sizeof(ext2_cache_t *) * 16))) {
-        free(rv->icache);
-        free(rv->bg);
-        free(rv);
-        bd->shutdown(bd);
-        return NULL;
-    }
-
-    if(!(rv->bcache = (ext2_cache_t **)malloc(sizeof(ext2_cache_t *) * 16))) {
-        free(rv->dcache);
-        free(rv->icache);
-        free(rv->bg);
-        free(rv);
-        bd->shutdown(bd);
-        return NULL;
-    }
-    
-    for(j = 0; j < 16; ++j) {
-        if(!(rv->icache[j] = (ext2_cache_t *)malloc(sizeof(ext2_cache_t))))
-            goto out_cache;
-
-        if(!(rv->dcache[j] = (ext2_cache_t *)malloc(sizeof(ext2_cache_t))))
-            goto out_cache;
-
+    for(j = 0; j < cache_sz; ++j) {
         if(!(rv->bcache[j] = (ext2_cache_t *)malloc(sizeof(ext2_cache_t))))
             goto out_cache;
     }
 
-    for(j = 0; j < 16; ++j) {
-        if(!(rv->icache[j]->data = (uint8_t *)malloc(block_size)))
-            goto out_bcache;
-
-        if(!(rv->dcache[j]->data = (uint8_t *)malloc(block_size)))
-            goto out_bcache;
-
+    for(j = 0; j < cache_sz; ++j) {
         if(!(rv->bcache[j]->data = (uint8_t *)malloc(block_size)))
             goto out_bcache;
 
-        rv->icache[j]->valid = rv->dcache[j]->valid = rv->bcache[j]->valid = 0;
+        rv->bcache[j]->flags = 0;
     }
 
-    rv->cache_size = 16;
+    rv->cache_size = cache_sz;
 
     return rv;
 
 out_bcache:
     for(; j >= 0; --j) {
         free(rv->bcache[j]->data);
-        free(rv->dcache[j]->data);
-        free(rv->icache[j]->data);
     }
 
-    j = 15;
+    j = cache_sz - 1;
 out_cache:
     for(; j >= 0; --j) {
         free(rv->bcache[j]);
-        free(rv->dcache[j]);
-        free(rv->icache[j]);
     }
 
     free(rv->bcache);
-    free(rv->dcache);
-    free(rv->icache);
     free(rv->bg);
     free(rv);
     bd->shutdown(bd);
@@ -347,18 +319,11 @@ void ext2_fs_shutdown(ext2_fs_t *fs) {
     int i;
 
     for(i = 0; i < fs->cache_size; ++i) {
-        free(fs->icache[i]->data);
-        free(fs->icache[i]);
-        free(fs->dcache[i]->data);
-        free(fs->dcache[i]);
         free(fs->bcache[i]->data);
         free(fs->bcache[i]);
     }
 
     free(fs->bcache);
-    free(fs->dcache);
-    free(fs->icache);
-
     fs->dev->shutdown(fs->dev);
     free(fs->bg);
     free(fs);

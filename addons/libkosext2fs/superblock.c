@@ -12,6 +12,7 @@
 
 #include "superblock.h"
 #include "utils.h"
+#include "ext2internal.h"
 
 int ext2_read_superblock(ext2_superblock_t *sb, kos_blockdev_t *bd) {
     if(bd->l_block_size > 10) {

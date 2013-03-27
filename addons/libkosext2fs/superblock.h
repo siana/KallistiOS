@@ -12,7 +12,11 @@ __BEGIN_DECLS
 
 #include <stdint.h>
 
+#ifndef EXT2_NOT_IN_KOS
 #include <kos/blockdev.h>
+#else
+#include "ext2fs.h"
+#endif
 
 /** \brief  ext2fs Superblock structure.
 

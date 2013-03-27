@@ -10,7 +10,11 @@
 #include <sys/cdefs.h>
 __BEGIN_DECLS
 
+#include <stdint.h>
+
+#ifndef EXT2_NOT_IN_KOS
 #include <kos/blockdev.h>
+#endif
 
 /* Tunable filesystem parameters. These must be set at compile time. */
 
@@ -30,7 +34,43 @@ __BEGIN_DECLS
    constant. */
 #define EXT2_LOG_INODE_HASH     (EXT2_LOG_MAX_INODES - 2)
 
+/* Size of the block cache, in filesystem blocks. When reading from the
+   filesystem, all data is read in block-sized units. The size of a block can
+   generally range from 1024 bytes to 4096 bytes, and is dependent on the
+   parameters the filesystem was formatted with. Increasing this value should
+   ensure that more accesses can be handled by the cache, but also increases the
+   latency at which data is written back to the block device itself. Setting
+   this to 32 should work well enough, but if you have more memory to spare,
+   feel free to set it larger.
+
+   Note that this is a default value for filesystems initialized/mounted with
+   ext2_fs_init(). If you wish to specify your own value that differs from this
+   one, you can do so with the ext2_fs_init_ex() function.
+*/
+#define EXT2_CACHE_BLOCKS       32
+
 /* End tunable filesystem parameters. */
+
+/* Convenience stuff, for in case you want to use this outside of KOS. */
+#ifdef EXT2_NOT_IN_KOS
+
+typedef struct kos_blockdev {
+    void *dev_data;
+    uint32_t l_block_size;
+    int (*init)(struct kos_blockdev *d);
+    int (*shutdown)(struct kos_blockdev *d);
+    int (*read_blocks)(struct kos_blockdev *d, uint32_t block, size_t count,
+                       void *buf);
+    int (*write_blocks)(struct kos_blockdev *d, uint32_t block, size_t count,
+                        const void *buf);
+    uint32_t (*count_blocks)(struct kos_blockdev *d);
+} kos_blockdev_t;
+
+#ifndef SYMLOOP_MAX
+#define SYMLOOP_MAX 16
+#endif
+
+#endif /* EXT2_NOT_IN_KOS */
 
 /* Opaque ext2 filesystem type */
 struct ext2fs_struct;
@@ -45,14 +85,13 @@ uint32_t ext2_log_block_size(const ext2_fs_t *fs);
 int ext2_init(void);
 
 ext2_fs_t *ext2_fs_init(kos_blockdev_t *bd);
+ext2_fs_t *ext2_fs_init_ex(kos_blockdev_t *bd, int cache_sz);
 void ext2_fs_shutdown(ext2_fs_t *fs);
 
 int ext2_block_read_nc(ext2_fs_t *fs, uint32_t block_num, uint8_t *rv);
-uint8_t *ext2_block_read(ext2_fs_t *fs, uint32_t block_num, int cache);
+uint8_t *ext2_block_read(ext2_fs_t *fs, uint32_t block_num);
 
-#define EXT2_CACHE_INODE    0
-#define EXT2_CACHE_DIR      1
-#define EXT2_CACHE_DATA     2
+int ext2_block_write_nc(ext2_fs_t *fs, uint32_t block_num, uint8_t *rv);
 
 __END_DECLS
 

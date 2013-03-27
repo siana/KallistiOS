@@ -1,34 +1,45 @@
 /* KallistiOS ##version##
 
    ext2internal.h
-   Copyright (C) 2012 Lawrence Sebald
+   Copyright (C) 2012, 2013 Lawrence Sebald
 */
 
 #include "block.h"
 #include "superblock.h"
+
+#ifndef EXT2_NOT_IN_KOS
 #include <kos/blockdev.h>
+#else
+#include "ext2fs.h"
+#endif
 
 #ifndef __EXT2_EXT2INTERNAL_H
 #define __EXT2_EXT2INTERNAL_H
 
+#define EXT2_CACHE_FLAG_VALID   1
+#define EXT2_CACHE_FLAG_DIRTY   2
+
 typedef struct ext2_cache {
-    int valid;
-    uint8_t *data;
+    uint32_t flags;
     uint32_t block;
+    uint8_t *data;
 } ext2_cache_t;
 
 struct ext2fs_struct {
     kos_blockdev_t *dev;
     ext2_superblock_t sb;
     uint32_t block_size;
-    
+
     uint32_t bg_count;
     ext2_bg_desc_t *bg;
-    
-    ext2_cache_t **icache;
-    ext2_cache_t **dcache;
+
     ext2_cache_t **bcache;
     int cache_size;
 };
+
+#ifdef EXT2_NOT_IN_KOS
+#include <stdio.h>
+#define dbglog(x, ...) printf(__VA_ARGS__)
+#endif
 
 #endif /* !__EXT2_EXT2INTERNAL_H */

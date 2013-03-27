@@ -87,12 +87,12 @@ void ext2_inode_init(void) {
 }
 
 ext2_inode_t *ext2_inode_get(ext2_fs_t *fs, uint32_t inode_num, int *err) {
-    int entry = inode_num & (INODE_HASH_SZ - 1);
+    int ent = inode_num & (INODE_HASH_SZ - 1);
     struct int_inode *i;
     ext2_inode_t *rinode;
 
     /* Figure out if this inode is already in the hash table. */
-    LIST_FOREACH(i, &inode_hash[entry], entry) {
+    LIST_FOREACH(i, &inode_hash[ent], entry) {
         if(i->fs == fs && i->inode_num == inode_num) {
             /* Increase the reference count, and see if it was free before. */
             if(!i->refcnt++) {
@@ -117,6 +117,11 @@ ext2_inode_t *ext2_inode_get(ext2_fs_t *fs, uint32_t inode_num, int *err) {
 
     /* Ok, at this point, we have a free inode, remove it from the free pool. */
     TAILQ_REMOVE(&free_inodes, i, qentry);
+
+    /* Remove it from any old hash table lists it was in */
+    if(i->inode_num)
+        LIST_REMOVE(i, entry);
+
     i->refcnt = 1;
     i->inode_num = inode_num;
     i->fs = fs;
@@ -127,13 +132,14 @@ ext2_inode_t *ext2_inode_get(ext2_fs_t *fs, uint32_t inode_num, int *err) {
         i->refcnt = 0;
         i->inode_num = 0;
         i->fs = NULL;
+        TAILQ_INSERT_HEAD(&free_inodes, i, qentry);
         *err = -EIO;
         return NULL;
     }
 
     /* Add it to the hash table. */
     i->inode = *rinode;
-    LIST_INSERT_HEAD(&inode_hash[entry], i, entry);
+    LIST_INSERT_HEAD(&inode_hash[ent], i, entry);
 
 #ifdef EXT2FS_DEBUG
     dbglog(DBG_KDEBUG, "ext2_inode_get: %" PRIu32 " (%" PRIu32 " refs)\n",
@@ -184,8 +190,7 @@ static ext2_inode_t *ext2_inode_read(ext2_fs_t *fs, uint32_t inode_num) {
     if(inode_num > fs->sb.s_inodes_count)
         return NULL;
 
-    if(!(buf = ext2_block_read(fs, fs->bg[bg].bg_inode_bitmap,
-                               EXT2_CACHE_INODE)))
+    if(!(buf = ext2_block_read(fs, fs->bg[bg].bg_inode_bitmap)))
         return NULL;
 
     if(!ext2_bit_is_set((uint32_t *)buf, index))
@@ -196,7 +201,7 @@ static ext2_inode_t *ext2_inode_read(ext2_fs_t *fs, uint32_t inode_num) {
     inode_block = fs->bg[bg].bg_inode_table + (index / in_per_block);
     index %= in_per_block;
 
-    if(!(buf = ext2_block_read(fs, inode_block, EXT2_CACHE_INODE)))
+    if(!(buf = ext2_block_read(fs, inode_block)))
         return NULL;
 
     /* Return the inode in question  */
@@ -331,7 +336,7 @@ int ext2_inode_by_path(ext2_fs_t *fs, const char *path, ext2_inode_t **rv,
     char *ipath, *cxt, *token;
     int blocks, i, block_size;
     uint8_t *buf;
-    uint32_t *iblock;
+    uint32_t *ib;
     ext2_dirent_t *dent;
     int err = 0;
     size_t tmp_sz;
@@ -383,8 +388,7 @@ int ext2_inode_by_path(ext2_fs_t *fs, const char *path, ext2_inode_t **rv,
         /* Run through any direct blocks in the inode. */
         for(i = 0; i < blocks && inode->i_block[i] && i < 12; ++i) {
             /* Grab the block, looking in the directory cache. */
-            if(!(buf = ext2_block_read(fs, inode->i_block[i],
-                                       EXT2_CACHE_DIR))) {
+            if(!(buf = ext2_block_read(fs, inode->i_block[i]))) {
                 free(ipath);
                 ext2_inode_put(inode);
                 return -EIO;
@@ -406,14 +410,13 @@ int ext2_inode_by_path(ext2_fs_t *fs, const char *path, ext2_inode_t **rv,
             goto out;
 
         /* Next, look through the indirect block. */
-        if(!(iblock = (uint32_t *)ext2_block_read(fs, inode->i_block[12],
-                                                  EXT2_CACHE_DIR))) {
+        if(!(ib = (uint32_t *)ext2_block_read(fs, inode->i_block[12]))) {
             free(ipath);
             ext2_inode_put(inode);
             return -EIO;
         }
 
-        if((dent = search_indir(fs, iblock, block_size, token, &err))) {
+        if((dent = search_indir(fs, ib, block_size, token, &err))) {
             goto next_token;
         }
         else if(err) {
@@ -425,15 +428,13 @@ int ext2_inode_by_path(ext2_fs_t *fs, const char *path, ext2_inode_t **rv,
         /* Next, look through the doubly-indirect block. */
         if(inode->i_block[13]) {
             /* Grab the block, looking in the directory cache. */
-            if(!(iblock = (uint32_t *)ext2_block_read(fs, inode->i_block[13],
-                                                      EXT2_CACHE_DIR))) {
+            if(!(ib = (uint32_t *)ext2_block_read(fs, inode->i_block[13]))) {
                 free(ipath);
                 ext2_inode_put(inode);
                 return -EIO;
             }
 
-            if((dent = search_indir_23(fs, iblock, block_size, token, &err,
-                                       0))) {
+            if((dent = search_indir_23(fs, ib, block_size, token, &err, 0))) {
                 goto next_token;
             }
             else if(err) {
@@ -447,15 +448,13 @@ int ext2_inode_by_path(ext2_fs_t *fs, const char *path, ext2_inode_t **rv,
            have to look all the way through one of these... */
         if(inode->i_block[14]) {
             /* Grab the block, looking in the directory cache. */
-            if(!(iblock = (uint32_t *)ext2_block_read(fs, inode->i_block[14],
-                                                      EXT2_CACHE_DIR))) {
+            if(!(ib = (uint32_t *)ext2_block_read(fs, inode->i_block[14]))) {
                 free(ipath);
                 ext2_inode_put(inode);
                 return -EIO;
             }
 
-            if((dent = search_indir_23(fs, iblock, block_size, token, &err,
-                                       1))) {
+            if((dent = search_indir_23(fs, ib, block_size, token, &err, 1))) {
                 goto next_token;
             }
             else if(err) {
@@ -571,75 +570,66 @@ next_token:
 
 uint8_t *ext2_inode_read_block(ext2_fs_t *fs, const ext2_inode_t *inode,
                                uint32_t block_num) {
-    int cache;
     uint32_t blks_per_ind, ibn;
     uint32_t *iblock;
     uint8_t *rv;
 
-    /* Figure out what cache to read from first. */
-    if(inode->i_mode & EXT2_S_IFDIR)
-        cache = EXT2_CACHE_DIR;
-    else
-        cache = EXT2_CACHE_DATA;
-
     /* If we're reading a direct block, this is easy. */
     if(block_num < 12)
-        return ext2_block_read(fs, inode->i_block[block_num], cache);
+        return ext2_block_read(fs, inode->i_block[block_num]);
 
     blks_per_ind = fs->block_size >> 2;
     block_num -= 12;
 
     /* Are we looking at the singly-indirect block? */
     if(block_num < blks_per_ind) {
-        if(!(iblock = (uint32_t *)ext2_block_read(fs, inode->i_block[12],
-                                                  cache)))
+        if(!(iblock = (uint32_t *)ext2_block_read(fs, inode->i_block[12])))
             return NULL;
 
-        rv = ext2_block_read(fs, iblock[block_num], cache);
+        rv = ext2_block_read(fs, iblock[block_num]);
         return rv;
     }
 
     /* Ok, we're looking at at least a doubly-indirect block... */
     block_num -= blks_per_ind;
     if(block_num < (blks_per_ind * blks_per_ind)) {
-        if(!(iblock = (uint32_t *)ext2_block_read(fs, inode->i_block[13],
-                                                  cache)))
+        if(!(iblock = (uint32_t *)ext2_block_read(fs, inode->i_block[13])))
             return NULL;
 
         /* Figure out what entry we want in here... */
         ibn = block_num / blks_per_ind;
         block_num %= blks_per_ind;
 
-        if(!(iblock = (uint32_t *)ext2_block_read(fs, iblock[ibn], cache)))
+        if(!(iblock = (uint32_t *)ext2_block_read(fs, iblock[ibn])))
             return NULL;
 
         /* Ok... Now we should be good to go. */
-        rv = ext2_block_read(fs, iblock[block_num], cache);
+        rv = ext2_block_read(fs, iblock[block_num]);
         return rv;
     }
 
     /* Ugh... You're going to make me look at a triply-indirect block now? */
     block_num -= blks_per_ind * blks_per_ind;
-    if(!(iblock = (uint32_t *)ext2_block_read(fs, inode->i_block[14], cache)))
+    if(!(iblock = (uint32_t *)ext2_block_read(fs, inode->i_block[14])))
         return NULL;
 
     /* Figure out what entry we want in here... */
     ibn = block_num / blks_per_ind;
     block_num %= blks_per_ind;
 
-    if(!(iblock = (uint32_t *)ext2_block_read(fs, iblock[ibn], cache)))
+    if(!(iblock = (uint32_t *)ext2_block_read(fs, iblock[ibn])))
         return NULL;
 
     /* And in this one too... */
     ibn = block_num / blks_per_ind;
     block_num %= blks_per_ind;
 
-    if(!(iblock = (uint32_t *)ext2_block_read(fs, iblock[ibn], cache)))
+    if(!(iblock = (uint32_t *)ext2_block_read(fs, iblock[ibn])))
         return NULL;
 
     /* Ok... Now we should be good to go. Finally. */
     if(block_num < blks_per_ind) {
-        rv = ext2_block_read(fs, iblock[block_num], cache);
+        rv = ext2_block_read(fs, iblock[block_num]);
         return rv;
     }
     else {
