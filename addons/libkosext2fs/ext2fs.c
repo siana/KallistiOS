@@ -69,9 +69,6 @@ uint8_t *ext2_block_read(ext2_fs_t *fs, uint32_t bl) {
                 return NULL;
             }
         }
-
-        printf("Throwing out block %" PRIu32 " flags: %08" PRIx32 "\n",
-               cache[0]->block, cache[0]->flags);
     }
 
     /* Try to read the block in question. */
