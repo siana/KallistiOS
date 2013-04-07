@@ -48,8 +48,8 @@ uint8_t *ext2_block_read(ext2_fs_t *fs, uint32_t bl) {
 
     /* Look through the cache from the most recently used to the least recently
        used entry. */
-    for(i = fs->cache_size - 1; i >= 0 && cache[i]->flags; --i) {
-        if(cache[i]->block == bl) {
+    for(i = fs->cache_size - 1; i >= 0; --i) {
+        if(cache[i]->block == bl && cache[i]->flags) {
             rv = cache[i]->data;
             make_mru(fs, cache, i);
             goto out;
@@ -74,6 +74,7 @@ uint8_t *ext2_block_read(ext2_fs_t *fs, uint32_t bl) {
     /* Try to read the block in question. */
     if(ext2_block_read_nc(fs, bl, cache[i]->data)) {
         errno = EIO;
+        cache[i]->flags = 0;            /* Mark it as invalid... */
         return NULL;
     }
 
@@ -104,21 +105,54 @@ int ext2_block_read_nc(ext2_fs_t *fs, uint32_t block_num, uint8_t *rv) {
     return 0;
 }
 
-int ext2_block_write_nc(ext2_fs_t *fs, uint32_t block_num, uint8_t *rv) {
+int ext2_block_write_nc(ext2_fs_t *fs, uint32_t block_num, const uint8_t *blk) {
     int fs_per_block = fs->sb.s_log_block_size - fs->dev->l_block_size + 10;
 
     if(fs_per_block < 0)
-    /* This should never happen, as the ext2 block size must be at least
-       as large as the sector size of the block device itself. */
+        /* This should never happen, as the ext2 block size must be at least
+           as large as the sector size of the block device itself. */
         return -EINVAL;
 
     if(fs->sb.s_blocks_count <= block_num)
         return -EINVAL;
 
     if(fs->dev->write_blocks(fs->dev, block_num << fs_per_block,
-                             1 << fs_per_block, rv))
+                             1 << fs_per_block, blk))
         return -EIO;
 
+    return 0;
+}
+
+int ext2_block_mark_dirty(ext2_fs_t *fs, uint32_t block_num) {
+    int i;
+    ext2_cache_t **cache = fs->bcache;
+
+    /* Look through the cache from the most recently used to the least recently
+       used entry. */
+    for(i = fs->cache_size - 1; i >= 0; --i) {
+        if(cache[i]->block == block_num && cache[i]->flags) {
+            cache[i]->flags |= EXT2_CACHE_FLAG_DIRTY;
+            make_mru(fs, cache, i);
+            return 0;
+        }
+    }
+
+    return -EINVAL;
+}
+
+int ext2_block_cache_wb(ext2_fs_t *fs) {
+    int i, err;
+    ext2_cache_t **cache = fs->bcache;
+
+    for(i = fs->cache_size - 1; i >= 0; --i) {
+        if(cache[i]->flags & EXT2_CACHE_FLAG_DIRTY) {
+            if((err = ext2_block_write_nc(fs, cache[i]->block, cache[i]->data)))
+                return err;
+
+            cache[i]->flags &= ~EXT2_CACHE_FLAG_DIRTY;
+        }
+    }
+    
     return 0;
 }
 
@@ -195,7 +229,8 @@ ext2_fs_t *ext2_fs_init_ex(kos_blockdev_t *bd, int cache_sz) {
     dbglog(DBG_KDEBUG, "Superblocks are stored on the following blocks:\n");
     tmp = rv->sb.s_first_data_block;
 
-    if(rv->sb.s_rev_level == EXT2_GOOD_OLD_REV) {
+    if(rv->sb.s_rev_level < EXT2_DYNAMIC_REV ||
+       !(rv->sb.s_feature_ro_compat & EXT2_FEATURE_RO_COMPAT_SPARSE_SUPER)) {
         while(tmp < bc) {
             dbglog(DBG_KDEBUG, "%" PRIu32 "\n", tmp);
             tmp += rv->sb.s_blocks_per_group;
@@ -312,8 +347,54 @@ out_cache:
     return NULL;
 }
 
+int ext2_fs_sync(ext2_fs_t *fs) {
+    int rv, frv = 0;
+
+    /* Do a write-back on the inode cache first, pushing the changes out to the
+       block cache. */
+    if((rv = ext2_inode_cache_wb(fs))) {
+        dbglog(DBG_ERROR, "ext2_fs_sync: Error writing back the inode cache: "
+               "%s.\n", strerror(-rv));
+        errno = -rv;
+        frv = -1;
+    }
+
+    /* Do a write-back on the block cache next, which should take care of all
+       the writes other than superblock(s) and block group descriptors. */
+    if((rv = ext2_block_cache_wb(fs))) {
+        dbglog(DBG_ERROR, "ext2_fs_sync: Error writing back the block cache: "
+               "%s.\n", strerror(-rv));
+        errno = -rv;
+        frv = -1;
+    }
+
+    if((fs->flags & EXT2_FS_FLAG_SB_DIRTY)) {
+        /* Write the main superblock and the block group descriptors. */
+        if((rv = ext2_write_superblock(fs, 0))) {
+            dbglog(DBG_ERROR, "ext2_fs_sync: Error writing back the main "
+                   "superblock: %s.\n", strerror(-rv));
+            dbglog(DBG_ERROR, "              Your filesystem is possibly toast "
+                   "at this point... Run e2fsck ASAP.\n");
+            errno = -rv;
+            frv = -1;
+        }
+
+        if((rv = ext2_write_blockgroups(fs, 0))) {
+            dbglog(DBG_ERROR, "ext2_fs_sync: Error writing back the main "
+                   "block group descriptors: %s.\n", strerror(-rv));
+            errno = -rv;
+            frv = -1;
+        }
+    }
+
+    return frv;
+}
+
 void ext2_fs_shutdown(ext2_fs_t *fs) {
     int i;
+
+    /* Sync the filesystem back to the block device, if needed. */
+    ext2_fs_sync(fs);
 
     for(i = 0; i < fs->cache_size; ++i) {
         free(fs->bcache[i]->data);

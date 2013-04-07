@@ -37,6 +37,67 @@ int ext2_read_superblock(ext2_superblock_t *sb, kos_blockdev_t *bd) {
     }
 }
 
+int ext2_write_superblock(struct ext2fs_struct *fs, uint32_t bg) {
+    uint8_t *buf;
+    ext2_superblock_t *sb;
+    kos_blockdev_t *bd = fs->dev;
+
+    /* Handle the first block group specially (i.e, the main superblock)... */
+    if(!bg) {
+        if(bd->l_block_size > 10) {
+            /* Allocate space to read the block in, and do so... */
+            if(!(buf = (uint8_t *)malloc(1 << bd->l_block_size)))
+                return -ENOMEM;
+
+            if(bd->read_blocks(bd, 0, 1, buf))
+                return -EIO;
+
+            /* Copy the superblock in and write it out. */
+            memcpy(buf + 1024, &fs->sb, 1024);
+            if(bd->write_blocks(bd, 0, 1, buf))
+                return -EIO;
+
+            free(buf);
+            return 0;
+        }
+        else if(bd->l_block_size == 10) {
+            return bd->write_blocks(bd, 1, 1, &fs->sb);
+        }
+        else {
+            return bd->write_blocks(bd, 1024 >> bd->l_block_size,
+                                    1024 >> bd->l_block_size, &fs->sb);
+        }
+    }
+    else {
+        /* We need to make space for a whole block here, since we have to do
+           writes one block at a time. */
+        if(!(buf = (uint8_t *)malloc(fs->block_size)))
+            return -ENOMEM;
+
+        memcpy(buf, &fs->sb, 1024);
+
+        if(fs->block_size > 1024)
+            memset(buf + 1024, 0, fs->block_size - 1024);
+
+        /* If we're not a revision 0 fs, write the block group number in the
+           copy we're writing. */
+        if(fs->sb.s_rev_level >= EXT2_DYNAMIC_REV) {
+            sb = (ext2_superblock_t *)buf;
+            sb->s_block_group_nr = (uint16_t)bg;
+        }
+
+        /* Write the block out to the fs. */
+        if(ext2_block_write_nc(fs, bg * fs->sb.s_blocks_per_group +
+                               fs->sb.s_first_data_block, buf)) {
+            free(buf);
+            return -EIO;
+        }
+
+        free(buf);
+        return 0;
+    }
+}
+
 #ifdef EXT2FS_DEBUG
 void ext2_print_superblock(const ext2_superblock_t *sb) {
     dbglog(DBG_KDEBUG, "ext2fs Superblock:\n");
@@ -117,7 +178,7 @@ void ext2_print_superblock(const ext2_superblock_t *sb) {
                    sb->s_journal_uuid[14], sb->s_journal_uuid[15]);
             dbglog(DBG_KDEBUG, "Journal Inode Number: %" PRIu32 "\n",
                    sb->s_journal_inum);
-            dbglog(DBG_KDEBUG, "Journal Inode Number: %" PRIu32 "\n",
+            dbglog(DBG_KDEBUG, "Journal Device: %" PRIu32 "\n",
                    sb->s_journal_dev);
             dbglog(DBG_KDEBUG, "Last orphan: %" PRIu32 "\n", sb->s_last_orphan);
         }

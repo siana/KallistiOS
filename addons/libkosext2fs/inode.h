@@ -104,6 +104,16 @@ int ext2_inode_by_path(ext2_fs_t *fs, const char *path, ext2_inode_t **rv,
 
 void ext2_inode_put(ext2_inode_t *inode);
 
+/* Write-back all of the inodes marked as dirty from the specified filesystem to
+   its block cache. */
+int ext2_inode_cache_wb(ext2_fs_t *fs);
+
+/* Allocate an unused inode on the specified filesystem. */
+ext2_inode_t *ext2_inode_alloc(ext2_fs_t *fs, uint32_t bg, int *err);
+
+/* Free the specified inode from on the filesystem given. */
+int ext2_inode_free(ext2_fs_t *fs, uint32_t inode_num);
+
 uint8_t *ext2_inode_read_block(ext2_fs_t *fs, const ext2_inode_t *inode,
                                uint32_t block_num);
 

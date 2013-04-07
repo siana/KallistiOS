@@ -24,9 +24,12 @@
 #define MAX_INODES      (1 << EXT2_LOG_MAX_INODES)
 #define INODE_HASH_SZ   (1 << EXT2_LOG_INODE_HASH)
 
+#define INODE_FLAG_DIRTY    0x00000001
+
 /* Internal inode storage structure. This is used for cacheing used inodes. */
 static struct int_inode {
-    /* Start with the on-disk inode itself to make the put() function easier. */
+    /* Start with the on-disk inode itself to make the put() function easier.
+       DO NOT MOVE THIS FROM THE BEGINNING OF THE STRUCTURE. */
     ext2_inode_t inode;
 
     /* Hash table entry -- used at all points after the first time an inode is
@@ -66,6 +69,7 @@ static struct inode_list inode_hash[INODE_HASH_SZ];
 
 /* Forward declaration... */
 static ext2_inode_t *ext2_inode_read(ext2_fs_t *fs, uint32_t inode_num);
+static int ext2_inode_wb(struct int_inode *inode);
 
 void ext2_inode_init(void) {
     int i;
@@ -158,11 +162,14 @@ void ext2_inode_put(ext2_inode_t *inode) {
 
     /* Decrement the reference counter, and see if we've got the last one. */
     if(!--iinode->refcnt) {
-        /* Yep, we've gone and consumed the last reference, so put it on the
-           free list at the end (in case we want to bring it back from the dead
-           later on).
-           XXXX: We should write it back out to the disk if it is dirty, but
-           that is for another day. */
+        /* Write it back out to the block cache if it was dirty. */
+        if(iinode->flags & INODE_FLAG_DIRTY)
+            /* XXXX: Should probably make sure this succeeds... */
+            ext2_inode_wb(iinode);
+
+        /* We've gone and consumed the last reference, so put it on the free
+           list at the end, in case we want to bring it back from the dead later
+           on. */
         TAILQ_INSERT_TAIL(&free_inodes, iinode, qentry);
     }
 
@@ -172,6 +179,15 @@ void ext2_inode_put(ext2_inode_t *inode) {
     dbglog(DBG_KDEBUG, "ext2_inode_put: %" PRIu32 " (%" PRIu32 " refs)\n",
            iinode->inode_num, iinode->refcnt);
 #endif
+}
+
+void ext2_inode_mark_dirty(ext2_inode_t *inode) {
+    struct int_inode *iinode = (struct int_inode *)inode;
+
+    /* Make sure we're not trying anything really mean. */
+    assert(iinode->refcnt != 0);
+
+    iinode->flags |= INODE_FLAG_DIRTY;
 }
 
 static ext2_inode_t *ext2_inode_read(ext2_fs_t *fs, uint32_t inode_num) {
@@ -206,6 +222,163 @@ static ext2_inode_t *ext2_inode_read(ext2_fs_t *fs, uint32_t inode_num) {
 
     /* Return the inode in question  */
     return (ext2_inode_t *)(buf + (index * fs->sb.s_inode_size));
+}
+
+static int ext2_inode_wb(struct int_inode *inode) {
+    uint32_t bg, index;
+    uint8_t *buf;
+    int in_per_block, rv;
+    uint32_t inode_block;
+    ext2_fs_t *fs = inode->fs;
+
+    in_per_block = (fs->block_size) / fs->sb.s_inode_size;
+
+    /* Figure out what block group and index within that group the inode in
+       question is. */
+    bg = (inode->inode_num - 1) / fs->sb.s_inodes_per_group;
+    index = (inode->inode_num - 1) % fs->sb.s_inodes_per_group;
+
+    if(inode->inode_num > fs->sb.s_inodes_count)
+        return -EINVAL;
+    
+    /* Read the block containing the inode in so that we can write the part that
+       we need to it. */
+    inode_block = fs->bg[bg].bg_inode_table + (index / in_per_block);
+    index %= in_per_block;
+
+    if(!(buf = ext2_block_read(fs, inode_block)))
+        return -errno;
+
+    /* Write to the block and mark it as dirty so that it'll get flushed. */
+    memcpy(buf + (index * fs->sb.s_inode_size), inode, sizeof(ext2_inode_t));
+    rv = ext2_block_mark_dirty(fs, inode_block);
+
+    /* Clear the dirty flag, if we wrote it out successfully. */
+    if(!rv)
+        inode->flags &= ~INODE_FLAG_DIRTY;
+
+    return rv;
+}
+
+int ext2_inode_cache_wb(ext2_fs_t *fs) {
+    int i, rv = 0;
+
+    for(i = 0; i < MAX_INODES && !rv; ++i) {
+        if(inodes[i].fs == fs && (inodes[i].flags & INODE_FLAG_DIRTY)) {
+            rv = ext2_inode_wb(inodes + i);
+        }
+    }
+
+    return rv;
+}
+
+ext2_inode_t *ext2_inode_alloc(ext2_fs_t *fs, uint32_t bg, int *err) {
+    uint8_t *buf;
+    uint32_t index;
+    struct int_inode *i;
+
+    /* See if we have any free inodes at all... */
+    if(!fs->sb.s_free_inodes_count) {
+        *err = ENOSPC;
+        return NULL;
+    }
+
+    /* See if we have any free inodes in the block group requested. */
+    if(fs->bg[bg].bg_free_inodes_count) {
+        if(!(buf = ext2_block_read(fs, fs->bg[bg].bg_inode_bitmap))) {
+            *err = errno;
+            return NULL;
+        }
+
+        index = ext2_bit_find_nonzero((uint32_t *)buf, 0,
+                                      fs->sb.s_inodes_per_group - 1);
+        if(index < fs->sb.s_inodes_per_group) {
+            ext2_bit_set((uint32_t *)buf, index);
+            ext2_block_mark_dirty(fs, fs->bg[bg].bg_inode_bitmap);
+            --fs->bg[bg].bg_free_inodes_count;
+            --fs->sb.s_free_inodes_count;
+            fs->flags |= EXT2_FS_FLAG_SB_DIRTY;
+            i = (struct int_inode *)ext2_inode_get(fs, index + bg *
+                                                   fs->sb.s_inodes_per_group +
+                                                   1, err);
+            memset(i, 0, sizeof(ext2_inode_t));
+            i->flags |= INODE_FLAG_DIRTY;
+            return (ext2_inode_t *)i;
+        }
+
+        /* We shouldn't get here... But, just in case, fall through. We should
+           probably log an error and tell the user to fsck though. */
+        dbglog(DBG_WARNING, "ext2_inode_alloc: Block group %" PRIu32 " "
+               "indicates that it has free inodes, but doesn't appear to. "
+               "Please run fsck on this volume!\n", bg);
+    }
+
+    /* Couldn't find a free inode in the requested block group... Loop through
+       all the block groups looking for a free inode. */
+    for(bg = 0; bg < fs->bg_count; ++bg) {
+        if(fs->bg[bg].bg_free_inodes_count) {
+            if(!(buf = ext2_block_read(fs, fs->bg[bg].bg_inode_bitmap))) {
+                *err = errno;
+                return NULL;
+            }
+
+            index = ext2_bit_find_nonzero((uint32_t *)buf, 0,
+                                          fs->sb.s_inodes_per_group - 1);
+            if(index < fs->sb.s_inodes_per_group) {
+                ext2_bit_set((uint32_t *)buf, index);
+                ext2_block_mark_dirty(fs, fs->bg[bg].bg_inode_bitmap);
+                --fs->bg[bg].bg_free_inodes_count;
+                --fs->sb.s_free_inodes_count;
+                fs->flags |= EXT2_FS_FLAG_SB_DIRTY;
+                i = (struct int_inode *)ext2_inode_get(fs, index + bg *
+                                                       fs->sb.s_inodes_per_group
+                                                       + 1, err);
+                memset(i, 0, sizeof(ext2_inode_t));
+                i->flags |= INODE_FLAG_DIRTY;
+                return (ext2_inode_t *)i;
+            }
+
+            /* We shouldn't get here... But, just in case, fall through. We
+               should probably log an error and tell the user to fsck though. */
+            dbglog(DBG_WARNING, "ext2_inode_alloc: Block group %" PRIu32 " "
+                   "indicates that it has free inodes, but doesn't appear to. "
+                   "Please run fsck on this volume!\n", bg);
+        }
+    }
+
+    *err = ENOSPC;
+    return NULL;
+}
+
+int ext2_inode_free(ext2_fs_t *fs, uint32_t inode_num) {
+    uint32_t bg, index;
+    uint8_t *buf;
+
+    if(inode_num > fs->sb.s_inodes_count)
+        return -EINVAL;
+
+    /* Figure out what block group and index within that group the inode in
+       question is. */
+    bg = (inode_num - 1) / fs->sb.s_inodes_per_group;
+    index = (inode_num - 1) % fs->sb.s_inodes_per_group;
+
+    if(!(buf = ext2_block_read(fs, fs->bg[bg].bg_inode_bitmap)))
+        return -EIO;
+
+    /* Make sure it is actually allocated. */
+    if(!ext2_bit_is_set((uint32_t *)buf, index))
+        return -EINVAL;
+
+    /* Mark the inode as free in the bitmap and increase the counters. */
+    ext2_bit_clear((uint32_t *)buf, index);
+    ext2_block_mark_dirty(fs, fs->bg[bg].bg_inode_bitmap);
+
+    ++fs->bg[bg].bg_free_inodes_count;
+    ++fs->sb.s_free_inodes_count;
+    fs->flags |= EXT2_FS_FLAG_SB_DIRTY;
+
+    /* TODO: Perhaps we should zero the inode? */
+    return 0;
 }
 
 static ext2_dirent_t *search_dir(uint8_t *buf, int block_size,

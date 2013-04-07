@@ -46,3 +46,39 @@ int ext2_read_blockgroups(ext2_fs_t *fs, uint32_t start_block) {
     free(buf);
     return 0;
 }
+
+int ext2_write_blockgroups(ext2_fs_t *fs, uint32_t bg) {
+    uint8_t *buf;
+    ext2_bg_desc_t *ptr = fs->bg;
+    uint32_t bg_per_block;
+    uint32_t count = fs->bg_count;
+    uint32_t start_block = bg * fs->sb.s_blocks_per_group +
+        fs->sb.s_first_data_block + 1;
+
+    if(!(buf = (uint8_t *)malloc(fs->block_size)))
+        return -ENOMEM;
+
+    bg_per_block = fs->block_size / sizeof(ext2_bg_desc_t);
+
+    while(count) {
+        if(count < bg_per_block) {
+            memcpy(buf, ptr, count * sizeof(ext2_bg_desc_t));
+            memset(buf + count * sizeof(ext2_bg_desc_t), 0,
+                   (bg_per_block - count) * sizeof(ext2_bg_desc_t));
+            count = 0;
+        }
+        else {
+            memcpy(buf, ptr, count * sizeof(ext2_bg_desc_t));
+            count -= bg_per_block;
+            ptr += bg_per_block;
+        }
+
+        if(ext2_block_write_nc(fs, start_block++, buf)) {
+            free(buf);
+            return -EIO;
+        }
+    }
+    
+    free(buf);
+    return 0;
+}

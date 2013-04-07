@@ -159,6 +159,27 @@ typedef struct ext2_superblock {
 */
 int ext2_read_superblock(ext2_superblock_t *sb, kos_blockdev_t *bd);
 
+/* Ugh... */
+struct ext2fs_struct;
+
+/** \brief  Write the superblock of an ext2 filesystem to either the main
+            superblock or any of the backups.
+
+    This function writes the superblock of an ext2 filesystem back to the block
+    device. This function will write back either the main superblock (the one
+    stored exactly 1024 bytes from the start of the filesystem) or any of the
+    backups, depending on the block group specified.
+
+    \param  fs          The filesystem to write to.
+    \param  bg          Which block group to write-back to. To write to the main
+                        superblock, specify 0.
+    \retval 0           On success.
+    \retval -1          On failure. errno should be set as appropriate by the
+                        block device or other failing function. If this fails on
+                        the main superblock, your filesystem is probably toast.
+*/
+int ext2_write_superblock(struct ext2fs_struct *fs, uint32_t bg);
+
 #ifdef EXT2FS_DEBUG
 void ext2_print_superblock(const ext2_superblock_t *sb);
 #endif

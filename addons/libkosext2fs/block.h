@@ -47,6 +47,7 @@ typedef struct ext2_bg_desc {
 } ext2_bg_desc_t;
 
 int ext2_read_blockgroups(ext2_fs_t *fs, uint32_t start_block);
+int ext2_write_blockgroups(ext2_fs_t *fs, uint32_t bg);
 
 __END_DECLS
 
