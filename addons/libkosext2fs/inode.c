@@ -563,7 +563,7 @@ static int ext2_inode_free_all(ext2_fs_t *fs, ext2_inode_t *inode,
         }
         else if(!--xattr->h_refcount) {
             printf("Freeing xattr at block %d\n", (int)inode->i_file_acl);
-            if((rv = mark_block_free(fs, blk)))
+            if((rv = mark_block_free(fs, inode->i_file_acl)))
                 return rv;
         }
 
