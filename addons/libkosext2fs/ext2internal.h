@@ -37,6 +37,7 @@ struct ext2fs_struct {
     int cache_size;
 
     uint32_t flags;
+    uint32_t mnt_flags;
 };
 
 /* The superblock and/or block descriptors need to be written to the block

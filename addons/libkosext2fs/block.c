@@ -55,6 +55,10 @@ int ext2_write_blockgroups(ext2_fs_t *fs, uint32_t bg) {
     uint32_t start_block = bg * fs->sb.s_blocks_per_group +
         fs->sb.s_first_data_block + 1;
 
+    /* Don't even bother if we're mounted read-only. */
+    if(!(fs->mnt_flags & EXT2FS_MNT_FLAG_RW))
+        return 0;
+
     if(!(buf = (uint8_t *)malloc(fs->block_size)))
         return -ENOMEM;
 

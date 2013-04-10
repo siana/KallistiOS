@@ -42,7 +42,7 @@ int ext2_resolve_symlink(ext2_fs_t *fs, ext2_inode_t *inode, char *rv,
            means that under normal circumstances, we should be limited to 4096
            bytes (which is, conveniently, our PATH_MAX on KOS). */
         for(i = 0; i < bcnt && len; ++i) {
-            buf = ext2_inode_read_block(fs, inode, i);
+            buf = ext2_inode_read_block(fs, inode, i, NULL);
 
             if(len > bs) {
                 memcpy(rv, buf, bs);

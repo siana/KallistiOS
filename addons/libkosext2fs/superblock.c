@@ -42,6 +42,10 @@ int ext2_write_superblock(struct ext2fs_struct *fs, uint32_t bg) {
     ext2_superblock_t *sb;
     kos_blockdev_t *bd = fs->dev;
 
+    /* Don't even bother if we're mounted read-only. */
+    if(!(fs->flags & EXT2FS_MNT_FLAG_RW))
+        return 0;
+
     /* Handle the first block group specially (i.e, the main superblock)... */
     if(!bg) {
         if(bd->l_block_size > 10) {

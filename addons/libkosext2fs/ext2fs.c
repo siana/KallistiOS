@@ -144,6 +144,10 @@ int ext2_block_cache_wb(ext2_fs_t *fs) {
     int i, err;
     ext2_cache_t **cache = fs->bcache;
 
+    /* Don't even bother if we're mounted read-only. */
+    if(!(fs->mnt_flags & EXT2FS_MNT_FLAG_RW))
+        return 0;
+
     for(i = fs->cache_size - 1; i >= 0; --i) {
         if(cache[i]->flags & EXT2_CACHE_FLAG_DIRTY) {
             if((err = ext2_block_write_nc(fs, cache[i]->block, cache[i]->data)))
@@ -171,11 +175,11 @@ int ext2_init(void) {
     return 0;
 }
 
-ext2_fs_t *ext2_fs_init(kos_blockdev_t *bd) {
-    return ext2_fs_init_ex(bd, EXT2_CACHE_BLOCKS);
+ext2_fs_t *ext2_fs_init(kos_blockdev_t *bd, uint32_t flags) {
+    return ext2_fs_init_ex(bd, flags, EXT2_CACHE_BLOCKS);
 }
 
-ext2_fs_t *ext2_fs_init_ex(kos_blockdev_t *bd, int cache_sz) {
+ext2_fs_t *ext2_fs_init_ex(kos_blockdev_t *bd, uint32_t flags, int cache_sz) {
     ext2_fs_t *rv;
     uint32_t bc;
     int j;
@@ -201,6 +205,14 @@ ext2_fs_t *ext2_fs_init_ex(kos_blockdev_t *bd, int cache_sz) {
     }
 
     rv->dev = bd;
+    rv->mnt_flags = flags & EXT2FS_MNT_VALID_FLAGS_MASK;
+
+    if(rv->mnt_flags != flags) {
+        dbglog(DBG_WARNING, "ext2_fs_init: unknown mount flags: %08" PRIx32
+               "\n", flags);
+        dbglog(DBG_WARNING, "              mounting read-only\n");
+        rv->mnt_flags = 0;
+    }
 
     /* Read in the all-important superblock. */
     if(ext2_read_superblock(&rv->sb, bd)) {
@@ -349,6 +361,10 @@ out_cache:
 
 int ext2_fs_sync(ext2_fs_t *fs) {
     int rv, frv = 0;
+
+    /* Don't even bother if we're mounted read-only. */
+    if(!(fs->mnt_flags & EXT2FS_MNT_FLAG_RW))
+        return 0;
 
     /* Do a write-back on the inode cache first, pushing the changes out to the
        block cache. */

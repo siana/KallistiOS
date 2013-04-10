@@ -33,9 +33,18 @@ typedef struct ext2_dirent {
 /* Forward declaration... */
 struct ext2_inode;
 
+/* Check if a directory is empty. */
 int ext2_dir_is_empty(ext2_fs_t *fs, const struct ext2_inode *dir);
+
+/* Find an entry in a directory. */
 ext2_dirent_t *ext2_dir_entry(ext2_fs_t *fs, const struct ext2_inode *dir,
                               const char *fn);
+
+/* Delete an entry from a directory. Note that this does nothing about cleaning
+   up the inode, but it does tell you which inode you're going to need to clean
+   up (or lower the reference count on). */
+int ext2_dir_rm_entry(ext2_fs_t *fs, const struct ext2_inode *dir,
+                      const char *fn, uint32_t *inode);
 
 __END_DECLS
 #endif /* !__EXT2_DIRECTORY_H */

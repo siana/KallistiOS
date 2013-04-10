@@ -20,6 +20,9 @@
 #include "inode.h"
 #include "directory.h"
 
+/* For some reason, Newlib doesn't seem to define this function in stdlib.h. */
+extern char *realpath(const char *, const char *);
+
 #define MAX_EXT2_FILES 16
 
 typedef struct fs_ext2_fs {
@@ -164,8 +167,8 @@ static ssize_t fs_ext2_read(void *h, void *buf, size_t cnt) {
 
     /* Handle the first block specially if we are offset within it. */
     if(bo) {
-        if(!(block = ext2_inode_read_block(fs, fh[fd].inode,
-                                           fh[fd].ptr >> lbs))) {
+        if(!(block = ext2_inode_read_block(fs, fh[fd].inode, fh[fd].ptr >> lbs,
+                                           NULL))) {
             mutex_unlock(&ext2_mutex);
             errno = EBADF;
             return -1;
@@ -186,8 +189,8 @@ static ssize_t fs_ext2_read(void *h, void *buf, size_t cnt) {
 
     /* While we still have more to read, do it. */
     while(cnt) {
-        if(!(block = ext2_inode_read_block(fs, fh[fd].inode,
-                                           fh[fd].ptr >> lbs))) {
+        if(!(block = ext2_inode_read_block(fs, fh[fd].inode, fh[fd].ptr >> lbs,
+                                           NULL))) {
             mutex_unlock(&ext2_mutex);
             errno = EBADF;
             return -1;
@@ -314,7 +317,8 @@ retry:
         return NULL;
     }
 
-    if(!(block = ext2_inode_read_block(fs, fh[fd].inode, fh[fd].ptr >> lbs))) {
+    if(!(block = ext2_inode_read_block(fs, fh[fd].inode, fh[fd].ptr >> lbs,
+                                       NULL))) {
         mutex_unlock(&ext2_mutex);
         errno = EBADF;
         return NULL;
@@ -359,6 +363,136 @@ retry:
     ext2_inode_put(inode);
     mutex_unlock(&ext2_mutex);
     return &fh[fd].dent;
+}
+
+static int fs_ext2_unlink(vfs_handler_t *vfs, const char *fn) {
+    fs_ext2_fs_t *fs = (fs_ext2_fs_t *)vfs->privdata;
+    int irv;
+    ext2_inode_t *pinode, *inode;
+    uint32_t inode_num;
+    ext2_dirent_t *dent;
+    char *cp, *ent;
+    uint32_t in_num;
+
+    /* Make sure there is a filename given */
+    if(!fn) {
+        errno = ENOENT;
+        return -1;
+    }
+
+    /* Make sure we're not trying to remove the root of the filesystem. */
+    if(!*fn) {
+        errno = EPERM;
+        return -1;
+    }
+
+    /* Make sure the fs is writable */
+    if(!(fs->mount_flags & FS_EXT2_MOUNT_READWRITE)) {
+        errno = EROFS;
+        return -1;
+    }
+
+    /* Make a writable copy of the filename. */
+    if(!(cp = strdup(fn))) {
+        errno = ENOMEM;
+        return -1;
+    }
+
+    /* Separate our copy into the parent and the file we want to remove. */
+    if(!(ent = strrchr(cp, '/'))) {
+        free(cp);
+        errno = EPERM;
+        return -1;
+    }
+
+    /* Split the string. */
+    *ent++ = 0;
+
+    mutex_lock(&ext2_mutex);
+
+    /* Find the parent directory of the object in question.*/
+    if((irv = ext2_inode_by_path(fs->fs, cp, &pinode, &inode_num, 1, NULL))) {
+        mutex_unlock(&ext2_mutex);
+        free(cp);
+        errno = -irv;
+        return -1;
+    }
+
+    /* If the entry we get back is not a directory, then we've got problems. */
+    if((pinode->i_mode & 0xF000) != EXT2_S_IFDIR) {
+        ext2_inode_put(pinode);
+        mutex_unlock(&ext2_mutex);
+        free(cp);
+        errno = ENOTDIR;
+        return -1;
+    }
+
+    /* Try to find the directory entry of the item we want to remove. */
+    if(!(dent = ext2_dir_entry(fs->fs, pinode, ent))) {
+        ext2_inode_put(pinode);
+        mutex_unlock(&ext2_mutex);
+        free(cp);
+        errno = ENOENT;
+        return -1;
+    }
+
+    /* Find the inode of the entry we want to remove. */
+    if(!(inode = ext2_inode_get(fs->fs, dent->inode, &irv))) {
+        ext2_inode_put(pinode);
+        mutex_unlock(&ext2_mutex);
+        free(cp);
+        errno = EIO;
+        return -1;
+    }
+
+    /* Make sure we don't try to remove a directory with unlink. That is what
+       rmdir is for. */
+    if((inode->i_mode & 0xF000) == EXT2_S_IFDIR) {
+        ext2_inode_put(pinode);
+        ext2_inode_put(inode);
+        mutex_unlock(&ext2_mutex);
+        free(cp);
+        errno = EPERM;
+        return -1;
+    }
+
+    /* Make sure we don't have any open file descriptors to the file. */
+    for(irv = 0; irv < MAX_EXT2_FILES; ++irv) {
+        if(fh[irv].inode_num == dent->inode) {
+            ext2_inode_put(pinode);
+            ext2_inode_put(inode);
+            mutex_unlock(&ext2_mutex);
+            free(cp);
+            errno = EBUSY;
+            return -1;
+        }
+    }
+
+    /* Remove the entry from the parent's directory. */
+    if((irv = ext2_dir_rm_entry(fs->fs, pinode, ent, &in_num))) {
+        ext2_inode_put(pinode);
+        ext2_inode_put(inode);
+        mutex_unlock(&ext2_mutex);
+        free(cp);
+        errno = -irv;
+        return -1;
+    }
+
+    /* We're done with these now, so clean them up. */
+    ext2_inode_put(pinode);
+    ext2_inode_put(inode);
+    free(cp);
+
+    /* Free up the inode and all the data blocks. */
+    if((irv = ext2_inode_deref(fs->fs, in_num, 0))) {
+        mutex_unlock(&ext2_mutex);
+        errno = -irv;
+        return -1;
+    }
+
+    /* And, we're done. Unlock the mutex. */
+    mutex_unlock(&ext2_mutex);
+    return 0;    
 }
 
 static int fs_ext2_stat(vfs_handler_t *vfs, const char *fn, stat_t *rv) {
@@ -426,6 +560,140 @@ static int fs_ext2_stat(vfs_handler_t *vfs, const char *fn, stat_t *rv) {
     return 0;
 }
 
+static int fs_ext2_rmdir(vfs_handler_t *vfs, const char *fn) {
+    fs_ext2_fs_t *fs = (fs_ext2_fs_t *)vfs->privdata;
+    int irv;
+    ext2_inode_t *pinode, *inode;
+    uint32_t inode_num;
+    ext2_dirent_t *dent;
+    char *cp, *ent;
+    uint32_t in_num;
+
+    /* Make sure there is a filename given */
+    if(!fn) {
+        errno = ENOENT;
+        return -1;
+    }
+
+    /* Make sure we're not trying to remove the root of the filesystem. */
+    if(!*fn || (fn[0] == '/' && !fn[1])) {
+        errno = EPERM;
+        return -1;
+    }
+
+    /* Make sure the fs is writable */
+    if(!(fs->mount_flags & FS_EXT2_MOUNT_READWRITE)) {
+        errno = EROFS;
+        return -1;
+    }
+
+    /* Make a writable copy of the filename. */
+    if(!(cp = strdup(fn))) {
+        errno = ENOMEM;
+        return -1;
+    }
+
+    /* Separate our copy into the parent and the file we want to remove. */
+    if(!(ent = strrchr(cp, '/'))) {
+        free(cp);
+        errno = EPERM;
+        return -1;
+    }
+
+    /* Split the string. */
+    *ent++ = 0;
+
+    mutex_lock(&ext2_mutex);
+
+    /* Find the parent directory of the object in question.*/
+    if((irv = ext2_inode_by_path(fs->fs, cp, &pinode, &inode_num, 1, NULL))) {
+        mutex_unlock(&ext2_mutex);
+        free(cp);
+        errno = -irv;
+        return -1;
+    }
+
+    /* If the entry we get back is not a directory, then we've got problems. */
+    if((pinode->i_mode & 0xF000) != EXT2_S_IFDIR) {
+        ext2_inode_put(pinode);
+        mutex_unlock(&ext2_mutex);
+        free(cp);
+        errno = ENOTDIR;
+        return -1;
+    }
+
+    /* Try to find the directory entry of the item we want to remove. */
+    if(!(dent = ext2_dir_entry(fs->fs, pinode, ent))) {
+        ext2_inode_put(pinode);
+        mutex_unlock(&ext2_mutex);
+        free(cp);
+        errno = ENOENT;
+        return -1;
+    }
+
+    /* Find the inode of the entry we want to remove. */
+    if(!(inode = ext2_inode_get(fs->fs, dent->inode, &irv))) {
+        ext2_inode_put(pinode);
+        mutex_unlock(&ext2_mutex);
+        free(cp);
+        errno = EIO;
+        return -1;
+    }
+
+    /* Make sure we don't try to remove a non-directory with rmdir. That is what
+       unlink is for. */
+    if((inode->i_mode & 0xF000) != EXT2_S_IFDIR) {
+        ext2_inode_put(pinode);
+        ext2_inode_put(inode);
+        mutex_unlock(&ext2_mutex);
+        free(cp);
+        errno = EPERM;
+        return -1;
+    }
+
+    /* Make sure we don't have any open file descriptors to the directory. */
+    for(irv = 0; irv < MAX_EXT2_FILES; ++irv) {
+        if(fh[irv].inode_num == dent->inode) {
+            ext2_inode_put(pinode);
+            ext2_inode_put(inode);
+            mutex_unlock(&ext2_mutex);
+            free(cp);
+            errno = EBUSY;
+            return -1;
+        }
+    }
+
+    /* Remove the entry from the parent's directory. */
+    if((irv = ext2_dir_rm_entry(fs->fs, pinode, ent, &in_num))) {
+        ext2_inode_put(pinode);
+        ext2_inode_put(inode);
+        mutex_unlock(&ext2_mutex);
+        free(cp);
+        errno = -irv;
+        return -1;
+    }
+
+    /* We're done with these now, so clean them up. */
+    ext2_inode_put(inode);
+    free(cp);
+
+    /* Free up the inode and all the data blocks. */
+    if((irv = ext2_inode_deref(fs->fs, in_num, 1))) {
+        mutex_unlock(&ext2_mutex);
+        errno = -irv;
+        return -1;
+    }
+
+    /* Decrement the reference count on the parent's inode. */
+    --pinode->i_links_count;
+    ext2_inode_mark_dirty(pinode);
+    ext2_inode_put(pinode);
+
+    /* And, we're done. Unlock the mutex. */
+    mutex_unlock(&ext2_mutex);
+    return 0;
+}
+
 static int fs_ext2_fcntl(void *h, int cmd, va_list ap) {
     file_t fd = ((file_t)h) - 1;
     int rv = -1;
@@ -483,12 +751,12 @@ static vfs_handler_t vh = {
     fs_ext2_readdir,            /* readdir */
     NULL,                       /* ioctl */
     NULL,                       /* rename */
-    NULL,                       /* unlink */
+    fs_ext2_unlink,             /* unlink */
     NULL,                       /* mmap */
     NULL,                       /* complete */
     fs_ext2_stat,               /* stat */
     NULL,                       /* mkdir */
-    NULL,                       /* rmdir */
+    fs_ext2_rmdir,              /* rmdir */
     fs_ext2_fcntl,              /* fcntl */
     NULL                        /* poll */
 };
@@ -513,7 +781,7 @@ int fs_ext2_mount(const char *mp, kos_blockdev_t *dev, uint32_t flags) {
     mutex_lock(&ext2_mutex);
 
     /* Try to initialize the filesystem */
-    if(!(fs = ext2_fs_init(dev))) {
+    if(!(fs = ext2_fs_init(dev, flags))) {
         mutex_unlock(&ext2_mutex);
         dbglog(DBG_DEBUG, "fs_ext2: device does not contain a valid ext2fs.\n");
         return -1;

@@ -76,6 +76,13 @@ typedef struct kos_blockdev {
 struct ext2fs_struct;
 typedef struct ext2fs_struct ext2_fs_t;
 
+/* Filesystem mount flags */
+#define EXT2FS_MNT_FLAG_RO          0x00000000
+#define EXT2FS_MNT_FLAG_RW          0x00000001
+
+/* Valid flags mask */
+#define EXT2FS_MNT_VALID_FLAGS_MASK 0x00000001
+
 uint32_t ext2_block_size(const ext2_fs_t *fs);
 uint32_t ext2_log_block_size(const ext2_fs_t *fs);
 
@@ -84,8 +91,8 @@ uint32_t ext2_log_block_size(const ext2_fs_t *fs);
    mounting the first filesystem. */
 int ext2_init(void);
 
-ext2_fs_t *ext2_fs_init(kos_blockdev_t *bd);
-ext2_fs_t *ext2_fs_init_ex(kos_blockdev_t *bd, int cache_sz);
+ext2_fs_t *ext2_fs_init(kos_blockdev_t *bd, uint32_t flags);
+ext2_fs_t *ext2_fs_init_ex(kos_blockdev_t *bd, uint32_t flags, int cache_sz);
 int ext2_fs_sync(ext2_fs_t *fs);
 void ext2_fs_shutdown(ext2_fs_t *fs);
 

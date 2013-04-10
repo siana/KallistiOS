@@ -43,6 +43,14 @@ typedef struct ext2_inode {
     } i_osd2;
 } ext2_inode_t;
 
+typedef struct ext2_xattr_hdr {
+    uint32_t h_magic;
+    uint32_t h_refcount;
+    uint32_t h_blocks;
+    uint32_t h_hash;
+    uint8_t reserved[16];
+} ext2_xattr_hdr_t;
+
 /* i_mode values */
 #define EXT2_S_IFSOCK   0xC000
 #define EXT2_S_IFLNK    0xA000
@@ -93,6 +101,9 @@ typedef struct ext2_inode {
 #define EXT2_BOOT_LOADER_INO    5
 #define EXT2_UNDEL_DIR_INO      6
 
+/* This should be in the h_magic of an xattr */
+#define EXT2_XATTR_MAGIC        0xEA020000
+
 /* Initialize the inode cache. This will be called by ext2_init(). */
 void ext2_inode_init(void);
 
@@ -104,6 +115,8 @@ int ext2_inode_by_path(ext2_fs_t *fs, const char *path, ext2_inode_t **rv,
 
 void ext2_inode_put(ext2_inode_t *inode);
 
+void ext2_inode_mark_dirty(ext2_inode_t *inode);
+
 /* Write-back all of the inodes marked as dirty from the specified filesystem to
    its block cache. */
 int ext2_inode_cache_wb(ext2_fs_t *fs);
@@ -111,11 +124,12 @@ int ext2_inode_cache_wb(ext2_fs_t *fs);
 /* Allocate an unused inode on the specified filesystem. */
 ext2_inode_t *ext2_inode_alloc(ext2_fs_t *fs, uint32_t bg, int *err);
 
-/* Free the specified inode from on the filesystem given. */
-int ext2_inode_free(ext2_fs_t *fs, uint32_t inode_num);
+/* Decrease the reference count on an inode. If the reference count reaches
+   zero, deallocate the inode and all of its blocks. */
+int ext2_inode_deref(ext2_fs_t *fs, uint32_t inode_num, int isdir);
 
 uint8_t *ext2_inode_read_block(ext2_fs_t *fs, const ext2_inode_t *inode,
-                               uint32_t block_num);
+                               uint32_t block_num, uint32_t *r_block);
 
 /* In symlink.c */
 int ext2_resolve_symlink(ext2_fs_t *fs, ext2_inode_t *inode, char *rv,

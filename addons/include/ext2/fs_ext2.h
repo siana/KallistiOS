@@ -83,6 +83,8 @@ int fs_ext2_shutdown(void);
     the block device does not support writing, then the filesystem will not be
     mounted as read-write (for obvious reasons).
 
+    These should stay synchronized with the ones in ext2fs.h.
+
     @{
 */
 #define FS_EXT2_MOUNT_READONLY      0x00000000  /**< \brief Mount read-only */
