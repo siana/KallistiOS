@@ -562,7 +562,6 @@ static int ext2_inode_free_all(ext2_fs_t *fs, ext2_inode_t *inode,
             dbglog(DBG_WARNING, "ext2_inode_free_all: xattr with bad magic!\n");
         }
         else if(!--xattr->h_refcount) {
-            printf("Freeing xattr at block %d\n", (int)inode->i_file_acl);
             if((rv = mark_block_free(fs, inode->i_file_acl)))
                 return rv;
         }
