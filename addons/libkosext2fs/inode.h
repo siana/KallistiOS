@@ -122,14 +122,21 @@ void ext2_inode_mark_dirty(ext2_inode_t *inode);
 int ext2_inode_cache_wb(ext2_fs_t *fs);
 
 /* Allocate an unused inode on the specified filesystem. */
-ext2_inode_t *ext2_inode_alloc(ext2_fs_t *fs, uint32_t bg, int *err);
+ext2_inode_t *ext2_inode_alloc(ext2_fs_t *fs, uint32_t parent, int *err,
+                               uint32_t *ninode);
 
 /* Decrease the reference count on an inode. If the reference count reaches
    zero, deallocate the inode and all of its blocks. */
 int ext2_inode_deref(ext2_fs_t *fs, uint32_t inode_num, int isdir);
 
+/* Allocate a new data block for an inode, filling in the blocks array and
+   updating the block count. It is the caller's responsibility to update the
+   i_size and any timestamps needed. */
+uint8_t *ext2_inode_alloc_block(ext2_fs_t *fs, ext2_inode_t *inode, int *err);
+
 uint8_t *ext2_inode_read_block(ext2_fs_t *fs, const ext2_inode_t *inode,
-                               uint32_t block_num, uint32_t *r_block);
+                               uint32_t block_num, uint32_t *r_block,
+                               int *err);
 
 /* In symlink.c */
 int ext2_resolve_symlink(ext2_fs_t *fs, ext2_inode_t *inode, char *rv,
