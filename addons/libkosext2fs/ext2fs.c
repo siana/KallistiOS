@@ -41,7 +41,7 @@ static void make_mru(ext2_fs_t *fs, ext2_cache_t **cache, int block) {
 }
 
 /* XXXX: This needs locking! */
-uint8_t *ext2_block_read(ext2_fs_t *fs, uint32_t bl) {
+uint8_t *ext2_block_read(ext2_fs_t *fs, uint32_t bl, int *err) {
     int i;
     uint8_t *rv;
     ext2_cache_t **cache = fs->bcache;
@@ -65,7 +65,7 @@ uint8_t *ext2_block_read(ext2_fs_t *fs, uint32_t bl) {
         if(cache[0]->flags & EXT2_CACHE_FLAG_DIRTY) {
             if(ext2_block_write_nc(fs, cache[0]->block, cache[0]->data)) {
                 /* XXXX: Uh oh... */
-                errno = EIO;
+                *err = EIO;
                 return NULL;
             }
         }
@@ -73,7 +73,7 @@ uint8_t *ext2_block_read(ext2_fs_t *fs, uint32_t bl) {
 
     /* Try to read the block in question. */
     if(ext2_block_read_nc(fs, bl, cache[i]->data)) {
-        errno = EIO;
+        *err = EIO;
         cache[i]->flags = 0;            /* Mark it as invalid... */
         return NULL;
     }
@@ -158,6 +158,98 @@ int ext2_block_cache_wb(ext2_fs_t *fs) {
     }
     
     return 0;
+}
+
+uint8_t *ext2_block_alloc(ext2_fs_t *fs, uint32_t bg, uint32_t *bn, int *err) {
+    uint8_t *buf, *blk;
+    uint32_t index;
+
+    /* Don't even bother if we're mounted read-only. */
+    if(!(fs->mnt_flags & EXT2FS_MNT_FLAG_RW)) {
+        *err = EROFS;
+        return NULL;
+    }
+
+    /* See if we have any free blocks at all... */
+    if(!fs->sb.s_free_blocks_count) {
+        *err = ENOSPC;
+        return NULL;
+    }
+
+    /* See if we have any free blocks in the block group requested. */
+    if(fs->bg[bg].bg_free_blocks_count) {
+        if(!(buf = ext2_block_read(fs, fs->bg[bg].bg_block_bitmap, err)))
+            return NULL;
+
+        index = ext2_bit_find_zero((uint32_t *)buf, 0,
+                                   fs->sb.s_blocks_per_group - 1);
+        if(index < fs->sb.s_blocks_per_group) {
+            *bn = index + bg * fs->sb.s_blocks_per_group +
+                fs->sb.s_first_data_block;
+
+            if(!(blk = ext2_block_read(fs, *bn, err)))
+                return NULL;
+
+            ext2_bit_set((uint32_t *)buf, index);
+            ext2_block_mark_dirty(fs, fs->bg[bg].bg_block_bitmap);
+            --fs->bg[bg].bg_free_blocks_count;
+            --fs->sb.s_free_blocks_count;
+            fs->flags |= EXT2_FS_FLAG_SB_DIRTY;
+
+            memset(blk, 0, fs->block_size);
+            ext2_block_mark_dirty(fs, *bn);
+            return blk;
+        }
+
+        /* We shouldn't get here... But, just in case, fall through. We should
+           probably log an error and tell the user to fsck though. */
+        dbglog(DBG_WARNING, "ext2_block_alloc: Block group %" PRIu32 " "
+               "indicates that it has free blocks, but doesn't appear to. "
+               "Please run fsck on this volume!\n", bg);
+    }
+
+    /* Couldn't find a free block in the requested block group... Loop through
+       all the block groups looking for a free block. */
+    for(bg = 0; bg < fs->bg_count; ++bg) {
+        if(fs->bg[bg].bg_free_blocks_count) {
+            if(!(buf = ext2_block_read(fs, fs->bg[bg].bg_block_bitmap, err)))
+                return NULL;
+
+            index = ext2_bit_find_zero((uint32_t *)buf, 0,
+                                       fs->sb.s_blocks_per_group - 1);
+            if(index < fs->sb.s_blocks_per_group) {
+                *bn = index + bg * fs->sb.s_blocks_per_group +
+                    fs->sb.s_first_data_block;
+
+                if(!(blk = ext2_block_read(fs, *bn, err)))
+                    return NULL;
+
+                ext2_bit_set((uint32_t *)buf, index);
+                ext2_block_mark_dirty(fs, fs->bg[bg].bg_block_bitmap);
+                --fs->bg[bg].bg_free_blocks_count;
+                --fs->sb.s_free_blocks_count;
+                fs->flags |= EXT2_FS_FLAG_SB_DIRTY;
+
+                memset(blk, 0, fs->block_size);
+                ext2_block_mark_dirty(fs, *bn);
+                return blk;
+            }
+
+            /* We shouldn't get here... But, just in case, fall through. We
+               should probably log an error and tell the user to fsck though. */
+            dbglog(DBG_WARNING, "ext2_block_alloc: Block group %" PRIu32 " "
+                   "indicates that it has free blocks, but doesn't appear to. "
+                   "Please run fsck on this volume!\n", bg);
+        }
+    }
+
+    /* Uh oh... We went through everything and didn't find any. That means the
+       data in the superblock is wrong. */
+    dbglog(DBG_WARNING, "ext2_block_alloc: Filesystem indicates that it has "
+           "free blocks, but doesn't appear to. Please run fsck on this "
+           "volume!\n");
+    *err = ENOSPC;
+    return NULL;
 }
 
 uint32_t ext2_block_size(const ext2_fs_t *fs) {

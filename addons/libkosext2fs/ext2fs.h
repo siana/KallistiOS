@@ -97,7 +97,7 @@ int ext2_fs_sync(ext2_fs_t *fs);
 void ext2_fs_shutdown(ext2_fs_t *fs);
 
 int ext2_block_read_nc(ext2_fs_t *fs, uint32_t block_num, uint8_t *rv);
-uint8_t *ext2_block_read(ext2_fs_t *fs, uint32_t block_num);
+uint8_t *ext2_block_read(ext2_fs_t *fs, uint32_t block_num, int *err);
 
 int ext2_block_write_nc(ext2_fs_t *fs, uint32_t block_num, const uint8_t *blk);
 
@@ -106,6 +106,8 @@ int ext2_block_mark_dirty(ext2_fs_t *fs, uint32_t block_num);
 /* Write-back all dirty blocks from the filesystem's cache. You probably want to
    call the corresponding inode function before this one. */
 int ext2_block_cache_wb(ext2_fs_t *fs);
+
+uint8_t *ext2_block_alloc(ext2_fs_t *fs, uint32_t bg, uint32_t *bn, int *err);
 
 __END_DECLS
 

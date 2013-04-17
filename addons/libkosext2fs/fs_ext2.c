@@ -4,6 +4,7 @@
    Copyright (C) 2012, 2013 Lawrence Sebald
 */
 
+#include <time.h>
 #include <errno.h>
 #include <stdint.h>
 #include <stdlib.h>
@@ -168,9 +169,8 @@ static ssize_t fs_ext2_read(void *h, void *buf, size_t cnt) {
     /* Handle the first block specially if we are offset within it. */
     if(bo) {
         if(!(block = ext2_inode_read_block(fs, fh[fd].inode, fh[fd].ptr >> lbs,
-                                           NULL))) {
+                                           NULL, &errno))) {
             mutex_unlock(&ext2_mutex);
-            errno = EBADF;
             return -1;
         }
         
@@ -190,9 +190,8 @@ static ssize_t fs_ext2_read(void *h, void *buf, size_t cnt) {
     /* While we still have more to read, do it. */
     while(cnt) {
         if(!(block = ext2_inode_read_block(fs, fh[fd].inode, fh[fd].ptr >> lbs,
-                                           NULL))) {
+                                           NULL, &errno))) {
             mutex_unlock(&ext2_mutex);
-            errno = EBADF;
             return -1;
         }
 
@@ -318,9 +317,8 @@ retry:
     }
 
     if(!(block = ext2_inode_read_block(fs, fh[fd].inode, fh[fd].ptr >> lbs,
-                                       NULL))) {
+                                       NULL, &errno))) {
         mutex_unlock(&ext2_mutex);
-        errno = EBADF;
         return NULL;
     }
 
@@ -478,6 +476,9 @@ static int fs_ext2_unlink(vfs_handler_t *vfs, const char *fn) {
         return -1;
     }
 
+    /* Update the times in the parent's inode */
+    pinode->i_ctime = pinode->i_mtime = time(NULL);
+
     /* We're done with these now, so clean them up. */
     ext2_inode_put(pinode);
     ext2_inode_put(inode);
@@ -557,6 +558,115 @@ static int fs_ext2_stat(vfs_handler_t *vfs, const char *fn, stat_t *rv) {
     ext2_inode_put(inode);
     mutex_unlock(&ext2_mutex);
 
+    return 0;
+}
+
+static int fs_ext2_mkdir(vfs_handler_t *vfs, const char *fn) {
+    fs_ext2_fs_t *fs = (fs_ext2_fs_t *)vfs->privdata;
+    int irv;
+    ext2_inode_t *inode, *ninode;
+    uint32_t inode_num, ninode_num;
+    char *cp, *nd;
+
+    /* Make sure there is a filename given */
+    if(!fn) {
+        errno = ENOENT;
+        return -1;
+    }
+
+    /* Make sure the fs is writable */
+    if(!(fs->mount_flags & FS_EXT2_MOUNT_READWRITE)) {
+        errno = EROFS;
+        return -1;
+    }
+
+    /* The root directory has to exist... */
+    if(!*fn) {
+        errno = EEXIST;
+        return -1;
+    }
+
+    /* Make a writable copy of the filename */
+    if(!(cp = strdup(fn))) {
+        errno = ENOMEM;
+        return -1;
+    }
+
+    /* Separate our copy into the parent and the directory we want to create */
+    if(!(nd = strrchr(cp, '/'))) {
+        free(cp);
+        errno = ENOENT;
+        return -1;
+    }
+
+    /* Split the string. */
+    *nd++ = 0;
+
+    mutex_lock(&ext2_mutex);
+
+    /* Find the parent of the directory we want to create. */
+    if((irv = ext2_inode_by_path(fs->fs, cp, &inode, &inode_num, 1, NULL))) {
+        mutex_unlock(&ext2_mutex);
+        free(cp);
+        errno = -irv;
+        return -1;
+    }
+
+    /* See if the directory contains the item we want to create */
+    if(ext2_dir_entry(fs->fs, inode, nd)) {
+        ext2_inode_put(inode);
+        mutex_unlock(&ext2_mutex);
+        free(cp);
+        errno = EEXIST;
+        return -1;
+    }
+
+    /* Allocate a new inode for the new directory. */
+    if(!(ninode = ext2_inode_alloc(fs->fs, inode_num, &irv, &ninode_num))) {
+        ext2_inode_put(inode);
+        mutex_unlock(&ext2_mutex);
+        free(cp);
+        errno = irv;
+        return -1;
+    }
+
+    /* Fill in the inode. Copy most of the interesting parts from the parent. */
+    ninode->i_mode = inode->i_mode;
+    ninode->i_uid = inode->i_uid;
+    ninode->i_atime = ninode->i_ctime = ninode->i_mtime = time(NULL);
+    ninode->i_gid = inode->i_gid;
+    ninode->i_osd2.l_i_uid_high = inode->i_osd2.l_i_uid_high;
+    ninode->i_osd2.l_i_gid_high = inode->i_osd2.l_i_gid_high;
+
+    /* Fill in the directory data for the new directory. */
+    if((irv = ext2_dir_create_empty(fs->fs, ninode, ninode_num, inode_num))) {
+        ext2_inode_put(inode);
+        ext2_inode_deref(fs->fs, ninode_num, 1);
+        mutex_unlock(&ext2_mutex);
+        free(cp);
+        errno = -irv;
+        return -1;
+    }
+
+    /* Add an entry to the parent directory. */
+    if((irv = ext2_dir_add_entry(fs->fs, inode, nd, ninode_num, ninode,
+                                 NULL))) {
+        ext2_inode_put(inode);
+        ext2_inode_deref(fs->fs, ninode_num, 1);
+        mutex_unlock(&ext2_mutex);
+        free(cp);
+        errno = -irv;
+        return -1;
+    }
+
+    /* Increment the parent directory's link count. */
+    ++inode->i_links_count;
+    ext2_inode_mark_dirty(inode);
+
+    ext2_inode_put(ninode);
+    ext2_inode_put(inode);
+    mutex_unlock(&ext2_mutex);
+    free(cp);
     return 0;
 }
 
@@ -684,7 +794,9 @@ static int fs_ext2_rmdir(vfs_handler_t *vfs, const char *fn) {
         return -1;
     }
 
-    /* Decrement the reference count on the parent's inode. */
+    /* Decrement the reference count on the parent's inode and update the times
+       stored in it. */
+    pinode->i_ctime = pinode->i_mtime = time(NULL);
     --pinode->i_links_count;
     ext2_inode_mark_dirty(pinode);
     ext2_inode_put(pinode);
@@ -755,7 +867,7 @@ static vfs_handler_t vh = {
     NULL,                       /* mmap */
     NULL,                       /* complete */
     fs_ext2_stat,               /* stat */
-    NULL,                       /* mkdir */
+    fs_ext2_mkdir,              /* mkdir */
     fs_ext2_rmdir,              /* rmdir */
     fs_ext2_fcntl,              /* fcntl */
     NULL                        /* poll */

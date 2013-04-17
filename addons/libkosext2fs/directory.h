@@ -43,8 +43,18 @@ ext2_dirent_t *ext2_dir_entry(ext2_fs_t *fs, const struct ext2_inode *dir,
 /* Delete an entry from a directory. Note that this does nothing about cleaning
    up the inode, but it does tell you which inode you're going to need to clean
    up (or lower the reference count on). */
-int ext2_dir_rm_entry(ext2_fs_t *fs, const struct ext2_inode *dir,
-                      const char *fn, uint32_t *inode);
+int ext2_dir_rm_entry(ext2_fs_t *fs, struct ext2_inode *dir, const char *fn,
+                      uint32_t *inode);
+
+/* Add an entry to a directory. */
+int ext2_dir_add_entry(ext2_fs_t *fs, struct ext2_inode *dir, const char *fn,
+                       uint32_t inode_num, const struct ext2_inode *ent,
+                       ext2_dirent_t **rv);
+
+/* Create the structure of an empty directory. The inode for the directory
+   must already be allocated. */
+int ext2_dir_create_empty(ext2_fs_t *fs, struct ext2_inode *dir,
+                          uint32_t inode_num, uint32_t parent_inode);
 
 __END_DECLS
 #endif /* !__EXT2_DIRECTORY_H */

@@ -196,6 +196,7 @@ static ext2_inode_t *ext2_inode_read(ext2_fs_t *fs, uint32_t inode_num) {
     uint8_t *buf;
     int in_per_block;
     uint32_t inode_block;
+    int err;
 
     in_per_block = (fs->block_size) / fs->sb.s_inode_size;
 
@@ -207,7 +208,7 @@ static ext2_inode_t *ext2_inode_read(ext2_fs_t *fs, uint32_t inode_num) {
     if(inode_num > fs->sb.s_inodes_count)
         return NULL;
 
-    if(!(buf = ext2_block_read(fs, fs->bg[bg].bg_inode_bitmap)))
+    if(!(buf = ext2_block_read(fs, fs->bg[bg].bg_inode_bitmap, &err)))
         return NULL;
 
     if(!ext2_bit_is_set((uint32_t *)buf, index))
@@ -218,7 +219,7 @@ static ext2_inode_t *ext2_inode_read(ext2_fs_t *fs, uint32_t inode_num) {
     inode_block = fs->bg[bg].bg_inode_table + (index / in_per_block);
     index %= in_per_block;
 
-    if(!(buf = ext2_block_read(fs, inode_block)))
+    if(!(buf = ext2_block_read(fs, inode_block, &err)))
         return NULL;
 
     /* Return the inode in question  */
@@ -251,8 +252,8 @@ static int ext2_inode_wb(struct int_inode *inode) {
     inode_block = fs->bg[bg].bg_inode_table + (index / in_per_block);
     index %= in_per_block;
 
-    if(!(buf = ext2_block_read(fs, inode_block)))
-        return -errno;
+    if(!(buf = ext2_block_read(fs, inode_block, &rv)))
+        return rv;
 
     /* Write to the block and mark it as dirty so that it'll get flushed. */
     memcpy(buf + (index * fs->sb.s_inode_size), inode, sizeof(ext2_inode_t));
@@ -281,10 +282,12 @@ int ext2_inode_cache_wb(ext2_fs_t *fs) {
     return rv;
 }
 
-ext2_inode_t *ext2_inode_alloc(ext2_fs_t *fs, uint32_t bg, int *err) {
+ext2_inode_t *ext2_inode_alloc(ext2_fs_t *fs, uint32_t parent, int *err,
+                               uint32_t *ninode) {
     uint8_t *buf;
     uint32_t index;
     struct int_inode *i;
+    uint32_t bg;
 
     /* Don't even bother if we're mounted read-only. */
     if(!(fs->mnt_flags & EXT2FS_MNT_FLAG_RW)) {
@@ -298,15 +301,16 @@ ext2_inode_t *ext2_inode_alloc(ext2_fs_t *fs, uint32_t bg, int *err) {
         return NULL;
     }
 
+    /* Figure out what block group the parent is in and try that one first. */
+    bg = (parent - 1) / fs->sb.s_inodes_per_group;
+
     /* See if we have any free inodes in the block group requested. */
     if(fs->bg[bg].bg_free_inodes_count) {
-        if(!(buf = ext2_block_read(fs, fs->bg[bg].bg_inode_bitmap))) {
-            *err = errno;
+        if(!(buf = ext2_block_read(fs, fs->bg[bg].bg_inode_bitmap, err)))
             return NULL;
-        }
 
-        index = ext2_bit_find_nonzero((uint32_t *)buf, 0,
-                                      fs->sb.s_inodes_per_group - 1);
+        index = ext2_bit_find_zero((uint32_t *)buf, 0,
+                                   fs->sb.s_inodes_per_group - 1);
         if(index < fs->sb.s_inodes_per_group) {
             ext2_bit_set((uint32_t *)buf, index);
             ext2_block_mark_dirty(fs, fs->bg[bg].bg_inode_bitmap);
@@ -318,6 +322,7 @@ ext2_inode_t *ext2_inode_alloc(ext2_fs_t *fs, uint32_t bg, int *err) {
                                                    1, err);
             memset(i, 0, sizeof(ext2_inode_t));
             i->flags |= INODE_FLAG_DIRTY;
+            *ninode = i->inode_num;
             return (ext2_inode_t *)i;
         }
 
@@ -332,13 +337,11 @@ ext2_inode_t *ext2_inode_alloc(ext2_fs_t *fs, uint32_t bg, int *err) {
        all the block groups looking for a free inode. */
     for(bg = 0; bg < fs->bg_count; ++bg) {
         if(fs->bg[bg].bg_free_inodes_count) {
-            if(!(buf = ext2_block_read(fs, fs->bg[bg].bg_inode_bitmap))) {
-                *err = errno;
+            if(!(buf = ext2_block_read(fs, fs->bg[bg].bg_inode_bitmap, err)))
                 return NULL;
-            }
 
-            index = ext2_bit_find_nonzero((uint32_t *)buf, 0,
-                                          fs->sb.s_inodes_per_group - 1);
+            index = ext2_bit_find_zero((uint32_t *)buf, 0,
+                                       fs->sb.s_inodes_per_group - 1);
             if(index < fs->sb.s_inodes_per_group) {
                 ext2_bit_set((uint32_t *)buf, index);
                 ext2_block_mark_dirty(fs, fs->bg[bg].bg_inode_bitmap);
@@ -350,6 +353,7 @@ ext2_inode_t *ext2_inode_alloc(ext2_fs_t *fs, uint32_t bg, int *err) {
                                                        + 1, err);
                 memset(i, 0, sizeof(ext2_inode_t));
                 i->flags |= INODE_FLAG_DIRTY;
+                *ninode = i->inode_num;
                 return (ext2_inode_t *)i;
             }
 
@@ -361,6 +365,11 @@ ext2_inode_t *ext2_inode_alloc(ext2_fs_t *fs, uint32_t bg, int *err) {
         }
     }
 
+    /* Uh oh... We went through everything and didn't find any. That means the
+       data in the superblock is wrong. */
+    dbglog(DBG_WARNING, "ext2_inode_alloc: Filesystem indicates that it has "
+           "free inodes, but doesn't appear to. Please run fsck on this "
+           "volume!\n");
     *err = ENOSPC;
     return NULL;
 }
@@ -368,11 +377,12 @@ ext2_inode_t *ext2_inode_alloc(ext2_fs_t *fs, uint32_t bg, int *err) {
 static inline int mark_block_free(ext2_fs_t *fs, uint32_t blk) {
     uint32_t bg, index;
     uint8_t *buf;
+    int err;
 
     bg = (blk - fs->sb.s_first_data_block) / fs->sb.s_blocks_per_group;
     index = (blk - fs->sb.s_first_data_block) % fs->sb.s_blocks_per_group;
 
-    if(!(buf = ext2_block_read(fs, fs->bg[bg].bg_block_bitmap)))
+    if(!(buf = ext2_block_read(fs, fs->bg[bg].bg_block_bitmap, &err)))
         return -EIO;
 
     /* Mark the block as free in the bitmap and increase the counters. */
@@ -532,7 +542,7 @@ static int ext2_inode_free_all(ext2_fs_t *fs, ext2_inode_t *inode,
     bg = (inode_num - 1) / fs->sb.s_inodes_per_group;
     index = (inode_num - 1) % fs->sb.s_inodes_per_group;
 
-    if(!(buf = ext2_block_read(fs, fs->bg[bg].bg_inode_bitmap)))
+    if(!(buf = ext2_block_read(fs, fs->bg[bg].bg_inode_bitmap, &rv)))
         return -EIO;
 
     /* Mark the inode as free in the bitmap and increase the counters. */
@@ -553,7 +563,7 @@ static int ext2_inode_free_all(ext2_fs_t *fs, ext2_inode_t *inode,
        extended attributes too? For now, assume that both can until we find some
        reason that assumption fails. */
     if(inode->i_file_acl) {
-        if(!(buf = ext2_block_read(fs, inode->i_file_acl)))
+        if(!(buf = ext2_block_read(fs, inode->i_file_acl, &rv)))
             return -EIO;
 
         xattr = (ext2_xattr_hdr_t *)buf;
@@ -654,6 +664,223 @@ int ext2_inode_deref(ext2_fs_t *fs, uint32_t inode_num, int isdir) {
     ext2_inode_put(inode);
 
     return rv;
+}
+
+static uint8_t *alloc_direct_blk(ext2_fs_t *fs, struct int_inode *inode,
+                                 uint32_t bg, uint32_t *rbn, int *err) {
+    uint8_t *buf;
+    uint32_t bn;
+
+    if(!(buf = ext2_block_alloc(fs, bg, &bn, err)))
+        return NULL;
+
+    *rbn = bn;
+    inode->inode.i_blocks += 2 << fs->sb.s_log_block_size;
+    inode->flags |= INODE_FLAG_DIRTY;
+
+    return buf;
+}
+
+static uint8_t *alloc_ind_blk(ext2_fs_t *fs, struct int_inode *inode,
+                              uint32_t bg, uint32_t *rbn, int *err) {
+    uint8_t *buf;
+    uint32_t *buf32;
+    uint32_t bn, bn2;
+
+    /* Allocate the indirect block */
+    if(!(buf = ext2_block_alloc(fs, bg, &bn, err)))
+        return NULL;
+
+    buf32 = (uint32_t *)buf;
+
+    /* Allocate the direct block and update the inode */
+    if(!(buf = alloc_direct_blk(fs, inode, bg, &bn2, err))) {
+        mark_block_free(fs, bn);
+        return NULL;
+    }
+
+    buf32[0] = bn2;
+    *rbn = bn;
+
+    return buf;
+}
+
+static uint8_t *alloc_dind_blk(ext2_fs_t *fs, struct int_inode *inode,
+                               uint32_t bg, uint32_t *rbn, int *err) {
+    uint8_t *buf;
+    uint32_t *buf32;
+    uint32_t bn, bn2;
+
+    /* Allocate the double indirect block */
+    if(!(buf = ext2_block_alloc(fs, bg, &bn, err)))
+        return NULL;
+
+    buf32 = (uint32_t *)buf;
+
+    /* Allocate the indirect and direct blocks and update the inode */
+    if(!(buf = alloc_ind_blk(fs, inode, bg, &bn2, err))) {
+        mark_block_free(fs, bn);
+        return NULL;
+    }
+
+    buf32[0] = bn2;
+    *rbn = bn;
+
+    return buf;
+}
+
+static uint8_t *alloc_tind_blk(ext2_fs_t *fs, struct int_inode *inode,
+                               uint32_t bg, uint32_t *rbn, int *err) {
+    uint8_t *buf;
+    uint32_t *buf32;
+    uint32_t bn, bn2;
+
+    /* Allocate the double indirect block */
+    if(!(buf = ext2_block_alloc(fs, bg, &bn, err)))
+        return NULL;
+
+    buf32 = (uint32_t *)buf;
+
+    /* Allocate the double indirect, indirect, and direct blocks and update the
+       inode */
+    if(!(buf = alloc_dind_blk(fs, inode, bg, &bn2, err))) {
+        mark_block_free(fs, bn);
+        return NULL;
+    }
+
+    buf32[0] = bn2;
+    *rbn = bn;
+
+    return buf;
+}
+
+uint8_t *ext2_inode_alloc_block(ext2_fs_t *fs, ext2_inode_t *inode, int *err) {
+    struct int_inode *iinode = (struct int_inode *)inode;
+    uint32_t blocks = inode->i_blocks >> (fs->sb.s_log_block_size + 1);
+    uint8_t *buf;
+    uint32_t *ind, *ind2, *ind3;
+    uint32_t bg, ibn, ibn2, ibn3;
+    uint32_t blocks_per_ind = fs->block_size >> 2;
+
+    /* Don't even bother if we're mounted read-only. */
+    if(!(fs->mnt_flags & EXT2FS_MNT_FLAG_RW)) {
+        *err = EROFS;
+        return NULL;
+    }
+
+    bg = (iinode->inode_num - 1) / fs->sb.s_inodes_per_group;
+
+    /* First, see if we have a slot in the direct blocks open still. */
+    if(blocks < 12) {
+        return alloc_direct_blk(fs, iinode, bg, &inode->i_block[blocks], err);
+    }
+    else if(blocks == 12) {
+        return alloc_ind_blk(fs, iinode, bg, &inode->i_block[12], err);
+    }
+
+    blocks -= 12;
+
+    /* Do we have space in the current indirect block? */
+    if(blocks < blocks_per_ind) {
+        /* Read the indirect block in. */
+        if(!(ind = (uint32_t *)ext2_block_read(fs, inode->i_block[12], err))) {
+            return NULL;
+        }
+
+        /* Allocate the data block. */
+        if((buf = alloc_direct_blk(fs, iinode, bg, &ind[blocks], err)))
+            ext2_block_mark_dirty(fs, inode->i_block[12]);
+
+        return buf;
+    }
+    else if(blocks == blocks_per_ind) {
+        return alloc_dind_blk(fs, iinode, bg, &inode->i_block[13], err);
+    }
+
+    blocks -= blocks_per_ind;
+
+    /* Do we have space in the first level of the doubly-indirect block? */
+    if(blocks < (blocks_per_ind * blocks_per_ind)) {
+        /* Read the double indirect block in. */
+        if(!(ind2 = (uint32_t *)ext2_block_read(fs, inode->i_block[13], err)))
+            return NULL;
+
+        /* Figure out what entry we want in here... */
+        ibn = blocks / blocks_per_ind;
+        blocks %= blocks_per_ind;
+
+        if(blocks) {
+            if(!(ind = (uint32_t *)ext2_block_read(fs, ind2[ibn], err)))
+                return NULL;
+
+            /* Allocate the data block. */
+            if((buf = alloc_direct_blk(fs, iinode, bg, &ind[blocks], err)))
+                ext2_block_mark_dirty(fs, ind2[ibn]);
+
+            return buf;
+        }
+        else {
+            if((buf = alloc_ind_blk(fs, iinode, bg, &ind2[ibn], err)))
+                ext2_block_mark_dirty(fs, inode->i_block[13]);
+
+            return buf;
+        }
+    }
+    else if(blocks == (blocks_per_ind * blocks_per_ind)) {
+        return alloc_tind_blk(fs, iinode, bg, &inode->i_block[14], err);
+    }
+
+    /* So, it comes to this... */
+    blocks -= blocks_per_ind * blocks_per_ind;
+    ibn3 = blocks / (blocks_per_ind * blocks_per_ind);
+    ibn2 = (blocks % (blocks_per_ind * blocks_per_ind)) / blocks_per_ind;
+    ibn = blocks % blocks_per_ind;
+
+    /* Do we have the EXTREMELY unlikely case that we've actually filled up the
+       trebly indirect block?! */
+    if(!ibn3 && !ibn2 && !ibn) {
+        *err = EFBIG;
+        return NULL;
+    }
+    /* Do we have to allocate a new doubly-indirect block? */
+    else if(!ibn2 && !blocks) {
+        if(!(ind3 = (uint32_t *)ext2_block_read(fs, inode->i_block[14], err)))
+            return NULL;
+
+        if((buf = alloc_dind_blk(fs, iinode, bg, &ind3[ibn3], err)))
+            ext2_block_mark_dirty(fs, inode->i_block[14]);
+
+        return buf;
+    }
+    /* What about a singly-indirect one? */
+    else if(!ibn) {
+        if(!(ind3 = (uint32_t *)ext2_block_read(fs, inode->i_block[14], err)))
+            return NULL;
+
+        if(!(ind2 = (uint32_t *)ext2_block_read(fs, ind3[ibn3], err)))
+            return NULL;
+
+        if((buf = alloc_ind_blk(fs, iinode, bg, &ind2[ibn2], err)))
+            ext2_block_mark_dirty(fs, ind3[ibn3]);
+
+        return buf;
+    }
+    /* We just need the data block if we get here. */
+    else {
+        if(!(ind3 = (uint32_t *)ext2_block_read(fs, inode->i_block[14], err)))
+            return NULL;
+
+        if(!(ind2 = (uint32_t *)ext2_block_read(fs, ind3[ibn3], err)))
+            return NULL;
+
+        if(!(ind = (uint32_t *)ext2_block_read(fs, ind2[ibn2], err)))
+            return NULL;
+
+        if((buf = alloc_direct_blk(fs, iinode, bg, &ind[ibn], err)))
+            ext2_block_mark_dirty(fs, ind2[ibn2]);
+
+        return buf;
+    }
 }
 
 static ext2_dirent_t *search_dir(uint8_t *buf, int block_size,
@@ -836,7 +1063,7 @@ int ext2_inode_by_path(ext2_fs_t *fs, const char *path, ext2_inode_t **rv,
         /* Run through any direct blocks in the inode. */
         for(i = 0; i < blocks && inode->i_block[i] && i < 12; ++i) {
             /* Grab the block, looking in the directory cache. */
-            if(!(buf = ext2_block_read(fs, inode->i_block[i]))) {
+            if(!(buf = ext2_block_read(fs, inode->i_block[i], &err))) {
                 free(ipath);
                 ext2_inode_put(inode);
                 return -EIO;
@@ -858,7 +1085,7 @@ int ext2_inode_by_path(ext2_fs_t *fs, const char *path, ext2_inode_t **rv,
             goto out;
 
         /* Next, look through the indirect block. */
-        if(!(ib = (uint32_t *)ext2_block_read(fs, inode->i_block[12]))) {
+        if(!(ib = (uint32_t *)ext2_block_read(fs, inode->i_block[12], &err))) {
             free(ipath);
             ext2_inode_put(inode);
             return -EIO;
@@ -876,7 +1103,8 @@ int ext2_inode_by_path(ext2_fs_t *fs, const char *path, ext2_inode_t **rv,
         /* Next, look through the doubly-indirect block. */
         if(inode->i_block[13]) {
             /* Grab the block, looking in the directory cache. */
-            if(!(ib = (uint32_t *)ext2_block_read(fs, inode->i_block[13]))) {
+            if(!(ib = (uint32_t *)ext2_block_read(fs, inode->i_block[13],
+                                                  &err))) {
                 free(ipath);
                 ext2_inode_put(inode);
                 return -EIO;
@@ -896,7 +1124,8 @@ int ext2_inode_by_path(ext2_fs_t *fs, const char *path, ext2_inode_t **rv,
            have to look all the way through one of these... */
         if(inode->i_block[14]) {
             /* Grab the block, looking in the directory cache. */
-            if(!(ib = (uint32_t *)ext2_block_read(fs, inode->i_block[14]))) {
+            if(!(ib = (uint32_t *)ext2_block_read(fs, inode->i_block[14],
+                                                  &err))) {
                 free(ipath);
                 ext2_inode_put(inode);
                 return -EIO;
@@ -1017,14 +1246,14 @@ next_token:
 }
 
 uint8_t *ext2_inode_read_block(ext2_fs_t *fs, const ext2_inode_t *inode,
-                               uint32_t block_num, uint32_t *r_block) {
+                               uint32_t block_num, uint32_t *r_block,
+                               int *err) {
     uint32_t blks_per_ind, ibn;
     uint32_t *iblock;
-    uint8_t *rv;
 
     /* Check to be sure we're not being asked to do something stupid... */
     if(block_num >= inode->i_blocks) {
-        errno = EINVAL;
+        *err = EINVAL;
         return NULL;
     }
 
@@ -1033,7 +1262,7 @@ uint8_t *ext2_inode_read_block(ext2_fs_t *fs, const ext2_inode_t *inode,
         if(r_block)
             *r_block = inode->i_block[block_num];
 
-        return ext2_block_read(fs, inode->i_block[block_num]);
+        return ext2_block_read(fs, inode->i_block[block_num], err);
     }
 
     blks_per_ind = fs->block_size >> 2;
@@ -1041,54 +1270,52 @@ uint8_t *ext2_inode_read_block(ext2_fs_t *fs, const ext2_inode_t *inode,
 
     /* Are we looking at the singly-indirect block? */
     if(block_num < blks_per_ind) {
-        if(!(iblock = (uint32_t *)ext2_block_read(fs, inode->i_block[12])))
+        if(!(iblock = (uint32_t *)ext2_block_read(fs, inode->i_block[12], err)))
             return NULL;
 
         if(r_block)
             *r_block = iblock[block_num];
 
-        rv = ext2_block_read(fs, iblock[block_num]);
-        return rv;
+        return ext2_block_read(fs, iblock[block_num], err);
     }
 
     /* Ok, we're looking at at least a doubly-indirect block... */
     block_num -= blks_per_ind;
     if(block_num < (blks_per_ind * blks_per_ind)) {
-        if(!(iblock = (uint32_t *)ext2_block_read(fs, inode->i_block[13])))
+        if(!(iblock = (uint32_t *)ext2_block_read(fs, inode->i_block[13], err)))
             return NULL;
 
         /* Figure out what entry we want in here... */
         ibn = block_num / blks_per_ind;
         block_num %= blks_per_ind;
 
-        if(!(iblock = (uint32_t *)ext2_block_read(fs, iblock[ibn])))
+        if(!(iblock = (uint32_t *)ext2_block_read(fs, iblock[ibn], err)))
             return NULL;
 
         /* Ok... Now we should be good to go. */
         if(r_block)
             *r_block = iblock[block_num];
 
-        rv = ext2_block_read(fs, iblock[block_num]);
-        return rv;
+        return ext2_block_read(fs, iblock[block_num], err);
     }
 
     /* Ugh... You're going to make me look at a triply-indirect block now? */
     block_num -= blks_per_ind * blks_per_ind;
-    if(!(iblock = (uint32_t *)ext2_block_read(fs, inode->i_block[14])))
+    if(!(iblock = (uint32_t *)ext2_block_read(fs, inode->i_block[14], err)))
         return NULL;
 
     /* Figure out what entry we want in here... */
     ibn = block_num / blks_per_ind;
     block_num %= blks_per_ind;
 
-    if(!(iblock = (uint32_t *)ext2_block_read(fs, iblock[ibn])))
+    if(!(iblock = (uint32_t *)ext2_block_read(fs, iblock[ibn], err)))
         return NULL;
 
     /* And in this one too... */
     ibn = block_num / blks_per_ind;
     block_num %= blks_per_ind;
 
-    if(!(iblock = (uint32_t *)ext2_block_read(fs, iblock[ibn])))
+    if(!(iblock = (uint32_t *)ext2_block_read(fs, iblock[ibn], err)))
         return NULL;
 
     /* Ok... Now we should be good to go. Finally. */
@@ -1096,12 +1323,11 @@ uint8_t *ext2_inode_read_block(ext2_fs_t *fs, const ext2_inode_t *inode,
         if(r_block)
             *r_block = iblock[block_num];
 
-        rv = ext2_block_read(fs, iblock[block_num]);
-        return rv;
+        return ext2_block_read(fs, iblock[block_num], err);
     }
     else {
         /* This really shouldn't happen... */
-        errno = EIO;
+        *err = EIO;
         return NULL;
     }
 }
