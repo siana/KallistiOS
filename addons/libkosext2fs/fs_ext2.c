@@ -1440,6 +1440,7 @@ int fs_ext2_unmount(const char *mp) {
 
         /* XXXX: We should probably do something with open files... */
         nmmgr_handler_remove(&i->vfsh->nmmgr);
+        ext2_fs_shutdown(i->fs);
         free(i->vfsh);
         free(i);
     }
@@ -1478,6 +1479,7 @@ int fs_ext2_shutdown(void) {
 
         /* XXXX: We should probably do something with open files... */
         nmmgr_handler_remove(&i->vfsh->nmmgr);
+        ext2_fs_shutdown(i->fs);
         free(i->vfsh);
         free(i);
 
