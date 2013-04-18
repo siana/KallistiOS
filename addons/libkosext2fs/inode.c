@@ -789,6 +789,10 @@ uint8_t *ext2_inode_alloc_block(ext2_fs_t *fs, ext2_inode_t *inode, int *err) {
         return NULL;
     }
 
+    /* Subtract out the xattr block if there is one. */
+    if(inode->i_file_acl)
+        blocks -= 1;
+
     bg = (iinode->inode_num - 1) / fs->sb.s_inodes_per_group;
 
     /* First, see if we have a slot in the direct blocks open still. */
@@ -1271,9 +1275,14 @@ uint8_t *ext2_inode_read_block(ext2_fs_t *fs, const ext2_inode_t *inode,
                                int *err) {
     uint32_t blks_per_ind, ibn;
     uint32_t *iblock;
+    int shift = (1 << fs->sb.s_log_block_size);
+    int sub = 0;
+
+    if(inode->i_file_acl)
+        sub = 1 << shift;
 
     /* Check to be sure we're not being asked to do something stupid... */
-    if(block_num >= inode->i_blocks) {
+    if((block_num << shift) >= inode->i_blocks - sub) {
         *err = EINVAL;
         return NULL;
     }
