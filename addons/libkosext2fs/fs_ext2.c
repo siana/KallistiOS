@@ -252,9 +252,23 @@ static ssize_t fs_ext2_read(void *h, void *buf, size_t cnt) {
     mutex_lock(&ext2_mutex);
 
     /* Check that the fd is valid */
-    if(fd >= MAX_EXT2_FILES || !fh[fd].inode_num || (fh[fd].mode & O_DIR)) {
+    if(fd >= MAX_EXT2_FILES || !fh[fd].inode_num) {
         mutex_unlock(&ext2_mutex);
         errno = EINVAL;
+        return -1;
+    }
+
+    /* Make sure we're not trying to read a file not opened for reading. */
+    if(!(fh[fd].mode & O_RDONLY)) {
+        mutex_unlock(&ext2_mutex);
+        errno = EBADF;
+        return -1;
+    }
+
+    /* Make sure we're not trying to read a directory with read */
+    if(fh[fd].mode & O_DIR) {
+        mutex_unlock(&ext2_mutex);
+        errno = EISDIR;
         return -1;
     }
 
@@ -403,7 +417,7 @@ static dirent_t *fs_ext2_readdir(void *h) {
     /* Check that the fd is valid */
     if(fd >= MAX_EXT2_FILES || !fh[fd].inode_num || !(fh[fd].mode & O_DIR)) {
         mutex_unlock(&ext2_mutex);
-        errno = EINVAL;
+        errno = EBADF;
         return NULL;
     }
 
