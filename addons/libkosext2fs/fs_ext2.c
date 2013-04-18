@@ -120,7 +120,7 @@ static void *fs_ext2_open(vfs_handler_t *vfs, const char *fn, int mode) {
 
     /* Make sure if we're going to be writing to the file that the fs is mounted
        read/write. */
-    if((mode & (O_TRUNC | O_WRONLY)) &&
+    if((mode & (O_TRUNC | O_WRONLY | O_RDWR)) &&
        !(mnt->mount_flags & FS_EXT2_MOUNT_READWRITE)) {
            errno = EROFS;
            return NULL;
@@ -192,7 +192,7 @@ static void *fs_ext2_open(vfs_handler_t *vfs, const char *fn, int mode) {
 
 created:
     /* Do we need to truncate the file? */
-    if((mode & O_WRONLY) && (mode & O_TRUNC)) {
+    if((mode & (O_WRONLY | O_RDWR)) && (mode & O_TRUNC)) {
         if((rv = ext2_inode_free_all(mnt->fs, fh[fd].inode, fh[fd].inode_num,
                                      0))) {
             errno = -rv;
@@ -214,11 +214,6 @@ created:
     fh[fd].ptr = 0;
     fh[fd].fs = mnt;
 
-    /* Are we appending (and writing, of course... appending without writing is
-       kinda silly, after all)? */
-    if((mode & O_WRONLY) && (mode & O_APPEND))
-        fh[fd].ptr = fh[fd].inode->i_size;
-
     mutex_unlock(&ext2_mutex);
 
     return (void *)(fd + 1);
@@ -233,9 +228,6 @@ static void fs_ext2_close(void *h) {
         ext2_inode_put(fh[fd].inode);
         fh[fd].inode_num = 0;
         fh[fd].mode = 0;
-
-        /* This will require more work probably when we support writing, but for
-           now this is enough... */
     }
 
     mutex_unlock(&ext2_mutex);
@@ -248,18 +240,20 @@ static ssize_t fs_ext2_read(void *h, void *buf, size_t cnt) {
     uint8_t *block;
     uint8_t *bbuf = (uint8_t *)buf;
     ssize_t rv;
+    int mode;
 
     mutex_lock(&ext2_mutex);
 
     /* Check that the fd is valid */
     if(fd >= MAX_EXT2_FILES || !fh[fd].inode_num) {
         mutex_unlock(&ext2_mutex);
-        errno = EINVAL;
+        errno = EBADF;
         return -1;
     }
 
-    /* Make sure we're not trying to read a file not opened for reading. */
-    if(!(fh[fd].mode & O_RDONLY)) {
+    /* Make sure the fd is open for reading */
+    mode = fh[fd].mode & O_MODE_MASK;
+    if(mode != O_RDONLY && mode != O_RDWR) {
         mutex_unlock(&ext2_mutex);
         errno = EBADF;
         return -1;
@@ -325,6 +319,127 @@ static ssize_t fs_ext2_read(void *h, void *buf, size_t cnt) {
     }
 
     /* We're done, clean up and return. */
+    mutex_unlock(&ext2_mutex);
+    return rv;
+}
+
+static ssize_t fs_ext2_write(void *h, const void *buf, size_t cnt) {
+    file_t fd = ((file_t)h) - 1;
+    ext2_fs_t *fs;
+    uint32_t bs, lbs, bo, bn;
+    uint8_t *block;
+    uint8_t *bbuf = (uint8_t *)buf;
+    ssize_t rv;
+    uint64_t nblocks;
+    int err, mode;
+
+    mutex_lock(&ext2_mutex);
+
+    /* Check that the fd is valid */
+    if(fd >= MAX_EXT2_FILES || !fh[fd].inode_num) {
+        mutex_unlock(&ext2_mutex);
+        errno = EBADF;
+        return -1;
+    }
+
+    /* Make sure the fd is open for writing */
+    mode = fh[fd].mode & O_MODE_MASK;
+    if(mode != O_WRONLY && mode != O_RDWR) {
+        mutex_unlock(&ext2_mutex);
+        errno = EBADF;
+        return -1;
+    }
+
+    fs = fh[fd].fs->fs;
+    bs = ext2_block_size(fs);
+    lbs = ext2_log_block_size(fs);
+    rv = (ssize_t)cnt;
+    bo = fh[fd].ptr & ((1 << lbs) - 1);
+
+    /* Reset the file pointer to the end of the file if we've got the append
+       flag set. */
+    if(fh[fd].mode & O_APPEND) {
+        fh[fd].ptr = fh[fd].inode->i_size;
+    }
+
+    /* If we have already moved beyond the end of the file with a seek
+       operation, allocate any blank blocks we need to to satisfy that. */
+    if(fh[fd].ptr > fh[fd].inode->i_size) {
+        nblocks = (fh[fd].ptr - fh[fd].inode->i_size) >> lbs;
+
+        while(nblocks--) {
+            if(!(block = ext2_inode_alloc_block(fs, fh[fd].inode, &errno))) {
+                mutex_unlock(&ext2_mutex);
+                return -1;
+            }
+        }
+
+        fh[fd].inode->i_size = fh[fd].ptr;
+    }
+
+    /* Handle the first block specially if we are offset within it. */
+    if(bo) {
+        if(!(block = ext2_inode_read_block(fs, fh[fd].inode, fh[fd].ptr >> lbs,
+                                           &bn, &errno))) {
+            mutex_unlock(&ext2_mutex);
+            return -1;
+        }
+
+        if(cnt > bs - bo) {
+            memcpy(block + bo, bbuf, bs - bo);
+            fh[fd].ptr += bs - bo;
+            cnt -= bs - bo;
+            bbuf += bs - bo;
+        }
+        else {
+            memcpy(block + bo, bbuf, cnt);
+            fh[fd].ptr += cnt;
+            cnt = 0;
+        }
+
+        ext2_block_mark_dirty(fs, bn);
+    }
+
+    /* While we still have more to write, do it. */
+    while(cnt) {
+        if(!(block = ext2_inode_read_block(fs, fh[fd].inode, fh[fd].ptr >> lbs,
+                                           &bn, &err))) {
+            if(err != EINVAL) {
+                mutex_unlock(&ext2_mutex);
+                errno = err;
+                return -1;
+            }
+            else if(!(block = ext2_inode_alloc_block(fs, fh[fd].inode,
+                                                     &errno))) {
+                mutex_unlock(&ext2_mutex);
+                return -1;
+            }
+        }
+        else {
+            ext2_block_mark_dirty(fs, bn);
+        }
+
+        if(cnt > bs) {
+            memcpy(block, bbuf, bs);
+            fh[fd].ptr += bs;
+            cnt -= bs;
+            bbuf += bs;
+        }
+        else {
+            memcpy(block, bbuf, cnt);
+            fh[fd].ptr += cnt;
+            cnt = 0;
+        }
+    }
+
+    /* Update the file's size and modification time. */
+    if(fh[fd].ptr > fh[fd].inode->i_size) {
+        fh[fd].inode->i_size = (uint32_t)fh[fd].ptr;
+    }
+
+    fh[fd].inode->i_mtime = time(NULL);
+    ext2_inode_mark_dirty(fh[fd].inode);
+
     mutex_unlock(&ext2_mutex);
     return rv;
 }
@@ -1222,7 +1337,7 @@ static vfs_handler_t vh = {
     fs_ext2_open,               /* open */
     fs_ext2_close,              /* close */
     fs_ext2_read,               /* read */
-    NULL,                       /* write */
+    fs_ext2_write,              /* write */
     fs_ext2_seek,               /* seek */
     fs_ext2_tell,               /* tell */
     fs_ext2_total,              /* total */
