@@ -125,6 +125,10 @@ int ext2_inode_cache_wb(ext2_fs_t *fs);
 ext2_inode_t *ext2_inode_alloc(ext2_fs_t *fs, uint32_t parent, int *err,
                                uint32_t *ninode);
 
+/* Free all data blocks associated with an inode. */
+int ext2_inode_free_all(ext2_fs_t *fs, ext2_inode_t *inode,
+                        uint32_t inode_num, int fxattr);
+
 /* Decrease the reference count on an inode. If the reference count reaches
    zero, deallocate the inode and all of its blocks. */
 int ext2_inode_deref(ext2_fs_t *fs, uint32_t inode_num, int isdir);

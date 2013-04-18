@@ -47,16 +47,84 @@ static struct {
     fs_ext2_fs_t *fs;
 } fh[MAX_EXT2_FILES];
 
+static int create_empty_file(fs_ext2_fs_t *fs, const char *fn,
+                             ext2_inode_t **rinode, uint32_t *rinode_num) {
+    int irv;
+    ext2_inode_t *inode, *ninode;
+    uint32_t inode_num, ninode_num;
+    char *cp, *nd;
+    time_t now = time(NULL);
+
+    if(!(fs->mount_flags & FS_EXT2_MOUNT_READWRITE))
+        return -EROFS;
+
+    /* Make a writable copy of the filename */
+    if(!(cp = strdup(fn)))
+        return -ENOMEM;
+
+    /* Separate our copy into the parent and the directory we want to create */
+    if(!(nd = strrchr(cp, '/'))) {
+        free(cp);
+        return -ENOENT;
+    }
+
+    /* Split the string. */
+    *nd++ = 0;
+
+    /* Find the parent of the directory we want to create. */
+    if((irv = ext2_inode_by_path(fs->fs, cp, &inode, &inode_num, 1, NULL))) {
+        free(cp);
+        return -irv;
+    }
+
+    /* Allocate a new inode for the new directory. */
+    if(!(ninode = ext2_inode_alloc(fs->fs, inode_num, &irv, &ninode_num))) {
+        ext2_inode_put(inode);
+        free(cp);
+        return -irv;
+    }
+
+    /* Fill in the inode. Copy most of the interesting parts from the parent. */
+    ninode->i_mode = (inode->i_mode & ~EXT2_S_IFDIR) | EXT2_S_IFREG;
+    ninode->i_uid = inode->i_uid;
+    ninode->i_atime = ninode->i_ctime = ninode->i_mtime = now;
+    ninode->i_gid = inode->i_gid;
+    ninode->i_osd2.l_i_uid_high = inode->i_osd2.l_i_uid_high;
+    ninode->i_osd2.l_i_gid_high = inode->i_osd2.l_i_gid_high;
+    ninode->i_links_count = 1;
+
+    /* Add an entry to the parent directory. */
+    if((irv = ext2_dir_add_entry(fs->fs, inode, nd, ninode_num, ninode,
+                                 NULL))) {
+        ext2_inode_put(inode);
+        ext2_inode_deref(fs->fs, ninode_num, 1);
+        free(cp);
+        return -irv;
+    }
+
+    /* Update the parent directory's times. */
+    inode->i_mtime = inode->i_ctime = now;
+    ext2_inode_mark_dirty(inode);
+
+    ext2_inode_put(inode);
+    free(cp);
+    *rinode = ninode;
+    *rinode_num = ninode_num;
+    return 0;
+}
+
 static void *fs_ext2_open(vfs_handler_t *vfs, const char *fn, int mode) {
     file_t fd;
     fs_ext2_fs_t *mnt = (fs_ext2_fs_t *)vfs->privdata;
     int rv;
 
-    /* We don't support writing for now... */
-    if((mode & (O_WRONLY | O_TRUNC))) {
-        errno = EROFS;
-        return NULL;
-    }
+    /* Make sure if we're going to be writing to the file that the fs is mounted
+       read/write. */
+    if((mode & (O_TRUNC | O_WRONLY)) &&
+       !(mnt->mount_flags & FS_EXT2_MOUNT_READWRITE)) {
+           errno = EROFS;
+           return NULL;
+       }
 
     /* Find a free file handle */
     mutex_lock(&ext2_mutex);
@@ -78,19 +146,28 @@ static void *fs_ext2_open(vfs_handler_t *vfs, const char *fn, int mode) {
     if((rv = ext2_inode_by_path(mnt->fs, fn, &fh[fd].inode,
                                 &fh[fd].inode_num, 1, NULL))) {
         fh[fd].inode_num = 0;
-        ext2_inode_put(fh[fd].inode);
-        mutex_unlock(&ext2_mutex);
 
         if(rv == -ENOENT) {
-            if(mode & O_CREAT)
-                errno = EROFS;
-            else
+            if(mode & O_CREAT) {
+                if((rv = create_empty_file(mnt, fn, &fh[fd].inode,
+                                           &fh[fd].inode_num))) {
+                    fh[fd].inode_num = 0;
+                    mutex_unlock(&ext2_mutex);
+                    errno = -rv;
+                    return NULL;
+                }
+
+                goto created;
+            }
+            else {
                 errno = ENOENT;
+            }
         }
         else {
             errno = -rv;
         }
 
+        mutex_unlock(&ext2_mutex);
         return NULL;
     }
 
@@ -113,10 +190,35 @@ static void *fs_ext2_open(vfs_handler_t *vfs, const char *fn, int mode) {
         return NULL;
     }
 
+created:
+    /* Do we need to truncate the file? */
+    if((mode & O_WRONLY) && (mode & O_TRUNC)) {
+        if((rv = ext2_inode_free_all(mnt->fs, fh[fd].inode, fh[fd].inode_num,
+                                     0))) {
+            errno = -rv;
+            fh[fd].inode_num = 0;
+            ext2_inode_put(fh[fd].inode);
+            mutex_unlock(&ext2_mutex);
+            return NULL;
+        }
+
+        /* Fix the times/sizes up. */
+        fh[fd].inode->i_size = 0;
+        fh[fd].inode->i_dtime = 0;
+        fh[fd].inode->i_mtime = time(NULL);
+        ext2_inode_mark_dirty(fh[fd].inode);
+    }
+
     /* Fill in the rest of the handle */
     fh[fd].mode = mode;
     fh[fd].ptr = 0;
     fh[fd].fs = mnt;
+
+    /* Are we appending (and writing, of course... appending without writing is
+       kinda silly, after all)? */
+    if((mode & O_WRONLY) && (mode & O_APPEND))
+        fh[fd].ptr = fh[fd].inode->i_size;
+
     mutex_unlock(&ext2_mutex);
 
     return (void *)(fd + 1);

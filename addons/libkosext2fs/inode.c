@@ -524,8 +524,8 @@ static int free_tind_block(ext2_fs_t *fs, ext2_inode_t *inode, uint32_t iblk) {
     return rv;
 }
 
-static int ext2_inode_free_all(ext2_fs_t *fs, ext2_inode_t *inode,
-                               uint32_t inode_num) {
+int ext2_inode_free_all(ext2_fs_t *fs, ext2_inode_t *inode,
+                        uint32_t inode_num, int for_del) {
     uint32_t bg, index, blk;
     uint8_t *buf;
     uint32_t i;
@@ -537,32 +537,34 @@ static int ext2_inode_free_all(ext2_fs_t *fs, ext2_inode_t *inode,
     if((rv = ext2_block_cache_wb(fs)))
         return rv;
 
-    /* Figure out what block group and index within that group the inode in
-       question is. */
-    bg = (inode_num - 1) / fs->sb.s_inodes_per_group;
-    index = (inode_num - 1) % fs->sb.s_inodes_per_group;
+    if(for_del) {
+        /* Figure out what block group and index within that group the inode in
+           question is. */
+        bg = (inode_num - 1) / fs->sb.s_inodes_per_group;
+        index = (inode_num - 1) % fs->sb.s_inodes_per_group;
 
-    if(!(buf = ext2_block_read(fs, fs->bg[bg].bg_inode_bitmap, &rv)))
-        return -EIO;
+        if(!(buf = ext2_block_read(fs, fs->bg[bg].bg_inode_bitmap, &rv)))
+            return -EIO;
 
-    /* Mark the inode as free in the bitmap and increase the counters. */
-    ext2_bit_clear((uint32_t *)buf, index);
-    ext2_block_mark_dirty(fs, fs->bg[bg].bg_inode_bitmap);
+        /* Mark the inode as free in the bitmap and increase the counters. */
+        ext2_bit_clear((uint32_t *)buf, index);
+        ext2_block_mark_dirty(fs, fs->bg[bg].bg_inode_bitmap);
 
-    ++fs->bg[bg].bg_free_inodes_count;
-    ++fs->sb.s_free_inodes_count;
-    fs->flags |= EXT2_FS_FLAG_SB_DIRTY;
+        ++fs->bg[bg].bg_free_inodes_count;
+        ++fs->sb.s_free_inodes_count;
+        fs->flags |= EXT2_FS_FLAG_SB_DIRTY;
 
-    /* Set the deletion time of the inode */
-    inode->i_dtime = (uint32_t)time(NULL);
-    iinode->flags |= INODE_FLAG_DIRTY;
+        /* Set the deletion time of the inode */
+        inode->i_dtime = (uint32_t)time(NULL);
+        iinode->flags |= INODE_FLAG_DIRTY;
+    }
 
     /* First look to see if there's any extended attributes... If so, free them
        up first.
        TODO: Should this only be checked for files, or can directories have
        extended attributes too? For now, assume that both can until we find some
        reason that assumption fails. */
-    if(inode->i_file_acl) {
+    if(inode->i_file_acl && for_del) {
         if(!(buf = ext2_block_read(fs, inode->i_file_acl, &rv)))
             return -EIO;
 
@@ -579,6 +581,10 @@ static int ext2_inode_free_all(ext2_fs_t *fs, ext2_inode_t *inode,
         ext2_block_mark_dirty(fs, inode->i_file_acl);
         inode->i_blocks -= sub;
     }
+    else if(inode->i_file_acl) {
+        /* We need to do this for now... We will reverse it later. */
+        inode->i_blocks -= sub;
+    }
 
     /* Free the direct data blocks. Note that since fast symlinks have the
        i_blocks field in their inodes set to 0, we don't have to do anything
@@ -592,34 +598,49 @@ static int ext2_inode_free_all(ext2_fs_t *fs, ext2_inode_t *inode,
         }
 
         if((rv = mark_block_free(fs, blk)))
-            return rv;
+            goto done;
 
         inode->i_blocks -= sub;
+        inode->i_block[i] = 0;
+        fs->flags |= EXT2_FS_FLAG_SB_DIRTY;
     }
 
     /* See if we're done already... */
     if(!inode->i_blocks)
-        return 0;
+        goto done;
 
     /* Handle the singly-indirect block */
     if((rv = free_ind_block(fs, inode, inode->i_block[12])))
-        return rv;
+        goto done;
+
+    inode->i_block[12] = 0;
 
     /* See if we're done now... */
     if(!inode->i_blocks)
-        return 0;
+        goto done;
 
     /* Time to go through the doubly-indirect block... */
     if((rv = free_dind_block(fs, inode, inode->i_block[13])))
-        return rv;
+        goto done;
+
+    inode->i_block[13] = 0;
 
     /* See if we're done now... */
     if(!inode->i_blocks)
-        return 0;
+        goto done;
 
     /* Ugh... Really... A trebly-indirect block? At least we know we're done at
        this point... */
-    return free_tind_block(fs, inode, inode->i_block[14]);
+    rv = free_tind_block(fs, inode, inode->i_block[14]);
+
+    inode->i_block[14] = 0;
+
+done:
+    /* Restore the xattr block to the block count if needed. */
+    if(inode->i_file_acl && !for_del)
+        inode->i_blocks = sub;
+
+    return rv;
 }
 
 int ext2_inode_deref(ext2_fs_t *fs, uint32_t inode_num, int isdir) {
@@ -658,7 +679,7 @@ int ext2_inode_deref(ext2_fs_t *fs, uint32_t inode_num, int isdir) {
 
     /* If the inode is not referenced anywhere anymore, free it */
     if(!inode->i_links_count)
-        rv = ext2_inode_free_all(fs, inode, inode_num);
+        rv = ext2_inode_free_all(fs, inode, inode_num, 1);
 
     /* Release our reference to the inode, putting it in the free pool */
     ext2_inode_put(inode);
