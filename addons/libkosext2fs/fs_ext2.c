@@ -122,7 +122,7 @@ static void *fs_ext2_open(vfs_handler_t *vfs, const char *fn, int mode) {
     return (void *)(fd + 1);
 }
 
-static void fs_ext2_close(void * h) {
+static void fs_ext2_close(void *h) {
     file_t fd = ((file_t)h) - 1;
 
     mutex_lock(&ext2_mutex);
@@ -361,6 +361,256 @@ retry:
     ext2_inode_put(inode);
     mutex_unlock(&ext2_mutex);
     return &fh[fd].dent;
+}
+
+static int int_rename(fs_ext2_fs_t *fs, const char *fn1, const char *fn2,
+                      ext2_inode_t *pinode, ext2_inode_t *finode,
+                      uint32_t finode_num, int isfile) {
+    ext2_inode_t *dpinode, *dinode;
+    uint32_t dpinode_num, tmp;
+    char *cp, *ent;
+    int irv, isdir = 0;
+    ext2_dirent_t *dent;
+
+    /* Make a writable copy of the destination filename. */
+    if(!(cp = strdup(fn2))) {
+        return -ENOMEM;
+    }
+
+    /* Separate our copy into the parent and the entry we want to create. */
+    if(!(ent = strrchr(cp, '/'))) {
+        free(cp);
+        return -EINVAL;
+    }
+
+    /* Split the string. */
+    *ent++ = 0;
+
+    /* Look up the parent of the destination. */
+    if((irv = ext2_inode_by_path(fs->fs, cp, &dpinode, &dpinode_num, 1,
+                                 NULL))) {
+        free(cp);
+        return irv;
+    }
+
+    /* If the entry we get back is not a directory, then we've got problems. */
+    if((dpinode->i_mode & 0xF000) != EXT2_S_IFDIR) {
+        ext2_inode_put(dpinode);
+        free(cp);
+        return -ENOTDIR;
+    }
+
+    /* Grab the directory entry for the new filename, if it exists. */
+    dent = ext2_dir_entry(fs->fs, dpinode, ent);
+
+    /* If the entry exists, we have a bit more error checking to do. */
+    if(dent) {
+        if(!(dinode = ext2_inode_get(fs->fs, dent->inode, &irv))) {
+            free(cp);
+            ext2_inode_put(dpinode);
+            return -EIO;
+        }
+
+        /* Do we have a directory? */
+        if((dinode->i_mode & 0xF000) == EXT2_S_IFDIR) {
+            isdir = 1;
+
+            if(isfile) {
+                /* We have a directory... Return error. */
+                free(cp);
+                ext2_inode_put(dinode);
+                ext2_inode_put(dpinode);
+                return -EISDIR;
+            }
+            else {
+                /* We have a directory... Make sure it is empty. */
+                if(!(irv = ext2_dir_is_empty(fs->fs, dinode))) {
+                    free(cp);
+                    ext2_inode_put(dinode);
+                    ext2_inode_put(dpinode);
+                    return -ENOTEMPTY;
+                }
+                else if(irv == -1) {
+                    free(cp);
+                    ext2_inode_put(dinode);
+                    ext2_inode_put(dpinode);
+                    return -EIO;
+                }
+            }
+        }
+
+        /* Make sure we don't have any open file descriptors to what will be
+           replaced at the destination. */
+        for(irv = 0; irv < MAX_EXT2_FILES; ++irv) {
+            if(fh[irv].inode_num == dent->inode) {
+                free(cp);
+                ext2_inode_put(dinode);
+                ext2_inode_put(dpinode);
+                return -EBUSY;
+            }
+        }
+    }
+
+    /* Gulp... Here comes the real work... */
+    if(dent) {
+        /* We are overwriting something. Remove the object that we're
+           overwriting from its parent. */
+        if((irv = ext2_dir_rm_entry(fs->fs, dpinode, ent, &tmp))) {
+            free(cp);
+            ext2_inode_put(dpinode);
+            ext2_inode_put(dinode);
+            return -EIO;
+        }
+
+        ext2_inode_put(dinode);
+
+        /* Decrement the old object's reference count, deallocating it if
+           necessary. */
+        if(ext2_inode_deref(fs->fs, tmp, isdir)) {
+            free(cp);
+            ext2_inode_put(dpinode);
+            return -EIO;
+        }
+
+        /* If it was a directory that we just removed, then decrement the parent
+           directory's reference count. */
+        if(isdir) {
+            --dpinode->i_links_count;
+            ext2_inode_mark_dirty(dpinode);
+        }
+    }
+
+    /* Add the new entry to the directory. */
+    if(ext2_dir_add_entry(fs->fs, dpinode, ent, finode_num, finode, NULL)) {
+        free(cp);
+        ext2_inode_put(dpinode);
+        return -EIO;
+    }
+
+    /* Unlink the item we're moving from its parent directory now that it is
+       safely in its new home. */
+    if((irv = ext2_dir_rm_entry(fs->fs, pinode, fn1, &tmp))) {
+        free(cp);
+        ext2_inode_put(dpinode);
+        return -EIO;
+    }
+
+    /* If the thing we moved was a directory, we need to fix its '..' entry and
+       update the reference counts of the inodes involved. */
+    if(!isfile) {
+        if((ext2_dir_redir_entry(fs->fs, finode, "..", dpinode_num, NULL)))
+            return -EIO;
+
+        --pinode->i_links_count;
+        ++dpinode->i_links_count;
+        ext2_inode_mark_dirty(dpinode);
+        ext2_inode_mark_dirty(pinode);
+    }
+
+    free(cp);
+    ext2_inode_put(dpinode);
+    return 0;
+}
+
+static int fs_ext2_rename(vfs_handler_t *vfs, const char *fn1,
+                          const char *fn2) {
+    fs_ext2_fs_t *fs = (fs_ext2_fs_t *)vfs->privdata;
+    int irv;
+    ext2_inode_t *pinode, *inode;
+    uint32_t inode_num;
+    ext2_dirent_t *dent;
+    char *cp, *ent;
+
+    /* Make sure we get valid filenames. */
+    if(!fn1 || !fn2) {
+        errno = ENOENT;
+        return -1;
+    }
+
+    /* No, you cannot move the root directory. */
+    if(!*fn1) {
+        errno = EINVAL;
+        return -1;
+    }
+
+    /* Make sure the fs is writable */
+    if(!(fs->mount_flags & FS_EXT2_MOUNT_READWRITE)) {
+        errno = EROFS;
+        return -1;
+    }
+
+    /* Make a writable copy of the source filename. */
+    if(!(cp = strdup(fn1))) {
+        errno = ENOMEM;
+        return -1;
+    }
+
+    /* Separate our copy into the parent and the file we want to move. */
+    if(!(ent = strrchr(cp, '/'))) {
+        free(cp);
+        errno = EINVAL;
+        return -1;
+    }
+
+    /* Split the string. */
+    *ent++ = 0;
+
+    mutex_lock(&ext2_mutex);
+
+    /* Find the parent directory of the original object.*/
+    if((irv = ext2_inode_by_path(fs->fs, cp, &pinode, &inode_num, 1, NULL))) {
+        mutex_unlock(&ext2_mutex);
+        free(cp);
+        errno = -irv;
+        return -1;
+    }
+
+    /* If the entry we get back is not a directory, then we've got problems. */
+    if((pinode->i_mode & 0xF000) != EXT2_S_IFDIR) {
+        ext2_inode_put(pinode);
+        mutex_unlock(&ext2_mutex);
+        free(cp);
+        errno = ENOTDIR;
+        return -1;
+    }
+
+    /* Grab the directory entry for the old filename. */
+    if(!(dent = ext2_dir_entry(fs->fs, pinode, ent))) {
+        ext2_inode_put(pinode);
+        mutex_unlock(&ext2_mutex);
+        free(cp);
+        errno = ENOENT;
+        return -1;
+    }
+
+    /* Find the inode of the entry we want to move. */
+    if(!(inode = ext2_inode_get(fs->fs, dent->inode, &irv))) {
+        mutex_unlock(&ext2_mutex);
+        errno = EIO;
+        return -1;
+    }
+
+    /* Is it a directory? */
+    if((inode->i_mode & 0xF000) == EXT2_S_IFDIR) {
+        if((irv = int_rename(fs, ent, fn2, pinode, inode, dent->inode,
+                             0)) < 0) {
+            errno = -irv;
+            irv = -1;
+        }
+    }
+    else {
+        if((irv = int_rename(fs, ent, fn2, pinode, inode, dent->inode,
+                             1)) < 0) {
+            errno = -irv;
+            irv = -1;
+        }
+    }
+
+    free(cp);
+    ext2_inode_put(pinode);
+    ext2_inode_put(inode);
+    mutex_lock(&ext2_mutex);
+    return irv;
 }
 
 static int fs_ext2_unlink(vfs_handler_t *vfs, const char *fn) {
@@ -862,7 +1112,7 @@ static vfs_handler_t vh = {
     fs_ext2_total,              /* total */
     fs_ext2_readdir,            /* readdir */
     NULL,                       /* ioctl */
-    NULL,                       /* rename */
+    fs_ext2_rename,             /* rename */
     fs_ext2_unlink,             /* unlink */
     NULL,                       /* mmap */
     NULL,                       /* complete */

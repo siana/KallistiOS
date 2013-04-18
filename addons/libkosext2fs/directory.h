@@ -56,5 +56,9 @@ int ext2_dir_add_entry(ext2_fs_t *fs, struct ext2_inode *dir, const char *fn,
 int ext2_dir_create_empty(ext2_fs_t *fs, struct ext2_inode *dir,
                           uint32_t inode_num, uint32_t parent_inode);
 
+/* Redirect an entry in a directory to a different inode. */
+int ext2_dir_redir_entry(ext2_fs_t *fs, struct ext2_inode *dir, const char *fn,
+                         uint32_t inode_num, ext2_dirent_t **rv);
+
 __END_DECLS
 #endif /* !__EXT2_DIRECTORY_H */

@@ -313,3 +313,53 @@ int ext2_dir_create_empty(ext2_fs_t *fs, struct ext2_inode *dir,
     /* And, we're done. */
     return 0;
 }
+
+int ext2_dir_redir_entry(ext2_fs_t *fs, struct ext2_inode *dir, const char *fn,
+                         uint32_t inode_num, ext2_dirent_t **rv) {
+    uint32_t off, i, blocks, bn;
+    ext2_dirent_t *dent;
+    uint8_t *buf;
+    size_t nlen = strlen(fn);
+    int err;
+
+    /* Don't even bother if we're mounted read-only. */
+    if(!(fs->mnt_flags & EXT2FS_MNT_FLAG_RW))
+        return -EROFS;
+
+    blocks = dir->i_blocks / (2 << fs->sb.s_log_block_size);
+
+    for(i = 0; i < blocks; ++i) {
+        off = 0;
+        dent = NULL;
+
+        if(!(buf = ext2_inode_read_block(fs, dir, i, &bn, &err)))
+            return -err;
+
+        while(off < fs->block_size) {
+            dent = (ext2_dirent_t *)(buf + off);
+
+            /* Make sure we don't trip and fall on a malformed entry. */
+            if(!dent->rec_len)
+                return -EIO;
+
+            /* If the entry is filled in, check if it is the entry we're trying
+               to modify. */
+            if(dent->inode) {
+                if(dent->name_len == nlen && !memcmp(dent->name, fn, nlen)) {
+                    dent->inode = inode_num;
+                    ext2_block_mark_dirty(fs, bn);
+
+                    if(rv)
+                        *rv = dent;
+
+                    return 0;
+                }
+            }
+
+            off += dent->rec_len;
+        }
+    }
+
+    /* Didn't find it... */
+    return -ENOENT;
+}
