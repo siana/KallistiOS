@@ -6,6 +6,9 @@
 TARGET = sd-ext2fs.elf
 OBJS = sd-ext2fs.o
 
+# Uncomment the next line to enable write support in the example.
+#KOS_CFLAGS += -DENABLE_WRITE
+
 all: rm-elf $(TARGET)
 
 include $(KOS_BASE)/Makefile.rules

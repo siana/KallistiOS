@@ -9,6 +9,9 @@
    About all this example program does is to mount the SD card (if one is found
    and it is detected to be ext2fs) on /sd of the VFS and print a directory
    listing of the root directory of the SD card.
+
+   In addition, if you add -DENABLE_WRITE to the CFLAGS while compiling, this
+   program will write a text file out on the root of the SD card.
 */
 
 #include <stdio.h>
@@ -21,11 +24,22 @@
 #include <kos/blockdev.h>
 #include <ext2/fs_ext2.h>
 
+/* Add -DENABLE_WRITE to the KOS_CFLAGS in the Makefile to enable writing a
+   small file out on the SD card. */
+#ifdef ENABLE_WRITE
+#define MNT_MODE FS_EXT2_MOUNT_READWRITE
+#else
+#define MNT_MODE FS_EXT2_MOUNT_READONLY
+#endif
+
 int main(int argc, char *argv[]) {
     kos_blockdev_t sd_dev;
     uint8 partition_type;
     DIR *d;
     struct dirent *entry;
+#ifdef ENABLE_WRITE
+    FILE *fp;
+#endif
 
     if(sd_init()) {
         printf("Could not initialize the SD card. Please make sure that you "
@@ -52,7 +66,7 @@ int main(int argc, char *argv[]) {
         exit(EXIT_FAILURE);
     }
 
-    if(fs_ext2_mount("/sd", &sd_dev, 0)) {
+    if(fs_ext2_mount("/sd", &sd_dev, MNT_MODE)) {
         printf("Could not mount SD card as ext2fs. Please make sure the card "
                "has been properly formatted.\n");
         exit(EXIT_FAILURE);
@@ -75,6 +89,23 @@ int main(int argc, char *argv[]) {
         exit(EXIT_FAILURE);
     }
 
+#ifdef ENABLE_WRITE
+    /* Create a new file on the root of the SD card. */
+    if(!(fp = fopen("/sd/hello.txt", "w"))) {
+        printf("Could not create file: %s\n", strerror(errno));
+        exit(EXIT_FAILURE);
+    }
+
+    if(fprintf(fp, "Hello World!\nTesting, testing, 1, 2, 3...") < 0) {
+        printf("Failed to write to file: %s\n", strerror(errno));
+    }
+    else {
+        printf("Wrote to file \"hello.txt\"\n");
+    }
+
+    fclose(fp);
+#endif
+
     /* Clean up the filesystem and everything else */
     fs_ext2_unmount("/sd");
     fs_ext2_shutdown();
@@ -82,5 +113,3 @@ int main(int argc, char *argv[]) {
 
     return 0;
 }
-
-
