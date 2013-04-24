@@ -1453,6 +1453,33 @@ int fs_ext2_unmount(const char *mp) {
     return rv;
 }
 
+int fs_ext2_sync(const char *mp) {
+    fs_ext2_fs_t *i;
+    int found = 0, rv = 0;
+
+    /* Find the fs in question */
+    mutex_lock(&ext2_mutex);
+    LIST_FOREACH(i, &ext2_fses, entry) {
+        if(!strcmp(mp, i->vfsh->nmmgr.pathname)) {
+            found = 1;
+            break;
+        }
+    }
+
+    if(found) {
+        /* ext2_fs_sync() will set errno if there's a problem. */
+        rv = ext2_fs_sync(i->fs);
+    }
+    else {
+        errno = ENOENT;
+        rv = -1;
+    }
+
+    mutex_unlock(&ext2_mutex);
+    return rv;
+}
+    
+
 int fs_ext2_init(void) {
     if(initted)
         return 0;

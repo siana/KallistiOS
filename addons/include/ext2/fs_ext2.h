@@ -1,7 +1,7 @@
 /* KallistiOS ##version##
 
    ext2/fs_ext2.h
-   Copyright (C) 2012 Lawrence Sebald
+   Copyright (C) 2012, 2013 Lawrence Sebald
 */
 
 #ifndef __EXT2_FS_EXT2_H
@@ -103,10 +103,6 @@ int fs_ext2_shutdown(void);
     \param  flags       Mount flags. Bitwise OR of values from ext2_mount_flags
     \retval 0           On success.
     \retval -1          On error.
-
-    \note               All filesystems will currently be mounted as read-only,
-                        regardless of the flags value. The lower-level ext2fs
-                        code does not support writing at this time.
 */
 int fs_ext2_mount(const char *mp, kos_blockdev_t *dev, uint32_t flags);
 
@@ -120,6 +116,24 @@ int fs_ext2_mount(const char *mp, kos_blockdev_t *dev, uint32_t flags);
     \retval -1          On error.
 */
 int fs_ext2_unmount(const char *mp);
+
+/** \brief  Sync an ext2 filesystem, flushing all pending writes to the block
+            device.
+
+    This function completes all pending writes on the filesystem, making sure
+    all data and metadata are in a consistent state on the block device. As both
+    inode and block writes are normally postponed until they are either evicted
+    from the cache or the filesystem is unmounted, doing this periodically may
+    be a good idea if there is a chance that the filesystem will not be
+    unmounted cleanly.
+
+    \param  mp          The mount point of the filesystem to be synced.
+    \retval 0           On success.
+    \retval -1          On error.
+
+    \note   This function has no effect if the filesystem was mounted read-only.
+*/
+int fs_ext2_sync(const char *mp);
 
 __END_DECLS
 #endif /* !__EXT2_FS_EXT2_H */
