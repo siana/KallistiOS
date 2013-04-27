@@ -212,8 +212,9 @@ void vid_flip(int fb);
     \param  r               The red value of the color (0-255).
     \param  g               The green value of the color (0-255).
     \param  b               The blue value of the color (0-255).
+    \return                 Old border color value (RGB888)
 */
-void vid_border_color(int r, int g, int b);
+uint32 vid_border_color(int r, int g, int b);
 
 /** \brief  Clear the display.
 

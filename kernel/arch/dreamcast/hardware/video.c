@@ -676,10 +676,12 @@ void vid_flip(int fb) {
 }
 
 /*-----------------------------------------------------------------------------*/
-void vid_border_color(int r, int g, int b) {
+uint32 vid_border_color(int r, int g, int b) {
+    uint32 obc = regs[0x0040 / 4];
     regs[0x0040 / 4] = ((r & 0xFF) << 16) |
                        ((g & 0xFF) << 8) |
                        (b & 0xFF);
+    return obc;
 }
 
 /*-----------------------------------------------------------------------------*/
