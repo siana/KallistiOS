@@ -1,5 +1,6 @@
 *.o
 *.elf
+*.map
 *~
 .*.swp
 doc/reference/
