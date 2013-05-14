@@ -208,11 +208,19 @@ int cdrom_reinit() {
 
     /* Check disc type and set parameters */
     gdc_get_drv_stat(params);
-    cdxa = params[1] == 32;
-    params[0] = 0;              /* 0 = set, 1 = get */
-    params[1] = 8192;           /* ? */
-    params[2] = cdxa ? 2048 : 1024;     /* CD-XA mode 1/2 */
-    params[3] = sector_size;        /* sector size */
+    if(sector_size != 2352) {
+        cdxa = params[1] == 32;
+        params[0] = 0;              /* 0 = set, 1 = get */
+        params[1] = 8192;           /* ? */
+        params[2] = cdxa ? 2048 : 1024;     /* CD-XA mode 1/2 */
+        params[3] = sector_size;        /* sector size */
+    }
+    else {
+        params[0] = 0;
+        params[1] = 4096;
+        params[2] = 1024;
+        params[3] = 2352;
+    }
 
     if(gdc_change_data_type(params) < 0) {
         rv = ERR_SYS;
