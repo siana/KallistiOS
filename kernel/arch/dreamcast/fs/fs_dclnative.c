@@ -260,7 +260,7 @@ uint32 dclnative_open(vfs_handler_t * vfs, const char *fn, int mode) {
     return h;
 }
 
-void dclnative_close(uint32 hnd) {
+int dclnative_close(uint32 hnd) {
     mutex_lock(mutex);
 
     if(hnd) {
@@ -273,6 +273,7 @@ void dclnative_close(uint32 hnd) {
     }
 
     mutex_unlock(mutex);
+    return 0;
 }
 
 ssize_t dclnative_read(uint32 hnd, void *buf, size_t cnt) {

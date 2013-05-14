@@ -121,7 +121,7 @@ size_t dcload_gdbpacket(const char* in_buf, size_t in_size, char* out_buf, size_
 
 /* File functions */
 void*   dcload_open(vfs_handler_t * vfs, const char *fn, int mode);
-void    dcload_close(void * hnd);
+int     dcload_close(void * hnd);
 ssize_t dcload_read(void * hnd, void *buf, size_t cnt);
 off_t   dcload_seek(void * hnd, off_t offset, int whence);
 off_t   dcload_tell(void * hnd);

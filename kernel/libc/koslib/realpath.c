@@ -50,10 +50,7 @@ char *
 realpath(const char *path, char resolved[PATH_MAX]) {
     char *p, *q, *s;
     size_t left_len, resolved_len;
-    int serrno;
     char left[PATH_MAX], next_token[PATH_MAX];
-
-    serrno = errno;
 
     if(path[0] == '/') {
         resolved[0] = '/';

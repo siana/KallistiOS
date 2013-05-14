@@ -281,7 +281,7 @@ static void *dcls_open(struct vfs_handler *vfs, const char *fn, int mode) {
     return (void *)hnd;
 }
 
-static void dcls_close(void *hnd) {
+static int dcls_close(void *hnd) {
     int fd = (int) hnd, locked;
     command_int_t *cmd = (command_int_t *)pktbuf;
 
@@ -289,7 +289,7 @@ static void dcls_close(void *hnd) {
 
     if(locked == -1 && irq_inside_int()) {
         errno = EAGAIN;
-        return;
+        return -1;
     }
     else if(locked == -1) {
         mutex_lock(&mutex);
@@ -313,6 +313,7 @@ static void dcls_close(void *hnd) {
     }
 
     mutex_unlock(&mutex);
+    return 0;
 }
 
 static ssize_t dcls_read(void *hnd, void *buf, size_t cnt) {

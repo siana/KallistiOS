@@ -152,11 +152,13 @@ void *dcload_open(vfs_handler_t * vfs, const char *fn, int mode) {
     return (void *)h;
 }
 
-void dcload_close(void * h) {
+int dcload_close(void * h) {
     uint32 hnd = (uint32)h;
 
-    if(lwip_dclsc && irq_inside_int())
-        return;
+    if(lwip_dclsc && irq_inside_int()) {
+        errno = EINTR;
+        return -1;
+    }
 
     spinlock_lock(&mutex);
 
@@ -170,6 +172,7 @@ void dcload_close(void * h) {
     }
 
     spinlock_unlock(&mutex);
+    return 0;
 }
 
 ssize_t dcload_read(void * h, void *buf, size_t cnt) {

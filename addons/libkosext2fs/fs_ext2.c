@@ -219,7 +219,7 @@ created:
     return (void *)(fd + 1);
 }
 
-static void fs_ext2_close(void *h) {
+static int fs_ext2_close(void *h) {
     file_t fd = ((file_t)h) - 1;
 
     mutex_lock(&ext2_mutex);
@@ -231,6 +231,7 @@ static void fs_ext2_close(void *h) {
     }
 
     mutex_unlock(&ext2_mutex);
+    return 0;
 }
 
 static ssize_t fs_ext2_read(void *h, void *buf, size_t cnt) {

@@ -10,6 +10,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <malloc.h>
+#include <errno.h>
 #include <time.h>
 #include <arch/types.h>
 #include <kos/mutex.h>
@@ -302,12 +303,15 @@ static int vmu_write_close(void * hnd) {
 }
 
 /* close a file */
-static void vmu_close(void * hnd) {
+static int vmu_close(void * hnd) {
     vmu_fh_t *fh;
+    int st, retval = 0;
 
     /* Check the handle */
-    if(!vmu_verify_hnd(hnd, VMU_ANY))
-        return;
+    if(!vmu_verify_hnd(hnd, VMU_ANY)) {
+        errno = EBADF;
+        return -1;
+    }
 
     fh = (vmu_fh_t *)hnd;
 
@@ -325,7 +329,13 @@ static void vmu_close(void * hnd) {
 
             if((fh->mode & O_MODE_MASK) == O_WRONLY ||
                     (fh->mode & O_MODE_MASK) == O_RDWR) {
-                vmu_write_close(hnd);
+                if ((st = vmu_write_close(hnd))) {
+                    if (st == -7)
+                        errno = ENOSPC;
+                    else
+                        errno = EIO;
+                    retval = -1;
+                }
             }
 
             free(fh->data);
@@ -339,6 +349,7 @@ static void vmu_close(void * hnd) {
     mutex_unlock(&fh_mutex);
 
     free(fh);
+    return retval;
 }
 
 /* read function */

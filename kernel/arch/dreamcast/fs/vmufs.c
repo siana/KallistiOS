@@ -694,11 +694,12 @@ int vmufs_read_dirent(maple_device_t * dev, vmu_dir_t * dirent, void ** outbuf, 
     return rv;
 }
 
+/* Returns 0 for success, -7 for 'not enough space', and other values for other errors. :-)  */
 int vmufs_write(maple_device_t * dev, const char * fn, void * inbuf, int insize, int flags) {
     vmu_root_t  root;
     vmu_dir_t   * dir = NULL, nd;
     uint16      * fat = NULL;
-    int     oldinsize, fatsize, dirsize, idx, rv = 0;
+    int     oldinsize, fatsize, dirsize, idx, rv = 0, st;
 
     /* Round up the size if necessary */
     oldinsize = insize;
@@ -749,8 +750,11 @@ int vmufs_write(maple_device_t * dev, const char * fn, void * inbuf, int insize,
     // If any of these fail, the action to take can be decided by the caller.
 
     /* Write out the data and update our structs */
-    if(vmufs_file_write(dev, &root, fat, dir, &nd, inbuf, insize / 512) < 0) {
-        rv = -4;
+    if((st = vmufs_file_write(dev, &root, fat, dir, &nd, inbuf, insize / 512)) < 0) {
+        if (st == -2)
+            rv = -7;
+        else
+            rv = -4;
         goto ex;
     }
 

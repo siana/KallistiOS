@@ -336,7 +336,7 @@ error_out:
 }
 
 /* Close a file or directory */
-static void ramdisk_close(void * h) {
+static int ramdisk_close(void * h) {
     rd_file_t   *f;
     file_t      fd = (file_t)h;
 
@@ -358,6 +358,7 @@ static void ramdisk_close(void * h) {
     }
 
     mutex_unlock(&rd_mutex);
+    return 0;
 }
 
 /* Read from a file */

@@ -386,7 +386,7 @@ static void * pty_open(vfs_handler_t * vfs, const char * fn, int mode) {
 }
 
 /* Close pty or dirlist */
-static void pty_close(void * h) {
+static int pty_close(void * h) {
     pipefd_t * fdobj;
 
     assert(h);
@@ -413,6 +413,7 @@ static void pty_close(void * h) {
     }
 
     free(fdobj);
+    return 0;
 }
 
 /* Read from a pty endpoint, kernel console special case */

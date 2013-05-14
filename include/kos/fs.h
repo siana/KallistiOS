@@ -124,7 +124,7 @@ typedef struct vfs_handler {
     void *(*open)(struct vfs_handler *vfs, const char *fn, int mode);
 
     /** \brief Close a previously opened file */
-    void (*close)(void *hnd);
+    int (*close)(void *hnd);
 
     /** \brief Read from a previously opened file */
     ssize_t (*read)(void *hnd, void *buffer, size_t cnt);
@@ -235,8 +235,9 @@ file_t fs_open(const char *fn, int mode);
     associated with the descriptor.
 
     \param  hnd             The file descriptor to close.
+    \return                 0 for success, -1 for error (detailed error in errno)
 */
-void fs_close(file_t hnd);
+int fs_close(file_t hnd);
 
 /** \brief  Read from an opened file.
 

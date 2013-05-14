@@ -241,7 +241,7 @@ static void * romdisk_open(vfs_handler_t * vfs, const char *fn, int mode) {
 }
 
 /* Close a file or directory */
-static void romdisk_close(void * h) {
+static int romdisk_close(void * h) {
     file_t fd = (file_t)h;
 
     /* Check that the fd is valid */
@@ -249,6 +249,7 @@ static void romdisk_close(void * h) {
         /* No need to lock the mutex: this is an atomic op */
         fh[fd].index = 0;
     }
+    return 0;
 }
 
 /* Read from a file */

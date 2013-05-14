@@ -29,13 +29,13 @@ static struct socket_list sockets;
 static mutex_t proto_rlock = RECURSIVE_MUTEX_INITIALIZER;
 static mutex_t list_rlock = RECURSIVE_MUTEX_INITIALIZER;
 
-static void fs_socket_close(void *hnd) {
+static int fs_socket_close(void *hnd) {
     net_socket_t *sock = (net_socket_t *)hnd;
 
     if(irq_inside_int()) {
         if(mutex_trylock(&list_rlock)) {
             errno = EWOULDBLOCK;
-            return;
+            return -1;
         }
     }
     else {
@@ -50,6 +50,7 @@ static void fs_socket_close(void *hnd) {
         sock->protocol->close(sock);
 
     free(sock);
+    return 0;
 }
 
 static ssize_t fs_socket_read(void *hnd, void *buffer, size_t cnt) {

@@ -176,20 +176,22 @@ static void fs_hnd_ref(fs_hnd_t * ref) {
    to a raw handle is no longer applicable. This function may destroy the
    file handle, so under no circumstances should you presume that it will
    still exist later. */
-static void fs_hnd_unref(fs_hnd_t * ref) {
+static int fs_hnd_unref(fs_hnd_t * ref) {
+    int retval = 0;
     assert(ref);
     assert(ref->refcnt > 0);
     ref->refcnt--;
 
     if(ref->refcnt == 0) {
         if(ref->handler != NULL) {
-            if(ref->handler->close == NULL) return;
+            if(ref->handler->close == NULL) return retval;
 
-            ref->handler->close(ref->hnd);
+            retval = ref->handler->close(ref->hnd);
         }
 
         free(ref);
     }
+    return retval;
 }
 
 /* Assigns a file descriptor (index) to a file handle (pointer). Will auto-
@@ -334,14 +336,19 @@ static fs_hnd_t * fs_map_hnd(file_t fd) {
 }
 
 /* Close a file and clean up the handle */
-void fs_close(file_t fd) {
+int fs_close(file_t fd) {
+    int retval;
     fs_hnd_t * hnd = fs_map_hnd(fd);
 
-    if(!hnd) return;
+    if(!hnd) {
+      errno = EBADF;
+      return -1;
+    }
 
     /* Deref it and remove it from our table */
-    fs_hnd_unref(hnd);
+    retval = fs_hnd_unref(hnd);
     fd_table[fd] = NULL;
+    return retval ? -1 : 0;
 }
 
 /* The rest of these pretty much map straight through */

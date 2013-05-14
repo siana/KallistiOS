@@ -116,7 +116,7 @@ uint32 ps2load_open(vfs_handler_t * vfs, const char *fn, int mode) {
     return h;
 }
 
-void ps2load_close(uint32 hnd) {
+int ps2load_close(uint32 hnd) {
     /* if (lwip_dclsc && irq_inside_int())
     return; */
 
@@ -132,6 +132,7 @@ void ps2load_close(uint32 hnd) {
     }
 
     spinlock_unlock(&mutex);
+    return 0;
 }
 
 ssize_t ps2load_read(uint32 hnd, void *buf, size_t cnt) {
