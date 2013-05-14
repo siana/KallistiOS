@@ -156,7 +156,8 @@ typedef struct vfs_handler {
     /** \brief "Memory map" a previously opened file */
     void *(*mmap)(void *fd);
 
-    /** \brief Perform an I/O completion (async I/O) for a previously opened file */
+    /** \brief Perform an I/O completion (async I/O) for a previously opened
+               file */
     int (*complete)(void *fd, ssize_t *rv);
 
     /** \brief Get status information on a file on the given VFS */
@@ -168,11 +169,18 @@ typedef struct vfs_handler {
     /** \brief Remove a directory from the given VFS */
     int (*rmdir)(struct vfs_handler *vfs, const char *fn);
 
-    /** \brief Manipulate file control flags on the given file. */
+    /** \brief Manipulate file control flags on the given file */
     int (*fcntl)(void *fd, int cmd, va_list ap);
 
-    /** \brief Check if an event is pending on the given file. */
+    /** \brief Check if an event is pending on the given file */
     short (*poll)(void *fd, short events);
+
+    /** \brief Create a hard link */
+    int (*link)(struct vfs_handler *vfs, const char *path1, const char *path2);
+
+    /** \brief Create a symbolic link */
+    int (*symlink)(struct vfs_handler *vfs, const char *path1,
+                   const char *path2);
 } vfs_handler_t;
 
 /** \brief  The number of distinct file descriptors that can be in use at a
@@ -425,6 +433,40 @@ int fs_rmdir(const char *fn);
     \return                 -1 on error (generally).
 */
 int fs_fcntl(file_t fd, int cmd, ...);
+
+/** \brief  Create a hard link.
+
+    This function implements the POSIX function link(), which creates a hard
+    link for an existing file.
+
+    \param  path1           An existing file to create a new link to.
+    \param  path2           The pathname of the new link to be created.
+    \return                 0 on success, -1 on failure.
+
+    \note                   Most filesystems in KallistiOS do not support hard
+                            links. Unlike most other VFS functions, this one
+                            does not set errno to ENOSYS in that case, but
+                            rather to EMLINK to preserve existing the original
+                            behavior in KOS.
+*/
+int fs_link(const char *path1, const char *path2);
+
+/** \brief  Create a symbolic link.
+
+    This function implements the POSIX function symlink(), which creates a
+    symbolic link on the filesystem. Symbolic links are not required to point to
+    an existing file (per POSIX) and may result in circular links if care is not
+    taken. For now, symbolic links cannot cross filesystem boundaries in KOS.
+
+    \param  path1           The content of the link (i.e, what to point at).
+    \param  path2           The pathname of the new link to be created.
+    \return                 0 on success, -1 on failure.
+
+    \note                   Most filesystems in KallistiOS do not support
+                            symbolic links. Filesystems that do not support
+                            symlinks will simply set errno to ENOSYS.
+*/
+int fs_symlink(const char *path1, const char *path2);
 
 /** \brief  Duplicate a file descriptor.
 

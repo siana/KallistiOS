@@ -1352,7 +1352,9 @@ static vfs_handler_t vh = {
     fs_ext2_mkdir,              /* mkdir */
     fs_ext2_rmdir,              /* rmdir */
     fs_ext2_fcntl,              /* fcntl */
-    NULL                        /* poll */
+    NULL,                       /* poll */
+    NULL,                       /* link */
+    NULL                        /* symlink */
 };
 
 static int initted = 0;

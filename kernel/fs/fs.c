@@ -2,7 +2,7 @@
 
    fs.c
    Copyright (C) 2000, 2001, 2002, 2003 Dan Potter
-   Copyright (C) 2012 Lawrence Sebald
+   Copyright (C) 2012, 2013 Lawrence Sebald
 
 */
 
@@ -649,6 +649,67 @@ int fs_fcntl(file_t fd, int cmd, ...) {
     rv = fs_vfcntl(fd, cmd, ap);
     va_end(ap);
     return rv;
+}
+
+int fs_link(const char *path1, const char *path2) {
+    vfs_handler_t *fh1, *fh2;
+    char rfn1[PATH_MAX], rfn2[PATH_MAX];
+
+    if(!realpath(path1, rfn1) || !realpath(path2, rfn2))
+        return -1;
+
+    /* Look for handlers */
+    fh1 = fs_verify_handler(rfn1);
+
+    if(!fh1) {
+        errno = ENOENT;
+        return -1;
+    }
+
+    fh2 = fs_verify_handler(rfn2);
+
+    if(!fh2) {
+        errno = ENOENT;
+        return -1;
+    }
+
+    if(fh1 != fh2) {
+        errno = EXDEV;
+        return -1;
+    }
+
+    if(fh1->link) {
+        return fh1->link(fh1, rfn1 + strlen(fh1->nmmgr.pathname),
+                         rfn2 + strlen(fh1->nmmgr.pathname));
+    }
+    else {
+        errno = EMLINK;
+        return -1;
+    }
+}
+
+int fs_symlink(const char *path1, const char *path2) {
+    vfs_handler_t *vfs;
+    char rfn[PATH_MAX];
+
+    if(!realpath(path2, rfn))
+        return -1;
+
+    /* Look for the handler */
+    vfs = fs_verify_handler(rfn);
+
+    if(!vfs) {
+        errno = ENOENT;
+        return -1;
+    }
+
+    if(vfs->symlink) {
+        return vfs->symlink(vfs, path1, rfn + strlen(vfs->nmmgr.pathname));
+    }
+    else {
+        errno = ENOSYS;
+        return -1;
+    }
 }
 
 /* Initialize FS structures */
