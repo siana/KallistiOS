@@ -11,7 +11,7 @@ stream.drv: prog.elf
 	$(DC_ARM_OBJCOPY) -O binary prog.elf stream.drv
 
 prog.elf: crt0.o main.o aica.o
-	$(DC_ARM_CC) -Wl,-Ttext,0x00000000,-Map,prog.map -nostartfiles -nostdlib -e reset -o prog.elf crt0.o main.o aica.o -lgcc
+	$(DC_ARM_CC) -Wl,-Ttext,0x00000000,-Map,prog.map,-N -nostartfiles -nostdlib -e reset -o prog.elf crt0.o main.o aica.o -lgcc
 
 %.o: %.c
 	$(DC_ARM_CC) $(DC_ARM_CFLAGS) $(DC_ARM_INCS) -c $< -o $@
