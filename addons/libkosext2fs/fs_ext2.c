@@ -122,9 +122,9 @@ static void *fs_ext2_open(vfs_handler_t *vfs, const char *fn, int mode) {
        read/write. */
     if((mode & (O_TRUNC | O_WRONLY | O_RDWR)) &&
        !(mnt->mount_flags & FS_EXT2_MOUNT_READWRITE)) {
-           errno = EROFS;
-           return NULL;
-       }
+        errno = EROFS;
+        return NULL;
+    }
 
     /* Find a free file handle */
     mutex_lock(&ext2_mutex);
@@ -1321,6 +1321,130 @@ static int fs_ext2_fcntl(void *h, int cmd, va_list ap) {
     return rv;
 }
 
+static int fs_ext2_link(vfs_handler_t *vfs, const char *path1,
+                        const char *path2) {
+    fs_ext2_fs_t *fs = (fs_ext2_fs_t *)vfs->privdata;
+    ext2_inode_t *inode, *pinode;
+    uint32_t inode_num, pinode_num;
+    int rv;
+    char *nd, *cp;
+
+    /* Make sure that the fs is mounted read/write. */
+    if(!(fs->mount_flags & FS_EXT2_MOUNT_READWRITE)) {
+        errno = EROFS;
+        return -1;
+    }
+
+    /* Make sure there is a filename given */
+    if(!path1) {
+        errno = EFAULT;
+        return -1;
+    }
+    /* Make sure they're not trying to make a link to the root directory. */
+    else if(!*path1) {
+        errno = EPERM;
+        return -1;
+    }
+
+    /* Make sure the second path is valid too */
+    if(!path2) {
+        errno = EFAULT;
+        return -1;
+    }
+    else if(!*path2) {
+        errno = EEXIST;
+        return -1;
+    }
+
+    /* Make a writable copy of the new link's filename */
+    if(!(cp = strdup(path2))) {
+        errno = ENOMEM;
+        return -1;
+    }
+
+    /* Separate our copy into the parent and the link we want to create */
+    if(!(nd = strrchr(cp, '/'))) {
+        free(cp);
+        errno = ENOENT;
+        return -1;
+    }
+
+    /* Split the string. */
+    *nd++ = 0;
+
+    mutex_lock(&ext2_mutex);
+
+    /* Find the object in question */
+    if((rv = ext2_inode_by_path(fs->fs, path1, &inode, &inode_num, 2, NULL))) {
+        mutex_unlock(&ext2_mutex);
+        free(cp);
+        errno = -rv;
+        return -1;
+    }
+
+    /* Make sure that the object in question isn't a directory. */
+    if((inode->i_mode & 0xF000) == EXT2_S_IFDIR) {
+        ext2_inode_put(inode);
+        mutex_unlock(&ext2_mutex);
+        free(cp);
+        errno = EPERM;
+        return -1;
+    }
+
+    /* Find the parent directory of the new link */
+    if((rv = ext2_inode_by_path(fs->fs, cp, &pinode, &pinode_num, 1, NULL))) {
+        ext2_inode_put(inode);
+        mutex_unlock(&ext2_mutex);
+        free(cp);
+        errno = -rv;
+        return -1;
+    }
+    
+    /* If the entry we get back is not a directory, then we've got problems. */
+    if((pinode->i_mode & 0xF000) != EXT2_S_IFDIR) {
+        ext2_inode_put(pinode);
+        ext2_inode_put(inode);
+        mutex_unlock(&ext2_mutex);
+        free(cp);
+        errno = ENOTDIR;
+        return -1;
+    }
+
+    /* See if the new link already exists */
+    if(ext2_dir_entry(fs->fs, pinode, nd)) {
+        ext2_inode_put(pinode);
+        ext2_inode_put(inode);
+        mutex_unlock(&ext2_mutex);
+        free(cp);
+        errno = EEXIST;
+        return -1;
+    }
+
+    /* Add the link's entry to its parent directory. */
+    if((rv = ext2_dir_add_entry(fs->fs, pinode, nd, inode_num, inode, NULL))) {
+        ext2_inode_put(pinode);
+        ext2_inode_put(inode);
+        mutex_unlock(&ext2_mutex);
+        free(cp);
+        errno = -rv;
+        return -1;
+    }
+
+    /* Clean this up, since we're done with it. */
+    free(cp);
+
+    /* Update the inodes... */
+    ++inode->i_links_count;
+    inode->i_ctime = pinode->i_ctime = pinode->i_mtime = time(NULL);
+    ext2_inode_mark_dirty(inode);
+    ext2_inode_mark_dirty(pinode);
+
+    ext2_inode_put(pinode);
+    ext2_inode_put(inode);
+    mutex_unlock(&ext2_mutex);
+    return 0;
+}
+
 /* This is a template that will be used for each mount */
 static vfs_handler_t vh = {
     /* Name Handler */
@@ -1353,7 +1477,7 @@ static vfs_handler_t vh = {
     fs_ext2_rmdir,              /* rmdir */
     fs_ext2_fcntl,              /* fcntl */
     NULL,                       /* poll */
-    NULL,                       /* link */
+    fs_ext2_link,               /* link */
     NULL                        /* symlink */
 };
 
