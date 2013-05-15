@@ -2,7 +2,7 @@
 
    kos/fs.h
    Copyright (C) 2000, 2001, 2002, 2003 Dan Potter
-   Copyright (C) 2012 Lawrence Sebald
+   Copyright (C) 2012, 2013 Lawrence Sebald
 
 */
 
@@ -243,7 +243,7 @@ file_t fs_open(const char *fn, int mode);
     associated with the descriptor.
 
     \param  hnd             The file descriptor to close.
-    \return                 0 for success, -1 for error (detailed error in errno)
+    \return                 0 for success, -1 for error
 */
 int fs_close(file_t hnd);
 
