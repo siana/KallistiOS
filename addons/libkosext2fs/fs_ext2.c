@@ -936,15 +936,18 @@ static int fs_ext2_unlink(vfs_handler_t *vfs, const char *fn) {
         return -1;
     }
 
-    /* Make sure we don't have any open file descriptors to the file. */
-    for(irv = 0; irv < MAX_EXT2_FILES; ++irv) {
-        if(fh[irv].inode_num == dent->inode) {
-            ext2_inode_put(pinode);
-            ext2_inode_put(inode);
-            mutex_unlock(&ext2_mutex);
-            free(cp);
-            errno = EBUSY;
-            return -1;
+    /* Make sure we don't have any open file descriptors to the file if we're
+       going to be actually deleting the data this time. */
+    if(inode->i_links_count == 1) {
+        for(irv = 0; irv < MAX_EXT2_FILES; ++irv) {
+            if(fh[irv].inode_num == dent->inode) {
+                ext2_inode_put(pinode);
+                ext2_inode_put(inode);
+                mutex_unlock(&ext2_mutex);
+                free(cp);
+                errno = EBUSY;
+                return -1;
+            }
         }
     }
 
@@ -1445,6 +1448,167 @@ static int fs_ext2_link(vfs_handler_t *vfs, const char *path1,
     return 0;
 }
 
+static int fs_ext2_symlink(vfs_handler_t *vfs, const char *path1,
+                           const char *path2) {
+    fs_ext2_fs_t *fs = (fs_ext2_fs_t *)vfs->privdata;
+    ext2_inode_t *inode, *pinode;
+    uint32_t inode_num, pinode_num, bs;
+    int rv;
+    char *nd, *cp;
+    size_t len;
+    time_t now;
+    uint8_t *block;
+
+    /* Make sure that the fs is mounted read/write. */
+    if(!(fs->mount_flags & FS_EXT2_MOUNT_READWRITE)) {
+        errno = EROFS;
+        return -1;
+    }
+
+    /* Make sure there is a string given */
+    if(!path1) {
+        errno = EFAULT;
+        return -1;
+    }
+
+    /* Make sure it is not too long. Linux doesn't allow symlinks to be more
+       than one page in length, so we'll respect that limit too. */
+    len = strlen(path1);
+    if(len >= 4096) {
+        errno = ENAMETOOLONG;
+        return -1;
+    }
+
+    /* Make sure the second path is valid */
+    if(!path2) {
+        errno = EFAULT;
+        return -1;
+    }
+    else if(!*path2) {
+        errno = EEXIST;
+        return -1;
+    }
+
+    /* Make a writable copy of the new link's filename */
+    if(!(cp = strdup(path2))) {
+        errno = ENOMEM;
+        return -1;
+    }
+
+    /* Separate our copy into the parent and the link we want to create */
+    if(!(nd = strrchr(cp, '/'))) {
+        free(cp);
+        errno = ENOENT;
+        return -1;
+    }
+
+    /* Split the string. */
+    *nd++ = 0;
+
+    mutex_lock(&ext2_mutex);
+
+    /* Find the parent directory of the new link */
+    if((rv = ext2_inode_by_path(fs->fs, cp, &pinode, &pinode_num, 1, NULL))) {
+        mutex_unlock(&ext2_mutex);
+        free(cp);
+        errno = -rv;
+        return -1;
+    }
+
+    /* If the entry we get back is not a directory, then we've got problems. */
+    if((pinode->i_mode & 0xF000) != EXT2_S_IFDIR) {
+        ext2_inode_put(pinode);
+        mutex_unlock(&ext2_mutex);
+        free(cp);
+        errno = ENOTDIR;
+        return -1;
+    }
+
+    /* See if the new link already exists */
+    if(ext2_dir_entry(fs->fs, pinode, nd)) {
+        ext2_inode_put(pinode);
+        mutex_unlock(&ext2_mutex);
+        free(cp);
+        errno = EEXIST;
+        return -1;
+    }
+
+    /* Allocate a new inode for the new symlink. */
+    if(!(inode = ext2_inode_alloc(fs->fs, pinode_num, &rv, &inode_num))) {
+        ext2_inode_put(pinode);
+        mutex_unlock(&ext2_mutex);
+        free(cp);
+        errno = rv;
+        return -1;
+    }
+
+    /* Fill in the inode. Copy most of the interesting parts from the parent. */
+    now = time(NULL);
+    inode->i_mode = (pinode->i_mode & ~EXT2_S_IFDIR) | EXT2_S_IFLNK;
+    inode->i_uid = pinode->i_uid;
+    inode->i_atime = inode->i_ctime = inode->i_mtime = now;
+    inode->i_gid = pinode->i_gid;
+    inode->i_osd2.l_i_uid_high = pinode->i_osd2.l_i_uid_high;
+    inode->i_osd2.l_i_gid_high = pinode->i_osd2.l_i_gid_high;
+    inode->i_links_count = 1;
+
+    /* Will the link fit in the inode? */
+    if(len < 60) {
+        /* We can make a fast symlink. */
+        strncpy((char *)inode->i_block, path1, 60);
+        inode->i_size = (uint32_t)len;
+    }
+    else {
+        /* We will never leak into the indirect pointers, so this is relatively
+           simple to deal with. */
+        inode->i_size = (uint32_t)len;
+        bs = ext2_block_size(fs->fs);
+
+        while(len) {
+            if(!(block = ext2_inode_alloc_block(fs->fs, inode, &rv))) {
+                ext2_inode_put(pinode);
+                ext2_inode_deref(fs->fs, inode_num, 1);
+                free(cp);
+                errno = rv;
+                return -1;
+            }
+
+            if(len >= bs) {
+                memcpy(block, path1, bs);
+                len -= bs;
+                path1 += bs;
+            }
+            else {
+                memcpy(block, path1, len);
+                memset(block + len, 0, bs - len);
+                len = 0;
+            }
+        }
+    }
+
+    /* Add an entry to the parent directory. */
+    if((rv = ext2_dir_add_entry(fs->fs, pinode, nd, inode_num, inode, NULL))) {
+        ext2_inode_put(pinode);
+        ext2_inode_deref(fs->fs, inode_num, 1);
+        free(cp);
+        errno = rv;
+        return -1;
+    }
+
+    /* Clean this up, since we're done with it. */
+    free(cp);
+
+    /* Update the parent inode and mark both as dirty... */
+    pinode->i_ctime = pinode->i_mtime = now;
+    ext2_inode_mark_dirty(pinode);
+    ext2_inode_mark_dirty(inode);
+
+    ext2_inode_put(pinode);
+    ext2_inode_put(inode);
+    mutex_unlock(&ext2_mutex);
+    return 0;
+}
+
 /* This is a template that will be used for each mount */
 static vfs_handler_t vh = {
     /* Name Handler */
@@ -1478,7 +1642,7 @@ static vfs_handler_t vh = {
     fs_ext2_fcntl,              /* fcntl */
     NULL,                       /* poll */
     fs_ext2_link,               /* link */
-    NULL                        /* symlink */
+    fs_ext2_symlink             /* symlink */
 };
 
 static int initted = 0;
