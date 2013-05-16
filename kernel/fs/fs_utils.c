@@ -31,7 +31,7 @@ ssize_t fs_copy(const char * src, const char * dst) {
         return -1;
     }
 
-    fd = fs_open(dst, O_WRONLY | O_TRUNC);
+    fd = fs_open(dst, O_WRONLY | O_TRUNC | O_CREAT);
 
     if(fd == FILEHND_INVALID) {
         fs_close(fs);
