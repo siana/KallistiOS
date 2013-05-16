@@ -1275,14 +1275,10 @@ uint8_t *ext2_inode_read_block(ext2_fs_t *fs, const ext2_inode_t *inode,
                                int *err) {
     uint32_t blks_per_ind, ibn;
     uint32_t *iblock;
-    int shift = (1 << fs->sb.s_log_block_size);
-    int sub = 0;
-
-    if(inode->i_file_acl)
-        sub = 1 << shift;
+    int shift = 1 + fs->sb.s_log_block_size;
 
     /* Check to be sure we're not being asked to do something stupid... */
-    if((block_num << shift) >= inode->i_blocks - sub) {
+    if((block_num << (shift + 9)) >= inode->i_size) {
         *err = EINVAL;
         return NULL;
     }
