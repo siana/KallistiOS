@@ -392,12 +392,39 @@ off_t fs_seek(file_t fd, off_t offset, int whence) {
 
     if(h == NULL) return -1;
 
-    if(h->handler == NULL || h->handler->seek == NULL) {
+    if(h->handler == NULL) {
         errno = EINVAL;
         return -1;
     }
 
-    return h->handler->seek(h->hnd, offset, whence);
+    /* Prefer the 32-bit version, but fall back if needed to the 64-bit one. */
+    if(h->handler->seek)
+        return h->handler->seek(h->hnd, offset, whence);
+    else if(h->handler->seek64)
+        return (off_t)h->handler->seek64(h->hnd, (_off64_t)offset, whence);
+
+    errno = EINVAL;
+    return -1;
+}
+
+_off64_t fs_seek64(file_t fd, _off64_t offset, int whence) {
+    fs_hnd_t *h = fs_map_hnd(fd);
+
+    if(h == NULL) return -1;
+
+    if(h->handler == NULL) {
+        errno = EINVAL;
+        return -1;
+    }
+
+    /* Prefer the 64-bit version, but fall back if needed to the 32-bit one. */
+    if(h->handler->seek64)
+        return h->handler->seek64(h->hnd, offset, whence);
+    else if(h->handler->seek)
+        return (_off64_t)h->handler->seek(h->hnd, (off_t)offset, whence);
+
+    errno = EINVAL;
+    return -1;
 }
 
 off_t fs_tell(file_t fd) {
@@ -405,12 +432,39 @@ off_t fs_tell(file_t fd) {
 
     if(h == NULL) return -1;
 
-    if(h->handler == NULL || h->handler->tell == NULL) {
+    if(h->handler == NULL) {
         errno = EINVAL;
         return -1;
     }
 
-    return h->handler->tell(h->hnd);
+    /* Prefer the 32-bit version, but fall back if needed to the 64-bit one. */
+    if(h->handler->tell)
+        return h->handler->tell(h->hnd);
+    else if(h->handler->tell64)
+        return (off_t)h->handler->tell64(h->hnd);
+
+    errno = EINVAL;
+    return -1;
+}
+
+_off64_t fs_tell64(file_t fd) {
+    fs_hnd_t *h = fs_map_hnd(fd);
+
+    if(h == NULL) return -1;
+
+    if(h->handler == NULL) {
+        errno = EINVAL;
+        return -1;
+    }
+
+    /* Prefer the 64-bit version, but fall back if needed to the 32-bit one. */
+    if(h->handler->tell64)
+        return h->handler->tell64(h->hnd);
+    else if(h->handler->tell)
+        return (_off64_t)h->handler->tell(h->hnd);
+
+    errno = EINVAL;
+    return -1;
 }
 
 size_t fs_total(file_t fd) {
@@ -418,12 +472,39 @@ size_t fs_total(file_t fd) {
 
     if(h == NULL) return -1;
 
-    if(h->handler == NULL || h->handler->total == NULL) {
+    if(h->handler == NULL) {
         errno = EINVAL;
         return -1;
     }
 
-    return h->handler->total(h->hnd);
+    /* Prefer the 32-bit version, but fall back if needed to the 64-bit one. */
+    if(h->handler->total)
+        return h->handler->total(h->hnd);
+    else if(h->handler->total64)
+        return (size_t)h->handler->total64(h->hnd);
+
+    errno = EINVAL;
+    return -1;
+}
+
+uint64 fs_total64(file_t fd) {
+    fs_hnd_t *h = fs_map_hnd(fd);
+
+    if(h == NULL) return -1;
+
+    if(h->handler == NULL) {
+        errno = EINVAL;
+        return -1;
+    }
+
+    /* Prefer the 64-bit version, but fall back if needed to the 32-bit one. */
+    if(h->handler->total64)
+        return h->handler->total64(h->hnd);
+    else if(h->handler->total)
+        return (uint64)h->handler->total(h->hnd);
+
+    errno = EINVAL;
+    return -1;
 }
 
 dirent_t *fs_readdir(file_t fd) {

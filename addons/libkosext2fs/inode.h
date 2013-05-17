@@ -104,6 +104,11 @@ typedef struct ext2_xattr_hdr {
 /* This should be in the h_magic of an xattr */
 #define EXT2_XATTR_MAGIC        0xEA020000
 
+/* Get the size of a regular file inode as a 64-bit integer. */
+static inline uint64_t ext2_inode_size(ext2_inode_t *inode) {
+    return (uint64_t)(inode->i_size) | ((uint64_t)(inode->i_dir_acl) << 32);
+}
+
 /* Initialize the inode cache. This will be called by ext2_init(). */
 void ext2_inode_init(void);
 

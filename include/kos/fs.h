@@ -181,6 +181,18 @@ typedef struct vfs_handler {
     /** \brief Create a symbolic link */
     int (*symlink)(struct vfs_handler *vfs, const char *path1,
                    const char *path2);
+
+    /* 64-bit file access functions. Generally, you should only define one of
+       the 64-bit or 32-bit versions of these functions. */
+
+    /** \brief Seek in a previously opened file (64-bit offsets) */
+    _off64_t (*seek64)(void *hnd, _off64_t offset, int whence);
+
+    /** \brief Return the current position in an opened file (64-bit offset) */
+    _off64_t (*tell64)(void *hnd);
+
+    /** \brief Return the size of an opened file as a 64-bit integer */
+    uint64 (*total64)(void *hnd);
 } vfs_handler_t;
 
 /** \brief  The number of distinct file descriptors that can be in use at a
@@ -288,6 +300,19 @@ ssize_t fs_write(file_t hnd, const void *buffer, size_t cnt);
 */
 off_t fs_seek(file_t hnd, off_t offset, int whence);
 
+/** \brief  Seek to a new position within a file (64-bit offsets).
+
+    This function moves the file pointer to the specified position within the
+    file (the base of this position is determined by the whence parameter).
+
+    \param  hnd             The file descriptor to move the pointer for.
+    \param  offset          The offset in bytes from the specified base.
+    \param  whence          The base of the pointer move. This should be one of
+                            the \ref seek_modes values.
+    \return                 The new position of the file pointer.
+*/
+_off64_t fs_seek64(file_t hnd, _off64_t offset, int whence);
+
 /** \brief  Retrieve the position of the pointer within a file.
 
     This function retrieves the current location of the file pointer within an
@@ -298,6 +323,16 @@ off_t fs_seek(file_t hnd, off_t offset, int whence);
 */
 off_t fs_tell(file_t hnd);
 
+/** \brief  Retrieve the position of the 64-bit pointer within a file.
+
+    This function retrieves the current location of the file pointer within an
+    opened file. This is an offset in bytes from the start of the file.
+
+    \param  hnd             The file descriptor to retrieve the pointer from.
+    \return                 The offset within the file for the pointer.
+*/
+_off64_t fs_tell64(file_t hnd);
+
 /** \brief  Retrieve the length of an opened file.
 
     This file retrieves the length of the file associated with the given file
@@ -307,6 +342,17 @@ off_t fs_tell(file_t hnd);
     \return                 The length of the file on success, -1 on failure.
 */
 size_t fs_total(file_t hnd);
+
+/** \brief  Retrieve the length of an opened file as a 64-bit integer.
+
+    This file retrieves the length of the file associated with the given file
+    descriptor.
+
+    \param  hnd             The file descriptor to retrieve the size from.
+    \return                 The length of the file on success, -1 on failure.
+*/
+uint64 fs_total64(file_t hnd);
+
 
 /** \brief  Read an entry from an opened directory.
 

@@ -480,7 +480,7 @@ static ssize_t fs_ext2_write(void *h, const void *buf, size_t cnt) {
     return rv;
 }
 
-static off_t fs_ext2_seek(void *h, off_t offset, int whence) {
+static _off64_t fs_ext2_seek64(void *h, _off64_t offset, int whence) {
     file_t fd = ((file_t)h) - 1;
     off_t rv;
 
@@ -512,12 +512,12 @@ static off_t fs_ext2_seek(void *h, off_t offset, int whence) {
             return -1;
     }
 
-    rv = (off_t)fh[fd].ptr;
+    rv = (_off64_t)fh[fd].ptr;
     mutex_unlock(&ext2_mutex);
     return rv;
 }
 
-static off_t fs_ext2_tell(void *h) {
+static _off64_t fs_ext2_tell64(void *h) {
     file_t fd = ((file_t)h) - 1;
     off_t rv;
 
@@ -529,12 +529,12 @@ static off_t fs_ext2_tell(void *h) {
         return -1;
     }
 
-    rv = (off_t)fh[fd].ptr;
+    rv = (_off64_t)fh[fd].ptr;
     mutex_unlock(&ext2_mutex);
     return rv;
 }
 
-static size_t fs_ext2_total(void *h) {
+static uint64 fs_ext2_total64(void *h) {
     file_t fd = ((file_t)h) - 1;
     size_t rv;
 
@@ -546,7 +546,7 @@ static size_t fs_ext2_total(void *h) {
         return -1;
     }
 
-    rv = fh[fd].inode->i_size;
+    rv = ext2_inode_size(fh[fd].inode);
     mutex_unlock(&ext2_mutex);
     return rv;
 }
@@ -1662,9 +1662,9 @@ static vfs_handler_t vh = {
     fs_ext2_close,              /* close */
     fs_ext2_read,               /* read */
     fs_ext2_write,              /* write */
-    fs_ext2_seek,               /* seek */
-    fs_ext2_tell,               /* tell */
-    fs_ext2_total,              /* total */
+    NULL,                       /* seek */
+    NULL,                       /* tell */
+    NULL,                       /* total */
     fs_ext2_readdir,            /* readdir */
     NULL,                       /* ioctl */
     fs_ext2_rename,             /* rename */
@@ -1677,7 +1677,10 @@ static vfs_handler_t vh = {
     fs_ext2_fcntl,              /* fcntl */
     NULL,                       /* poll */
     fs_ext2_link,               /* link */
-    fs_ext2_symlink             /* symlink */
+    fs_ext2_symlink,            /* symlink */
+    fs_ext2_seek64,             /* seek64 */
+    fs_ext2_tell64,             /* tell64 */
+    fs_ext2_total64             /* total64 */
 };
 
 static int initted = 0;
