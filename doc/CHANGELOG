@@ -198,6 +198,43 @@ KallistiOS version 2.0.0 -----------------------------------------------
 - *** Added rudimentary IP reassembly support [LS]
 - *** Added support for IPv6 in the network stack [LS]
 - *** Added support for TCP in the network stack [LS]
+- *** Added setsockopt(), getsockopt(), and fcntl() functions, mainly for
+      dealing with sockets. Removed the (now useless) fs_socket_setflags()
+      function [LS]
+- *** Updated patches to use GCC 4.7.0 and Newlib 1.12.0 [LS]
+- *** Added initializers for transient semaphores, condvars, and mutexes and
+      changed the way that they should be initialized in general [LS]
+- *** Added a poll() function, as well as select() [LS]
+- *** Added the ability to wake a certain thread with genwait and to specify
+      an error code to wake them with [LS]
+- DC  Use the fsca and fsrra asm mnemonics in the fmath code since they've
+      been supported by binutils since 2004 [LS]
+- DC  Detect the region/type of keyboard on attach and map keys in an
+      appropriate manner [LS]
+- DC  Give each keyboard its own queue of keys [LS]
+- DC  Added low-level SPI support on the serial port as well as a block device
+      interface for using an SD card with the homebrew adapter [LS]
+- *** Added a CRC16-CCITT function [LS]
+- *** Added dontwait, waitall, and peek flags for use with sending and receiving
+      data on sockets [LS]
+- *** Added fs_ext2 to be used with the SD card code (and fixed a lot of bugs
+      with it along the way) [LS]
+- DC  Added missing txrenv stuff to PVR sprites (thanks to Tvspelsfreak at the
+      DCEmulation forums for pointing out it was missing) [LS]
+- *** Change how threads are swapped to prevent a high priority thread from
+      starving everyone else [LS]
+- DC  Create a map file for the ARM code during compilation [CG]
+- DC  Return the old border color from vid_border_color() [CG]
+- *** Return status codes from fs_close() as is expected in POSIX [CG]
+- DC  Actually support 2352 byte sector reads in the cdrom code (thanks to
+      Multimedia Mike for noticing it was broken) [LS]
+- *** Added fs_symlink() and fs_link() functions to the VFS [LS]
+- DC  Fixed a delay loop in aica_get_pos() that was optimized away [CG]
+- DC  Added -N to the ARM linker switches to prevent .data from being padded to
+      a 32KiB boundary [CG]
+- *** Use the O_CREAT flag in fs_copy() on the destination file [LS]
+- DC  Added fs_ext2/SD examples sd/ext2fs (basic example showing mounting and
+      file I/O) and sd/mke2fs (create a new ext2 filesystem on the SD card) [LS]
 
 KallistiOS version 1.2.0 -----------------------------------------------
 - DC  Fix to use DCARM7_CFLAGS when compiling ARM driver [Christian Groessler == CG]
