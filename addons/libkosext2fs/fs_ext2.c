@@ -203,7 +203,7 @@ created:
         }
 
         /* Fix the times/sizes up. */
-        fh[fd].inode->i_size = 0;
+        ext2_inode_set_size(fh[fd].inode, 0);
         fh[fd].inode->i_dtime = 0;
         fh[fd].inode->i_mtime = time(NULL);
         ext2_inode_mark_dirty(fh[fd].inode);
@@ -241,6 +241,7 @@ static ssize_t fs_ext2_read(void *h, void *buf, size_t cnt) {
     uint8_t *block;
     uint8_t *bbuf = (uint8_t *)buf;
     ssize_t rv;
+    uint64_t sz;
     int mode;
 
     mutex_lock(&ext2_mutex);
@@ -268,8 +269,9 @@ static ssize_t fs_ext2_read(void *h, void *buf, size_t cnt) {
     }
 
     /* Do we have enough left? */
-    if((fh[fd].ptr + cnt) > fh[fd].inode->i_size)
-        cnt = fh[fd].inode->i_size - fh[fd].ptr;
+    sz = ext2_inode_size(fh[fd].inode);
+    if((fh[fd].ptr + cnt) > sz)
+        cnt = sz - fh[fd].ptr;
 
     fs = fh[fd].fs->fs;
     bs = ext2_block_size(fs);
@@ -331,6 +333,7 @@ static ssize_t fs_ext2_write(void *h, const void *buf, size_t cnt) {
     uint8_t *block;
     uint8_t *bbuf = (uint8_t *)buf;
     ssize_t rv;
+    uint64_t sz;
     int err, mode;
 
     mutex_lock(&ext2_mutex);
@@ -354,19 +357,18 @@ static ssize_t fs_ext2_write(void *h, const void *buf, size_t cnt) {
     bs = ext2_block_size(fs);
     lbs = ext2_log_block_size(fs);
     rv = (ssize_t)cnt;
+    sz = ext2_inode_size(fh[fd].inode);
 
     /* Reset the file pointer to the end of the file if we've got the append
        flag set. */
     if(fh[fd].mode & O_APPEND)
-        fh[fd].ptr = fh[fd].inode->i_size;
+        fh[fd].ptr = sz;
 
     /* If we have already moved beyond the end of the file with a seek
        operation, allocate any blank blocks we need to to satisfy that. */
-    if(fh[fd].ptr > fh[fd].inode->i_size) {
-        bo = fh[fd].inode->i_size;
-
+    if(fh[fd].ptr > sz) {
         /* Are we staying within the same block? */
-        if(((bo - 1) >> lbs) == ((fh[fd].ptr - 1) >> lbs)) {
+        if(((sz - 1) >> lbs) == ((fh[fd].ptr - 1) >> lbs)) {
             if(!(block = ext2_inode_read_block(fs, fh[fd].inode,
                                                (fh[fd].ptr - 1) >> lbs, &bn,
                                                &errno))) {
@@ -374,43 +376,40 @@ static ssize_t fs_ext2_write(void *h, const void *buf, size_t cnt) {
                 return -1;
             }
 
-            memset(block + (bo & (bs - 1)), 0, fh[fd].ptr - bo);
+            memset(block + (sz & (bs - 1)), 0, fh[fd].ptr - sz);
             ext2_block_mark_dirty(fs, bn);
         }
         /* Nope, we need to allocate a new one... */
         else {
             /* Do we need to clear the end of the current last block? */
-            if(fh[fd].inode->i_size & (bs - 1)) {
+            if(sz & (bs - 1)) {
                 if(!(block = ext2_inode_read_block(fs, fh[fd].inode,
-                                                   fh[fd].inode->i_size >> lbs,
+                                                   (sz - 1) >> lbs,
                                                    &bn, &errno))) {
                     mutex_unlock(&ext2_mutex);
                     return -1;
                 }
 
-                memset(block + (fh[fd].inode->i_size & (bs - 1)), 0,
-                       fh[fd].ptr - fh[fd].inode->i_size);
+                memset(block + (sz & (bs - 1)), 0, bs - (sz & (bs - 1)));
                 ext2_block_mark_dirty(fs, bn);
-                fh[fd].inode->i_size &= (bs - 1);
-                fh[fd].inode->i_size += bs;
+                sz &= (bs - 1);
+                sz += bs;
             }
 
             /* The size should now be nicely at a block boundary... */
-            bo = fh[fd].inode->i_size;
-
-            while(bo < fh[fd].ptr) {
+            while(sz < fh[fd].ptr) {
                 if(!(block = ext2_inode_alloc_block(fs, fh[fd].inode,
-                                                    bo >> lbs, &errno))) {
+                                                    sz >> lbs, &errno))) {
                     mutex_unlock(&ext2_mutex);
                     return -1;
                 }
 
-                bo += bs;
-                fh[fd].inode->i_size += bs;
+                sz += bs;
             }
         }
 
-        fh[fd].inode->i_size = fh[fd].ptr;
+        ext2_inode_set_size(fh[fd].inode, fh[fd].ptr);
+        sz = fh[fd].ptr;
     }
 
     /* Handle the first block specially if we are offset within it. */
@@ -470,8 +469,8 @@ static ssize_t fs_ext2_write(void *h, const void *buf, size_t cnt) {
     }
 
     /* Update the file's size and modification time. */
-    if(fh[fd].ptr > fh[fd].inode->i_size)
-        fh[fd].inode->i_size = (uint32_t)fh[fd].ptr;
+    if(fh[fd].ptr > sz)
+        ext2_inode_set_size(fh[fd].inode, fh[fd].ptr);
 
     fh[fd].inode->i_mtime = time(NULL);
     ext2_inode_mark_dirty(fh[fd].inode);
@@ -504,7 +503,7 @@ static _off64_t fs_ext2_seek64(void *h, _off64_t offset, int whence) {
             break;
 
         case SEEK_END:
-            fh[fd].ptr = fh[fd].inode->i_size + offset;
+            fh[fd].ptr = ext2_inode_size(fh[fd].inode) + offset;
             break;
 
         default:
@@ -1036,7 +1035,6 @@ static int fs_ext2_stat(vfs_handler_t *vfs, const char *fn, stat_t *rv) {
     /* Fill in the easy parts of the structure. */
     rv->dev = vfs;
     rv->unique = inode_num;
-    rv->size = inode->i_size;
     rv->time = inode->i_mtime;
     rv->attr = 0;
 
@@ -1044,14 +1042,17 @@ static int fs_ext2_stat(vfs_handler_t *vfs, const char *fn, stat_t *rv) {
     switch(inode->i_mode & 0xF000) {
         case EXT2_S_IFLNK:
             rv->type = STAT_TYPE_SYMLINK;
+            rv->size = inode->i_size;
             break;
 
         case EXT2_S_IFREG:
             rv->type = STAT_TYPE_FILE;
+            rv->size = ext2_inode_size(inode);
             break;
 
         case EXT2_S_IFDIR:
             rv->type = STAT_TYPE_DIR;
+            rv->size = inode->i_size;
             break;
 
         case EXT2_S_IFSOCK:
@@ -1059,10 +1060,12 @@ static int fs_ext2_stat(vfs_handler_t *vfs, const char *fn, stat_t *rv) {
         case EXT2_S_IFBLK:
         case EXT2_S_IFCHR:
             rv->type = STAT_TYPE_PIPE;
+            rv->size = 0;
             break;
 
         default:
             rv->type = STAT_TYPE_NONE;
+            rv->size = 0;
             break;
     }
 

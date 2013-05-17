@@ -1256,9 +1256,16 @@ uint8_t *ext2_inode_read_block(ext2_fs_t *fs, const ext2_inode_t *inode,
     uint32_t blks_per_ind, ibn;
     uint32_t *iblock;
     int shift = 1 + fs->sb.s_log_block_size;
+    uint64_t sz;
+
+    /* Grab the size */
+    if((inode->i_mode & 0xF000) == EXT2_S_IFREG)
+        sz = ext2_inode_size(inode);
+    else
+        sz = (uint64_t)inode->i_size;
 
     /* Check to be sure we're not being asked to do something stupid... */
-    if((block_num << (shift + 9)) >= inode->i_size) {
+    if((block_num << (shift + 9)) >= sz) {
         *err = EINVAL;
         return NULL;
     }
