@@ -136,7 +136,8 @@ int ext2_inode_deref(ext2_fs_t *fs, uint32_t inode_num, int isdir);
 /* Allocate a new data block for an inode, filling in the blocks array and
    updating the block count. It is the caller's responsibility to update the
    i_size and any timestamps needed. */
-uint8_t *ext2_inode_alloc_block(ext2_fs_t *fs, ext2_inode_t *inode, int *err);
+uint8_t *ext2_inode_alloc_block(ext2_fs_t *fs, ext2_inode_t *inode,
+                                uint32_t blocks,int *err);
 
 uint8_t *ext2_inode_read_block(ext2_fs_t *fs, const ext2_inode_t *inode,
                                uint32_t block_num, uint32_t *r_block,

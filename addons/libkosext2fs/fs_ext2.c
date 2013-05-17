@@ -331,7 +331,6 @@ static ssize_t fs_ext2_write(void *h, const void *buf, size_t cnt) {
     uint8_t *block;
     uint8_t *bbuf = (uint8_t *)buf;
     ssize_t rv;
-    uint64_t nblocks;
     int err, mode;
 
     mutex_lock(&ext2_mutex);
@@ -355,23 +354,59 @@ static ssize_t fs_ext2_write(void *h, const void *buf, size_t cnt) {
     bs = ext2_block_size(fs);
     lbs = ext2_log_block_size(fs);
     rv = (ssize_t)cnt;
-    bo = fh[fd].ptr & ((1 << lbs) - 1);
 
     /* Reset the file pointer to the end of the file if we've got the append
        flag set. */
-    if(fh[fd].mode & O_APPEND) {
+    if(fh[fd].mode & O_APPEND)
         fh[fd].ptr = fh[fd].inode->i_size;
-    }
 
     /* If we have already moved beyond the end of the file with a seek
        operation, allocate any blank blocks we need to to satisfy that. */
     if(fh[fd].ptr > fh[fd].inode->i_size) {
-        nblocks = (fh[fd].ptr - fh[fd].inode->i_size) >> lbs;
+        bo = fh[fd].inode->i_size;
 
-        while(nblocks--) {
-            if(!(block = ext2_inode_alloc_block(fs, fh[fd].inode, &errno))) {
+        /* Are we staying within the same block? */
+        if(((bo - 1) >> lbs) == ((fh[fd].ptr - 1) >> lbs)) {
+            if(!(block = ext2_inode_read_block(fs, fh[fd].inode,
+                                               (fh[fd].ptr - 1) >> lbs, &bn,
+                                               &errno))) {
                 mutex_unlock(&ext2_mutex);
                 return -1;
+            }
+
+            memset(block + (bo & (bs - 1)), 0, fh[fd].ptr - bo);
+            ext2_block_mark_dirty(fs, bn);
+        }
+        /* Nope, we need to allocate a new one... */
+        else {
+            /* Do we need to clear the end of the current last block? */
+            if(fh[fd].inode->i_size & (bs - 1)) {
+                if(!(block = ext2_inode_read_block(fs, fh[fd].inode,
+                                                   fh[fd].inode->i_size >> lbs,
+                                                   &bn, &errno))) {
+                    mutex_unlock(&ext2_mutex);
+                    return -1;
+                }
+
+                memset(block + (fh[fd].inode->i_size & (bs - 1)), 0,
+                       fh[fd].ptr - fh[fd].inode->i_size);
+                ext2_block_mark_dirty(fs, bn);
+                fh[fd].inode->i_size &= (bs - 1);
+                fh[fd].inode->i_size += bs;
+            }
+
+            /* The size should now be nicely at a block boundary... */
+            bo = fh[fd].inode->i_size;
+
+            while(bo < fh[fd].ptr) {
+                if(!(block = ext2_inode_alloc_block(fs, fh[fd].inode,
+                                                    bo >> lbs, &errno))) {
+                    mutex_unlock(&ext2_mutex);
+                    return -1;
+                }
+
+                bo += bs;
+                fh[fd].inode->i_size += bs;
             }
         }
 
@@ -379,7 +414,7 @@ static ssize_t fs_ext2_write(void *h, const void *buf, size_t cnt) {
     }
 
     /* Handle the first block specially if we are offset within it. */
-    if(bo) {
+    if((bo = fh[fd].ptr & ((1 << lbs) - 1))) {
         if(!(block = ext2_inode_read_block(fs, fh[fd].inode, fh[fd].ptr >> lbs,
                                            &bn, &errno))) {
             mutex_unlock(&ext2_mutex);
@@ -410,8 +445,9 @@ static ssize_t fs_ext2_write(void *h, const void *buf, size_t cnt) {
                 errno = err;
                 return -1;
             }
-            else if(!(block = ext2_inode_alloc_block(fs, fh[fd].inode,
-                                                     &errno))) {
+
+            if(!(block = ext2_inode_alloc_block(fs, fh[fd].inode,
+                                                fh[fd].ptr >> lbs, &errno))) {
                 mutex_unlock(&ext2_mutex);
                 return -1;
             }
@@ -434,9 +470,8 @@ static ssize_t fs_ext2_write(void *h, const void *buf, size_t cnt) {
     }
 
     /* Update the file's size and modification time. */
-    if(fh[fd].ptr > fh[fd].inode->i_size) {
+    if(fh[fd].ptr > fh[fd].inode->i_size)
         fh[fd].inode->i_size = (uint32_t)fh[fd].ptr;
-    }
 
     fh[fd].inode->i_mtime = time(NULL);
     ext2_inode_mark_dirty(fh[fd].inode);
@@ -476,9 +511,6 @@ static off_t fs_ext2_seek(void *h, off_t offset, int whence) {
             mutex_unlock(&ext2_mutex);
             return -1;
     }
-
-    /* Check bounds */    
-    if(fh[fd].ptr > fh[fd].inode->i_size) fh[fd].ptr = fh[fd].inode->i_size;
 
     rv = (off_t)fh[fd].ptr;
     mutex_unlock(&ext2_mutex);
@@ -1452,7 +1484,7 @@ static int fs_ext2_symlink(vfs_handler_t *vfs, const char *path1,
                            const char *path2) {
     fs_ext2_fs_t *fs = (fs_ext2_fs_t *)vfs->privdata;
     ext2_inode_t *inode, *pinode;
-    uint32_t inode_num, pinode_num, bs;
+    uint32_t inode_num, pinode_num, bs, lbs;
     int rv;
     char *nd, *cp;
     size_t len;
@@ -1561,11 +1593,12 @@ static int fs_ext2_symlink(vfs_handler_t *vfs, const char *path1,
     else {
         /* We will never leak into the indirect pointers, so this is relatively
            simple to deal with. */
-        inode->i_size = (uint32_t)len;
         bs = ext2_block_size(fs->fs);
+        lbs = ext2_log_block_size(fs->fs);
 
         while(len) {
-            if(!(block = ext2_inode_alloc_block(fs->fs, inode, &rv))) {
+            if(!(block = ext2_inode_alloc_block(fs->fs, inode,
+                                                inode->i_size >> lbs, &rv))) {
                 ext2_inode_put(pinode);
                 ext2_inode_deref(fs->fs, inode_num, 1);
                 free(cp);
@@ -1577,10 +1610,12 @@ static int fs_ext2_symlink(vfs_handler_t *vfs, const char *path1,
                 memcpy(block, path1, bs);
                 len -= bs;
                 path1 += bs;
+                inode->i_size += bs;
             }
             else {
                 memcpy(block, path1, len);
                 memset(block + len, 0, bs - len);
+                inode->i_size += len;
                 len = 0;
             }
         }

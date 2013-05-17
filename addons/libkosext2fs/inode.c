@@ -398,8 +398,9 @@ static int free_ind_block(ext2_fs_t *fs, ext2_inode_t *inode, uint32_t iblk) {
     uint32_t blks_per_ind = fs->block_size >> 2;
     uint32_t i, blk;
     uint32_t *iblock;
-    uint32_t blks_left = inode->i_blocks;
-    int rv, sub = (2 << fs->sb.s_log_block_size);
+    int rv;
+
+    (void)inode;
 
     if(!iblk) {
         /* ????: This really shouldn't happen! */
@@ -412,7 +413,7 @@ static int free_ind_block(ext2_fs_t *fs, ext2_inode_t *inode, uint32_t iblk) {
     if(!(iblock = (uint32_t *)malloc(fs->block_size)))
         /* Uh oh... */
         return -ENOMEM;
-    
+
     /* Read the indirect block in. No need to cache this, since we're going to
        be releasing it very soon anyway... */
     if(ext2_block_read_nc(fs, iblk, (uint8_t *)iblock)) {
@@ -420,25 +421,15 @@ static int free_ind_block(ext2_fs_t *fs, ext2_inode_t *inode, uint32_t iblk) {
         return -EIO;
     }
 
-    for(i = 0; i < blks_per_ind && blks_left; ++i) {
-        if(!(blk = iblock[i])) {
-            /* ????: This really shouldn't happen! */
-            dbglog(DBG_ERROR, "ext2_inode_free_all: inode indicates use of "
-                   "block 0. Run fsck ASAP!\n");
+    for(i = 0; i < blks_per_ind; ++i) {
+        if(!(blk = iblock[i]))
             continue;
-        }
 
         if((rv = mark_block_free(fs, blk))) {
             free(iblock);
             return rv;
         }
-
-        /* Subtract out however many blocks we freed up along the way. */
-        blks_left -= sub;
     }
-
-    /* Update the number of blocks remaining. */
-    inode->i_blocks = blks_left;
 
     /* Mark the indirect block itself free... */
     rv = mark_block_free(fs, iblk);
@@ -472,8 +463,8 @@ static int free_dind_block(ext2_fs_t *fs, ext2_inode_t *inode, uint32_t iblk) {
     }
 
     /* Go through each entry in the block and free all of its blocks. */
-    for(j = 0; j < blks_per_ind && inode->i_blocks; ++j) {
-        if((rv = free_ind_block(fs, inode, ib2[j]))) {
+    for(j = 0; j < blks_per_ind; ++j) {
+        if(ib2[j] && (rv = free_ind_block(fs, inode, ib2[j]))) {
             free(ib2);
             return rv;
         }
@@ -511,8 +502,8 @@ static int free_tind_block(ext2_fs_t *fs, ext2_inode_t *inode, uint32_t iblk) {
     }
 
     /* Go through each entry in the block and free all of its blocks. */
-    for(j = 0; j < blks_per_ind && inode->i_blocks; ++j) {
-        if((rv = free_dind_block(fs, inode, ib2[j]))) {
+    for(j = 0; j < blks_per_ind; ++j) {
+        if(ib2[j] && (rv = free_dind_block(fs, inode, ib2[j]))) {
             free(ib2);
             return rv;
         }
@@ -579,59 +570,40 @@ int ext2_inode_free_all(ext2_fs_t *fs, ext2_inode_t *inode,
         }
 
         ext2_block_mark_dirty(fs, inode->i_file_acl);
-        inode->i_blocks -= sub;
-    }
-    else if(inode->i_file_acl) {
-        /* We need to do this for now... We will reverse it later. */
-        inode->i_blocks -= sub;
     }
 
     /* Free the direct data blocks. Note that since fast symlinks have the
        i_blocks field in their inodes set to 0, we don't have to do anything
        special to handle them in this code. */
-    for(i = 0; i < 12 && inode->i_blocks; ++i) {
-        if(!(blk = inode->i_block[i])) {
-            /* ????: This really shouldn't happen! */
-            dbglog(DBG_ERROR, "ext2_inode_free_all: inode indicates use of "
-                   "block 0. Run fsck ASAP!\n");
+    for(i = 0; i < 12; ++i) {
+        if(!(blk = inode->i_block[i]))
             continue;
-        }
 
         if((rv = mark_block_free(fs, blk)))
             goto done;
 
-        inode->i_blocks -= sub;
         inode->i_block[i] = 0;
         fs->flags |= EXT2_FS_FLAG_SB_DIRTY;
     }
 
-    /* See if we're done already... */
-    if(!inode->i_blocks)
-        goto done;
-
     /* Handle the singly-indirect block */
-    if((rv = free_ind_block(fs, inode, inode->i_block[12])))
+    if(inode->i_block[12] &&
+       (rv = free_ind_block(fs, inode, inode->i_block[12])))
         goto done;
 
     inode->i_block[12] = 0;
 
-    /* See if we're done now... */
-    if(!inode->i_blocks)
-        goto done;
-
     /* Time to go through the doubly-indirect block... */
-    if((rv = free_dind_block(fs, inode, inode->i_block[13])))
+    if(inode->i_block[13] &&
+       (rv = free_dind_block(fs, inode, inode->i_block[13])))
         goto done;
 
     inode->i_block[13] = 0;
 
-    /* See if we're done now... */
-    if(!inode->i_blocks)
-        goto done;
-
     /* Ugh... Really... A trebly-indirect block? At least we know we're done at
        this point... */
-    rv = free_tind_block(fs, inode, inode->i_block[14]);
+    if(inode->i_block[14])
+        rv = free_tind_block(fs, inode, inode->i_block[14]);
 
     inode->i_block[14] = 0;
 
@@ -639,6 +611,8 @@ done:
     /* Restore the xattr block to the block count if needed. */
     if(inode->i_file_acl && !for_del)
         inode->i_blocks = sub;
+    else
+        inode->i_blocks = 0;
 
     return rv;
 }
@@ -722,6 +696,8 @@ static uint8_t *alloc_ind_blk(ext2_fs_t *fs, struct int_inode *inode,
 
     buf32[0] = bn2;
     *rbn = bn;
+    inode->inode.i_blocks += 2 << fs->sb.s_log_block_size;
+    inode->flags |= INODE_FLAG_DIRTY;
 
     return buf;
 }
@@ -746,6 +722,8 @@ static uint8_t *alloc_dind_blk(ext2_fs_t *fs, struct int_inode *inode,
 
     buf32[0] = bn2;
     *rbn = bn;
+    inode->inode.i_blocks += 2 << fs->sb.s_log_block_size;
+    inode->flags |= INODE_FLAG_DIRTY;
 
     return buf;
 }
@@ -771,13 +749,15 @@ static uint8_t *alloc_tind_blk(ext2_fs_t *fs, struct int_inode *inode,
 
     buf32[0] = bn2;
     *rbn = bn;
+    inode->inode.i_blocks += 2 << fs->sb.s_log_block_size;
+    inode->flags |= INODE_FLAG_DIRTY;
 
     return buf;
 }
 
-uint8_t *ext2_inode_alloc_block(ext2_fs_t *fs, ext2_inode_t *inode, int *err) {
+uint8_t *ext2_inode_alloc_block(ext2_fs_t *fs, ext2_inode_t *inode,
+                                uint32_t blocks, int *err) {
     struct int_inode *iinode = (struct int_inode *)inode;
-    uint32_t blocks = inode->i_blocks >> (fs->sb.s_log_block_size + 1);
     uint8_t *buf;
     uint32_t *ind, *ind2, *ind3;
     uint32_t bg, ibn, ibn2, ibn3;

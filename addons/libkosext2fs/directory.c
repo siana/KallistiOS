@@ -229,7 +229,7 @@ int ext2_dir_add_entry(ext2_fs_t *fs, struct ext2_inode *dir, const char *fn,
 
     /* No space in the existing blocks... Guess we'll have to allocate a new
        block to store this in. */
-    if(!(buf = ext2_inode_alloc_block(fs, dir, &err)))
+    if(!(buf = ext2_inode_alloc_block(fs, dir, blocks, &err)))
         return -err;
 
     dent = (ext2_dirent_t *)buf;
@@ -272,7 +272,7 @@ int ext2_dir_create_empty(ext2_fs_t *fs, struct ext2_inode *dir,
     uint32_t bg;
 
     /* Allocate a block for the directory structure. */
-    if(!(dir_buf = ext2_inode_alloc_block(fs, dir, &err)))
+    if(!(dir_buf = ext2_inode_alloc_block(fs, dir, 0, &err)))
         return -err;
 
     /* Fill in "." */
