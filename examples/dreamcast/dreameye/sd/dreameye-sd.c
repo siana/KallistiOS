@@ -38,7 +38,7 @@ int main(int argc, char *argv[]) {
     /* Comment this out if you'd rather that debug output went to dcload. Of
        course, you'll need to be using dcload-ip, but you should have already
        known that. ;-) */
-    //dbgio_dev_select("fb");
+    dbgio_dev_select("fb");
 
     printf("KallistiOS Dreameye Image Dump program\n");
     printf("Attempting to find a connected Dreameye device...\n");
