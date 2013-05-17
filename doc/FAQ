@@ -1,6 +1,6 @@
 KallistiOS ##version## FAQ
 Copyright (C) 2001 Dan Potter
-Copyright (C) 2012 Lawrence Sebald
+Copyright (C) 2012, 2013 Lawrence Sebald
 
 Here you may find some answers to some common questions we hear
 regarding the usage of KOS. We will be adding more to this file over
@@ -223,7 +223,7 @@ support), and is slowly being worked out.
 
 Q) What VFS modules are available?
 
-A) Presently there are six:
+A) Presently there are six (and one in an addon library):
 
 - ISO9660 -- mounts on /cd, and is a decent implementation of the
 ISO9660 file system standard used on CDs. Note that because of the
@@ -256,6 +256,13 @@ exactly like a normal file system.
 It is used to allow network sockets to use the normal VFS functions (write(),
 read(), close()) for its operation. There are never any visible files on this
 VFS, so you can't use open() to access it.
+
+- ext2 -- mounts wherever you tell it to. This one is implemented in the
+libkosext2fs library in the addons tree. It was primarily added to provide a
+freely-usable (not patent-encumbered) filesystem that could be used on SD cards.
+It is usable with more than just SD cards though, if you want to provide a block
+device for using it with other things. There probably isn't much of a good
+reason to do so, however.
 
 
 1.5
@@ -318,8 +325,9 @@ A) Yes. There is a very primitive and rudimentary driver for the Sega
 broadband adapter (an RTL8193C based 10/100 card) and the Lan Adapter on
 the DC. With regards to TCP/IP and friends, there are two choices: either
 you can use the built-in network stack or you can use lwIP, which is in
-the kos-ports tree. Note though that currently the built-in network stack
-does not actually support TCP (UDP is there though).
+the kos-ports tree. Note that lwIP is pretty much considered deprecated
+now, and isn't actively tested anymore. You should use the internal
+network stack for all new code.
 
 
 3.2

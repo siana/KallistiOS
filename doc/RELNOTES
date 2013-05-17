@@ -1,6 +1,6 @@
 KallistiOS ##version##
 Copyright (C) 2002, 2003 Dan Potter
-Copyright (C) 2012 Lawrence Sebald
+Copyright (C) 2012, 2013 Lawrence Sebald
 
 RELEASE NOTES for 2.0.0
 -----------------------
@@ -53,10 +53,10 @@ need to add -lkosutils to your link line somewhere.
 
 KOS now has a built-in network stack in the kernel/net directory. This is only
 usable at the moment with the Broadband Adapter or the Lan Adapter for the
-Dreamcast. Also, right now it only supports UDP. You also have an almost
-complete set of sockets functions so that you can use the networking support
-just like you would on any other OS. Add INIT_NET to your KOS_INIT_FLAGS to
-initialize the network support on startup.
+Dreamcast. It suports UDP and TCP over both IPv4 and IPv6. You also have an
+almost complete set of sockets functions so that you can use the networking
+support just like you would on any other OS. Add INIT_NET to your KOS_INIT_FLAGS
+to initialize the network support on startup.
 
 If you are using the networking support on the Dreamcast, it is now possible to
 use dcload debugging through KOS' network stack. This is automatically set up
@@ -80,6 +80,26 @@ A lot of cobwebs have built up over the years in the KOS source, and its quite
 possible that there are parts of the code that do not work properly anymore.
 Please, if you find anything that doesn't work properly anymore, report an issue
 on the Sourceforge bug tracker!
+
+Many changes were made to the synchronization primitives and other threading-
+related things. Make sure to take a look at the documentation on them.
+
+Support for the homebrew serial port SD card reader has been added. There is a
+block-level driver for SD cards, as well as a lower-level driver for using the
+serial port as a generic SPI bus.
+
+If you would like a ready-to-use filesystem to go with your SD card support,
+look no farther than libkosext2fs (in the addons tree). This provides support
+for reading and writing to ext2 filesystems. This library is still pretty raw
+and could use a lot more testing, but it seems to work fairly well as long as
+you respect the few limitations in it (no files >= 4GiB in size being the big
+one, absolute paths in symlinks don't work either). As a result of adding this
+filesystem into the tree, there were a bunch of other changes made in the VFS
+code. Specifically, fs_link() and fs_symlink() were added.
+
+The GBA, ia32, and PS2 ports of KOS are all considered abandoned and are likely
+to be removed in the future. If you would like to step up to maintain/improve
+them, please let us know!
 
 There's probably a whole bunch of other stuff that should be mentioned in here,
 but its been so long since anyone has updated this document...

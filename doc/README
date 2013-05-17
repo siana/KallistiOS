@@ -1,7 +1,7 @@
 KallistiOS ##version##
 README
 Copyright (C) 2000-2003 Dan Potter
-Copyright (C) 2012 Lawrence Sebald
+Copyright (C) 2012-2013 Lawrence Sebald
 
 OVERVIEW
 --------
@@ -105,6 +105,7 @@ GCC, Binutils, and Newlib versions in the utils/dc-chain directory.
 If you don't have any of the above, please see one of the following sites
 for some more instructions (and perhaps a build script that may help you):
 
+DC:  http://gamedev.allusion.net/softprj/kos/setup.php
 DC:  http://dcemulation.org/
 GBA: http://www.gbadev.org/
 PS2: http://wiki.ps2dev.org/
@@ -172,28 +173,34 @@ VERSION CODES
 
 All KOS versions are composed of three sections: major, minor, micro. Major
 revisions are generally something that changes the OS fundamentally, or
-when we run out of single-digit major version numbers =). For example, in
-the 1.0.x -> 1.1.x transition we moved from an OS style target to a library
-style target. The minor version number is used to denote a development
-series. Even numbered minor versions are considered stable, while
-odd-number versions are considered unstable, incomplete, etc. When we feel
-like significant progress has been made since the last stable release,
-we'll make a new stable release. Finally, the micro version denotes a
-sequence in the development series. 1.1.0 would be the first snapshot of
-the 1.1 development series.
+when we wait several years between releases =). The minor version number
+is used to denote a development series. This gets incremented basically
+whenever we feel that it is relevant to do so. Finally, the micro version
+denotes a sequence in the development series. 1.1.0 would be the first
+snapshot of the 1.1 development series.
 
-And as always, if you want to be on the bleeding edge, use the Subversion
-tree hosted via SourceForge and the svnpush/svnpull scripts.
+And as always, if you want to be on the bleeding edge, use the Git
+repository hosted at SourceForge.
 
 
 HACKING
 -------
 If you are planning on doing your own hacking and potentially submitting
 patches for me to include, then I'd very much appreciate it if you would do
-this against the SVN tree rather than a release tree. You can generate
-patches for me like so:
+this against the Git repository rather than a release tree. The general
+workflow to do this is to add/commit the changes to your local git repo
+and then send a patch for the revisions in question like so (where n is the
+number of commits you have made):
 
-svn diff -ruN
+git format-patch -n
+
+This will write a number of .patch files to the current directory for the n
+most recent commits you have made. You can then upload those patches to the
+SourceForge patch tracker to get them to us. You should ensure that your git
+setup is relatively sane and that you have your name/email address filled in
+properly, or I will probably reject your patches. You should also provide
+useful commit messages, with a summary on the first line to make it easier
+on me later.
 
 I don't guarantee that any patch will get included (especially if your patch
 contains a lot of reformatting, sloppy coding, things at cross-purposes with
