@@ -22,7 +22,10 @@ its path in the Makefile, because some KOS includes are copied over to newlib.
 Finally, run make.  If anything goes wrong, check the output in logs/.
 
 Some patches are included in this package as well.  As of this writing,
-they patch newlib-1.19.0 and gcc-4.5.2 to work with KOS.
+they patch newlib-2.0.0 and gcc-4.7.3 to work with KOS.
 
 You should not attempt to spawn multiple jobs with make. Using "make -j2" or any
-other number after the -j will probably break things.
+other number after the -j will probably break things. There is however now an
+option inside the Makefile to set the number of jobs for the building phases.
+Set the makejobs variable in the Makefile to whatever you would normally feel
+the need to use on the command line, and it will do the right thing.

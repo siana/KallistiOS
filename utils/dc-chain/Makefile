@@ -5,7 +5,8 @@
 # Interesting parameters:
 # erase=0|1                     Erase build directories on the fly to save space
 # thread_model=posix|single|kos Set gcc threading model
-# verbose=0|1                   Display  
+# verbose=0|1                   Display
+# makejobs=-jn                  Set the number of jobs for calls to make to n
 #
 # Interesting targets (you can 'make' any of these):
 # all: patch build
@@ -24,13 +25,13 @@ sh_target=sh-elf
 arm_target=arm-eabi
 sh_prefix  := /opt/toolchains/dc/$(sh_target)
 arm_prefix := /opt/toolchains/dc/$(arm_target)
-# kos_root: KOS subversion root (contains kos/ and kos-ports/)
+# kos_root: KOS Git root (contains kos/ and kos-ports/)
 kos_root=$(CURDIR)/../../..
 # kos_base: equivalent of KOS_BASE (contains include/ and kernel/)
 kos_base=$(CURDIR)/../..
-binutils_ver=2.22
-gcc_ver=4.7.0
-newlib_ver=1.20.0
+binutils_ver=2.23.2
+gcc_ver=4.7.3
+newlib_ver=2.0.0
 gdb_ver=6.7.1
 insight_ver=6.7.1
 # With GCC 4.x versions, the patches provide a kos thread model, so you should
@@ -38,13 +39,24 @@ insight_ver=6.7.1
 # threading support for C++ (or Objective C/Objective C++), you can set this to
 # single (why you would is beyond me, though).
 thread_model=kos
-erase=0
+erase=1
 verbose=1
+
+# Set this value to -jn where n is the number of jobs you want to run with make.
+# If you only want one job, just set this to nothing (i.e, "makejobs=").
+# Tracking down problems with multiple make jobs is much more difficult than
+# with just one running at a time. So, if you run into trouble, then you should
+# clear this variable and try again with just one job running.
+makejobs=-j4
+
 # Set the languages to build for pass 2 of building gcc for sh-elf. The default
 # here is to build C, C++, Objective C, and Objective C++. You may want to take
 # out the latter two if you're not worried about them and/or you're short on
 # hard drive space.
 pass2_languages=c,c++,objc,obj-c++
+
+# Change this if you don't have Bash installed in /bin
+SHELL = /bin/bash
 
 # Makefile variables
 install=$(prefix)/bin
@@ -125,7 +137,8 @@ $(build_binutils): logdir
 	-mkdir -p $(build)
 	> $(log)
 	cd $(build); ../$(src_dir)/configure --target=$(target) --prefix=$(prefix) $(to_log)
-	make -C $(build) all install DESTDIR=$(DESTDIR) $(to_log) 
+	make $(makejobs) -C $(build) DESTDIR=$(DESTDIR) $(to_log)
+	make -C $(build) install DESTDIR=$(DESTDIR) $(to_log)
 	$(clean_up)
 
 $(build_gcc_pass1) $(build_gcc_pass2): build = build-gcc-$(target)-$(gcc_ver)
@@ -136,7 +149,8 @@ $(build_gcc_pass1): logdir
 	-mkdir -p $(build)
 	> $(log)
 	cd $(build);  ../$(src_dir)/configure --target=$(target) --prefix=$(prefix) --without-headers --with-newlib --enable-languages=c --disable-libssp --disable-tls $(extra_configure_args) $(to_log)
-	make -C $(build) all install DESTDIR=$(DESTDIR) $(to_log)
+	make $(makejobs) -C $(build) DESTDIR=$(DESTDIR) $(to_log)
+	make -C $(build) install DESTDIR=$(DESTDIR) $(to_log)
 
 $(build_newlib): build = build-newlib-$(target)-$(newlib_ver)
 $(build_newlib): src_dir = newlib-$(newlib_ver)
@@ -146,7 +160,8 @@ $(build_newlib): logdir
 	-mkdir -p $(build)
 	> $(log)
 	cd $(build); ../$(src_dir)/configure --target=$(target) --prefix=$(prefix) $(extra_configure_args) $(to_log)
-	make -C $(build) all install DESTDIR=$(DESTDIR) $(to_log)
+	make $(makejobs) -C $(build) DESTDIR=$(DESTDIR) $(to_log)
+	make -C $(build) install DESTDIR=$(DESTDIR) $(to_log)
 	$(clean_up)
 
 fixup-sh4-newlib: newlib_inc=$(DESTDIR)$(sh_prefix)/$(sh_target)/include
@@ -172,7 +187,8 @@ $(build_gcc_pass2): logdir
 	> $(log)
 	cd $(build);  ../$(src_dir)/configure --target=$(target) --prefix=$(prefix) --with-newlib --disable-libssp --disable-tls \
 	   --enable-threads=$(thread_model) --enable-languages=$(pass2_languages) $(extra_configure_args) $(to_log)
-	make -C $(build) all install DESTDIR=$(DESTDIR) $(to_log)
+	make $(makejobs) -C $(build) DESTDIR=$(DESTDIR) $(to_log)
+	make -C $(build) install DESTDIR=$(DESTDIR) $(to_log)
 	$(clean_up)
 
 # ---- }}}}
@@ -206,7 +222,7 @@ build_gdb_stamp:
 	cd build-gdb-$(gdb_ver); ../gdb-$(gdb_ver)/configure \
 	    --prefix=$(sh_prefix) \
 	    --target=$(sh_target) $(to_log)
-	make -C build-gdb-$(gdb_ver) $(to_log)
+	make $(makejobs) -C build-gdb-$(gdb_ver) $(to_log)
 	touch $@
 
 install_gdb: log = $(logdir)/gdb-$(gdb_ver).log
@@ -250,7 +266,7 @@ build_insight_stamp:
 	cd build-insight-$(insight_ver); ../insight-$(insight_ver)/configure \
 	    --prefix=$(sh_prefix) \
 	    --target=$(sh_target) $(to_log)
-	make -C build-insight-$(insight_ver) $(to_log)
+	make $(makejobs) -C build-insight-$(insight_ver) $(to_log)
 	touch $@
 
 install_insight: log = $(logdir)/insight-$(insight_ver).log
@@ -296,7 +312,7 @@ endif
 
 # If verbose=1, display output to screen as well as log files
 ifeq (1,$(verbose))
-  to_log = 2>&1 | tee -a $(log)
+  to_log = 2>&1 | tee -a $(log) && [ $$PIPESTATUS -eq 0 ]
 else
   to_log = >> $(log) 2>&1
 endif
