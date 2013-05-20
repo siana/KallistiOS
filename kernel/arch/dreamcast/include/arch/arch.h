@@ -2,6 +2,7 @@
 
    arch/dreamcast/include/arch.h
    Copyright (C) 2001 Dan Potter
+   Copyright (C) 2013 Lawrence Sebald
 
 */
 
@@ -217,6 +218,43 @@ int hardware_periph_init();
     various exit points, so you shouldn't have to do this yourself.
 */
 void hardware_shutdown();
+
+/* These three aught to be in their own header file at some point, but for now,
+   they'll stay here. */
+
+/** \brief  Retrieve the banner printed at program initialization.
+
+    This function retrieves the banner string that is printed at initialization
+    time by the kernel. This contains the version of KOS in use and basic
+    information about the environment in which it was compiled.
+
+    \retval                 A pointer to the banner string.
+*/
+const char *kos_get_banner(void);
+
+/** \brief  Retrieve the license information for the compiled copy of KOS.
+
+    This function retrieves a string containing the license terms that the
+    version of KOS in use is distributed under. This can be used to easily add
+    information to your program to be displayed at runtime.
+
+    \retval                 A pointer to the license terms.
+*/
+const char *kos_get_license(void);
+
+/** \brief  Retrieve a list of authors and the dates of their contributions.
+
+    This function retrieves the copyright information for the version of KOS in
+    use. This function can be used to add such information to the credits of
+    programs using KOS to give the appropriate credit to those that have worked
+    on KOS.
+
+    Remember, you do need to give credit where credit is due, and this is an
+    easy way to do so. ;-)
+
+    \retval                 A pointer to the authors' copyright information.
+*/
+const char *kos_get_authors(void);
 
 /** \brief  Dreamcast specific sleep mode "function". */
 #define arch_sleep() do { \

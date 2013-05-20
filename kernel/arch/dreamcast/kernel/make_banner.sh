@@ -1,31 +1,31 @@
 #!/bin/bash
 
-# Re-creates the banner.c file for each compilation run
+# Re-creates the banner.h file for each compilation run
 
-echo 'char banner[] = ' > banner.c
+echo 'static const char banner[] = ' > banner.h
 
-echo -n '"KallistiOS ' >> banner.c
+echo -n '"KallistiOS ' >> banner.h
 if [ -d "$KOS_BASE/.git" ]; then
-    echo -n 'Git revision ' >> banner.c
-    echo -n `git rev-list --full-history --all --abbrev-commit | head -1` >> banner.c
-    echo -n ': ' >> banner.c
+    echo -n 'Git revision ' >> banner.h
+    echo -n `git rev-list --full-history --all --abbrev-commit | head -1` >> banner.h
+    echo -n ': ' >> banner.h
 else
-    echo -n '##version##: ' >> banner.c
+    echo -n '##version##: ' >> banner.h
 fi
-echo -n `date` >> banner.c
-echo '\n"' >> banner.c
+echo -n `date` >> banner.h
+echo '\n"' >> banner.h
 
-echo -n '"  ' >> banner.c
-echo -n `whoami` >> banner.c
-echo -n '@' >> banner.c
+echo -n '"  ' >> banner.h
+echo -n `whoami` >> banner.h
+echo -n '@' >> banner.h
 if [ `uname` = Linux ]; then
-	echo -n `hostname -f` >> banner.c
+	echo -n `hostname -f` >> banner.h
 else
-	echo -n `hostname` >> banner.c
+	echo -n `hostname` >> banner.h
 fi
-echo -n ':' >> banner.c
-echo -n $KOS_BASE >> banner.c
-echo '\n"' >> banner.c
+echo -n ':' >> banner.h
+echo -n $KOS_BASE >> banner.h
+echo '\n"' >> banner.h
 
-echo ';' >> banner.c
+echo ';' >> banner.h
 

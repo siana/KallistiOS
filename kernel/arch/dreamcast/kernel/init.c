@@ -32,9 +32,6 @@ void __verify_newlib_patch();
 /* Ditto */
 int main(int argc, char **argv);
 
-/* Double-ditto */
-extern const char banner[];
-
 /* We have to put this here so we can include plat-specific devices */
 dbgio_handler_t * dbgio_handlers[] = {
     &dbgio_dcload,
@@ -72,7 +69,7 @@ int arch_auto_init() {
     else {
         // PTYs not initialized yet
         dbgio_write_str("\n--\n");
-        dbgio_write_str(banner);
+        dbgio_write_str(kos_get_banner());
     }
 
     timer_init();           /* Timers */

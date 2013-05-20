@@ -19,15 +19,19 @@ SUBDIRS =
 
 myall: $(OBJS)
 	-cp $(COPYOBJS) $(KOS_BASE)/kernel/build/
-	-rm banner.c banner.o
+	-rm banner.h banner.o authors.h
 
 include $(KOS_BASE)/Makefile.prefab
 
 banner.o: banner.c
 
-banner.c: make_banner.sh 
+banner.c: banner.h authors.h
+
+banner.h: make_banner.sh 
 	./make_banner.sh
-	#echo 'char banner[] = "KallistiOS ##version##: $(shell date)\n  $(shell whoami)@$(shell hostname):$(KOS_BASE)\n";'>$@
+
+authors.h: make_authors.awk
+	awk -f make_authors.awk < ../../../../AUTHORS > authors.h
 
 arch_exports.o: arch_exports.c
 
@@ -35,9 +39,9 @@ arch_exports.c: ../exports.txt
 	$(KOS_BASE)/utils/genexports/genexports.sh ../exports.txt arch_exports.c arch_symtab
 
 clean:
-	-rm -f banner.c
+	-rm -f banner.h authors.h
 	-rm -f $(OBJS)
 	-rm -f arch_exports.c
 	-rm -f arch_exports.c
 
-.PHONY: banner.c
+.PHONY: banner.h authors.h
