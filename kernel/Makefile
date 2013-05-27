@@ -24,6 +24,7 @@ include $(KOS_BASE)/Makefile.prefab
 clean: clean_subdirs
 	rm -f build/*.o
 	rm -f build/libc/*.o
+	rm -f stubs/*.o stubs/kernel_export_stubs.c stubs/arch_export_stubs.c
 
 run:
 

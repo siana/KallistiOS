@@ -2,6 +2,9 @@ Platform independent changes are marked with '***', otherwise the
 applicable platform is listed. If someone besides me found the bug or
 suggested the fix, I'll put their name in [ ].
 
+KallistiOS version 2.0.1 -----------------------------------------------
+- *** Clean up generated stubs files on a make clean [Lawrence Sebald = LS]
+
 KallistiOS version 2.0.0 -----------------------------------------------
 - DC  Broadband Adapter driver fixes [Dan Potter == DP]
 - *** Imported a new version of lwIP, with proper sockets lib [DP]
