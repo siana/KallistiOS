@@ -1,7 +1,8 @@
 /* KallistiOS ##version##
 
    hardware.c
-   (c)2000-2001 Dan Potter
+   Copyright (C) 2000-2001 Dan Potter
+   Copyright (C) 2013 Lawrence Sebald
 */
 
 #include <arch/arch.h>
@@ -15,6 +16,17 @@
 #include <dc/vblank.h>
 
 static int initted = 0;
+
+#define SYSMODE_REG 0xA05F74B0
+
+int hardware_sys_mode(int *region) {
+    uint32 sm = *((vuint32 *)SYSMODE_REG);
+
+    if(region)
+        *region = sm & 0x0F;
+
+    return (sm >> 4) & 0x0F;
+}
 
 int hardware_sys_init() {
     /* Setup ASIC stuff */

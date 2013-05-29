@@ -219,6 +219,50 @@ int hardware_periph_init();
 */
 void hardware_shutdown();
 
+/** \defgroup hw_consoles           Console types
+
+    These are the various console types that can be returned by the
+    hardware_sys_mode() function.
+
+    @{
+*/
+#define HW_TYPE_RETAIL      0x0     /**< \brief A retail Dreamcast. */
+#define HW_TYPE_SET5        0x9     /**< \brief A Set5.xx devkit. */
+/** @} */
+
+/** \defgroup hw_regions            Region codes
+
+    These are the various region codes that can be returned by the
+    hardware_sys_mode() function. Note that a retail Dreamcast will always
+    return 0 for the region code. You must read the region of a retail device
+    from the flashrom.
+
+    \see    fr_region
+    \see    flashrom_get_region()
+
+    @{
+*/
+#define HW_REGION_UNKNOWN   0x0     /**< \brief Unknown region. */
+#define HW_REGION_ASIA      0x1     /**< \brief Japan/Asia (NTSC) */
+#define HW_REGION_US        0x4     /**< \brief North America */
+#define HW_REGION_EUROPE    0xC     /**< \brief Europe (PAL) */
+/** @} */
+
+/** \brief  Retrieve the system mode of the console in use.
+
+    This function retrieves the system mode register of the console that is in
+    use. This register details the actual system type in use (and in some system
+    types the region of the device).
+
+    \param  region          On return, the region code (one of the
+                            \ref hw_regions) of the device if the console type
+                            allows reading it through the system mode register
+                            -- otherwise, you must retrieve the region from the
+                            flashrom.
+    \return                 The console type (one of the \ref hw_consoles).
+*/
+int hardware_sys_mode(int *region);
+
 /* These three aught to be in their own header file at some point, but for now,
    they'll stay here. */
 
