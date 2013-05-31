@@ -1,4 +1,3 @@
-#!/bin/bash
 # Dreamcast toolchain makefile    by Jim Ursetto
 # adapted from Stalin's build script version 0.3
 #
@@ -85,16 +84,16 @@ patch-newlib: $(newlib_patches)
 patch-kos: $(kos_patches)
 
 $(newlib_patches):
-	cd $(newlib_dir); patch -p1 < $@
+	patch -d $(newlib_dir) -p1 < $@
 
 $(binutils_patches):
-	cd $(binutils_dir); patch -p1 < $@
+	patch -d $(binutils_dir) -p1 < $@
 
 $(gcc_patches):
-	cd $(gcc_dir); patch -p1 < $@
+	patch -d $(gcc_dir) -p1 < $@
 
 $(kos_patches):
-	cd $(kos_root); patch -p1 < $@
+	patch -d $(kos_root) -p1 < $@
 
 # ---- }}}
 
