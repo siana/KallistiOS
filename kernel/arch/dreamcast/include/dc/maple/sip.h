@@ -1,7 +1,7 @@
 /* KallistiOS ##version##
 
    dc/maple/sip.h
-   Copyright (C) 2005, 2008, 2010 Lawrence Sebald
+   Copyright (C) 2005, 2008, 2010, 2013 Lawrence Sebald
 
 */
 
@@ -28,6 +28,23 @@ __BEGIN_DECLS
 #include <sys/types.h>
 #include <dc/maple.h>
 
+/** \brief  Type for a microphone sample callback.
+
+    This is the signature that is required for a function to accept samples
+    from the microphone as it is sampling. This function will be called about
+    once per frame, and in an interrupt context (so it should be pretty quick
+    to execute). Basically, all you should do in one of these is copy the
+    samples out to your own buffer -- do not do any processing on the samples
+    in your callback other than to copy them out!
+
+    \param  dev             The device the samples are coming from.
+    \param  samples         Pointer to the sample buffer.
+    \param  len             The number of bytes in the sample buffer.
+
+    \headerfile dc/maple/sip.h
+*/
+typedef void (*sip_sample_cb)(maple_device_t *dev, uint8 *samples, size_t len);
+
 /** \brief  SIP status structure.
 
     This structure contains information about the status of the microphone
@@ -51,14 +68,8 @@ typedef struct  sip_state {
     /** \brief  Is the mic currently sampling? */
     int             is_sampling;
 
-    /** \brief  How long is the samples buffer? */
-    size_t          buf_len;
-
-    /** \brief  What is the last place written to in the buffer? */
-    off_t           buf_pos;
-
-    /** \brief  Buffer for storing samples in (automatically allocated). */
-    uint8          *samples_buf;
+    /** \brief  Sampling callback. */
+    sip_sample_cb   callback;
 } sip_state_t;
 
 /** \brief  Get recorded samples from the microphone device.
@@ -156,15 +167,17 @@ int sip_set_frequency(maple_device_t *dev, unsigned int freq);
     This function informs a microphone it should start recording samples.
 
     \param  dev             The device to start sampling on.
+    \param  cb              A callback to call when samples are ready.
     \param  block           Set to 1 to wait for the SIP to start sampling.
                             Otherwise check the is_sampling member of the status
                             for dev to know when it has started.
     \retval MAPLE_EOK       On success.
     \retval MAPLE_EAGAIN    If the command couldn't be sent, try again later.
-    \retval MAPLE_EFAIL     If the microphone is already sampling.
+    \retval MAPLE_EFAIL     If the microphone is already sampling or the
+                            callback function is NULL.
     \retval MAPLE_ETIMEOUT  If the command timed out while blocking.
 */
-int sip_start_sampling(maple_device_t *dev, int block);
+int sip_start_sampling(maple_device_t *dev, sip_sample_cb cb, int block);
 
 /** \brief  Stop sampling on a microphone.
 
@@ -180,33 +193,6 @@ int sip_start_sampling(maple_device_t *dev, int block);
     \retval MAPLE_ETIMEOUT  If the command timed out while blocking.
 */
 int sip_stop_sampling(maple_device_t *dev, int block);
-
-/** \brief  Retrieve the sample buffer from the microphone.
-
-    This function retrieves the sample buffer from the microphone and allocates
-    a new buffer for the microphone to record into. This function cannot be
-    called while the microphone is sampling. The caller is responsible for the
-    buffer returned, and must free the buffer when it is done with it.
-
-    \param  dev             The device to fetch samples for.
-    \param  sz              On return, the size of the sample buffer in bytes.
-                            This must not be NULL.
-    \return                 The sample buffer on success, NULL on failure.
-*/
-uint8 *sip_get_samples(maple_device_t *dev, size_t *sz);
-
-/** \brief  Clear the sample buffer of a microphone.
-
-    This function clears out any old samples on the microphone buffer so that
-    recording will start from the beginning of the buffer again. This does not
-    resize the buffer in any way. This function will not work if called while
-    the microphone is sampling.
-
-    \param  dev             The device to clear the buffer on.
-    \retval MAPLE_EOK       On success.
-    \retval MAPLE_EFAIL     If the device is currently sampling.
-*/
-int sip_clear_samples(maple_device_t *dev);
 
 /* \cond */
 /* Init / Shutdown */

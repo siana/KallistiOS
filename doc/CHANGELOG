@@ -3,7 +3,12 @@ applicable platform is listed. If someone besides me found the bug or
 suggested the fix, I'll put their name in [ ].
 
 KallistiOS version 2.0.1 -----------------------------------------------
-- *** Clean up generated stubs files on a make clean [Lawrence Sebald = LS]
+- *** Cleaned up generated stubs files on a make clean [Lawrence Sebald = LS]
+- DC  Added a function to detect if the program is being run on a retail
+      Dreamcast or a Set5.xx device [LS]
+- DC  Fixed an issue with the SIP driver that would cause programs to freeze
+      if a microphone was connected at program startup [LS]
+- DC  Rearranged the SIP driver to get rid of the internal buffer [LS]
 
 KallistiOS version 2.0.0 -----------------------------------------------
 - DC  Broadband Adapter driver fixes [Dan Potter == DP]
