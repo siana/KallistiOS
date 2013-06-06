@@ -27,6 +27,12 @@ export KOS_STRIP="${KOS_CC_BASE}/bin/${KOS_CC_PREFIX}-strip"
 export KOS_CFLAGS="${KOS_CFLAGS} ${KOS_INC_PATHS} -D_arch_${KOS_ARCH} -D_arch_sub_${KOS_SUBARCH} -Wall -g -fno-builtin -fno-strict-aliasing"
 export KOS_CPPFLAGS="${KOS_CPPFLAGS} ${KOS_INC_PATHS_CPP} -fno-operator-names -fno-rtti -fno-exceptions"
 
+# Which standards modes we want to compile for
+# Note that this only covers KOS itself, not necessarily anything else compiled
+# with kos-cc or kos-c++.
+export KOS_CSTD="-std=gnu99"
+export KOS_CPPSTD="-std=gnu++98"
+
 GCCVER="`kos-cc -v 2>&1 | tail -1 | awk '{print $3}'`"
 
 case $GCCVER in
