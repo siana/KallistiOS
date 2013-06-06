@@ -93,21 +93,10 @@ __BEGIN_DECLS
 #   include <dc/vblank.h>
 #   include <dc/vmufs.h>
 #   include <dc/scif.h>
-#elif _arch_gba /* _arch_dreamcast */
-#   include <gba/keys.h>
-#   include <gba/sprite.h>
-#   include <gba/video.h>
-#   include <gba/dma.h>
-#   include <gba/sound.h>
-#elif _arch_ps2 /* _arch_gba */
-#   include <ps2/ioports.h>
-#   include <ps2/fs_ps2load.h>
-#   include <ps2/sbios.h>
-#else   /* _arch_ps2 */
+#else   /* _arch_dreamcast */
 #   error Invalid architecture or no architecture specified
 #endif
 
 __END_DECLS
 
 #endif
-

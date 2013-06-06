@@ -3,6 +3,7 @@
 *.map
 *~
 .*.swp
+.DS_Store
 doc/reference/
 environ.sh
 romdisk.img
