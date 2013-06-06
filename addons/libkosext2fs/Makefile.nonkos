@@ -4,7 +4,7 @@
 OBJS = ext2fs.o bitops.o block.o inode.o superblock.o symlink.o directory.o
 
 # Make sure everything compiles nice and cleanly (or not at all).
-CFLAGS += -W -pedantic -Werror -std=gnu99 -DEXT2_NOT_IN_KOS -g
+CFLAGS += -W -pedantic -Werror -std=c99 -DEXT2_NOT_IN_KOS -g
 
 libkosext2fs.a: $(OBJS)
 	$(AR) rcs $@ $^

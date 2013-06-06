@@ -24,6 +24,14 @@
 /* For some reason, Newlib doesn't seem to define this function in stdlib.h. */
 extern char *realpath(const char *, const char *);
 
+#ifdef __STRICT_ANSI__
+/* These don't necessarily get prototyped in string.h in standard-compliant mode
+   as they are extensions to the standard. Declaring them this way shouldn't
+   hurt. */
+char *strtok_r(char *, const char *, char **);
+char *strdup(const char *);
+#endif
+
 #define MAX_EXT2_FILES 16
 
 typedef struct fs_ext2_fs {

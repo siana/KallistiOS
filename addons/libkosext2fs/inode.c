@@ -22,6 +22,14 @@
 #include "ext2internal.h"
 #include "directory.h"
 
+#ifdef __STRICT_ANSI__
+/* These don't necessarily get prototyped in string.h in standard-compliant mode
+   as they are extensions to the standard. Declaring them this way shouldn't
+   hurt. */
+char *strtok_r(char *, const char *, char **);
+char *strdup(const char *);
+#endif
+
 #define MAX_INODES      (1 << EXT2_LOG_MAX_INODES)
 #define INODE_HASH_SZ   (1 << EXT2_LOG_INODE_HASH)
 
