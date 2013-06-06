@@ -132,5 +132,6 @@ __BEGIN_DECLS
         __w; })
 
 /** \endcond */
+__END_DECLS
 
 #endif /* !__DC_FMATH_BASE_H */
