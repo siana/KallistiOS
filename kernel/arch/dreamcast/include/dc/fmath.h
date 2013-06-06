@@ -1,7 +1,8 @@
 /* KallistiOS ##version##
 
    dc/fmath.h
-   (C)2001 Andrew Kieschnick
+   Copyright (C) 2001 Andrew Kieschnick
+   Copyright (C) 2013 Lawrence Sebald
 
 */
 
@@ -12,6 +13,7 @@
 __BEGIN_DECLS
 
 #include <arch/types.h>
+#include <dc/fmath_base.h>
 
 /**
     \file dc/fmath.h
@@ -19,133 +21,31 @@ __BEGIN_DECLS
     \author Andrew Kieschnick
 */
 
-/** PI constant (if you don't want full math.h) */
-#define F_PI 3.1415926f
+/* Sigh... C99 treats inline stuff a lot differently than traditional GCC did,
+   so we need to take care of that... */
+#if __STDC_VERSION__ >= 199901L
+#define __FMINLINE static inline
+#elif __GNUC__
+#define __FMINLINE extern inline
+#else
+/* Uhm... I guess this is the best we can do? */
+#define __FMINLINE static
+#endif
 
-/** \cond */
-#define __fsin(x) \
-    ({ float __value, __arg = (x), __scale = 10430.37835; \
-        asm(    "fmul	%2,%1\n\t" \
-                "ftrc	%1,fpul\n\t" \
-                "fsca	fpul,dr0\n\t" \
-                "fmov	fr0,%0" \
-                : "=f" (__value), "+&f" (__scale) \
-                : "f" (__arg) \
-                : "fpul", "fr0", "fr1"); \
-        __value; })
-
-#define __fcos(x) \
-    ({ float __value, __arg = (x), __scale = 10430.37835; \
-        asm(    "fmul	%2,%1\n\t" \
-                "ftrc	%1,fpul\n\t" \
-                "fsca	fpul,dr0\n\t" \
-                "fmov	fr1,%0" \
-                : "=f" (__value), "+&f" (__scale) \
-                : "f" (__arg) \
-                : "fpul", "fr0", "fr1"); \
-        __value; })
-
-#define __ftan(x) \
-    ({ float __value, __arg = (x), __scale = 10430.37835; \
-        asm(    "fmul	%2,%1\n\t" \
-                "ftrc	%1,fpul\n\t" \
-                "fsca	fpul,dr0\n\t" \
-                "fdiv   fr1, fr0\n\t" \
-                "fmov	fr0,%0" \
-                : "=f" (__value), "+&f" (__scale) \
-                : "f" (__arg) \
-                : "fpul", "fr0", "fr1"); \
-        __value; })
-
-
-#define __fisin(x) \
-    ({ float __value, __arg = (x); \
-        asm(    "lds	%1,fpul\n\t" \
-                "fsca	fpul,dr0\n\t" \
-                "fmov	fr0,%0" \
-                : "=f" (__value) \
-                : "r" (__arg) \
-                : "fpul", "fr0", "fr1"); \
-        __value; })
-
-#define __ficos(x) \
-    ({ float __value, __arg = (x); \
-        asm(    "lds	%1,fpul\n\t" \
-                "fsca	fpul,dr0\n\t" \
-                "fmov	fr1,%0" \
-                : "=f" (__value) \
-                : "r" (__arg) \
-                : "fpul", "fr0", "fr1"); \
-        __value; })
-
-#define __fitan(x) \
-    ({ float __value, __arg = (x); \
-        asm(    "lds	%1,fpul\n\t" \
-                "fsca	fpul,dr0\n\t" \
-                "fdiv   fr1, fr0\n\t" \
-                "fmov	fr0,%0" \
-                : "=f" (__value) \
-                : "r" (__arg) \
-                : "fpul", "fr0", "fr1"); \
-        __value; })
-
-
-#define __fsqrt(x) \
-    ({ float __arg = (x); \
-        asm(    "fsqrt %0\n\t" \
-                : "=f" (__arg) : "0" (__arg)); \
-        __arg; })
-
-#define __frsqrt(x) \
-    ({ float __arg = (x); \
-        asm(    "fsrra %0\n\t" \
-                : "=f" (__arg) : "0" (__arg)); \
-        __arg; })
-
-/* Floating point inner product (dot product) */
-#define __fipr(x, y, z, w, a, b, c, d) ({ \
-        register float __x __asm__("fr0") = (x); \
-        register float __y __asm__("fr1") = (y); \
-        register float __z __asm__("fr2") = (z); \
-        register float __w __asm__("fr3") = (w); \
-        register float __a __asm__("fr4") = (a); \
-        register float __b __asm__("fr5") = (b); \
-        register float __c __asm__("fr6") = (c); \
-        register float __d __asm__("fr7") = (d); \
-        __asm__ __volatile__( \
-                              "fipr	fv4,fv0" \
-                              : "+f" (__w) \
-                              : "f" (__x), "f" (__y), "f" (__z), "f" (__w), \
-                              "f" (__a), "f" (__b), "f" (__c), "f" (__d) \
-                            ); \
-        __w; })
-
-/* Floating point inner product w/self (square of vector magnitude) */
-#define __fipr_magnitude_sqr(x, y, z, w) ({ \
-        register float __x __asm__("fr4") = (x); \
-        register float __y __asm__("fr5") = (y); \
-        register float __z __asm__("fr6") = (z); \
-        register float __w __asm__("fr7") = (w); \
-        __asm__ __volatile__( \
-                              "fipr	fv4,fv4" \
-                              : "+f" (__w) \
-                              : "f" (__x), "f" (__y), "f" (__z), "f" (__w) \
-                            ); \
-        __w; })
-
-/** \endcond */
-
-/** \return v1 dot v2 (inner product) */
-extern inline float fipr(float x, float y, float z, float w,
-                         float a, float b, float c, float d) {
+/**
+    \brief  Floating point inner product.
+    \return v1 dot v2 (inner product)
+*/
+__FMINLINE float fipr(float x, float y, float z, float w,
+                      float a, float b, float c, float d) {
     return __fipr(x, y, z, w, a, b, c, d);
 }
 
 /**
-    \brief Floating point inner product w/self (square of vector magnitude)
+    \brief  Floating point inner product w/self (square of vector magnitude)
     \return v1 dot v1 (square of magnitude)
 */
-extern inline float fipr_magnitude_sqr(float x, float y, float z, float w) {
+__FMINLINE float fipr_magnitude_sqr(float x, float y, float z, float w) {
     return __fipr_magnitude_sqr(x, y, z, w);
 }
 
@@ -154,7 +54,7 @@ extern inline float fipr_magnitude_sqr(float x, float y, float z, float w) {
     \param r a floating point number between 0 and 2*PI
     \return sin(r), where r is [0..2*PI]
 */
-extern inline float fsin(float r) {
+__FMINLINE float fsin(float r) {
     return __fsin(r);
 }
 
@@ -163,7 +63,7 @@ extern inline float fsin(float r) {
     \param r a floating point number between 0 and 2*PI
     \return cos(r), where r is [0..2*PI]
 */
-extern inline float fcos(float r) {
+__FMINLINE float fcos(float r) {
     return __fcos(r);
 }
 
@@ -172,7 +72,7 @@ extern inline float fcos(float r) {
     \param r a floating point number between 0 and 2*PI
     \return tan(r), where r is [0..2*PI]
 */
-extern inline float ftan(float r) {
+__FMINLINE float ftan(float r) {
     return __ftan(r);
 }
 
@@ -181,7 +81,7 @@ extern inline float ftan(float r) {
     \param d an integer between 0 and 65535
     \return sin(d), where d is [0..65535]
 */
-extern inline float fisin(int d) {
+__FMINLINE float fisin(int d) {
     return __fisin(d);
 }
 
@@ -190,7 +90,7 @@ extern inline float fisin(int d) {
     \param d an integer between 0 and 65535
     \return cos(d), where d is [0..65535]
 */
-extern inline float ficos(int d) {
+__FMINLINE float ficos(int d) {
     return __ficos(d);
 }
 
@@ -199,7 +99,7 @@ extern inline float ficos(int d) {
     \param d an integer between 0 and 65535
     \return tan(d), where d is [0..65535]
 */
-extern inline float fitan(int d) {
+__FMINLINE float fitan(int d) {
     return __fitan(d);
 }
 
@@ -207,16 +107,35 @@ extern inline float fitan(int d) {
     \brief Floating point square root
     \return sqrt(f)
 */
-extern inline float fsqrt(float f) {
+__FMINLINE float fsqrt(float f) {
     return __fsqrt(f);
 }
 
 /**
     \return 1.0f / sqrt(f)
 */
-extern inline float frsqrt(float f) {
+__FMINLINE float frsqrt(float f) {
     return __frsqrt(f);
 }
+
+/* Make sure we declare the non-inline versions for C99 and non-gcc. Why they'd
+   ever be needed, since they're inlined above, who knows? I guess in case
+   someone tries to take the address of one of them? */
+/** \cond */
+#if __STDC_VERSION__ >= 199901L || !defined(__GNUC__)
+extern float fipr(float x, float y, float z, float w, float a, float b, float c,
+                  float d);
+extern float fipr_magnitude_sqr(float x, float y, float z, float w);
+extern float fsin(float r);
+extern float fcos(float r);
+extern float ftan(float r);
+extern float fisin(int d);
+extern float ficos(int d);
+extern float fitan(int d);
+extern float fsqrt(float f);
+extern float frsqrt(float f);
+#endif /* __STDC_VERSION__ >= 199901L || !defined(__GNUC__) */
+/** \endcond */
 
 __END_DECLS
 

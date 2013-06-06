@@ -1,10 +1,21 @@
 /* KallistiOS ##version##
 
    dc/fmath.c
-   (C)2001 Andrew Kieschnick
+   Copyright (C) 2001 Andrew Kieschnick
 */
 
-#include <dc/fmath.h>
+#include <dc/fmath_base.h>
+
+/* v1 dot v2 (inner product) */
+float fipr(float x, float y, float z, float w, float a, float b, float c,
+           float d) {
+    return __fipr(x, y, z, w, a, b, c, d);
+}
+
+/* v1 dot v1 (square of magnitude) */
+float fipr_magnitude_sqr(float x, float y, float z, float w) {
+    return __fipr_magnitude_sqr(x, y, z, w);
+}
 
 /* Returns sin(r), where r is [0..2*PI] */
 float fsin(float r) {
