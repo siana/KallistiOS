@@ -181,7 +181,8 @@ int net_ipv6_input(netif_t *src, const uint8 *pkt, int pktsize,
                    const eth_hdr_t *eth) {
     ipv6_hdr_t *ip;
     uint8 next_hdr;
-    int pos, len, rv;
+    //int pos;
+    int len, rv;
 
     if(pktsize < sizeof(ipv6_hdr_t)) {
         /* This is obviously a bad packet, drop it */
@@ -200,7 +201,7 @@ int net_ipv6_input(netif_t *src, const uint8 *pkt, int pktsize,
     }
 
     /* Parse the header to find the payload */
-    pos = sizeof(ipv6_hdr_t);
+    //pos = sizeof(ipv6_hdr_t); // Currently unused, but will be needed later.
     next_hdr = ip->next_header;
 
     if(eth)

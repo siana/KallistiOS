@@ -29,7 +29,6 @@ void dbglog_set_level(int level) {
 /* Kernel debug logging facility */
 void dbglog(int level, const char *fmt, ...) {
     va_list args;
-    int i;
 
     /* If this log level is blocked out, don't even bother */
     if(level > dbglog_level)
@@ -40,7 +39,7 @@ void dbglog(int level, const char *fmt, ...) {
         spinlock_lock(&mutex);
 
     va_start(args, fmt);
-    i = vsprintf(printf_buf, fmt, args);
+    (void)vsprintf(printf_buf, fmt, args);
     va_end(args);
 
     if(irq_inside_int())
@@ -51,6 +50,3 @@ void dbglog(int level, const char *fmt, ...) {
     if(level >= DBG_ERROR && !irq_inside_int())
         spinlock_unlock(&mutex);
 }
-
-
-

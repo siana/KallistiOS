@@ -27,14 +27,16 @@ void pvr_init_tile_matrix(int which) {
     int     x, y;
     uint32      *vr;
     volatile int    *opbs;
-    uint32      matbase, opbbase;
+    //uint32      matbase, opbbase;
 
     vr = (uint32*)PVR_RAM_BASE;
     buf = pvr_state.ta_buffers + which;
     opbs = pvr_state.opb_size;
 
+#if 0
     matbase = buf->tile_matrix;
     opbbase = buf->opb;
+#endif
 
     /* Header of zeros */
     vr += buf->tile_matrix / 4;

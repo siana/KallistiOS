@@ -262,10 +262,10 @@ static int net_arp_send(netif_t *nif, arp_pkt_t *pkt)   {
 
 /* Receive an ARP packet and process it (called by net_input) */
 int net_arp_input(netif_t *nif, const uint8 *pkt_in, int len) {
-    eth_hdr_t *eth_hdr;
+    //eth_hdr_t *eth_hdr;
     arp_pkt_t *pkt;
 
-    eth_hdr = (eth_hdr_t *)pkt_in;
+    //eth_hdr = (eth_hdr_t *)pkt_in;
     pkt = (arp_pkt_t *)(pkt_in + sizeof(eth_hdr_t));
 
     switch(pkt->opcode[1]) {

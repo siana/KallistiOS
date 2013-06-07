@@ -444,7 +444,7 @@ static void dma_chain(ptr_t data) {
 /* Poll streamer to load more data if neccessary */
 int snd_stream_poll(snd_stream_hnd_t hnd) {
     uint32      ch0pos, ch1pos;
-    int     realbuffer;
+    //int     realbuffer;
     int     current_play_pos;
     int     needed_samples;
     int     got_samples;
@@ -463,7 +463,7 @@ int snd_stream_poll(snd_stream_hnd_t hnd) {
         return -1;
     }
 
-    realbuffer = !((ch0pos < (streams[hnd].buffer_size / 4)) && (ch1pos < (streams[hnd].buffer_size / 4)));
+    //realbuffer = !((ch0pos < (streams[hnd].buffer_size / 4)) && (ch1pos < (streams[hnd].buffer_size / 4)));
 
     current_play_pos = (ch0pos < ch1pos) ? (ch0pos) : (ch1pos);
 

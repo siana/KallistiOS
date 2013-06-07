@@ -359,7 +359,7 @@ int cdrom_spin_down() {
 
 /* Initialize: assume no threading issues */
 int cdrom_init() {
-    uint32 p, x;
+    uint32 p;
     volatile uint32 *react = (uint32*)0xa05f74e4,
                      *bios = (uint32*)0xa0000000;
 
@@ -371,7 +371,7 @@ int cdrom_init() {
     *react = 0x1fffff;
 
     for(p = 0; p < 0x200000 / 4; p++) {
-        x = bios[p];
+        (void)bios[p];
     }
 
     /* Reset system functions */

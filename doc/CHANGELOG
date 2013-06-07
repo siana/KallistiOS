@@ -12,6 +12,7 @@ KallistiOS version 2.0.1 -----------------------------------------------
 - *** Removed the GBA, ia32, and ps2 ports. If someone really wants them back
       and wants to maintain them, let me know. [LS]
 - DC  Fixed fmath functions so they compile in C99 mode [LS]
+- *** Cleaned up warnings with -std=gnu99 for C code [LS]
 
 KallistiOS version 2.0.0 -----------------------------------------------
 - DC  Broadband Adapter driver fixes [Dan Potter == DP]

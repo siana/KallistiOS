@@ -262,12 +262,15 @@ static void la_strobe_eeprom() {
     la_write(BMPR16, BMPR16_ECS);
 }
 static void la_read_eeprom(uint8 *data) {
-    uint8 save16, save17, val;
+    //uint8 save16, save17
+    uint8 val;
     int n, bit;
 
+#if 0
     /* Save the current value of the EEPROM registers */
     save16 = la_read(BMPR16);
     save17 = la_read(BMPR17);
+#endif
 
     /* Read bytes from EEPROM, two per iteration */
     for(n = 0; n < 3; n++) {
