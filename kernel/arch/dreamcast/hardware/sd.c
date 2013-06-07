@@ -574,6 +574,8 @@ out:
 }
 
 static int sdb_init(kos_blockdev_t *d) {
+    (void)d;
+
     if(!initted) {
         errno = ENODEV;
         return -1;

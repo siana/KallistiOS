@@ -15,6 +15,9 @@
 int _gettimeofday_r(void * re, struct timeval *tv, struct timezone *tz) {
     uint32  m, s;
 
+    (void)re;
+    (void)tz;
+
     assert(tv != NULL);
 
     timer_ms_gettime(&s, &m);

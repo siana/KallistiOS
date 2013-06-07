@@ -65,6 +65,8 @@ int elf_load(const char * fn, klibrary_t * shell, elf_prog_t * out) {
     uint32          vma;
     file_t          fd;
 
+    (void)shell;
+
     /* Load the file: needs to change to just load headers */
     fd = fs_open(fn, O_RDONLY);
 

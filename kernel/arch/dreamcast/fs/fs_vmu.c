@@ -238,6 +238,8 @@ static void * vmu_open(vfs_handler_t * vfs, const char *path, int mode) {
     maple_device_t  * dev;      /* maple bus address of the vmu unit */
     vmu_fh_t    *fh;
 
+    (void)vfs;
+
     if(!*path || (path[0] == '/' && !path[1])) {
         /* /vmu should be opened */
         fh = vmu_open_vmu_dir();
@@ -547,6 +549,8 @@ static dirent_t *vmu_readdir(void * fd) {
 static int vmu_unlink(vfs_handler_t * vfs, const char *path) {
     maple_device_t  * dev = NULL;   /* address of VMU */
 
+    (void)vfs;
+
     /* convert path to valid VMU address */
     dev = vmu_path_to_addr(path);
 
@@ -560,6 +564,8 @@ static int vmu_unlink(vfs_handler_t * vfs, const char *path) {
 
 static int vmu_stat(vfs_handler_t * vfs, const char * fn, stat_t * rv) {
     maple_device_t * dev;
+
+    (void)vfs;
 
     if(rv == NULL) {
         dbglog(DBG_ERROR, "vmu_stat: null output pointer\n");
@@ -589,6 +595,8 @@ static int vmu_stat(vfs_handler_t * vfs, const char * fn, stat_t * rv) {
 static int vmu_fcntl(void *fd, int cmd, va_list ap) {
     vmu_fh_t *fh;
     int rv = -1;
+
+    (void)ap;
 
     /* Check the handle */
     if(!vmu_verify_hnd(fd, VMU_ANY)) {
@@ -650,7 +658,13 @@ static vfs_handler_t vh = {
     vmu_stat,           /* stat */
     NULL,               /* mkdir */
     NULL,               /* rmdir */
-    vmu_fcntl
+    vmu_fcntl,
+    NULL,               /* poll */
+    NULL,               /* link */
+    NULL,               /* symlink */
+    NULL,               /* seek64 */
+    NULL,               /* tell64 */
+    NULL                /* total64 */
 };
 
 int fs_vmu_init() {

@@ -256,6 +256,9 @@ static void tcp_send_fin_ack(struct tcp_sock *sock);
 static int net_tcp_socket(net_socket_t *hnd, int domain, int type, int proto) {
     struct tcp_sock *sock;
 
+    (void)type;
+    (void)proto;
+
     if(!(sock = (struct tcp_sock *)malloc(sizeof(struct tcp_sock)))) {
         errno = ENOMEM;
         return -1;
@@ -2337,6 +2340,8 @@ static int listen_pkt(netif_t *src, const struct in6_addr *srca,
     int end_of_opts;
     uint16_t mss = 576;
 
+    (void)size;
+
     /* Incoming segments with a RST should be ignored */
     if(flags & TCP_FLAG_RST)
         return 0;
@@ -2430,6 +2435,8 @@ static int synsent_pkt(netif_t *src, const struct in6_addr *srca,
     uint32_t ack, seq;
     int sz = size - TCP_GET_OFFSET(flags), gotack = 0;
     int j = 0, end_of_opts, mss = 536;
+
+    (void)src;
 
     /* Grab the ack and seq numbers from the packet */
     ack = ntohl(tcp->ack);
@@ -2530,6 +2537,8 @@ static int process_pkt(netif_t *src, const struct in6_addr *srca,
     int sz, bad_pkt = 0, tmp, acksyn = 0;
     const uint8_t *buf = (const uint8_t *)tcp;
     uint8_t *rb;
+
+    (void)src;
 
     /* Grab the seq and ack values from the header. */
     seq = ntohl(tcp->seq);
@@ -2883,6 +2892,8 @@ static void tcp_thd_cb(void *arg) {
     struct tcp_sock *i, *tmp;
     uint64_t timer;
 
+    (void)arg;
+
     rwsem_read_lock(&tcp_sem);
 
     LIST_FOREACH(i, &tcp_socks, sock_list) {
@@ -3014,7 +3025,7 @@ void net_tcp_shutdown() {
     int old;
 
     /* Kill the thread and make sure we can grab the lock */
-    if(tcp_thd_cb >= 0)
+    if(thd_cb_id >= 0)
         net_thd_del_callback(thd_cb_id);
 
     /* Disable IRQs so we can kill the sockets in peace... */

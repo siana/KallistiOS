@@ -61,6 +61,8 @@ static void * lwip_dclsc = 0;
 /* Printk replacement */
 
 int dcload_write_buffer(const uint8 *data, int len, int xlat) {
+    (void)xlat;
+
     if(lwip_dclsc && irq_inside_int()) {
         errno = EAGAIN;
         return -1;
@@ -98,6 +100,8 @@ void *dcload_open(vfs_handler_t * vfs, const char *fn, int mode) {
     int hnd = 0;
     uint32 h;
     int dcload_mode = 0;
+
+    (void)vfs;
 
     if(lwip_dclsc && irq_inside_int())
         return (void *)0;
@@ -319,6 +323,8 @@ dirent_t *dcload_readdir(void * h) {
 int dcload_rename(vfs_handler_t * vfs, const char *fn1, const char *fn2) {
     int ret;
 
+    (void)vfs;
+
     if(lwip_dclsc && irq_inside_int())
         return 0;
 
@@ -338,6 +344,8 @@ int dcload_rename(vfs_handler_t * vfs, const char *fn1, const char *fn2) {
 int dcload_unlink(vfs_handler_t * vfs, const char *fn) {
     int ret;
 
+    (void)vfs;
+
     if(lwip_dclsc && irq_inside_int())
         return 0;
 
@@ -351,6 +359,9 @@ int dcload_unlink(vfs_handler_t * vfs, const char *fn) {
 
 static int dcload_fcntl(void *h, int cmd, va_list ap) {
     int rv = -1;
+
+    (void)h;
+    (void)ap;
 
     switch(cmd) {
         case F_GETFL:
@@ -401,7 +412,13 @@ static vfs_handler_t vh = {
     NULL,               /* stat */
     NULL,               /* mkdir */
     NULL,               /* rmdir */
-    dcload_fcntl
+    dcload_fcntl,
+    NULL,               /* poll */
+    NULL,               /* link */
+    NULL,               /* symlink */
+    NULL,               /* seek64 */
+    NULL,               /* tell64 */
+    NULL                /* total64 */
 };
 
 // We have to provide a minimal interface in case dcload usage is
@@ -411,7 +428,15 @@ static int never_detected() {
 }
 dbgio_handler_t dbgio_dcload = {
     "fs_dcload_uninit",
-    never_detected
+    never_detected,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL
 };
 
 int fs_dcload_detected() {

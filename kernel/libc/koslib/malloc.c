@@ -2092,6 +2092,7 @@ Void_t* public_vALLOc(size_t bytes) {
 #ifdef KM_DBG
     assert(0);  /* unsupported */
 #endif
+    (void)bytes;
     return 0;
 }
 
@@ -2099,6 +2100,7 @@ Void_t* public_pVALLOc(size_t bytes) {
 #ifdef KM_DBG
     assert(0);  /* unsupported */
 #endif
+    (void)bytes;
     return 0;
 }
 
@@ -2166,6 +2168,9 @@ Void_t** public_iCALLOc(size_t n, size_t elem_size, Void_t** chunks) {
 #ifdef KM_DBG
     assert(0);  /* unsupported */
 #endif
+    (void)n;
+    (void)elem_size;
+    (void)chunks;
     return 0;
 }
 
@@ -2173,6 +2178,9 @@ Void_t** public_iCOMALLOc(size_t n, size_t sizes[], Void_t** chunks) {
 #ifdef KM_DBG
     assert(0);  /* unsupported */
 #endif
+    (void)n;
+    (void)sizes;
+    (void)chunks;
     return 0;
 }
 
@@ -2180,6 +2188,7 @@ void public_cFREe(Void_t* m) {
 #ifdef KM_DBG
     assert(0);  /* unsupported */
 #endif
+    (void)m;
     return;
 }
 
@@ -2187,6 +2196,7 @@ int public_mTRIm(size_t s) {
 #ifdef KM_DBG
     assert(0);  /* unsupported */
 #endif
+    (void)s;
     return 0;
 }
 

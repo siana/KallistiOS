@@ -1,7 +1,7 @@
 /* KallistiOS ##version##
 
    fs_pty.c
-   Copyright (C)2003 Dan Potter
+   Copyright (C) 2003 Dan Potter
    Copyright (C) 2012 Lawrence Sebald
 
 */
@@ -105,6 +105,9 @@ int fs_pty_create(char * buffer, int maxbuflen, file_t * master_out, file_t * sl
     ptyhalf_t *master, *slave;
     int boot;
     char mname[16], sname[16];
+
+    (void)buffer;
+    (void)maxbuflen;
 
     /* Check basics */
     if(!master_out || !slave_out)
@@ -246,6 +249,8 @@ static void * pty_open_dir(const char * fn, int mode) {
     int     cnt;
     pipefd_t    * fdobj = NULL;
 
+    (void)fn;
+
     mutex_lock(&list_mutex);
 
     /* Go through and count the number of items */
@@ -363,6 +368,8 @@ static void * pty_open_file(const char * fn, int mode) {
 }
 
 static void * pty_open(vfs_handler_t * vfs, const char * fn, int mode) {
+    (void)vfs;
+
     /* Skip any preceeding slash */
     if(*fn == '/') fn++;
 
@@ -419,6 +426,8 @@ static int pty_close(void * h) {
 /* Read from a pty endpoint, kernel console special case */
 static ssize_t pty_read_serial(pipefd_t * fdobj, ptyhalf_t * ph, void * buf, size_t bytes) {
     int c, r = 0;
+
+    (void)ph;
 
     while(bytes > 0) {
     again:
@@ -699,7 +708,13 @@ static vfs_handler_t vh = {
     NULL,
     NULL,
     NULL,
-    pty_fcntl
+    pty_fcntl,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL
 };
 
 /* Are we initialized? */

@@ -6,24 +6,31 @@
 /* Condition Variable Initialization Attributes, P1003.1c/Draft 10, p. 96 */
 
 int pthread_condattr_init(pthread_condattr_t *attr) {
+    (void)attr;
     return 0;
 }
 
 int pthread_condattr_destroy(pthread_condattr_t *attr) {
+    (void)attr;
     return 0;
 }
 
 int pthread_condattr_getpshared(const pthread_condattr_t *attr, int *pshared) {
+    (void)attr;
+    (void)pshared;
     return 0;
 }
 
 int pthread_condattr_setpshared(pthread_condattr_t *attr, int pshared) {
+    (void)attr;
+    (void)pshared;
     return 0;
 }
 
 /* Initializing and Destroying a Condition Variable, P1003.1c/Draft 10, p. 87 */
 
 int pthread_cond_init(pthread_cond_t *cond, const pthread_condattr_t *attr) {
+    (void)attr;
     assert(cond);
 
     return cond_init(cond);

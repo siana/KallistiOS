@@ -129,6 +129,9 @@ static void handler_irq9(irq_t source, irq_context_t *context) {
     vuint32 *asicack = (vuint32*)0xa05f6900;
     uint32  mask;
 
+    (void)source;
+    (void)context;
+
     /* Go through each event register and look for pending events */
     for(reg = 0; reg < 3; reg++) {
         /* Read the event mask and clear pending */

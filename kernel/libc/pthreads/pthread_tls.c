@@ -1,5 +1,10 @@
+/* KallistiOS ##version##
+
+   pthread_tls.c
+   Copyright (C) 2011 Lawrence Sebald
+*/
+
 #include <pthread.h>
-#include <errno.h>
 
 /* Dynamic Package Initialization */
 int pthread_once(pthread_once_t *once_control, void (*init_routine)(void)) {

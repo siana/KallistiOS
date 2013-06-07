@@ -104,6 +104,9 @@ static int rb_space_used() {
    out if possible. If our internal ring buffer comes close to overflowing,
    the best we can do is twiddle RTS/CTS for a while. */
 static void scif_err_irq(irq_t src, irq_context_t * cxt) {
+    (void)src;
+    (void)cxt;
+
     /* Clear status bits */
     SCSCR2 &= ~0x08;
     SCSCR2 |= 0x08;
@@ -129,6 +132,9 @@ static void scif_err_irq(irq_t src, irq_context_t * cxt) {
 }
 
 static void scif_data_irq(irq_t src, irq_context_t * cxt) {
+    (void)src;
+    (void)cxt;
+
     /* Clear status bits */
     SCSCR2 &= ~0x40;
     SCSCR2 |= 0x40;

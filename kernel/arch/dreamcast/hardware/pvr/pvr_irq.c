@@ -27,6 +27,8 @@ static void dma_next_list(ptr_t data) {
     int i, did = 0;
     volatile pvr_dma_buffers_t * b;
 
+    (void)data;
+
     // DBG(("dma_next_list\n"));
 
     for(i = 0; i < PVR_OPB_COUNT; i++) {

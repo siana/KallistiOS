@@ -68,6 +68,9 @@ static int net_udp_send_raw(netif_t *net, const struct sockaddr_in6 *src,
 
 static int net_udp_accept(net_socket_t *hnd, struct sockaddr *addr,
                           socklen_t *addr_len) {
+    (void)hnd;
+    (void)addr;
+    (void)addr_len;
     errno = EOPNOTSUPP;
     return -1;
 }
@@ -293,6 +296,8 @@ static int net_udp_connect(net_socket_t *hnd, const struct sockaddr *addr,
 }
 
 static int net_udp_listen(net_socket_t *hnd, int backlog) {
+    (void)hnd;
+    (void)backlog;
     errno = EOPNOTSUPP;
     return -1;
 }
@@ -412,6 +417,8 @@ static ssize_t net_udp_sendto(net_socket_t *hnd, const void *message,
     struct sockaddr_in6 realaddr6;
     uint32_t sflags;
     struct sockaddr_in6 local_addr;
+
+    (void)flags;
 
     if(irq_inside_int()) {
         if(mutex_trylock(&udp_mutex) == -1) {
@@ -552,6 +559,9 @@ static int net_udp_shutdownsock(net_socket_t *hnd, int how) {
 
 static int net_udp_socket(net_socket_t *hnd, int domain, int type, int proto) {
     struct udp_sock *udpsock;
+
+    (void)type;
+    (void)proto;
 
     udpsock = (struct udp_sock *)malloc(sizeof(struct udp_sock));
 
@@ -909,6 +919,8 @@ static int net_udp_input4(netif_t *src, const ip_hdr_t *ip, const uint8 *data,
     struct udp_sock *sock;
     struct udp_pkt *pkt;
 
+    (void)src;
+
     if(size <= sizeof(udp_hdr_t)) {
         /* Discard the packet, since it is too short to be of any interest. */
         ++udp_stats.pkt_recv_bad_size;
@@ -998,6 +1010,8 @@ static int net_udp_input6(netif_t *src, const ipv6_hdr_t *ip, const uint8 *data,
     uint16 cs;
     struct udp_sock *sock;
     struct udp_pkt *pkt;
+
+    (void)src;
 
     if(size <= sizeof(udp_hdr_t)) {
         /* Discard the packet, since it is too short to be of any interest. */
@@ -1103,6 +1117,8 @@ static int net_udp_send_raw(netif_t *net, const struct sockaddr_in6 *src,
     uint16 cs;
     int err;
     struct in6_addr srcaddr = src->sin6_addr;
+
+    (void)flags;
 
     if(!net) {
         net = net_default_dev;

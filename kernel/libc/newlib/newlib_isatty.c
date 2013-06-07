@@ -19,6 +19,8 @@ int isatty(int fd) {
 }
 
 int _isatty_r(struct _reent *reent, int fd) {
+    (void)reent;
+
     /* Make sure that stdin, stdout, and stderr are shown as ttys, otherwise
        they won't be set as line-buffered.*/
     if(fd >= 0 && fd <= 2) {

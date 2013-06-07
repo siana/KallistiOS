@@ -55,6 +55,7 @@ static int fb_shutdown() {
 }
 
 static int fb_set_irq_usage(int mode) {
+    (void)mode;
     return 0;
 }
 
@@ -100,6 +101,8 @@ static int fb_flush() {
 static int fb_write_buffer(const uint8 *data, int len, int xlat) {
     int rv = len;
 
+    (void)xlat;
+
     while(len--) {
         fb_write((int)(*data++));
     }
@@ -108,6 +111,8 @@ static int fb_write_buffer(const uint8 *data, int len, int xlat) {
 }
 
 static int fb_read_buffer(uint8 * data, int len) {
+    (void)data;
+    (void)len;
     errno = EAGAIN;
     return -1;
 }

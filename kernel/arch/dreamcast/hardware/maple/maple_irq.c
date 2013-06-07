@@ -1,7 +1,7 @@
 /* KallistiOS ##version##
 
    maple_irq.c
-   (c)2002 Dan Potter
+   Copyright (C) 2002 Dan Potter
  */
 
 #include <malloc.h>
@@ -169,6 +169,8 @@ static void vbl_autodetect() {
 void maple_vbl_irq_hnd(uint32 code) {
     maple_driver_t *drv;
 
+    (void)code;
+
     /* dbgio_write_str("inside vbl_irq_hnd\n"); */
 
     /* Count, for fun and profit */
@@ -197,6 +199,8 @@ void maple_vbl_irq_hnd(uint32 code) {
 void maple_dma_irq_hnd(uint32 code) {
     maple_frame_t   *i;
     int8        resp;
+
+    (void)code;
 
     /* dbgio_write_str("start dma_irq_hnd\n"); */
 

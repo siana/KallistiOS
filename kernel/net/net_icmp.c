@@ -53,6 +53,8 @@ Message types that are not implemented yet (if ever):
 
 static void icmp_default_echo_cb(const uint8 *ip, uint16 seq, uint64 delta_us,
                                  uint8 ttl, const uint8* data, int data_sz) {
+    (void)data;
+
     if(delta_us != (uint64) - 1) {
         printf("%d bytes from %d.%d.%d.%d: icmp_seq=%d ttl=%d time=%.3f ms\n",
                data_sz, ip[0], ip[1], ip[2], ip[3], seq, ttl,
@@ -72,6 +74,9 @@ static void net_icmp_input_0(netif_t *src, ip_hdr_t *ip, icmp_hdr_t *icmp,
                              const uint8 *d, int s) {
     uint64 tmr, otmr;
     uint16 seq;
+
+    (void)src;
+    (void)icmp;
 
     tmr = timer_us_gettime64();
     seq = (d[7] | (d[6] << 8));

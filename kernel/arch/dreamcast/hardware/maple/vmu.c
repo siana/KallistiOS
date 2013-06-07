@@ -22,6 +22,7 @@
  */
 
 static int vmu_attach(maple_driver_t *drv, maple_device_t *dev) {
+    (void)drv;
     dev->status_valid = 1;
     return 0;
 }

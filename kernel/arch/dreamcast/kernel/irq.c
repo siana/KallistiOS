@@ -188,6 +188,8 @@ void irq_handle_trapa(irq_t code, irq_context_t *context) {
     irq_handler hnd;
     uint32 vec;
 
+    (void)code;
+
     /* Get the trapa vector */
     vec = (*tra) >> 2;
 
@@ -260,10 +262,14 @@ void irq_create_context(irq_context_t *context, uint32 stkpntr,
 }
 
 /* Default timer handler (until threads can take over) */
-static void irq_def_timer(irq_t src, irq_context_t *context) { }
+static void irq_def_timer(irq_t src, irq_context_t *context) {
+    (void)src;
+    (void)context;
+}
 
 /* Default FPU exception handler (can't seem to turn these off) */
 static void irq_def_fpu(irq_t src, irq_context_t *context) {
+    (void)src;
     context->pc += 2;
 }
 

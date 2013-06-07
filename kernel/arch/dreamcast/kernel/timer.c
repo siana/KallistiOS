@@ -145,6 +145,8 @@ int timer_ints_enabled(int which) {
 static uint32 timer_ms_counter = 0;
 static uint32 timer_ms_countdown;
 static void timer_ms_handler(irq_t source, irq_context_t *context) {
+    (void)source;
+    (void)context;
     timer_ms_counter++;
 }
 
@@ -212,6 +214,8 @@ static uint32 tp_ms_remaining;
 
 /* IRQ handler for the primary timer interrupt. */
 static void tp_handler(irq_t src, irq_context_t * cxt) {
+    (void)src;
+
     /* Are we at zero? */
     if(tp_ms_remaining == 0) {
         /* Disable any further timer events. The callback may

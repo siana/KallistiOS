@@ -41,6 +41,8 @@ static vuint32  * const shdma  = (vuint32 *)0xffa00000;
 #define PVR_LMMODE1 0x88/4
 
 static void pvr_dma_irq_hnd(uint32 code) {
+    (void)code;
+
     if(shdma[DMAC_DMATCR2] != 0)
         dbglog(DBG_INFO, "pvr_dma: The dma did not complete successfully\n");
 

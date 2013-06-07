@@ -1,7 +1,7 @@
 /* KallistiOS ##version##
 
    kernel/debug/dbgio.c
-   Copyright (C)2004 Dan Potter
+   Copyright (C) 2004 Dan Potter
 */
 
 #include <string.h>
@@ -195,6 +195,7 @@ static int null_shutdown() {
     return 0;
 }
 static int null_set_irq_usage(int mode) {
+    (void)mode;
     return 0;
 }
 static int null_read() {
@@ -202,15 +203,21 @@ static int null_read() {
     return -1;
 }
 static int null_write(int c) {
+    (void)c;
     return 1;
 }
 static int null_flush() {
     return 0;
 }
 static int null_write_buffer(const uint8 *data, int len, int xlat) {
+    (void)data;
+    (void)len;
+    (void)xlat;
     return len;
 }
 static int null_read_buffer(uint8 * data, int len) {
+    (void)data;
+    (void)len;
     errno = EAGAIN;
     return -1;
 }

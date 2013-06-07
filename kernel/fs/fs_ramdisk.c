@@ -1,7 +1,7 @@
 /* KallistiOS ##version##
 
    fs_ramdisk.c
-   Copyright (C)2002,2003 Dan Potter
+   Copyright (C) 2002,2003 Dan Potter
    Copyright (C) 2012 Lawrence Sebald
 
 */
@@ -222,6 +222,8 @@ static void * ramdisk_open(vfs_handler_t * vfs, const char *fn, int mode) {
     file_t      fd = -1;
     rd_file_t   *f;
     int     mm = mode & O_MODE_MASK;
+
+    (void)vfs;
 
     if(!strcmp(fn, "/"))
         fn++;
@@ -524,6 +526,8 @@ static int ramdisk_unlink(vfs_handler_t * vfs, const char *fn) {
     rd_file_t   * f;
     int     rv = -1;
 
+    (void)vfs;
+
     mutex_lock(&rd_mutex);
 
     /* Find the file */
@@ -567,6 +571,8 @@ static void * ramdisk_mmap(void * h) {
 static int ramdisk_fcntl(void *h, int cmd, va_list ap) {
     file_t fd = (file_t)h;
     int rv = -1;
+
+    (void)ap;
 
     mutex_lock(&rd_mutex);
 
@@ -625,7 +631,13 @@ static vfs_handler_t vh = {
     NULL,               /* stat XXX */
     NULL,               /* mkdir XXX */
     NULL,               /* rmdir XXX */
-    ramdisk_fcntl
+    ramdisk_fcntl,
+    NULL,               /* poll XXX */
+    NULL,               /* link XXX */
+    NULL,               /* symlink XXX */
+    NULL,               /* seek64 XXX */
+    NULL,               /* tell64 XXX */
+    NULL                /* total64 XXX */
 };
 
 /* Attach a piece of memory to a file. This works somewhat like open for

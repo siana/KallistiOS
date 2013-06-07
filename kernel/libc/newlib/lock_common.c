@@ -16,6 +16,7 @@ void __newlib_lock_init(__newlib_lock_t * lock) {
 }
 
 void __newlib_lock_close(__newlib_lock_t * lock) {
+    (void)lock;
 }
 
 void __newlib_lock_acquire(__newlib_lock_t * lock) {
@@ -23,6 +24,7 @@ void __newlib_lock_acquire(__newlib_lock_t * lock) {
 }
 
 void __newlib_lock_try_acquire(__newlib_lock_t * lock) {
+    (void)lock;
     assert_msg(0, "We don't support try_acquire");
 }
 
@@ -39,6 +41,7 @@ void __newlib_lock_init_recursive(__newlib_recursive_lock_t * lock) {
 
 void __newlib_lock_close_recursive(__newlib_recursive_lock_t * lock) {
     /* Empty */
+    (void)lock;
 }
 
 void __newlib_lock_acquire_recursive(__newlib_recursive_lock_t * lock) {
@@ -66,6 +69,7 @@ void __newlib_lock_acquire_recursive(__newlib_recursive_lock_t * lock) {
 }
 
 void __newlib_lock_try_acquire_recursive(__newlib_recursive_lock_t * lock) {
+    (void)lock;
     assert_msg(0, "We don't support try_acquire");
 }
 

@@ -598,6 +598,8 @@ static void * iso_open(vfs_handler_t * vfs, const char *fn, int mode) {
     file_t      fd;
     iso_dirent_t    *de;
 
+    (void)vfs;
+
     /* Make sure they don't want to open things as writeable */
     if((mode & O_MODE_MASK) != O_RDONLY)
         return 0;
@@ -891,6 +893,8 @@ static int iso_vblank_hnd;
 static void iso_vblank(uint32 evt) {
     int status, disc_type;
 
+    (void)evt;
+
     /* Get the status. This may fail if a CD operation is in
        progress in the foreground. */
     if(cdrom_get_status(&status, &disc_type) < 0)
@@ -907,6 +911,10 @@ static void iso_vblank(uint32 evt) {
 /* There's only one ioctl at the moment (re-initialize caches) but you should
    always clear data and size. */
 static int iso_ioctl(void * hnd, void *data, size_t size) {
+    (void)hnd;
+    (void)data;
+    (void)size;
+
     iso_reset();
 
     return 0;
@@ -915,6 +923,8 @@ static int iso_ioctl(void * hnd, void *data, size_t size) {
 static int iso_fcntl(void *h, int cmd, va_list ap) {
     file_t fd = (file_t)h;
     int rv = -1;
+
+    (void)ap;
 
     if(fd >= MAX_ISO_FILES || !fh[fd].first_extent || fh[fd].broken) {
         errno = EBADF;
@@ -973,7 +983,13 @@ static vfs_handler_t vh = {
     NULL,
     NULL,
     NULL,
-    iso_fcntl
+    iso_fcntl,
+    NULL,               /* poll */
+    NULL,               /* link */
+    NULL,               /* symlink */
+    NULL,               /* seek64 */
+    NULL,               /* tell64 */
+    NULL                /* total64 */
 };
 
 /* Initialize the file system */

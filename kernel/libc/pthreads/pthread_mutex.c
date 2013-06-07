@@ -12,24 +12,31 @@
 /* Mutex Initialization Attributes, P1003.1c/Draft 10, p. 81 */
 
 int pthread_mutexattr_init(pthread_mutexattr_t *attr) {
+    (void)attr;
     return 0;
 }
 
 int pthread_mutexattr_destroy(pthread_mutexattr_t *attr) {
+    (void)attr;
     return 0;
 }
 
 int pthread_mutexattr_getpshared(const pthread_mutexattr_t *attr, int  *pshared) {
+    (void)attr;
+    (void)pshared;
     return 0;
 }
 
 int pthread_mutexattr_setpshared(pthread_mutexattr_t *attr, int pshared) {
+    (void)attr;
+    (void)pshared;
     return 0;
 }
 
 /* Initializing and Destroying a Mutex, P1003.1c/Draft 10, p. 87 */
 
 int pthread_mutex_init(pthread_mutex_t *mutex, const pthread_mutexattr_t *attr) {
+    (void)attr;
     assert(mutex);
 
     return mutex_init(mutex, MUTEX_TYPE_NORMAL);
@@ -65,27 +72,40 @@ int pthread_mutex_unlock(pthread_mutex_t *mutex) {
 /* Mutex Initialization Scheduling Attributes, P1003.1c/Draft 10, p. 128 */
 
 int pthread_mutexattr_setprotocol(pthread_mutexattr_t *attr, int protocol) {
+    (void)attr;
+    (void)protocol;
     return 0;
 }
 
 int pthread_mutexattr_getprotocol(const pthread_mutexattr_t *attr, int *protocol) {
+    (void)attr;
+    (void)protocol;
     return EINVAL;
 }
 
 int pthread_mutexattr_setprioceiling(pthread_mutexattr_t *attr, int prioceiling) {
+    (void)attr;
+    (void)prioceiling;
     return 0;
 }
 
 int pthread_mutexattr_getprioceiling(const pthread_mutexattr_t *attr, int *prioceiling) {
+    (void)attr;
+    (void)prioceiling;
     return EINVAL;
 }
 
 /* Change the Priority Ceiling of a Mutex, P1003.1c/Draft 10, p. 131 */
 
 int pthread_mutex_setprioceiling(pthread_mutex_t *mutex, int prioceiling, int *old_ceiling) {
+    (void)mutex;
+    (void)prioceiling;
+    (void)old_ceiling;
     return 0;
 }
 
 int pthread_mutex_getprioceiling(pthread_mutex_t *mutex, int *prioceiling) {
+    (void)mutex;
+    (void)prioceiling;
     return EINVAL;
 }

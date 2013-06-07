@@ -16,6 +16,8 @@ int _stat_r(struct _reent * reent, const char * fn, struct stat * pstat) {
     file_t fp = fs_open(fn, O_RDONLY);
     mode_t md = S_IFREG;
 
+    (void)reent;
+
     /* If we couldn't get it as a file, try as a directory */
     if(fp == FILEHND_INVALID) {
         fp = fs_open(fn, O_RDONLY | O_DIR);

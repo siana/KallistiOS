@@ -1,7 +1,7 @@
 /* KallistiOS ##version##
 
    fs_romdisk.c
-   Copyright (C)2001,2002,2003 Dan Potter
+   Copyright (C) 2001,2002,2003 Dan Potter
    Copyright (C) 2012 Lawrence Sebald
 
 */
@@ -386,6 +386,8 @@ static int romdisk_fcntl(void *h, int cmd, va_list ap) {
     file_t fd = (file_t)h;
     int rv = -1;
 
+    (void)ap;
+
     if(fd >= MAX_RD_FILES || !fh[fd].index) {
         errno = EBADF;
         return -1;
@@ -443,7 +445,13 @@ static vfs_handler_t vh = {
     NULL,
     NULL,
     NULL,
-    romdisk_fcntl
+    romdisk_fcntl,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL
 };
 
 /* Are we initialized? */

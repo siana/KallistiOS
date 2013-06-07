@@ -210,6 +210,8 @@ int net_arp_lookup(netif_t *nif, const uint8 ip_in[4], uint8 mac_out[6],
 int net_arp_revlookup(netif_t *nif, uint8 ip_out[4], const uint8 mac_in[6]) {
     netarp_t *cur;
 
+    (void)nif;
+
     /* Look for the entry */
     LIST_FOREACH(cur, &net_arp_cache, ac_list) {
         if(!memcmp(mac_in, cur->mac, 6)) {
@@ -262,10 +264,11 @@ static int net_arp_send(netif_t *nif, arp_pkt_t *pkt)   {
 
 /* Receive an ARP packet and process it (called by net_input) */
 int net_arp_input(netif_t *nif, const uint8 *pkt_in, int len) {
-    //eth_hdr_t *eth_hdr;
+    //eth_hdr_t *eth_hdr = (eth_hdr_t *)pkt_in;
     arp_pkt_t *pkt;
 
-    //eth_hdr = (eth_hdr_t *)pkt_in;
+    (void)len;
+
     pkt = (arp_pkt_t *)(pkt_in + sizeof(eth_hdr_t));
 
     switch(pkt->opcode[1]) {

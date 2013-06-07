@@ -280,6 +280,9 @@ static void net_dhcp_send_request(dhcp_pkt_t *pkt, int pktlen, dhcp_pkt_t *pkt2,
     struct dhcp_pkt_out *qpkt;
     uint32 serverid = net_dhcp_get_32bit(pkt, DHCP_OPTION_SERVER_ID, pktlen);
 
+    (void)pkt2;
+    (void)pkt2len;
+
     if(serverid == 0)
         return;
 

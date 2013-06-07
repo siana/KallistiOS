@@ -210,6 +210,8 @@ static void *dcls_open(struct vfs_handler *vfs, const char *fn, int mode) {
     int dcload_mode = 0;
     command_t *cmd = (command_t *)pktbuf;
 
+    (void)vfs;
+
     locked = mutex_trylock(&mutex);
 
     if(locked == -1 && irq_inside_int()) {
@@ -502,6 +504,8 @@ static dirent_t *dcls_readdir(void *hnd) {
 static int dcls_rename(vfs_handler_t *vfs, const char *fn1, const char *fn2) {
     int len1 = strlen(fn1), len2 = strlen(fn2), locked;
 
+    (void)vfs;
+
     locked = mutex_trylock(&mutex);
 
     if(locked == -1 && irq_inside_int()) {
@@ -536,6 +540,8 @@ static int dcls_rename(vfs_handler_t *vfs, const char *fn1, const char *fn2) {
 
 static int dcls_unlink(vfs_handler_t *vfs, const char *fn) {
     int len = strlen(fn) + 5, locked;
+
+    (void)vfs;
 
     locked = mutex_trylock(&mutex);
 
@@ -627,6 +633,8 @@ static int dcls_writebuf(const uint8 *buf, int len, int xlat) {
     int locked;
     command_3int_t cmd;
 
+    (void)xlat;
+
     if(initted < 2)
         return -1;
 
@@ -656,6 +664,9 @@ static int dcls_writebuf(const uint8 *buf, int len, int xlat) {
 
 static int dcls_fcntl(void *h, int cmd, va_list ap) {
     int rv = -1;
+
+    (void)h;
+    (void)ap;
 
     switch(cmd) {
         case F_GETFL:
@@ -706,7 +717,13 @@ static vfs_handler_t vh = {
     dcls_stat,
     NULL,               /* mkdir */
     NULL,               /* rmdir */
-    dcls_fcntl
+    dcls_fcntl,
+    NULL,               /* poll */
+    NULL,               /* link */
+    NULL,               /* symlink */
+    NULL,               /* seek64 */
+    NULL,               /* tell64 */
+    NULL                /* total64 */
 };
 
 /* dbgio handler */

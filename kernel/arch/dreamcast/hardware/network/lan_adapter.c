@@ -458,6 +458,8 @@ static int total_pkts_rx = 0, total_pkts_tx = 0;
 static int la_tx(const uint8 * pkt, int len, int blocking) {
     int i, timeout;
 
+    (void)blocking;
+
     assert_msg(la_started == LA_RUNNING, "la_tx called out of sequence");
 
     /* Wait for queue to empty */
@@ -538,6 +540,8 @@ static int la_rx() {
 
 static void la_irq_hnd(uint32 code) {
     int intr_rx, intr_tx, hnd = 0;
+
+    (void)code;
 
     /* Acknowledge Lan Adapter interrupt(s) */
     intr_tx = la_read(DLCR0);
@@ -652,10 +656,12 @@ static int la_if_tx(netif_t * self, const uint8 * data, int len, int blocking) {
 
 /* We'll auto-commit for now */
 static int la_if_tx_commit(netif_t * self) {
+    (void)self;
     return 0;
 }
 
 static int la_if_rx_poll(netif_t * self) {
+    (void)self;
     return la_rx();
 }
 
@@ -667,6 +673,8 @@ static int la_if_set_flags(netif_t * self, uint32 flags_and, uint32 flags_or) {
 
 static int la_if_set_mc(netif_t *self, const uint8 *list, int count) {
     int i;
+
+    (void)self;
 
     /* Reset Data Link Control */
     timer_spin_sleep(2);

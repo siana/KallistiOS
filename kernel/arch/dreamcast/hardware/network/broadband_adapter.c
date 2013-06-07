@@ -503,11 +503,11 @@ static void rx_finish_enq(int room) {
         sem_signal(&bba_rx_sema);
         thd_schedule(1, 0);
     }
-    else
-        ;//dbglog(DBG_KDEBUG, "rx_finish_enq: lagging\n");
 }
 
 static void bba_dma_cb(ptr_t p) {
+    (void)p;
+
     if(next_len) {
         g2_dma_transfer(next_dst, next_src, next_len, 0,
                         bba_dma_cb, 0,  /* callback */
@@ -733,6 +733,8 @@ void bba_unlock() {
 
 static int bcolor;
 static void *bba_rx_threadfunc(void *dummy) {
+    (void)dummy;
+
     while(!bba_rx_exit_thread) {
         //sem_wait_timed(&bba_rx_sema, 500);
         sem_wait(&bba_rx_sema);
@@ -812,6 +814,8 @@ static void bba_rx() {
 /* Ethernet IRQ handler */
 static void bba_irq_hnd(uint32 code) {
     int intr, hnd;
+
+    (void)code;
 
     //vid_border_color(0, 255, 0);
     /* Acknowledge 8193 interrupt, except RX ACK bits. We'll handle
@@ -919,6 +923,8 @@ static void set_ipv6_lladdr() {
 
 /* They only ever made one GAPS peripheral, so this should suffice */
 static int bba_if_detect(netif_t *self) {
+    (void)self;
+
     if(bba_if.flags & NETIF_DETECTED)
         return 0;
 
@@ -930,6 +936,8 @@ static int bba_if_detect(netif_t *self) {
 }
 
 static int bba_if_init(netif_t *self) {
+    (void)self;
+
     if(bba_if.flags & NETIF_INITIALIZED)
         return 0;
 
@@ -943,6 +951,8 @@ static int bba_if_init(netif_t *self) {
 }
 
 static int bba_if_shutdown(netif_t *self) {
+    (void)self;
+
     if(!(bba_if.flags & NETIF_INITIALIZED))
         return 0;
 
@@ -954,6 +964,8 @@ static int bba_if_shutdown(netif_t *self) {
 
 static int bba_if_start(netif_t *self) {
     int i;
+
+    (void)self;
 
     if(!(bba_if.flags & NETIF_INITIALIZED))
         return -1;
@@ -990,6 +1002,8 @@ static int bba_if_start(netif_t *self) {
 }
 
 static int bba_if_stop(netif_t *self) {
+    (void)self;
+
     if(!(bba_if.flags & NETIF_RUNNING))
         return 0;
 
@@ -1009,6 +1023,8 @@ static int bba_if_stop(netif_t *self) {
 }
 
 static int bba_if_tx(netif_t *self, const uint8 *data, int len, int blocking) {
+    (void)self;
+
     if(!(bba_if.flags & NETIF_RUNNING))
         return -1;
 
@@ -1020,11 +1036,14 @@ static int bba_if_tx(netif_t *self, const uint8 *data, int len, int blocking) {
 
 /* We'll auto-commit for now */
 static int bba_if_tx_commit(netif_t *self) {
+    (void)self;
     return 0;
 }
 
 static int bba_if_rx_poll(netif_t *self) {
     int intr;
+
+    (void)self;
 
     intr = g2_read_16(NIC(RT_INTRSTATUS));
 
@@ -1047,12 +1066,15 @@ static int bba_if_rx_poll(netif_t *self) {
 
 /* Don't need to hook anything here yet */
 static int bba_if_set_flags(netif_t *self, uint32 flags_and, uint32 flags_or) {
+    (void)self;
     bba_if.flags = (bba_if.flags & flags_and) | flags_or;
     return 0;
 }
 
 static int bba_if_set_mc(netif_t *self, const uint8 *list, int count) {
     uint32 old;
+
+    (void)self;
 
     if(count == 0) {
         /* Clear the multicast address filter */

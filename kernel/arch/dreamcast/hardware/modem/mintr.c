@@ -577,6 +577,8 @@ void modemConnection(void) {
 }
 
 static void modemCallback(uint32 code) {
+    (void)code;
+
     if(modemCallbackCode != NULL)
         modemCallbackCode();
 
@@ -715,6 +717,8 @@ void modemIntConfigModem(void) {
 /* Sets the interrupt handler and state based on the specified mode of
    operation */
 void modemIntSetHandler(int protocol, int mode) {
+    (void)protocol;
+
     modemCfg.flags &= ~MODEM_CFG_FLAG_CONNECTED;
     modemCfg.flags |= MODEM_CFG_FLAG_CONNECTING;
 
@@ -742,6 +746,9 @@ void modemIntResetControlCode(void) {
    is generated until it's stopped. */
 
 static void modemIntrTimeoutCallback(irq_t source, irq_context_t *context) {
+    (void)source;
+    (void)context;
+
     if(modemTimeoutCallbackFlag != NULL)
         *modemTimeoutCallbackFlag = 1;
 

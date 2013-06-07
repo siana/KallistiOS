@@ -60,11 +60,15 @@ static ssize_t fs_socket_read(void *hnd, void *buffer, size_t cnt) {
 }
 
 static off_t fs_socket_seek(void *hnd, off_t offset, int whence) {
+    (void)hnd;
+    (void)offset;
+    (void)whence;
     errno = ESPIPE;
     return (off_t) - 1;
 }
 
 static off_t fs_socket_tell(void *hnd) {
+    (void)hnd;
     errno = ESPIPE;
     return (off_t) - 1;
 }
@@ -116,7 +120,12 @@ static vfs_handler_t vh = {
     NULL,            /* mkdir */
     NULL,            /* rmdir */
     fs_socket_fcntl, /* fcntl */
-    fs_socket_poll   /* poll */
+    fs_socket_poll,  /* poll */
+    NULL,            /* link */
+    NULL,            /* symlink */
+    NULL,            /* seek64 */
+    NULL,            /* tell64 */
+    NULL             /* total64 */
 };
 
 /* Have we been initialized? */

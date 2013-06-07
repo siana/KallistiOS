@@ -1,8 +1,8 @@
 /* KallistiOS ##version##
 
    flashrom.c
-   Copyright (c)2003 Dan Potter
-   Copyright (C)2008 Lawrence Sebald
+   Copyright (c) 2003 Dan Potter
+   Copyright (C) 2008 Lawrence Sebald
 */
 
 /*
@@ -67,6 +67,9 @@ int flashrom_write(int offset, void * buffer, int bytes) {
     irq_restore(old);
     return rv;
 #else
+    (void)offset;
+    (void)buffer;
+    (void)bytes;
     return -1;
 #endif
 }
@@ -82,6 +85,7 @@ int flashrom_delete(int offset) {
     irq_restore(old);
     return rv;
 #else
+    (void)offset;
     return -1;
 #endif
 }

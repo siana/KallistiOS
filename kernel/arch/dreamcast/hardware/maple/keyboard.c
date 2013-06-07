@@ -335,6 +335,8 @@ static int kbd_attach(maple_driver_t *drv, maple_device_t *dev) {
     uint32 f = dev->info.functions, tmp = MAPLE_FUNC_KEYBOARD;
     int d = 0;
 
+    (void)drv;
+
     /* Figure out which function data we want to look at. This is borrowed from
        the maple_enum_type_ex function and isn't really pretty... */
     while(tmp != 0x80000000) {

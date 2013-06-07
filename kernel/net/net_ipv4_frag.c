@@ -136,6 +136,8 @@ static int frag_import(netif_t *src, ip_hdr_t *hdr, const uint8 *data,
     int rv = 0;
     uint64 now = timer_ms_gettime64();
 
+    (void)size;
+
     /* Reallocate space for the data buffer, if needed. */
     if(end > frag->cur_length) {
         tmp = realloc(frag->data, end);

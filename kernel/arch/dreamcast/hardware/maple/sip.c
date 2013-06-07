@@ -276,11 +276,14 @@ static void sip_periodic(maple_driver_t *drv) {
 static int sip_attach(maple_driver_t *drv, maple_device_t *dev) {
     sip_state_t *sip;
 
+    (void)drv;
+
     sip = (sip_state_t *)dev->status;
     sip->is_sampling = 0;
     sip->amp_gain = SIP_DEFAULT_GAIN;
     sip->callback = NULL;
     dev->status_valid = 1;
+
     return 0;
 }
 

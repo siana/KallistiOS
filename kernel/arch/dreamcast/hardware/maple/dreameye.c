@@ -405,6 +405,8 @@ static void dreameye_periodic(maple_driver_t *drv) {
 static int dreameye_attach(maple_driver_t *drv, maple_device_t *dev) {
     dreameye_state_t *de;
 
+    (void)drv;
+
     de = (dreameye_state_t *)dev->status;
     de->image_count = 0;
     de->image_count_valid = 0;

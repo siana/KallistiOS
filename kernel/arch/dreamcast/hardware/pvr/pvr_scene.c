@@ -117,6 +117,8 @@ void pvr_scene_begin() {
    rx and ry are appropriate (i.e. *rx = 1024 and *ry = 512 for 640x480).
    Also, note that this probably won't work with DMA mode for now... */
 void pvr_scene_begin_txr(pvr_ptr_t txr, uint32 *rx, uint32 *ry) {
+    (void)ry;
+
     /* For the most part, this isn't very much different than the normal render setup.
        And, yes, if you remember KOS 1.1.6, this pretty much looks similar to what was
        there. I'm quite uncreative with my variable naming ;) */
@@ -225,6 +227,8 @@ int pvr_list_prim(pvr_list_t list, void * data, int size) {
 }
 
 int pvr_list_flush(pvr_list_t list) {
+    (void)list;
+
     assert_msg(0, "not implemented yet");
     return -1;
 }

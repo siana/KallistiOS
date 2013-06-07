@@ -932,6 +932,7 @@ static void handle_exception(irq_t code, irq_context_t *context) {
 }
 
 static void handle_user_trapa(irq_t code, irq_context_t *context) {
+    (void)code;
     registers = (uint32 *)context;
     gdb_handle_exception(EXC_TRAPA);
 }
@@ -943,6 +944,7 @@ static void handle_gdb_trapa(irq_t code, irq_context_t *context) {
     * instruction, since this instruction will
     * later be replaced by its original one!
     */
+    (void)code;
     registers = (uint32 *)context;
     registers[PC] -= 2;
     gdb_handle_exception(EXC_TRAPA);

@@ -216,6 +216,8 @@ static void mmu_page_map_single(mmucontext_t *context,
     mmupage_t   *page;
     int     top, bot, i;
 
+    (void)dirty;
+
     /* Get back the virtual address */
     virtpage = virtpage << MMU_IND_BITS;
 
@@ -597,6 +599,8 @@ mmu_mapfunc_t mmu_map_set_callback(mmu_mapfunc_t newfunc) {
 
 static void unhandled_mmu(irq_t source, irq_context_t *context) {
     int i;
+
+    (void)source;
 
     dbgio_printf("Exception happened in tid %d at PC %08lx, SR %08lx\n",
                  thd_current->tid, context->pc, context->sr);

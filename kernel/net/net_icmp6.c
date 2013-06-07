@@ -41,6 +41,8 @@ static void icmp6_default_echo_cb(const struct in6_addr *ip, uint16 seq,
                                   const uint8 *data, int data_sz) {
     char ipstr[INET6_ADDRSTRLEN];
 
+    (void)data;
+
     inet_ntop(AF_INET6, ip, ipstr, INET6_ADDRSTRLEN);
 
     if(delta_us != (uint64) - 1) {
@@ -61,6 +63,9 @@ static void net_icmp6_input_129(netif_t *net, ipv6_hdr_t *ip, icmp6_hdr_t *icmp,
                                 const uint8 *d, int s) {
     uint64 tmr, otmr = 0;
     uint16 seq;
+
+    (void)net;
+    (void)icmp;
 
     tmr = timer_us_gettime64();
     seq = (d[7] | (d[6] << 8));
@@ -137,6 +142,9 @@ static void net_icmp6_input_134(netif_t *net, ipv6_hdr_t *ip, icmp6_hdr_t *icmp,
     struct in6_addr src;
     uint16 len = ntohs(ip->length);
     int pos = 0;
+
+    (void)d;
+    (void)s;
 
     /* Ignore obviously bad packets */
     if(len <= sizeof(icmp6_router_adv_t)) {
@@ -262,6 +270,9 @@ static void net_icmp6_input_135(netif_t *net, ipv6_hdr_t *ip, icmp6_hdr_t *icmp,
     struct in6_addr target, src;
     int sol = 1, pos = 0, i;
 
+    (void)d;
+    (void)s;
+
     /* Ignore obviously bad packets */
     if(len < sizeof(icmp6_neighbor_sol_t)) {
         return;
@@ -328,6 +339,9 @@ static void net_icmp6_input_136(netif_t *net, ipv6_hdr_t *ip, icmp6_hdr_t *icmp,
     struct in6_addr target, dest;
     uint32 flags;
 
+    (void)d;
+    (void)s;
+
     /* Ignore obviously bad packets */
     if(len < sizeof(icmp6_neighbor_adv_t)) {
         return;
@@ -368,6 +382,9 @@ static void net_icmp6_input_137(netif_t *net, ipv6_hdr_t *ip, icmp6_hdr_t *icmp,
     struct in6_addr target, dest;
     char str[INET6_ADDRSTRLEN], str2[INET6_ADDRSTRLEN];
     int len = ntohs(ip->length), pos = 0;
+
+    (void)d;
+    (void)s;
 
     /* Reject obviously bad packets */
     if(len < sizeof(icmp6_redirect_t)) {

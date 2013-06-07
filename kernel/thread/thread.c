@@ -182,6 +182,8 @@ static void *thd_idle_task(void *param) {
         printf("Inside idle task now\n");
     #endif
         irq_restore(old); */
+    (void)param;
+
     for(;;) {
         arch_sleep();   /* We can safely enter sleep mode here */
     }
@@ -194,6 +196,8 @@ static void *thd_idle_task(void *param) {
    created. */
 static void *thd_reaper(void *param) {
     kthread_t *thd;
+
+    (void)param;
 
     for(;;) {
         /* Wait til we have something to reap */
@@ -596,6 +600,8 @@ irq_context_t * thd_choose_new() {
 static void thd_timer_hnd(irq_context_t *context) {
     /* Get the system time */
     uint64 now = timer_ms_gettime64();
+
+    (void)context;
 
     //printf("timer woke at %d\n", (uint32)now);
 
