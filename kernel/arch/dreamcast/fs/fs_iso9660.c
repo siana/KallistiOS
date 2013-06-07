@@ -496,7 +496,7 @@ static iso_dirent_t *find_object(const char *fn, int dir,
                     else
                         fnlen = strlen(fn);
 
-                    if(!strnicmp(rrname, fn, fnlen) && ! *(rrname + fnlen)) {
+                    if(!strcasecmp(rrname, fn, fnlen) && ! *(rrname + fnlen)) {
                         if(!((dir << 1) ^ de->flags))
                             return de;
                     }

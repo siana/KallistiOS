@@ -1,7 +1,7 @@
 /* KallistiOS ##version##
 
    nmmgr.c
-   Copyright (C)2003 Dan Potter
+   Copyright (C) 2003 Dan Potter
 
 */
 
@@ -35,7 +35,7 @@ nmmgr_handler_t * nmmgr_lookup(const char *fn) {
 
     /* Scan the handler table and look for a path match */
     LIST_FOREACH(cur, &nmmgr_handlers, list_ent) {
-        if(!strnicmp(cur->pathname, fn, strlen(cur->pathname)))
+        if(!strcasecmp(cur->pathname, fn, strlen(cur->pathname)))
             break;
     }
 
