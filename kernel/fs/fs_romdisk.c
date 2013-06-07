@@ -1,8 +1,8 @@
 /* KallistiOS ##version##
 
    fs_romdisk.c
-   Copyright (C) 2001,2002,2003 Dan Potter
-   Copyright (C) 2012 Lawrence Sebald
+   Copyright (C) 2001, 2002, 2003 Dan Potter
+   Copyright (C) 2012, 2013 Lawrence Sebald
 
 */
 
@@ -95,7 +95,7 @@ static mutex_t fh_mutex;
 /* Given a filename and a starting romdisk directory listing (byte offset),
    search for the entry in the directory and return the byte offset to its
    entry. */
-static uint32 romdisk_find_object(rd_image_t * mnt, const char *fn, int fnlen, int dir, uint32 offset) {
+static uint32 romdisk_find_object(rd_image_t * mnt, const char *fn, size_t fnlen, int dir, uint32 offset) {
     uint32          i, ni, type;
     const romdisk_file_t    *fhdr;
 
@@ -132,7 +132,6 @@ static uint32 romdisk_find_object(rd_image_t * mnt, const char *fn, int fnlen, i
 
         /* Check filename */
         if((strlen(fhdr->filename) == fnlen) && (!strncasecmp(fhdr->filename, fn, fnlen))) {
-
             /* Match: return this index */
             return i;
         }
@@ -279,28 +278,45 @@ static off_t romdisk_seek(void * h, off_t offset, int whence) {
 
     /* Check that the fd is valid */
     if(fd >= MAX_RD_FILES || fh[fd].index == 0 || fh[fd].dir) {
-        errno = EINVAL;
+        errno = EBADF;
         return -1;
     }
 
     /* Update current position according to arguments */
     switch(whence) {
         case SEEK_SET:
+            if(offset < 0) {
+                errno = EINVAL;
+                return -1;
+            }
+
             fh[fd].ptr = offset;
             break;
+
         case SEEK_CUR:
+            if(offset < 0 && ((uint32)-offset) > fh[fd].ptr) {
+                errno = EINVAL;
+                return -1;
+            }
+
             fh[fd].ptr += offset;
             break;
+
         case SEEK_END:
+            if(offset < 0 && ((uint32)-offset) > fh[fd].size) {
+                errno = EINVAL;
+                return -1;
+            }
+
             fh[fd].ptr = fh[fd].size + offset;
             break;
+
         default:
+            errno = EINVAL;
             return -1;
     }
 
     /* Check bounds */
-    if(fh[fd].ptr < 0) fh[fd].ptr = 0;
-
     if(fh[fd].ptr > fh[fd].size) fh[fd].ptr = fh[fd].size;
 
     return fh[fd].ptr;

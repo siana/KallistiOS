@@ -1,8 +1,8 @@
 /* KallistiOS ##version##
 
    fs_ramdisk.c
-   Copyright (C) 2002,2003 Dan Potter
-   Copyright (C) 2012 Lawrence Sebald
+   Copyright (C) 2002, 2003 Dan Potter
+   Copyright (C) 2012, 2013 Lawrence Sebald
 
 */
 
@@ -432,30 +432,55 @@ static off_t ramdisk_seek(void * h, off_t offset, int whence) {
     mutex_lock(&rd_mutex);
 
     /* Check that the fd is valid */
-    if(fd < MAX_RAM_FILES && fh[fd].file != NULL && !fh[fd].dir) {
-        /* Update current position according to arguments */
-        switch(whence) {
-            case SEEK_SET:
-                fh[fd].ptr = offset;
-                break;
-            case SEEK_CUR:
-                fh[fd].ptr += offset;
-                break;
-            case SEEK_END:
-                fh[fd].ptr = fh[fd].file->size + offset;
-                break;
-            default:
-                return -1;
-        }
-
-        /* Check bounds */
-        if(fh[fd].ptr < 0) fh[fd].ptr = 0;
-
-        if(fh[fd].ptr > fh[fd].file->size) fh[fd].ptr = fh[fd].file->size;
-
-        rv = fh[fd].ptr;
+    if(fd >= MAX_RAM_FILES || !fh[fd].file || fh[fd].dir) {
+        errno = EBADF;
+        mutex_unlock(&rd_mutex);
+        return -1;
     }
 
+    /* Update current position according to arguments */
+    switch(whence) {
+        case SEEK_SET:
+            if(offset < 0) {
+                errno = EINVAL;
+                mutex_unlock(&rd_mutex);
+                return -1;
+            }
+
+            fh[fd].ptr = offset;
+            break;
+
+        case SEEK_CUR:
+            if(offset < 0 && ((uint32)-offset) > fh[fd].ptr) {
+                errno = EINVAL;
+                mutex_unlock(&rd_mutex);
+                return -1;
+            }
+
+            fh[fd].ptr += offset;
+            break;
+
+        case SEEK_END:
+            if(offset < 0 && ((uint32)-offset) > fh[fd].file->size) {
+                errno = EINVAL;
+                mutex_unlock(&rd_mutex);
+                return -1;
+            }
+
+            fh[fd].ptr = fh[fd].file->size + offset;
+            break;
+
+        default:
+            errno = EINVAL;
+            mutex_unlock(&rd_mutex);
+            return -1;
+    }
+
+    /* Check bounds */
+    // XXXX: Technically this isn't correct. Fix it sometime.
+    if(fh[fd].ptr > fh[fd].file->size) fh[fd].ptr = fh[fd].file->size;
+
+    rv = fh[fd].ptr;
     mutex_unlock(&rd_mutex);
     return rv;
 }

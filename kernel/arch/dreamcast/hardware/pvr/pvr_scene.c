@@ -30,7 +30,7 @@ void * pvr_set_vertbuf(pvr_list_t list, void * buffer, int len) {
     assert(pvr_state.dma_mode);
 
     // Make sure it's a valid list.
-    assert(list >= 0 && list < PVR_OPB_COUNT);
+    assert(list < PVR_OPB_COUNT);
 
     // Make sure it's an _enabled_ list.
     assert(pvr_state.lists_enabled & (1 << list));
@@ -59,7 +59,7 @@ void * pvr_vertbuf_tail(pvr_list_t list) {
     uint8 * bufbase;
 
     // Check the validity of the request.
-    assert(list >= 0 && list < PVR_OPB_COUNT);
+    assert(list < PVR_OPB_COUNT);
     assert(pvr_state.dma_mode);
 
     // Get the buffer base.
@@ -74,7 +74,7 @@ void pvr_vertbuf_written(pvr_list_t list, uint32 amt) {
     uint32 val;
 
     // Check the validity of the request.
-    assert(list >= 0 && list < PVR_OPB_COUNT);
+    assert(list < PVR_OPB_COUNT);
     assert(pvr_state.dma_mode);
 
     // Change the current end of the buffer.
@@ -149,7 +149,7 @@ int pvr_list_begin(pvr_list_t list) {
 #endif  /* !NDEBUG */
 
     /* If we already had a list open, close it first */
-    if(pvr_state.list_reg_open != -1 && pvr_state.list_reg_open != list)
+    if(pvr_state.list_reg_open != -1 && pvr_state.list_reg_open != (int)list)
         pvr_list_finish();
 
     /* Ok, set the flag */

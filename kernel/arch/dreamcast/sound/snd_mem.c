@@ -117,11 +117,9 @@ void snd_mem_shutdown() {
 /* Allocate a chunk of SPU RAM; we will return an offset into SPU RAM. */
 uint32 snd_mem_malloc(size_t size) {
     snd_block_t *e, *best = NULL;
-    int     best_size = 4 * 1024 * 1024;
+    size_t best_size = 4 * 1024 * 1024;
 
     assert_msg(initted, "Use of snd_mem_malloc before snd_mem_init");
-
-    assert(size >= 0);
 
     if(size == 0)
         return 0;

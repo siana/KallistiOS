@@ -4,7 +4,7 @@
    Copyright (C) 2000, 2001, 2003 Dan Potter
    Copyright (C) 2001 Andrew Kieschnick
    Copyright (C) 2002 Bero
-   Copyright (C) 2012 Lawrence Sebald
+   Copyright (C) 2012, 2013 Lawrence Sebald
 
 */
 
@@ -195,7 +195,7 @@ static uint32 iso_733(const uint8 *from) {
    this cache. As the cache fills up, sectors are removed from the end
    of it. */
 typedef struct {
-    int32   sector;         /* CD sector */
+    uint32  sector;         /* CD sector */
     uint8   data[2048];     /* Sector data */
 } cache_block_t;
 
@@ -214,7 +214,7 @@ static void bclear_cache(cache_block_t **cache) {
     mutex_lock(&cache_mutex);
 
     for(i = 0; i < NUM_CACHE_BLOCKS; i++)
-        cache[i]->sector = -1;
+        cache[i]->sector = (uint32)-1;
 
     mutex_unlock(&cache_mutex);
 }
@@ -257,7 +257,7 @@ static int bread_cache(cache_block_t **cache, uint32 sector) {
 
     /* If not, look for an open cache slot; if we find one, use it */
     for(i = 0; i < NUM_CACHE_BLOCKS; i++) {
-        if(cache[i]->sector == -1) break;
+        if(cache[i]->sector == (uint32)-1) break;
     }
 
     /* If we didn't find one, kick an LRU block out of cache */
@@ -725,27 +725,46 @@ static off_t iso_seek(void * h, off_t offset, int whence) {
     file_t fd = (file_t)h;
 
     /* Check that the fd is valid */
-    if(fd >= MAX_ISO_FILES || fh[fd].first_extent == 0 || fh[fd].broken)
+    if(fd >= MAX_ISO_FILES || fh[fd].first_extent == 0 || fh[fd].broken) {
+        errno = EBADF;
         return -1;
+    }
 
     /* Update current position according to arguments */
     switch(whence) {
         case SEEK_SET:
+            if(offset < 0) {
+                errno = EINVAL;
+                return -1;
+            }
+
             fh[fd].ptr = offset;
             break;
+
         case SEEK_CUR:
+            if(offset < 0 && ((uint32)-offset) > fh[fd].ptr) {
+                errno = EINVAL;
+                return -1;
+            }
+
             fh[fd].ptr += offset;
             break;
+
         case SEEK_END:
+            if(offset < 0 && ((uint32)-offset) > fh[fd].size) {
+                errno = EINVAL;
+                return -1;
+            }
+
             fh[fd].ptr = fh[fd].size + offset;
             break;
+
         default:
+            errno = EINVAL;
             return -1;
     }
 
     /* Check bounds */
-    if(fh[fd].ptr < 0) fh[fd].ptr = 0;
-
     if(fh[fd].ptr > fh[fd].size) fh[fd].ptr = fh[fd].size;
 
     return fh[fd].ptr;
