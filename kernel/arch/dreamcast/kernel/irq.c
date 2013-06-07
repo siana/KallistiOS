@@ -1,7 +1,7 @@
 /* KallistiOS ##version##
 
    arch/dreamcast/kernel/irq.c
-   (c)2000-2001 Dan Potter
+   Copyright (C) 2000-2001 Dan Potter
 */
 
 /* This module contains low-level handling for IRQs and related exceptions. */
@@ -282,10 +282,10 @@ static int initted = 0;
 /* Init routine */
 int irq_init() {
     /* Save SR and VBR */
-    asm("stc	sr,r0\n"
-        "mov.l	r0,%0" : : "m"(pre_sr));
-    asm("stc	vbr,r0\n"
-        "mov.l	r0,%0" : : "m"(pre_vbr));
+    __asm__("stc    sr,r0\n"
+            "mov.l  r0,%0" : : "m"(pre_sr));
+    __asm__("stc    vbr,r0\n"
+            "mov.l  r0,%0" : : "m"(pre_vbr));
 
     /* Make sure interrupts are disabled */
     irq_disable();
@@ -313,35 +313,28 @@ int irq_init() {
 
     /* Set VBR to our exception table above, but don't enable
        exceptions and IRQs yet. */
-    asm("	! Set VBR\n"
-        "	mov.l	_vbr_addr,r0\n"
-        "	ldc	r0,vbr\n"
-        "	bra	_after_vbr\n"
-        "	nop\n"
-        "	.align 2\n"
-        "_vbr_addr:\n"
-        "	.long	_irq_vma_table\n"
-        "_after_vbr:\n");
+    __asm__("	! Set VBR\n"
+            "	mov.l _vbr_addr,r0\n"
+            "	ldc	  r0,vbr\n"
+            "	bra   _after_vbr\n"
+            "	nop\n"
+            "	.align 2\n"
+            "_vbr_addr:\n"
+            "	.long _irq_vma_table\n"
+            "_after_vbr:\n");
 
     initted = 1;
 
     return 0;
 }
 
-
 void irq_shutdown() {
     if(!initted)
         return;
 
     /* Restore SR and VBR */
-    asm("mov.l	%0,r0\n"
-        "ldc	r0,sr" : : "m"(pre_sr));
-    asm("mov.l	%0,r0\n"
-        "ldc	r0,vbr" : : "m"(pre_vbr));
-
+    __asm__("mov.l  %0,r0\n"
+            "ldc    r0,sr" : : "m"(pre_sr));
+    __asm__("mov.l  %0,r0\n"
+            "ldc    r0,vbr" : : "m"(pre_vbr));
 }
-
-
-
-
-

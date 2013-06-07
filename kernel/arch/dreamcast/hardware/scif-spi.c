@@ -33,7 +33,7 @@
 
 /* This doesn't seem to actually be necessary on any of the SD cards I've tried,
    but I'm keeping it around, just in case... */
-#define SD_WAIT() asm("nop\n\tnop\n\tnop\n\tnop\n\tnop")
+#define SD_WAIT() __asm__("nop\n\tnop\n\tnop\n\tnop\n\tnop")
 
 static uint16 scsptr2 = 0;
 

@@ -1,7 +1,7 @@
 /* KallistiOS ##version##
 
    kernel/arch/dreamcast/hardware/sq.c
-   (c)2001 Andrew Kieschnick
+   Copyright (C) 2001 Andrew Kieschnick
 */
 
 #include <dc/sq.h>
@@ -29,7 +29,7 @@ void sq_clr(void *dest, int n) {
     n >>= 5;
 
     while(n--) {
-        asm("pref @%0" : : "r"(d));
+        __asm__("pref @%0" : : "r"(d));
         d += 8;
     }
 
@@ -52,7 +52,7 @@ void * sq_cpy(void *dest, void *src, int n) {
     n >>= 5;
 
     while(n--) {
-        asm("pref @%0" : : "r"(s + 8));  /* prefetch 32 bytes for next loop */
+        __asm__("pref @%0" : : "r"(s + 8));  /* prefetch 32 bytes for next loop */
         d[0] = *(s++);
         d[1] = *(s++);
         d[2] = *(s++);
@@ -61,7 +61,7 @@ void * sq_cpy(void *dest, void *src, int n) {
         d[5] = *(s++);
         d[6] = *(s++);
         d[7] = *(s++);
-        asm("pref @%0" : : "r"(d));
+        __asm__("pref @%0" : : "r"(d));
         d += 8;
     }
 
@@ -93,7 +93,7 @@ void * sq_set(void *s, uint32 c, int n) {
     n >>= 5;
 
     while(n--) {
-        asm("pref @%0" : : "r"(d));
+        __asm__("pref @%0" : : "r"(d));
         d += 8;
     }
 
@@ -125,7 +125,7 @@ void * sq_set16(void *s, uint32 c, int n) {
     n >>= 5;
 
     while(n--) {
-        asm("pref @%0" : : "r"(d));
+        __asm__("pref @%0" : : "r"(d));
         d += 8;
     }
 
@@ -153,7 +153,7 @@ void * sq_set32(void *s, uint32 c, int n) {
     n >>= 5;
 
     while(n--) {
-        asm("pref @%0" : : "r"(d));
+        __asm__("pref @%0" : : "r"(d));
         d += 8;
     }
 
@@ -163,5 +163,3 @@ void * sq_set32(void *s, uint32 c, int n) {
 
     return s;
 }
-
-

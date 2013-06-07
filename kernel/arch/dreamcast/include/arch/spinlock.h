@@ -1,7 +1,7 @@
 /* KallistiOS ##version##
 
    arch/dreamcast/include/spinlock.h
-   (c)2001 Dan Potter
+   Copyright (C) 2001 Dan Potter
 
 */
 
@@ -65,9 +65,11 @@ typedef volatile int spinlock_t;
         spinlock_t * __lock = A; \
         int __gotlock = 0; \
         while(1) { \
-            asm volatile ("tas.b @%1\n\t" \
-                          "movt %0\n\t" \
-                          : "=r" (__gotlock) : "r" (__lock) : "t", "memory"); \
+            __asm__ __volatile__("tas.b @%1\n\t" \
+                                 "movt %0\n\t" \
+                                 : "=r" (__gotlock) \
+                                 : "r" (__lock) \
+                                 : "t", "memory"); \
             if (!__gotlock) \
                 thd_pass(); \
             else break; \

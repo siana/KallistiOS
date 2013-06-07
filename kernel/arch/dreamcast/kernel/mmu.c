@@ -94,22 +94,22 @@ static inline void mmu_ldtlb(int asid, uint32 virt, uint32 phys, int sz, int pr,
                              int sh, int wt) {
     SET_PTEH(virt, asid);
     SET_PTEL(phys, 1, sz, pr, c, d, sh, wt);
-    asm("ldtlb");
+    __asm__("ldtlb");
 }
 static inline void mmu_ldtlb_quick(uint32 ptehv, uint32 ptelv) {
     *pteh = ptehv;
     *ptel = ptelv;
-    asm("ldtlb");
+    __asm__("ldtlb");
 }
 static inline void mmu_ldtlb_wait() {
-    asm("nop");
-    asm("nop");
-    asm("nop");
-    asm("nop");
-    asm("nop");
-    asm("nop");
-    asm("nop");
-    asm("nop");
+    __asm__("nop");
+    __asm__("nop");
+    __asm__("nop");
+    __asm__("nop");
+    __asm__("nop");
+    __asm__("nop");
+    __asm__("nop");
+    __asm__("nop");
 }
 
 /* Defined in mmuitlb.s */

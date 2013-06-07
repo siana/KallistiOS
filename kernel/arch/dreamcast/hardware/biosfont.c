@@ -2,8 +2,8 @@
 
    biosfont.c
 
-   (c)2000-2002 Dan Potter
-   Japanese code (c) Kazuaki Matsumoto
+   Copyright (C) 2000-2002 Dan Potter
+   Japanese code Copyright (C) Kazuaki Matsumoto
  */
 
 #include <assert.h>
@@ -67,19 +67,17 @@ int bfont_set_32bit_mode(int on) {
 
 /* A little assembly that grabs the font address */
 extern uint8* get_font_address();
-asm(
-    "	.text\n"
-    "	.align 2\n"
-    "_get_font_address:\n"
-    "	mov.l	syscall_b4,r0\n"
-    "	mov.l	@r0,r0\n"
-    "	jmp	@r0\n"
-    "	mov	#0,r1\n"
-    "\n"
-    "	.align 4\n"
-    "syscall_b4:\n"
-    "	.long	0x8c0000b4\n"
-);
+__asm__("	.text\n"
+        "	.align 2\n"
+        "_get_font_address:\n"
+        "	mov.l	syscall_b4,r0\n"
+        "	mov.l	@r0,r0\n"
+        "	jmp	@r0\n"
+        "	mov	#0,r1\n"
+        "\n"
+        "	.align 4\n"
+        "syscall_b4:\n"
+        "	.long	0x8c0000b4\n");
 
 
 /* Shift-JIS -> JIS conversion */

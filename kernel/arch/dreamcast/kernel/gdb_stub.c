@@ -293,7 +293,7 @@ static char lowhex(int  x) {
  * Assembly macros
  */
 
-#define BREAKPOINT()   asm("trapa	#0xff"::);
+#define BREAKPOINT()   __asm__("trapa	#0xff"::);
 
 
 /*

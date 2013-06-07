@@ -240,7 +240,7 @@ int scif_init() {
 
     /* Wait a bit for it to stabilize */
     for(i = 0; i < 800000; i++)
-        asm("nop");
+        __asm__("nop");
 
     /* Unreset, enable hardware flow control, triggers on 8 bytes */
     SCFCR2 = 0x48;
@@ -259,7 +259,7 @@ int scif_init() {
 
     /* Wait a bit for it to stabilize */
     for(i = 0; i < 800000; i++)
-        asm("nop");
+        __asm__("nop");
 
     return 0;
 }

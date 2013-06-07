@@ -23,10 +23,10 @@ __BEGIN_DECLS
 /** \cond */
 #define __fsin(x) \
     ({ float __value, __arg = (x), __scale = 10430.37835; \
-        asm(    "fmul	%2,%1\n\t" \
-                "ftrc	%1,fpul\n\t" \
-                "fsca	fpul,dr0\n\t" \
-                "fmov	fr0,%0" \
+        __asm__("fmul   %2,%1\n\t" \
+                "ftrc   %1,fpul\n\t" \
+                "fsca   fpul,dr0\n\t" \
+                "fmov   fr0,%0" \
                 : "=f" (__value), "+&f" (__scale) \
                 : "f" (__arg) \
                 : "fpul", "fr0", "fr1"); \
@@ -34,10 +34,10 @@ __BEGIN_DECLS
 
 #define __fcos(x) \
     ({ float __value, __arg = (x), __scale = 10430.37835; \
-        asm(    "fmul	%2,%1\n\t" \
-                "ftrc	%1,fpul\n\t" \
-                "fsca	fpul,dr0\n\t" \
-                "fmov	fr1,%0" \
+        __asm__("fmul   %2,%1\n\t" \
+                "ftrc   %1,fpul\n\t" \
+                "fsca   fpul,dr0\n\t" \
+                "fmov   fr1,%0" \
                 : "=f" (__value), "+&f" (__scale) \
                 : "f" (__arg) \
                 : "fpul", "fr0", "fr1"); \
@@ -45,11 +45,11 @@ __BEGIN_DECLS
 
 #define __ftan(x) \
     ({ float __value, __arg = (x), __scale = 10430.37835; \
-        asm(    "fmul	%2,%1\n\t" \
-                "ftrc	%1,fpul\n\t" \
-                "fsca	fpul,dr0\n\t" \
+        __asm__("fmul   %2,%1\n\t" \
+                "ftrc   %1,fpul\n\t" \
+                "fsca   fpul,dr0\n\t" \
                 "fdiv   fr1, fr0\n\t" \
-                "fmov	fr0,%0" \
+                "fmov   fr0,%0" \
                 : "=f" (__value), "+&f" (__scale) \
                 : "f" (__arg) \
                 : "fpul", "fr0", "fr1"); \
@@ -58,9 +58,9 @@ __BEGIN_DECLS
 
 #define __fisin(x) \
     ({ float __value, __arg = (x); \
-        asm(    "lds	%1,fpul\n\t" \
-                "fsca	fpul,dr0\n\t" \
-                "fmov	fr0,%0" \
+        __asm__("lds    %1,fpul\n\t" \
+                "fsca   fpul,dr0\n\t" \
+                "fmov   fr0,%0" \
                 : "=f" (__value) \
                 : "r" (__arg) \
                 : "fpul", "fr0", "fr1"); \
@@ -68,9 +68,9 @@ __BEGIN_DECLS
 
 #define __ficos(x) \
     ({ float __value, __arg = (x); \
-        asm(    "lds	%1,fpul\n\t" \
-                "fsca	fpul,dr0\n\t" \
-                "fmov	fr1,%0" \
+        __asm__("lds    %1,fpul\n\t" \
+                "fsca   fpul,dr0\n\t" \
+                "fmov   fr1,%0" \
                 : "=f" (__value) \
                 : "r" (__arg) \
                 : "fpul", "fr0", "fr1"); \
@@ -78,10 +78,10 @@ __BEGIN_DECLS
 
 #define __fitan(x) \
     ({ float __value, __arg = (x); \
-        asm(    "lds	%1,fpul\n\t" \
-                "fsca	fpul,dr0\n\t" \
+        __asm__("lds    %1,fpul\n\t" \
+                "fsca   fpul,dr0\n\t" \
                 "fdiv   fr1, fr0\n\t" \
-                "fmov	fr0,%0" \
+                "fmov   fr0,%0" \
                 : "=f" (__value) \
                 : "r" (__arg) \
                 : "fpul", "fr0", "fr1"); \
@@ -90,13 +90,13 @@ __BEGIN_DECLS
 
 #define __fsqrt(x) \
     ({ float __arg = (x); \
-        asm(    "fsqrt %0\n\t" \
+        __asm__("fsqrt %0\n\t" \
                 : "=f" (__arg) : "0" (__arg)); \
         __arg; })
 
 #define __frsqrt(x) \
     ({ float __arg = (x); \
-        asm(    "fsrra %0\n\t" \
+        __asm__("fsrra %0\n\t" \
                 : "=f" (__arg) : "0" (__arg)); \
         __arg; })
 
