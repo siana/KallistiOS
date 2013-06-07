@@ -80,7 +80,7 @@ typedef struct strchan {
 } strchan_t;
 
 // Our stream structs
-static strchan_t streams[SND_STREAM_MAX] = { { { 0 } } };
+static strchan_t streams[SND_STREAM_MAX];
 
 // Separation buffers (for stereo)
 int16 * sep_buffer[2] = { NULL, NULL };

@@ -21,11 +21,13 @@ void modemSoftReset(void);
 void modemConfigurationReset(void); /* Configures the modem. It's assumed that
                                        the modem has already been reset. */
 
-MODEM_CFG modemCfg = { 0, 0,
+MODEM_CFG modemCfg = {
+    0, 0,
     { 0, 0, 0 },
     NULL,
     { 0, MODEM_STATE_NULL, 0 },
-    { 0, 0 }
+    { 0, 0 },
+    { 0, 0, 0, 0, 0, 0 }
 };
 
 /* Internal flags shared to keep track of parts of the driver's state */

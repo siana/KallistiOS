@@ -239,7 +239,7 @@ net_ipv6_stats_t net_ipv6_get_stats() {
 uint16 net_ipv6_checksum_pseudo(const struct in6_addr *src,
                                 const struct in6_addr *dst,
                                 uint32 upper_len, uint8 next_hdr) {
-    ipv6_pseudo_hdr_t ps = {{{{ 0 }}}};
+    ipv6_pseudo_hdr_t ps;
 
     /* Since the src and dst addresses aren't necessarily aligned when we send
        them in from header processing, do this the hard way. */
@@ -256,6 +256,7 @@ uint16 net_ipv6_checksum_pseudo(const struct in6_addr *src,
 
     ps.upper_layer_len = htonl(upper_len);
     ps.next_header = next_hdr;
+    ps.zero[0] = ps.zero[1] = ps.zero[2] = 0;
 
     return ~net_ipv4_checksum((uint8 *)&ps, sizeof(ipv6_pseudo_hdr_t), 0);
 }
