@@ -57,7 +57,8 @@ static const char *inet_ntop4(const void *src, char *dst, socklen_t size) {
 
 static const char *inet_ntop6(const void *src, char *dst, socklen_t size) {
     int tmp[8] = { 0 };
-    int runstart = -1, maxzero = 0, dcs = -1, i;
+    int runstart = -1, maxzero = 0;
+    socklen_t i, dcs = (socklen_t)-1;
     char tmpstr[4];
     char *ch = tmpstr, *ch2 = dst;
     int part;
