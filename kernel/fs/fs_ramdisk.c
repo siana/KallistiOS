@@ -42,6 +42,13 @@ cache data from disk rather than as a general purpose file system.
 #include <assert.h>
 #include <errno.h>
 
+#ifdef __STRICT_ANSI__
+/* Newlib doesn't prototype this function in strict standards compliant mode, so
+   we'll do it here. It is still provided either way, but it isn't prototyped if
+   we use -std=c99 (or any other non-gnuXX value). */
+char 	*_EXFUN(strdup,(const char *));
+#endif
+
 /* File definition */
 typedef struct rd_file {
     char    * name;     /* File name -- allocated */

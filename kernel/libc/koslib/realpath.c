@@ -39,6 +39,14 @@
 #include <unistd.h>
 #include <limits.h>
 
+#ifdef __STRICT_ANSI__
+/* Newlib doesn't prototype these two functions in strict standards compliant
+   mode, so we'll do it here. They're still provided either way, but they're
+   not prototyped if we use -std=c99 (or any other non-gnuXX value). */
+size_t	 _EXFUN(strlcat,(char *, const char *, size_t));
+size_t	 _EXFUN(strlcpy,(char *, const char *, size_t));
+#endif
+
 /*
  * char *realpath(const char *path, char resolved[PATH_MAX]);
  *
