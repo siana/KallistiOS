@@ -53,7 +53,7 @@ typedef struct ptyhalf {
 
     uint8   buffer[PTY_BUFFER_SIZE];    /* Our _receive_ buffer */
     int head, tail;         /* Insert at head, remove at tail */
-    int cnt;                /* Byte count in the queue */
+    size_t cnt;             /* Byte count in the queue */
 
     int refcnt;             /* When this reaches zero, we close */
 
@@ -472,9 +472,9 @@ static ssize_t pty_read_serial(pipefd_t * fdobj, ptyhalf_t * ph, void * buf, siz
 
 /* Read from a pty endpoint */
 static ssize_t pty_read(void * h, void * buf, size_t bytes) {
-    int     avail;
-    pipefd_t    * fdobj;
-    ptyhalf_t   * ph;
+    size_t avail;
+    pipefd_t *fdobj;
+    ptyhalf_t *ph;
 
     fdobj = (pipefd_t *)h;
     ph = fdobj->d.p;
@@ -520,7 +520,6 @@ static ssize_t pty_read(void * h, void * buf, size_t bytes) {
 
     ph->head = (ph->head + bytes) % PTY_BUFFER_SIZE;
     ph->cnt -= bytes;
-    assert(ph->cnt >= 0);
 
     /* Wake anyone waiting for write space */
     cond_broadcast(&ph->ready_write);
@@ -532,9 +531,9 @@ done:
 
 /* Write to a pty endpoint */
 static ssize_t pty_write(void * h, const void * buf, size_t bytes) {
-    int     avail;
-    pipefd_t    * fdobj;
-    ptyhalf_t   * ph;
+    size_t avail;
+    pipefd_t *fdobj;
+    ptyhalf_t *ph;
 
     fdobj = (pipefd_t *)h;
     ph = fdobj->d.p;

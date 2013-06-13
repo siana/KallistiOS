@@ -1,8 +1,15 @@
 # KallistiOS ##version##
 #
 # Root Makefile
-# Copyright (C)2003 Dan Potter
+# Copyright (C) 2003 Dan Potter
 #
+
+# Make sure things compile nice and cleanly. We don't necessarily want to push
+# these flags out on to user code, but it's a good idea to keep them around for
+# compiling all of KOS proper.
+# I expect everyone to keep their code warning free. Don't make me add -Werror
+# here too. ;-)
+KOS_CFLAGS += -Wextra
 
 # Add stuff to DIRS to auto-compile it with the big tree.
 DIRS = utils

@@ -88,7 +88,7 @@ realpath(const char *path, char resolved[PATH_MAX]) {
         p = strchr(left, '/');
         s = p ? p : left + left_len;
 
-        if(s - left >= sizeof(next_token)) {
+        if((unsigned)(s - left) >= sizeof(next_token)) {
             errno = ENAMETOOLONG;
             return (NULL);
         }

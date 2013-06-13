@@ -1,7 +1,7 @@
 /* KallistiOS ##version##
 
    malloc.c
-   Copyright (C)2003 Dan Potter
+   Copyright (C) 2003 Dan Potter
 
    Most of this module was written by Doug Lea and released into the
    public domain. We have incorporated it under the KallistiOS
@@ -2867,7 +2867,7 @@ typedef struct malloc_chunk* mbinptr;
   Compute index for size. We expect this to be inlined when
   compiled with optimization, else not, which works out well.
 */
-static int largebin_index(unsigned int sz) {
+static unsigned int largebin_index(unsigned int sz) {
     unsigned int  x = sz >> SMALLBIN_WIDTH;
     unsigned int m;            /* bit position of highest set bit of m */
 
@@ -3439,7 +3439,7 @@ INTERNAL_SIZE_T s;
 
 static void do_check_malloc_state() {
     mstate av = get_malloc_state();
-    int i;
+    unsigned int i;
     mchunkptr p;
     mchunkptr q;
     mbinptr b;
@@ -3448,7 +3448,7 @@ static void do_check_malloc_state() {
     unsigned int idx;
     INTERNAL_SIZE_T size;
     CHUNK_SIZE_T  total = 0;
-    int max_fast_bin;
+    unsigned int max_fast_bin;
 
     /* internal size_t must be no wider than pointer type */
     assert(sizeof(INTERNAL_SIZE_T) <= sizeof(char*));
@@ -5210,7 +5210,7 @@ size_t mUSABLe(mem) Void_t* mem;
 struct mallinfo mALLINFo() {
     mstate av = get_malloc_state();
     struct mallinfo mi;
-    int i;
+    unsigned int i;
     mbinptr b;
     mchunkptr p;
     INTERNAL_SIZE_T avail;
