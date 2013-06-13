@@ -215,14 +215,14 @@ typedef void (*Function)();
  */
 
 static int hex(char);
-static char *mem2hex(char *, char *, int);
-static char *hex2mem(char *, char *, int);
-static int hexToInt(char **, int *);
+static char *mem2hex(char *, char *, uint32);
+static char *hex2mem(char *, char *, uint32);
+static int hexToInt(char **, uint32 *);
 static unsigned char *getpacket(void);
 static void putpacket(char *);
 static int computeSignal(int exceptionVector);
 
-static void hardBreakpoint(int, int, int, int, char*);
+static void hardBreakpoint(int, int, uint32, int, char*);
 static void putDebugChar(char);
 static char getDebugChar(void);
 static void flushDebugChannel(void);
@@ -317,8 +317,8 @@ hex(char ch) {
 /* convert the memory, pointed to by mem into hex, placing result in buf */
 /* return a pointer to the last char put in buf (null) */
 static char *
-mem2hex(char *mem, char *buf, int count) {
-    int i;
+mem2hex(char *mem, char *buf, uint32 count) {
+    uint32 i;
     int ch;
 
     for(i = 0; i < count; i++) {
@@ -335,8 +335,8 @@ mem2hex(char *mem, char *buf, int count) {
 /* return a pointer to the character after the last byte written */
 
 static char *
-hex2mem(char *buf, char *mem, int count) {
-    int i;
+hex2mem(char *buf, char *mem, uint32 count) {
+    uint32 i;
     unsigned char ch;
 
     for(i = 0; i < count; i++) {
@@ -353,7 +353,7 @@ hex2mem(char *buf, char *mem, int count) {
 /* RETURN NUMBER OF CHARS PROCESSED           */
 /**********************************************/
 static int
-hexToInt(char **ptr, int *intValue) {
+hexToInt(char **ptr, uint32 *intValue) {
     int numChars = 0;
     int hexValue;
 
@@ -635,7 +635,7 @@ undoSStep(void) {
 #define BREG(r, o) (*((uint8*)((r)+(o))))
 
 static void
-hardBreakpoint(int set, int brktype, int addr, int length, char* resBuffer) {
+hardBreakpoint(int set, int brktype, uint32 addr, int length, char* resBuffer) {
     char* const ucb_base = (char*)0xff200000;
     static const int ucb_step = 0xc;
     static const char BAR = 0x0, BAMR = 0x4, BBR = 0x8, /*BASR = 0x14,*/ BRCR = 0x20;
@@ -719,7 +719,7 @@ When in the monitor mode we talk a human on the serial line rather than gdb.
 static void
 gdb_handle_exception(int exceptionVector) {
     int sigval, stepping;
-    int addr, length;
+    uint32 addr, length;
     char *ptr;
 
     /* reply to host that an exception has occurred */

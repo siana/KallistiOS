@@ -110,7 +110,7 @@ int vid_screen_shot(const char *destfn) {
     /* Write a small header */
     sprintf(header, "P6\n#KallistiOS Screen Shot\n%d %d\n255\n", vid_mode->width, vid_mode->height);
 
-    if(fs_write(f, header, strlen(header)) != strlen(header)) {
+    if(fs_write(f, header, strlen(header)) != (ssize_t)strlen(header)) {
         dbglog(DBG_ERROR, "vid_screen_shot: can't write header to output file '%s'\n", destfn);
         fs_close(f);
         free(buffer);

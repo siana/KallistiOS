@@ -597,7 +597,7 @@ static int  bba_copy_packet(uint8 * dst, uint32 src, int len) {
 #endif
 }
 
-static int rx_enq(int ring_offset, int pkt_size) {
+static int rx_enq(int ring_offset, size_t pkt_size) {
     /* If there's no one to receive it, don't bother. */
     if(eth_rx_callback) {
         if(rxin != rxout &&
@@ -767,7 +767,7 @@ static void *bba_rx_threadfunc(void *dummy) {
 
 static void bba_rx() {
     uint32 rx_status;
-    int pkt_size, ring_offset;
+    size_t pkt_size, ring_offset;
 
     //vid_border_color(255, 0, 255);
     while(!(g2_read_8(NIC(RT_CHIPCMD)) & 1)) {

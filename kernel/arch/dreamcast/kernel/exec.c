@@ -1,7 +1,7 @@
 /* KallistiOS ##version##
 
    exec.c
-   (c)2002 Dan Potter
+   Copyright (C) 2002 Dan Potter
 */
 
 #include <arch/arch.h>
@@ -33,7 +33,7 @@ void arch_exec_at(const void *image, uint32 length, uint32 address) {
     uint32  tcount = (tend - tstart) / 4;
     uint32  buffer[tcount];
     uint32  * values;
-    int i;
+    uint32 i;
 
     assert((tend - tstart) % 4 == 0);
 

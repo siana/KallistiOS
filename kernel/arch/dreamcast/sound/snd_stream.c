@@ -1,8 +1,8 @@
 /* KallistiOS ##version##
 
    snd_stream.c
-   Copyright (c)2000,2001,2002,2003,2004 Dan Potter
-   Copyright (c)2002 Florian Schulze
+   Copyright (C) 2000, 2001, 2002, 2003, 2004 Dan Potter
+   Copyright (C) 2002 Florian Schulze
 
    SH-4 support routines for SPU streaming sound driver
 */
@@ -49,11 +49,11 @@ typedef struct strchan {
     int ch[2];
 
     // The last write position in the playing buffer
-    int last_write_pos; // = 0
+    uint32 last_write_pos; // = 0
     int curbuffer;  // = 0
 
     // The buffer size allocated for this stream.
-    int buffer_size;    // = 0x10000
+    uint32 buffer_size;    // = 0x10000
 
     // Stream data location in AICA RAM
     uint32  spu_ram_sch[2];
@@ -445,7 +445,7 @@ static void dma_chain(ptr_t data) {
 int snd_stream_poll(snd_stream_hnd_t hnd) {
     uint32      ch0pos, ch1pos;
     //int     realbuffer;
-    int     current_play_pos;
+    uint32     current_play_pos;
     int     needed_samples;
     int     got_samples;
     void        *data;

@@ -131,7 +131,7 @@ static const char *maple_resp_names[] = {
     "OK",
     "DATATRF"
 };
-#define maple_resp_name_cnt (sizeof(maple_resp_names)/sizeof(char *))
+#define maple_resp_name_cnt ((int)(sizeof(maple_resp_names)/sizeof(char *)))
 
 /* Return a string representing the maple response code */
 const char * maple_perror(int response) {

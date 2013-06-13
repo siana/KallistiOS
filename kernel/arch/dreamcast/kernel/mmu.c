@@ -331,11 +331,11 @@ void sc_mmu_mmap(uint32 dst, size_t len, uint32 src) {
    generic but should probably be replaced by a nice assembly
    routine for each platform as appropriate. */
 int mmu_copyin(mmucontext_t *context, uint32 srcaddr, uint32 srccnt, void *buffer) {
-    mmupage_t   *srcpage;
-    uint32      srcptr;
-    uint32      src;
-    int     copied, run, srckrn;
-    uint8       *dst;
+    mmupage_t *srcpage;
+    uint32 srcptr;
+    uint32 src, run;
+    int copied, srckrn;
+    uint8 *dst;
 
     /* Setup source pointers */
     srcptr = (uint32)srcaddr;
@@ -381,19 +381,14 @@ int mmu_copyin(mmucontext_t *context, uint32 srcaddr, uint32 srccnt, void *buffe
         /* Check for overruns */
         srccnt -= run;
 
-        if(srccnt <= 0) {
-            break;
-        }
-        else {
-            if(!srckrn && (srcptr & ~PAGEMASK) != ((srcptr - run) & ~PAGEMASK)) {
-                srcpage = map_virt(context, srcptr >> PAGESIZE_BITS);
+        if(!srckrn && (srcptr & ~PAGEMASK) != ((srcptr - run) & ~PAGEMASK)) {
+            srcpage = map_virt(context, srcptr >> PAGESIZE_BITS);
 
-                if(srcpage == NULL)
-                    panic("mmu_copyv with invalid source page (in loop)");
+            if(srcpage == NULL)
+                panic("mmu_copyv with invalid source page (in loop)");
 
-                src = (srcpage->physical << PAGESIZE_BITS)
-                      | (srcptr - (srcptr & ~PAGEMASK));
-            }
+            src = (srcpage->physical << PAGESIZE_BITS)
+                  | (srcptr - (srcptr & ~PAGEMASK));
         }
 
         copied += run;
@@ -410,13 +405,13 @@ int mmu_copyin(mmucontext_t *context, uint32 srcaddr, uint32 srccnt, void *buffe
    routine for each platform as appropriate. */
 int mmu_copyv(mmucontext_t *context1, iovec_t *iov1, int iovcnt1,
               mmucontext_t *context2, iovec_t *iov2, int iovcnt2) {
-    mmupage_t   *srcpage, *dstpage;
-    int     srciov, dstiov;
-    int     srccnt, dstcnt;
-    uint32      srcptr, dstptr;
-    uint32      src, dst;
-    int     copied, run;
-    int     srckrn, dstkrn;
+    mmupage_t *srcpage, *dstpage;
+    int srciov, dstiov;
+    uint32 srccnt, dstcnt;
+    uint32 srcptr, dstptr;
+    uint32 src, dst, run;
+    int copied;
+    int srckrn, dstkrn;
     /* static int   sproket = 0; */
 
     /* timer_disable_primary();

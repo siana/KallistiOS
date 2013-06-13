@@ -1,7 +1,7 @@
 /* KallistiOS ##version##
 
    kernel/arch/dreamcast/fs/fs_dclsocket.c
-   Copyright (C) 2007, 2008, 2012 Lawrence Sebald
+   Copyright (C) 2007, 2008, 2012, 2013 Lawrence Sebald
 
    Based on fs_dclnative.c and related files
    Copyright (C) 2003 Dan Potter
@@ -92,7 +92,7 @@ static void dcls_handle_pbin(command_t *cmd) {
 }
 
 static void dcls_handle_dbin(command_t *cmd) {
-    int i;
+    unsigned int i;
 
     for(i = 0; i < (bin_info.size + 1023) / 1024; ++i) {
         if(!bin_info.map[i])

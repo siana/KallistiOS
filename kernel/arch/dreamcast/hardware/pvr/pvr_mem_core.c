@@ -3217,7 +3217,7 @@ size_t mUSABLe(mem) Void_t* mem;
 struct mallinfo mALLINFo() {
     mstate av = get_malloc_state();
     struct mallinfo mi;
-    int i;
+    unsigned int i;
     mbinptr b;
     mchunkptr p;
     INTERNAL_SIZE_T avail;

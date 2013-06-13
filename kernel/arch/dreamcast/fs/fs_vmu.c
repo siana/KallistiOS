@@ -2,7 +2,7 @@
 
    fs_vmu.c
    Copyright (C) 2003 Dan Potter
-   Copyright (C) 2012 Lawrence Sebald
+   Copyright (C) 2012, 2013 Lawrence Sebald
 
 */
 
@@ -51,29 +51,29 @@ and may be used pretty much simultaneously in the same program.
 
 /* File handles */
 typedef struct vmu_fh_str {
-    uint32      strtype;        /* 0==dir, 1==file */
+    uint32 strtype;                     /* 0==dir, 1==file */
     TAILQ_ENTRY(vmu_fh_str) listent;    /* list entry */
 
-    int     mode;           /* mode the file was opened with */
-    char        path[17];       /* full path of the file */
-    char        name[13];       /* name of the file */
-    off_t       loc;            /* current position in the file (bytes) */
-    maple_device_t  * dev;          /* maple address of the vmu to use */
-    int     filesize;       /* file length from dirent (in 512-byte blks) */
-    uint8       *data;          /* copy of the whole file */
+    int mode;                           /* mode the file was opened with */
+    char path[17];                      /* full path of the file */
+    char name[13];                      /* name of the file */
+    off_t loc;                          /* current position in the file (bytes) */
+    maple_device_t *dev;                /* maple address of the vmu to use */
+    uint32 filesize;                    /* file length from dirent (in 512-byte blks) */
+    uint8 *data;                        /* copy of the whole file */
 } vmu_fh_t;
 
 /* Directory handles */
 typedef struct vmu_dh_str {
-    uint32      strtype;        /* 0==dir, 1==file */
+    uint32 strtype;                     /* 0==dir, 1==file */
     TAILQ_ENTRY(vmu_dh_str) listent;    /* list entry */
 
-    int     rootdir;        /* 1 if we're reading /vmu */
-    dirent_t    dirent;         /* Dirent to pass back */
-    vmu_dir_t   * dirblocks;        /* Copy of all directory blocks */
-    uint16      entry;          /* Current dirent */
-    uint16      dircnt;         /* Count of dir entries */
-    maple_device_t  * dev;          /* VMU address */
+    int rootdir;                        /* 1 if we're reading /vmu */
+    dirent_t dirent;                    /* Dirent to pass back */
+    vmu_dir_t *dirblocks;               /* Copy of all directory blocks */
+    uint16 entry;                       /* Current dirent */
+    uint16 dircnt;                      /* Count of dir entries */
+    maple_device_t *dev;                /* VMU address */
 } vmu_dh_t;
 
 /* Linked list of open files (controlled by "mutex") */
@@ -99,8 +99,8 @@ static maple_device_t * vmu_path_to_addr(const char *p) {
 }
 
 /* Open the fake vmu root dir /vmu */
-vmu_fh_t *vmu_open_vmu_dir() {
-    int p, u;
+static vmu_fh_t *vmu_open_vmu_dir(void) {
+    unsigned int p, u;
     unsigned int num = 0;
     char names[MAPLE_PORT_COUNT * MAPLE_UNIT_COUNT][2];
     vmu_dh_t *dh;
@@ -291,7 +291,7 @@ static int vmu_verify_hnd(void * hnd, int type) {
     mutex_unlock(&fh_mutex);
 
     if(rv)
-        return type == VMU_ANY ? 1 : (cur->strtype == type);
+        return type == VMU_ANY ? 1 : ((int)cur->strtype == type);
     else
         return 0;
 }
@@ -328,7 +328,6 @@ static int vmu_close(void * hnd) {
         }
 
         case VMU_FILE:
-
             if((fh->mode & O_MODE_MASK) == O_WRONLY ||
                     (fh->mode & O_MODE_MASK) == O_RDWR) {
                 if ((st = vmu_write_close(hnd))) {

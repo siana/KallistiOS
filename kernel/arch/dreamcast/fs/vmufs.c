@@ -1,7 +1,7 @@
 /* KallistiOS ##version##
 
    vmufs.c
-   Copyright (C)2003 Dan Potter
+   Copyright (C) 2003 Dan Potter
 
 */
 
@@ -108,7 +108,8 @@ int vmufs_fat_blocks(vmu_root_t * root_buf) {
 /* Common code for both dir_read and dir_write */
 static int vmufs_dir_ops(maple_device_t * dev, vmu_root_t * root, vmu_dir_t * dir_buf, int write) {
     uint16  dir_block, dir_size;
-    int i, needsop, rv;
+    unsigned int i;
+    int needsop, rv;
 
     /* Find the directory starting block and length */
     dir_block = root->dir_loc;
@@ -472,7 +473,8 @@ int vmufs_fat_free(vmu_root_t * root, uint16 * fat) {
 }
 
 int vmufs_dir_free(vmu_root_t * root, vmu_dir_t * dir) {
-    int i, freeblocks;
+    unsigned int i;
+    int freeblocks;
 
     freeblocks = 0;
 
@@ -569,9 +571,10 @@ static void vmufs_teardown(vmu_dir_t * dir, uint16 * fat) {
 }
 
 int vmufs_readdir(maple_device_t * dev, vmu_dir_t ** outbuf, int * outcnt) {
-    vmu_root_t  root;
-    vmu_dir_t   * dir;
-    int     dircnt, dirsize, i, j, rv = 0;
+    vmu_root_t root;
+    vmu_dir_t *dir;
+    int dircnt, dirsize, rv = 0;
+    unsigned int i, j;
 
     *outbuf = NULL;
     *outcnt = 0;

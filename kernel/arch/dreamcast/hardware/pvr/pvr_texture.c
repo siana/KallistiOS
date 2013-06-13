@@ -1,7 +1,7 @@
 /* KallistiOS ##version##
 
    pvr_texture.c
-   Copyright (C)2002,2004 Dan Potter
+   Copyright (C) 2002, 2004 Dan Potter
 
  */
 
@@ -51,8 +51,9 @@ void pvr_txr_load(void * src, pvr_ptr_t dst, uint32 count) {
        PVR_TXRLOAD_INVERT
 
 */
-void pvr_txr_load_ex(void * src, pvr_ptr_t dst, uint32 w, uint32 h, uint32 flags) {
-    int x, y, yout, min, mask, bpp, invert;
+void pvr_txr_load_ex(void * src, pvr_ptr_t dst, uint32 w, uint32 h,
+                     uint32 flags) {
+    uint32 x, y, yout, min, mask, bpp, invert;
 
     /* Make sure we're attempting something we can do */
     switch(flags & PVR_TXRLOAD_FMT_MASK) {
@@ -142,7 +143,7 @@ void pvr_txr_load_ex(void * src, pvr_ptr_t dst, uint32 w, uint32 h, uint32 flags
 
 /* Load a KOS Platform Independent Image (subject to restraint checking) */
 void pvr_txr_load_kimg(kos_img_t *img, pvr_ptr_t dst, uint32 flags) {
-    int fmt, w, h;
+    uint32 fmt, w, h;
 
     /* First check and make sure it's a format we can use */
     fmt = KOS_IMG_FMT_I(img->fmt) & KOS_IMG_FMT_MASK;
@@ -208,4 +209,3 @@ void pvr_txr_load_kimg(kos_img_t *img, pvr_ptr_t dst, uint32 flags) {
         pvr_txr_load_ex(img->data, dst, w, h, flags);
     }
 }
-
