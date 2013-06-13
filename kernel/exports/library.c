@@ -1,11 +1,12 @@
 /* KallistiOS ##version##
 
    kernel/library.c
-   Copyright (C)2003 Dan Potter
+   Copyright (C) 2003 Dan Potter
 */
 
 #include <assert.h>
 #include <string.h>
+#include <strings.h>
 #include <malloc.h>
 #include <stdio.h>
 #include <errno.h>

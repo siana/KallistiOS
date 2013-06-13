@@ -40,6 +40,7 @@ ISO9660 systems, as these were used as references as well.
 #include <stdio.h>
 #include <ctype.h>
 #include <string.h>
+#include <strings.h>
 #include <malloc.h>
 #include <errno.h>
 

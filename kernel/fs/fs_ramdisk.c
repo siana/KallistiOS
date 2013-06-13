@@ -36,6 +36,7 @@ cache data from disk rather than as a general purpose file system.
 #include <kos/fs_ramdisk.h>
 #include <malloc.h>
 #include <string.h>
+#include <strings.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <assert.h>

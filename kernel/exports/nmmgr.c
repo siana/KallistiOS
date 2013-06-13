@@ -18,6 +18,7 @@ interface at the front of their struct.
 #include <stdio.h>
 #include <malloc.h>
 #include <string.h>
+#include <strings.h>
 #include <kos/nmmgr.h>
 #include <kos/mutex.h>
 #include <kos/exports.h>

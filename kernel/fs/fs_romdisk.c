@@ -22,6 +22,7 @@ on sunsite.unc.edu in /pub/Linux/system/recovery/, or as a package under Debian 
 #include <kos/fs_romdisk.h>
 #include <malloc.h>
 #include <string.h>
+#include <strings.h>
 #include <stdio.h>
 #include <assert.h>
 #include <errno.h>
