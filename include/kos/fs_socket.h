@@ -1,7 +1,7 @@
 /* KallistiOS ##version##
 
    kos/fs_socket.h
-   Copyright (C) 2006, 2009, 2010, 2012 Lawrence Sebald
+   Copyright (C) 2006, 2009, 2010, 2012, 2013 Lawrence Sebald
 
 */
 
@@ -267,7 +267,7 @@ typedef struct fs_socket_proto {
         \retval 0           On success
     */
     int (*input)(netif_t *src, int domain, const void *hdr, const uint8 *data,
-                 int size);
+                 size_t size);
 
     /** \brief  Get socket options.
 
@@ -341,8 +341,8 @@ typedef struct fs_socket_proto {
 
 /* \cond */
 /* Init/shutdown */
-int fs_socket_init();
-int fs_socket_shutdown();
+int fs_socket_init(void);
+int fs_socket_shutdown(void);
 /* \endcond */
 
 /** \brief  Open a socket without calling the protocol initializer.
@@ -396,7 +396,7 @@ net_socket_t *fs_socket_open_sock(fs_socket_proto_t *proto);
     \retval 0           On success
 */
 int fs_socket_input(netif_t *src, int domain, int protocol, const void *hdr,
-                    const uint8 *data, int size);
+                    const uint8 *data, size_t size);
 
 /** \brief  Add a new protocol for use with fs_socket.
 

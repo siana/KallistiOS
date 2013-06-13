@@ -1,7 +1,7 @@
 /* KallistiOS ##version##
 
    kernel/net/net_tcp.c
-   Copyright (C) 2012 Lawrence Sebald
+   Copyright (C) 2012, 2013 Lawrence Sebald
 
 */
 
@@ -1453,7 +1453,7 @@ static ssize_t net_tcp_sendto(net_socket_t *hnd, const void *message,
                               const struct sockaddr *addr, socklen_t addr_len) {
     struct tcp_sock *sock;
     ssize_t size;
-    int bsz, tmp;
+    uint32_t bsz, tmp;
     uint8_t *sb, *buf = (uint8_t *)message;
 
     /* Check the parameters first */
@@ -2191,7 +2191,7 @@ static void tcp_send_ack(struct tcp_sock *sock) {
 }
 
 static void tcp_send_data(struct tcp_sock *sock, int resend) {
-    int wnd = sock->data.snd.wnd, snd;
+    uint32_t wnd = sock->data.snd.wnd, snd;
     int sz = sizeof(tcp_hdr_t);
     uint8_t rawpkt[1500];
     tcp_hdr_t *hdr = (tcp_hdr_t *)rawpkt;
@@ -2532,9 +2532,10 @@ static int synsent_pkt(netif_t *src, const struct in6_addr *srca,
    described in pages 69-76 of the RFC. */
 static int process_pkt(netif_t *src, const struct in6_addr *srca,
                        const struct in6_addr *dsta, const tcp_hdr_t *tcp,
-                       struct tcp_sock *s, uint16_t flags, int size) {
+                       struct tcp_sock *s, uint16_t flags, size_t size) {
     uint32_t seq, ack, up;
-    int sz, bad_pkt = 0, tmp, acksyn = 0;
+    size_t sz;
+    int bad_pkt = 0, tmp, acksyn = 0;
     const uint8_t *buf = (const uint8_t *)tcp;
     uint8_t *rb;
 
@@ -2782,7 +2783,7 @@ static int process_pkt(netif_t *src, const struct in6_addr *srca,
 }
 
 static int net_tcp_input(netif_t *src, int domain, const void *hdr,
-                         const uint8 *data, int size) {
+                         const uint8 *data, size_t size) {
     struct in6_addr srca, dsta;
     const ip_hdr_t *ip4;
     const ipv6_hdr_t *ip6;
@@ -3013,14 +3014,14 @@ static fs_socket_proto_t proto = {
     net_tcp_poll                        /* poll */
 };
 
-int net_tcp_init() {
+int net_tcp_init(void) {
     if((thd_cb_id = net_thd_add_callback(tcp_thd_cb, NULL, 50)) < 0)
         return -1;
 
     return fs_socket_proto_add(&proto);
 }
 
-void net_tcp_shutdown() {
+void net_tcp_shutdown(void) {
     struct tcp_sock *i, *tmp;
     int old;
 

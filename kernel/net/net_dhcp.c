@@ -1,7 +1,7 @@
 /* KallistiOS ##version##
 
    kernel/net/net_dhcp.c
-   Copyright (C) 2008, 2009 Lawrence Sebald
+   Copyright (C) 2008, 2009, 2013 Lawrence Sebald
 
 */
 
@@ -194,7 +194,7 @@ static uint16 net_dhcp_get_16bit(dhcp_pkt_t *pkt, uint8 opt, int len) {
     return 0;
 }
 
-int net_dhcp_request() {
+int net_dhcp_request(void) {
     uint8 pkt[1500];
     dhcp_pkt_t *req = (dhcp_pkt_t *)pkt;
     int optlen;
@@ -333,7 +333,7 @@ static void net_dhcp_send_request(dhcp_pkt_t *pkt, int pktlen, dhcp_pkt_t *pkt2,
     state = DHCP_STATE_REQUESTING;
 }
 
-static void net_dhcp_renew() {
+static void net_dhcp_renew(void) {
     uint8 buf[1500];
     dhcp_pkt_t *req = (dhcp_pkt_t *)buf;
     int optlen;
@@ -613,7 +613,7 @@ static void net_dhcp_thd(void *obj __attribute__((unused))) {
     mutex_unlock(&dhcp_lock);
 }
 
-int net_dhcp_init() {
+int net_dhcp_init(void) {
     struct sockaddr_in addr;
 
     /* Create the DHCP socket */
@@ -648,7 +648,7 @@ int net_dhcp_init() {
     return 0;
 }
 
-void net_dhcp_shutdown() {
+void net_dhcp_shutdown(void) {
     if(dhcp_cbid != -1) {
         net_thd_del_callback(dhcp_cbid);
         dhcp_cbid = -1;

@@ -1,7 +1,7 @@
 /* KallistiOS ##version##
 
    kernel/net/net_ipv4_frag.c
-   Copyright (C) 2009 Lawrence Sebald
+   Copyright (C) 2009, 2013 Lawrence Sebald
 
 */
 
@@ -126,7 +126,7 @@ static inline int all_bits_set(const uint8 *bitfield, int end) {
 /* Import the data for a fragment, potentially passing it onward in processing,
    if the whole datagram has arrived. */
 static int frag_import(netif_t *src, ip_hdr_t *hdr, const uint8 *data,
-                       int size, uint16 flags, struct ip_frag *frag) {
+                       size_t size, uint16 flags, struct ip_frag *frag) {
     void *tmp;
     int fo = flags & 0x1FFF;
     int tl = ntohs(hdr->length);
@@ -194,7 +194,7 @@ out:
 /* IPv4 fragmentation procedure. This is basically a direct implementation of
    the example IP fragmentation procedure on pages 26-27 of RFC 791. */
 int net_ipv4_frag_send(netif_t *net, ip_hdr_t *hdr, const uint8 *data,
-                       int size) {
+                       size_t size) {
     int ihl = (hdr->version_ihl & 0x0f) << 2;
     int total = size + ihl;
     uint16 flags = ntohs(hdr->flags_frag_offs);
@@ -244,7 +244,7 @@ int net_ipv4_frag_send(netif_t *net, ip_hdr_t *hdr, const uint8 *data,
    above are basically a direct implementation of the example IP reassembly
    routine on pages 27-29 of RFC 791. */
 int net_ipv4_reassemble(netif_t *src, ip_hdr_t *hdr, const uint8 *data,
-                        int size) {
+                        size_t size) {
     uint16 flags = ntohs(hdr->flags_frag_offs);
     struct ip_frag *f;
 
@@ -298,7 +298,7 @@ int net_ipv4_reassemble(netif_t *src, ip_hdr_t *hdr, const uint8 *data,
     return frag_import(src, hdr, data, size, flags, f);
 }
 
-int net_ipv4_frag_init() {
+int net_ipv4_frag_init(void) {
     if(!initted) {
         cbid = net_thd_add_callback(&frag_thd_cb, NULL, 2000);
         TAILQ_INIT(&frags);
@@ -308,7 +308,7 @@ int net_ipv4_frag_init() {
     return 0;
 }
 
-void net_ipv4_frag_shutdown() {
+void net_ipv4_frag_shutdown(void) {
     struct ip_frag *c, *n;
 
     if(initted) {

@@ -1,7 +1,7 @@
 /* KallistiOS ##version##
 
    kernel/net/net_ipv6.h
-   Copyright (C) 2010, 2012 Lawrence Sebald
+   Copyright (C) 2010, 2012, 2013 Lawrence Sebald
 
 */
 
@@ -44,11 +44,11 @@ typedef struct ipv6_pseudo_hdr_s {
 #define IPV6_HDR_EXT_DESTINATION    60
 
 int net_ipv6_send_packet(netif_t *net, ipv6_hdr_t *hdr, const uint8 *data,
-                         int data_size);
-int net_ipv6_send(netif_t *net, const uint8 *data, int data_size, int hop_limit,
-                  int proto, const struct in6_addr *src,
+                         size_t data_size);
+int net_ipv6_send(netif_t *net, const uint8 *data, size_t data_size,
+                  int hop_limit, int proto, const struct in6_addr *src,
                   const struct in6_addr *dst);
-int net_ipv6_input(netif_t *src, const uint8 *pkt, int pktsize,
+int net_ipv6_input(netif_t *src, const uint8 *pkt, size_t pktsize,
                    const eth_hdr_t *eth);
 uint16 net_ipv6_checksum_pseudo(const struct in6_addr *src,
                                 const struct in6_addr *dst,
@@ -58,7 +58,7 @@ extern const struct in6_addr in6addr_linklocal_allnodes;
 extern const struct in6_addr in6addr_linklocal_allrouters;
 
 /* Init and Shutdown */
-int net_ipv6_init();
-void net_ipv6_shutdown();
+int net_ipv6_init(void);
+void net_ipv6_shutdown(void);
 
 #endif /* !__LOCAL_NET_IPV6_H */

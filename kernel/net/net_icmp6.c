@@ -1,7 +1,7 @@
 /* KallistiOS ##version##
 
    kernel/net/net_icmp6.c
-   Copyright (C) 2010, 2011 Lawrence Sebald
+   Copyright (C) 2010, 2011, 2013 Lawrence Sebald
 
 */
 
@@ -38,7 +38,7 @@ Message types that are not implemented yet (if ever):
 
 static void icmp6_default_echo_cb(const struct in6_addr *ip, uint16 seq,
                                   uint64 delta_us, uint8 hlim,
-                                  const uint8 *data, int data_sz) {
+                                  const uint8 *data, size_t data_sz) {
     char ipstr[INET6_ADDRSTRLEN];
 
     (void)data;
@@ -60,7 +60,7 @@ net6_echo_cb net_icmp6_echo_cb = icmp6_default_echo_cb;
 
 /* Handle Echo Reply (ICMPv6 type 129) packets */
 static void net_icmp6_input_129(netif_t *net, ipv6_hdr_t *ip, icmp6_hdr_t *icmp,
-                                const uint8 *d, int s) {
+                                const uint8 *d, size_t s) {
     uint64 tmr, otmr = 0;
     uint16 seq;
 
@@ -84,7 +84,7 @@ static void net_icmp6_input_129(netif_t *net, ipv6_hdr_t *ip, icmp6_hdr_t *icmp,
 
 /* Handle Echo (ICMPv6 type 128) packets */
 static void net_icmp6_input_128(netif_t *net, ipv6_hdr_t *ip, icmp6_hdr_t *icmp,
-                                const uint8 *d, int s) {
+                                const uint8 *d, size_t s) {
     uint16 cs;
     struct in6_addr src, dst;
 
@@ -137,7 +137,7 @@ static void dupdet(netif_t *net, const struct in6_addr *ip) {
 
 /* Handle Router Advertisement (ICMPv6 type 134) packets */
 static void net_icmp6_input_134(netif_t *net, ipv6_hdr_t *ip, icmp6_hdr_t *icmp,
-                                const uint8 *d, int s) {
+                                const uint8 *d, size_t s) {
     icmp6_router_adv_t *pkt = (icmp6_router_adv_t *)icmp;
     struct in6_addr src;
     uint16 len = ntohs(ip->length);
@@ -263,7 +263,7 @@ static void net_icmp6_input_134(netif_t *net, ipv6_hdr_t *ip, icmp6_hdr_t *icmp,
 
 /* Handle Neighbor Solicitation (ICMPv6 type 135) packets */
 static void net_icmp6_input_135(netif_t *net, ipv6_hdr_t *ip, icmp6_hdr_t *icmp,
-                                const uint8 *d, int s) {
+                                const uint8 *d, size_t s) {
     icmp6_neighbor_sol_t *pkt = (icmp6_neighbor_sol_t *)icmp;
     icmp6_nsol_lladdr_t *ll;
     uint16 len = ntohs(ip->length);
@@ -332,7 +332,7 @@ cont:
 
 /* Handle Neighbor Advertisement (ICMPv6 type 136) packets */
 static void net_icmp6_input_136(netif_t *net, ipv6_hdr_t *ip, icmp6_hdr_t *icmp,
-                                const uint8 *d, int s) {
+                                const uint8 *d, size_t s) {
     icmp6_neighbor_adv_t *pkt = (icmp6_neighbor_adv_t *)icmp;
     icmp6_nsol_lladdr_t *lladdr = (icmp6_nsol_lladdr_t *)pkt->options;
     uint16 len = ntohs(ip->length);
@@ -376,12 +376,12 @@ static void net_icmp6_input_136(netif_t *net, ipv6_hdr_t *ip, icmp6_hdr_t *icmp,
 }
 
 static void net_icmp6_input_137(netif_t *net, ipv6_hdr_t *ip, icmp6_hdr_t *icmp,
-                                const uint8 *d, int s) {
+                                const uint8 *d, size_t s) {
     icmp6_redirect_t *pkt = (icmp6_redirect_t *)icmp;
     icmp6_nsol_lladdr_t *ll = (icmp6_nsol_lladdr_t *)pkt->options;
     struct in6_addr target, dest;
     char str[INET6_ADDRSTRLEN], str2[INET6_ADDRSTRLEN];
-    int len = ntohs(ip->length), pos = 0;
+    uint32 len = ntohs(ip->length), pos = 0;
 
     (void)d;
     (void)s;
@@ -418,7 +418,7 @@ static void net_icmp6_input_137(netif_t *net, ipv6_hdr_t *ip, icmp6_hdr_t *icmp,
     }
 }
 
-int net_icmp6_input(netif_t *net, ipv6_hdr_t *ip, const uint8 *d, int s) {
+int net_icmp6_input(netif_t *net, ipv6_hdr_t *ip, const uint8 *d, size_t s) {
     icmp6_hdr_t *icmp;
     uint16 cs = net_ipv6_checksum_pseudo(&ip->src_addr, &ip->dst_addr,
                                          ntohs(ip->length), IPV6_HDR_ICMP);
@@ -470,7 +470,7 @@ int net_icmp6_input(netif_t *net, ipv6_hdr_t *ip, const uint8 *d, int s) {
 
 /* Send an ICMPv6 Echo (PING6) packet to the specified device */
 int net_icmp6_send_echo(netif_t *net, const struct in6_addr *dst, uint16 ident,
-                        uint16 seq, const uint8 *data, int size) {
+                        uint16 seq, const uint8 *data, size_t size) {
     icmp6_echo_hdr_t *echo;
     uint8 databuf[sizeof(icmp6_echo_hdr_t) + size + 8];
     struct in6_addr src;
@@ -683,8 +683,8 @@ int net_icmp6_send_rsol(netif_t *net) {
 /* Convenience function for handling the parts of error packets that are the
    same no matter what kind we're dealing with. */
 static int send_err_pkt(netif_t *net, uint8 buf[1240], int ptr,
-                        const uint8 *ppkt, int pktsz, int mc_allow) {
-    int size = 1240 - ptr;
+                        const uint8 *ppkt, size_t pktsz, int mc_allow) {
+    size_t size = 1240 - ptr;
     icmp6_hdr_t *pkt = (icmp6_hdr_t *)buf;
     const ipv6_hdr_t *orig = (const ipv6_hdr_t *)ppkt;
     uint16 cs;
@@ -738,7 +738,7 @@ static int send_err_pkt(netif_t *net, uint8 buf[1240], int ptr,
 
 /* Send an ICMPv6 Destination Unreachable about the given packet. */
 int net_icmp6_send_dest_unreach(netif_t *net, uint8 code, const uint8 *ppkt,
-                                int psz) {
+                                size_t psz) {
     uint8 buf[1240];
     icmp6_dest_unreach_t *pkt = (icmp6_dest_unreach_t *)buf;
 
@@ -758,7 +758,7 @@ int net_icmp6_send_dest_unreach(netif_t *net, uint8 code, const uint8 *ppkt,
 
 /* Send an ICMPv6 Time Exceeded about the given packet. */
 int net_icmp6_send_time_exceeded(netif_t *net, uint8 code, const uint8 *ppkt,
-                                 int psz) {
+                                 size_t psz) {
     uint8 buf[1240];
     icmp6_time_exceeded_t *pkt = (icmp6_time_exceeded_t *)buf;
 
@@ -778,7 +778,7 @@ int net_icmp6_send_time_exceeded(netif_t *net, uint8 code, const uint8 *ppkt,
 
 /* Send an ICMPv6 Parameter Problem about the given packet. */
 int net_icmp6_send_param_prob(netif_t *net, uint8 code, uint32 ptr,
-                              const uint8 *ppkt, int psz) {
+                              const uint8 *ppkt, size_t psz) {
     uint8 buf[1240];
     icmp6_param_problem_t *pkt = (icmp6_param_problem_t *)buf;
     int mc_allow = 0;

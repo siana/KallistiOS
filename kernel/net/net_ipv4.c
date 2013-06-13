@@ -2,7 +2,7 @@
 
    kernel/net/net_ipv4.c
 
-   Copyright (C) 2005, 2006, 2007, 2008, 2009, 2010, 2012 Lawrence Sebald
+   Copyright (C) 2005, 2006, 2007, 2008, 2009, 2010, 2012, 2013 Lawrence Sebald
 
    Portions adapted from KOS' old net_icmp.c file:
    Copyright (c) 2002 Dan Potter
@@ -23,9 +23,9 @@
 static net_ipv4_stats_t ipv4_stats = { 0 };
 
 /* Perform an IP-style checksum on a block of data */
-uint16 net_ipv4_checksum(const uint8 *data, int bytes, uint16 start) {
+uint16 net_ipv4_checksum(const uint8 *data, size_t bytes, uint16 start) {
     uint32 sum = start;
-    int i = bytes;
+    size_t i = bytes;
 
     /* Make sure we don't do any unaligned memory accesses */
     if(((uint32)data) & 0x01) {
@@ -90,7 +90,7 @@ static int is_broadcast(const uint8 dest[4], const uint8 bc[4]) {
 
 /* Send a packet on the specified network adapter */
 int net_ipv4_send_packet(netif_t *net, ip_hdr_t *hdr, const uint8 *data,
-                         int size) {
+                         size_t size) {
     uint8 dest_ip[4];
     uint8 dest_mac[6];
     uint8 pkt[size + sizeof(ip_hdr_t) + sizeof(eth_hdr_t)];
@@ -171,7 +171,7 @@ int net_ipv4_send_packet(netif_t *net, ip_hdr_t *hdr, const uint8 *data,
     return 0;
 }
 
-int net_ipv4_send(netif_t *net, const uint8 *data, int size, int id, int ttl,
+int net_ipv4_send(netif_t *net, const uint8 *data, size_t size, int id, int ttl,
                   int proto, uint32 src, uint32 dst) {
     ip_hdr_t hdr;
 
@@ -198,12 +198,12 @@ int net_ipv4_send(netif_t *net, const uint8 *data, int size, int id, int ttl,
     return net_ipv4_frag_send(net, &hdr, data, size);
 }
 
-int net_ipv4_input(netif_t *src, const uint8 *pkt, int pktsize,
+int net_ipv4_input(netif_t *src, const uint8 *pkt, size_t pktsize,
                    const eth_hdr_t *eth) {
     ip_hdr_t *ip;
-    int i;
+    uint16 i;
     uint8 *data;
-    int hdrlen;
+    size_t hdrlen;
     uint8 ipa[4];
 
     if(pktsize < sizeof(ip_hdr_t)) {
@@ -245,8 +245,8 @@ int net_ipv4_input(netif_t *src, const uint8 *pkt, int pktsize,
 }
 
 int net_ipv4_input_proto(netif_t *src, ip_hdr_t *ip, const uint8 *data) {
-    int hdrlen = (ip->version_ihl & 0x0F) << 2;
-    int datalen = ntohs(ip->length) - hdrlen;
+    size_t hdrlen = (ip->version_ihl & 0x0F) << 2;
+    size_t datalen = ntohs(ip->length) - hdrlen;
     int rv;
 
     /* Send the packet along to the appropriate protocol. */
@@ -290,6 +290,6 @@ uint16 net_ipv4_checksum_pseudo(in_addr_t src, in_addr_t dst, uint8 proto,
     return ~net_ipv4_checksum((uint8 *)&ps, sizeof(ipv4_pseudo_hdr_t), 0);
 }
 
-net_ipv4_stats_t net_ipv4_get_stats() {
+net_ipv4_stats_t net_ipv4_get_stats(void) {
     return ipv4_stats;
 }

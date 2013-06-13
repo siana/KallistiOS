@@ -1,7 +1,7 @@
 /* KallistiOS ##version##
 
    kernel/net/net_dhcp.h
-   Copyright (C) 2008 Lawrence Sebald
+   Copyright (C) 2008, 2013 Lawrence Sebald
 
 */
 
@@ -143,11 +143,11 @@ typedef struct dhcp_pkt {
     uint8   options[];
 } __attribute__((packed)) dhcp_pkt_t;
 
-int net_dhcp_init();
+int net_dhcp_init(void);
 
-void net_dhcp_shutdown();
+void net_dhcp_shutdown(void);
 
-int net_dhcp_request();
+int net_dhcp_request(void);
 
 __END_DECLS
 

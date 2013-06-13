@@ -1,7 +1,7 @@
 /* KallistiOS ##version##
 
    fs_socket.c
-   Copyright (C) 2006, 2009, 2012 Lawrence Sebald
+   Copyright (C) 2006, 2009, 2012, 2013 Lawrence Sebald
 
 */
 
@@ -131,7 +131,7 @@ static vfs_handler_t vh = {
 /* Have we been initialized? */
 static int initted = 0;
 
-int fs_socket_init() {
+int fs_socket_init(void) {
     if(initted == 1)
         return 0;
 
@@ -146,7 +146,7 @@ int fs_socket_init() {
     return 0;
 }
 
-int fs_socket_shutdown() {
+int fs_socket_shutdown(void) {
     net_socket_t *c, *n;
     fs_socket_proto_t *i, *j;
 
@@ -180,7 +180,7 @@ int fs_socket_shutdown() {
 }
 
 int fs_socket_input(netif_t *src, int domain, int protocol, const void *hdr,
-                    const uint8 *data, int size) {
+                    const uint8 *data, size_t size) {
     fs_socket_proto_t *i;
     int rv = -2;
 

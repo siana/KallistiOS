@@ -3,7 +3,7 @@
    kernel/net/net_icmp.c
 
    Copyright (C) 2002 Dan Potter
-   Copyright (C) 2005, 2006, 2007, 2009, 2010, 2011 Lawrence Sebald
+   Copyright (C) 2005, 2006, 2007, 2009, 2010, 2011, 2013 Lawrence Sebald
 
  */
 
@@ -52,7 +52,7 @@ Message types that are not implemented yet (if ever):
 */
 
 static void icmp_default_echo_cb(const uint8 *ip, uint16 seq, uint64 delta_us,
-                                 uint8 ttl, const uint8* data, int data_sz) {
+                                 uint8 ttl, const uint8* data, size_t data_sz) {
     (void)data;
 
     if(delta_us != (uint64) - 1) {
@@ -71,7 +71,7 @@ net_echo_cb net_icmp_echo_cb = icmp_default_echo_cb;
 
 /* Handle Echo Reply (ICMP type 0) packets */
 static void net_icmp_input_0(netif_t *src, ip_hdr_t *ip, icmp_hdr_t *icmp,
-                             const uint8 *d, int s) {
+                             const uint8 *d, size_t s) {
     uint64 tmr, otmr;
     uint16 seq;
 
@@ -95,7 +95,7 @@ static void net_icmp_input_0(netif_t *src, ip_hdr_t *ip, icmp_hdr_t *icmp,
 
 /* Handle Echo (ICMP type 8) packets */
 static void net_icmp_input_8(netif_t *src, ip_hdr_t *ip, icmp_hdr_t *icmp,
-                             const uint8 *d, int s) {
+                             const uint8 *d, size_t s) {
     /* Set type to echo reply */
     icmp->type = ICMP_MESSAGE_ECHO_REPLY;
 
@@ -110,7 +110,7 @@ static void net_icmp_input_8(netif_t *src, ip_hdr_t *ip, icmp_hdr_t *icmp,
     net_ipv4_send(src, d, s, ip->packet_id, 255, 1, ip->dest, ip->src);
 }
 
-int net_icmp_input(netif_t *src, ip_hdr_t *ip, const uint8 *d, int s) {
+int net_icmp_input(netif_t *src, ip_hdr_t *ip, const uint8 *d, size_t s) {
     icmp_hdr_t *icmp;
     int i;
 
@@ -154,7 +154,7 @@ int net_icmp_input(netif_t *src, ip_hdr_t *ip, const uint8 *d, int s) {
 
 /* Send an ICMP Echo (PING) packet to the specified device */
 int net_icmp_send_echo(netif_t *net, const uint8 ipaddr[4], uint16 ident,
-                       uint16 seq, const uint8 *data, int size) {
+                       uint16 seq, const uint8 *data, size_t size) {
     icmp_hdr_t *icmp;
     int r = -1;
     uint16 sz = sizeof(icmp_hdr_t) + size + 8;

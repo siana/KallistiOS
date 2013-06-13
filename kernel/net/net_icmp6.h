@@ -1,7 +1,7 @@
 /* KallistiOS ##version##
 
    kernel/net/net_icmp6.h
-   Copyright (C) 2010 Lawrence Sebald
+   Copyright (C) 2010, 2013 Lawrence Sebald
 
 */
 
@@ -164,6 +164,7 @@ typedef struct icmp6_ndp_prefix_s {
 #define NDP_OPT_REDIRECTED_HDR          4
 #define NDP_OPT_MTU                     5
 
-int net_icmp6_input(netif_t *src, ipv6_hdr_t *ih, const uint8 *data, int size);
+int net_icmp6_input(netif_t *src, ipv6_hdr_t *ih, const uint8 *data,
+                    size_t size);
 
 #endif /* !__LOCAL_NET_ICMP6_H */

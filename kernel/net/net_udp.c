@@ -1,7 +1,7 @@
 /* KallistiOS ##version##
 
    kernel/net/net_udp.c
-   Copyright (C) 2005, 2006, 2007, 2008, 2009, 2012 Lawrence Sebald
+   Copyright (C) 2005, 2006, 2007, 2008, 2009, 2012, 2013 Lawrence Sebald
 
 */
 
@@ -64,7 +64,7 @@ static net_udp_stats_t udp_stats = { 0 };
 
 static int net_udp_send_raw(netif_t *net, const struct sockaddr_in6 *src,
                             const struct sockaddr_in6 *dst, const uint8 *data,
-                            int size, int flags, int hops);
+                            size_t size, int flags, int hops);
 
 static int net_udp_accept(net_socket_t *hnd, struct sockaddr *addr,
                           socklen_t *addr_len) {
@@ -913,7 +913,7 @@ static short net_udp_poll(net_socket_t *hnd, short events) {
 extern void __poll_event_trigger(int fd, short event);
 
 static int net_udp_input4(netif_t *src, const ip_hdr_t *ip, const uint8 *data,
-                          int size) {
+                          size_t size) {
     udp_hdr_t *hdr = (udp_hdr_t *)data;
     uint16 cs;
     struct udp_sock *sock;
@@ -1005,7 +1005,7 @@ static int net_udp_input4(netif_t *src, const ip_hdr_t *ip, const uint8 *data,
 }
 
 static int net_udp_input6(netif_t *src, const ipv6_hdr_t *ip, const uint8 *data,
-                          int size) {
+                          size_t size) {
     udp_hdr_t *hdr = (udp_hdr_t *)data;
     uint16 cs;
     struct udp_sock *sock;
@@ -1097,7 +1097,7 @@ static int net_udp_input6(netif_t *src, const ipv6_hdr_t *ip, const uint8 *data,
 }
 
 static int net_udp_input(netif_t *src, int domain, const void *hdr,
-                         const uint8 *data, int size) {
+                         const uint8 *data, size_t size) {
     switch(domain) {
         case AF_INET:
             return net_udp_input4(src, (const ip_hdr_t *)hdr, data, size);
@@ -1111,7 +1111,7 @@ static int net_udp_input(netif_t *src, int domain, const void *hdr,
 
 static int net_udp_send_raw(netif_t *net, const struct sockaddr_in6 *src,
                             const struct sockaddr_in6 *dst, const uint8 *data,
-                            int size, int flags, int hops) {
+                            size_t size, int flags, int hops) {
     uint8 buf[size + sizeof(udp_hdr_t)];
     udp_hdr_t *hdr = (udp_hdr_t *)buf;
     uint16 cs;
@@ -1186,7 +1186,7 @@ static int net_udp_send_raw(netif_t *net, const struct sockaddr_in6 *src,
     }
 }
 
-net_udp_stats_t net_udp_get_stats() {
+net_udp_stats_t net_udp_get_stats(void) {
     return udp_stats;
 }
 
@@ -1212,10 +1212,10 @@ static fs_socket_proto_t proto = {
     net_udp_poll
 };
 
-int net_udp_init() {
+int net_udp_init(void) {
     return fs_socket_proto_add(&proto);
 }
 
-void net_udp_shutdown() {
+void net_udp_shutdown(void) {
     fs_socket_proto_remove(&proto);
 }

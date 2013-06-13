@@ -2,7 +2,7 @@
 
    include/kos/net.h
    Copyright (C) 2002 Dan Potter
-   Copyright (C) 2005, 2006, 2007, 2008, 2009, 2010, 2012 Lawrence Sebald
+   Copyright (C) 2005, 2006, 2007, 2008, 2009, 2010, 2012, 2013 Lawrence Sebald
 
 */
 
@@ -244,10 +244,10 @@ typedef struct ipv6_hdr_s {
 /** \brief  Init ARP.
     \retval 0               On success (no error conditions defined).
 */
-int net_arp_init();
+int net_arp_init(void);
 
 /** \brief  Shutdown ARP. */
-void net_arp_shutdown();
+void net_arp_shutdown(void);
 
 /** \brief  Garbage collect timed out ARP entries.
 
@@ -255,7 +255,7 @@ void net_arp_shutdown();
 
     \retval 0               On success (no error conditions defined).
 */
-int net_arp_gc();
+int net_arp_gc(void);
 
 /** \brief  Add an entry to the ARP cache manually.
 
@@ -361,7 +361,7 @@ net_input_func net_input_set_target(net_input_func t);
     \param  len             The length of the data, in bytes.
 */
 typedef void (*net_echo_cb)(const uint8 *ip, uint16 seq, uint64 delta_us,
-                            uint8 ttl, const uint8 *data, int len);
+                            uint8 ttl, const uint8 *data, size_t len);
 
 /** \brief  Where will we handle possibly notifying the user of ping replies? */
 extern net_echo_cb net_icmp_echo_cb;
@@ -376,7 +376,7 @@ extern net_echo_cb net_icmp_echo_cb;
     \return                 0 on success, <0 on failure.
 */
 int net_icmp_send_echo(netif_t *net, const uint8 ipaddr[4], uint16 ident,
-                       uint16 seq, const uint8 *data, int size);
+                       uint16 seq, const uint8 *data, size_t size);
 
 /* Valid values for the code in the net_icmp_send_dest_unreach() function. */
 #define ICMP_PROTOCOL_UNREACHABLE       2   /**< \brief Protocol unreachable */
@@ -423,7 +423,7 @@ typedef struct net_ipv4_stats {
 /** \brief  Retrieve statistics from the IPv4 layer.
     \return                 The net_ipv4_stats_t structure.
 */
-net_ipv4_stats_t net_ipv4_get_stats();
+net_ipv4_stats_t net_ipv4_get_stats(void);
 
 /** \brief  Create a 32-bit IP address, based on the individual numbers
             contained within the IP.
@@ -451,7 +451,7 @@ void net_ipv4_parse_address(uint32 addr, uint8 out[4]);
 */
 typedef void (*net6_echo_cb)(const struct in6_addr *ip, uint16 seq,
                              uint64 delta_us, uint8 hlim, const uint8 *data,
-                             int len);
+                             size_t len);
 
 /** \brief  Where will we handle possibly notifying the user of ping replies? */
 extern net6_echo_cb net_icmp6_echo_cb;
@@ -466,7 +466,7 @@ extern net6_echo_cb net_icmp6_echo_cb;
     \return                 0 on success, <0 on failure.
 */
 int net_icmp6_send_echo(netif_t *net, const struct in6_addr *dst, uint16 ident,
-                        uint16 seq, const uint8 *data, int size);
+                        uint16 seq, const uint8 *data, size_t size);
 
 /** \brief  Send a Neighbor Solicitation packet on the specified device.
     \param  net             The network device to use.
@@ -511,7 +511,7 @@ int net_icmp6_send_rsol(netif_t *net);
     \return                 0 on success, <0 on failure.
 */
 int net_icmp6_send_dest_unreach(netif_t *net, uint8 code, const uint8 *ppkt,
-                                int psz);
+                                size_t psz);
 
 /* Time Exceeded codes -- only fragment reassembly time exceeded makes sense */
 #define ICMP6_TIME_EXCEEDED_HOPS_EXC    0   /**< \brief Hops exceeded */
@@ -525,7 +525,7 @@ int net_icmp6_send_dest_unreach(netif_t *net, uint8 code, const uint8 *ppkt,
     \return                 0 on success, <0 on failure.
 */
 int net_icmp6_send_time_exceeded(netif_t *net, uint8 code, const uint8 *ppkt,
-                                 int psz);
+                                 size_t psz);
 
 /* Parameter Problem codes */
 #define ICMP6_PARAM_PROB_BAD_HEADER     0   /**< \brief Malformed header */
@@ -541,7 +541,7 @@ int net_icmp6_send_time_exceeded(netif_t *net, uint8 code, const uint8 *ppkt,
     \return                 0 on success, <0 on failure.
 */
 int net_icmp6_send_param_prob(netif_t *net, uint8 code, uint32 ptr,
-                              const uint8 *ppkt, int psz);
+                              const uint8 *ppkt, size_t psz);
 
 /***** net_ipv6.c *********************************************************/
 
@@ -564,22 +564,22 @@ typedef struct net_ipv6_stats {
 /** \brief  Retrieve statistics from the IPv6 layer.
     \return                 The global IPv6 stats structure.
 */
-net_ipv6_stats_t net_ipv6_get_stats();
+net_ipv6_stats_t net_ipv6_get_stats(void);
 
 /***** net_ndp.c **********************************************************/
 
 /** \brief  Init NDP.
     \retval 0               On success (no error conditions defined).
 */
-int net_ndp_init();
+int net_ndp_init(void);
 
 /** \brief  Shutdown NDP. */
-void net_ndp_shutdown();
+void net_ndp_shutdown(void);
 
 /** \brief  Garbage collect timed out NDP entries.
     This will be called periodically as NDP queries come in.
 */
-void net_ndp_gc();
+void net_ndp_gc(void);
 
 /** \brief  Add an entry to the NDP cache.
     \param  nif             The network device in question.
@@ -630,25 +630,25 @@ typedef struct net_udp_stats {
 /** \brief  Retrieve statistics from the UDP layer.
     \return                 The global UDP stats struct.
 */
-net_udp_stats_t net_udp_get_stats();
+net_udp_stats_t net_udp_get_stats(void);
 
 /** \brief  Init UDP.
     \retval 0               On success (no error conditions defined).
 */
-int net_udp_init();
+int net_udp_init(void);
 
 /** \brief  Shutdown UDP. */
-void net_udp_shutdown();
+void net_udp_shutdown(void);
 
 /***** net_tcp.c **********************************************************/
 
 /** \brief  Init TCP.
     \retval 0               On success (no error conditions defined).
 */
-int net_tcp_init();
+int net_tcp_init(void);
 
 /** \brief  Shutdown TCP. */
-void net_tcp_shutdown();
+void net_tcp_shutdown(void);
 
 /***** net_crc.c **********************************************************/
 
@@ -712,10 +712,10 @@ int net_multicast_check(const uint8 mac[6]);
 /** \brief  Init multicast support.
     \return                 0 on success, !0 on error.
 */
-int net_multicast_init();
+int net_multicast_init(void);
 
 /** \brief  Shutdown multicast support. */
-void net_multicast_shutdown();
+void net_multicast_shutdown(void);
 
 /***** net_core.c *********************************************************/
 
@@ -728,7 +728,7 @@ extern struct netif_list net_if_list;
 
     \return                 The network interface list.
 */
-struct netif_list * net_get_if_list();
+struct netif_list * net_get_if_list(void);
 
 /** \brief  The default network device, used with sockets (read-only). */
 extern netif_t *net_default_dev;
@@ -754,10 +754,10 @@ int net_unreg_device(netif_t *device);
 /** \brief  Init network support.
     \return                 0 on success, <0 on failure.
 */
-int net_init();
+int net_init(void);
 
 /** \brief  Shutdown network support. */
-void net_shutdown();
+void net_shutdown(void);
 
 __END_DECLS
 

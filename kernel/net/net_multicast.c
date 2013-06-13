@@ -1,7 +1,7 @@
 /* KallistiOS ##version##
 
    kernel/net/net_multicast.c
-   Copyright (C) 2010 Lawrence Sebald
+   Copyright (C) 2010, 2013 Lawrence Sebald
 
 */
 
@@ -26,7 +26,7 @@ static struct mc_list multicasts = LIST_HEAD_INITIALIZER(0);
 static int mc_count = 0;
 static mutex_t mc_mutex = MUTEX_INITIALIZER;
 
-static void multicast_commit() {
+static void multicast_commit(void) {
     mc_entry_t *i;
     int tmp = 0;
     uint8 macs[mc_count * 6];
@@ -133,11 +133,11 @@ int net_multicast_check(const uint8 mac[6]) {
     return rv;
 }
 
-int net_multicast_init() {
+int net_multicast_init(void) {
     return 0;
 }
 
-void net_multicast_shutdown() {
+void net_multicast_shutdown(void) {
     mc_entry_t *i, *tmp;
 
     /* Free all entries */

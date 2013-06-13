@@ -2,7 +2,7 @@
 
    kernel/net/net_icmp.h
    Copyright (C) 2002 Dan Potter
-   Copyright (C) 2005, 2007, 2010 Lawrence Sebald
+   Copyright (C) 2005, 2007, 2010, 2013 Lawrence Sebald
 
 */
 
@@ -33,7 +33,7 @@ typedef struct {
 #define ICMP_MESSAGE_ECHO               8
 #define ICMP_MESSAGE_TIME_EXCEEDED      11
 
-int net_icmp_input(netif_t *src, ip_hdr_t *ih, const uint8 *data, int size);
+int net_icmp_input(netif_t *src, ip_hdr_t *ih, const uint8 *data, size_t size);
 
 __END_DECLS
 

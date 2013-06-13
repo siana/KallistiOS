@@ -1,7 +1,7 @@
 /* KallistiOS ##version##
 
    kernel/net/net_ndp.c
-   Copyright (C) 2010 Lawrence Sebald
+   Copyright (C) 2010, 2013 Lawrence Sebald
 
 */
 
@@ -44,7 +44,7 @@ static struct ndp_list ndp_cache = LIST_HEAD_INITIALIZER(0);
 #define NDP_STATE_DELAY         3
 #define NDP_STATE_PROBE         4
 
-void net_ndp_gc() {
+void net_ndp_gc(void) {
     ndp_entry_t *i, *tmp;
     uint64 now = timer_ms_gettime64();
 
@@ -217,11 +217,11 @@ int net_ndp_lookup(netif_t *net, const struct in6_addr *ip, uint8 mac_out[6],
     return -2;
 }
 
-int net_ndp_init() {
+int net_ndp_init(void) {
     return 0;
 }
 
-void net_ndp_shutdown() {
+void net_ndp_shutdown(void) {
     /* Free all entries */
     ndp_entry_t *i, *tmp;
 

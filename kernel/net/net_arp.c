@@ -3,7 +3,7 @@
    kernel/net/net_arp.c
 
    Copyright (C) 2002 Dan Potter
-   Copyright (C) 2005, 2010, 2012 Lawrence Sebald
+   Copyright (C) 2005, 2010, 2012, 2013 Lawrence Sebald
 */
 
 #include <string.h>
@@ -74,7 +74,7 @@ struct netarp_list net_arp_cache = LIST_HEAD_INITIALIZER(0);
 /* Cache management */
 
 /* Garbage collect timed out entries */
-int net_arp_gc() {
+int net_arp_gc(void) {
     netarp_t *a1, *a2;
 
     a1 = LIST_FIRST(&net_arp_cache);
@@ -334,7 +334,7 @@ int net_arp_query(netif_t *nif, const uint8 ip[4]) {
 /* Init/shutdown */
 
 /* Init */
-int net_arp_init() {
+int net_arp_init(void) {
     /* Initialize the ARP cache */
     LIST_INIT(&net_arp_cache);
 
@@ -342,7 +342,7 @@ int net_arp_init() {
 }
 
 /* Shutdown */
-void net_arp_shutdown() {
+void net_arp_shutdown(void) {
     /* Free all ARP entries */
     netarp_t *a1, *a2;
 

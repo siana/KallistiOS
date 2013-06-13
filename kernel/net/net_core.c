@@ -3,7 +3,7 @@
    kernel/net/net_core.c
 
    Copyright (C) 2002 Dan Potter
-   Copyright (C) 2005 Lawrence Sebald
+   Copyright (C) 2005, 2013 Lawrence Sebald
 */
 
 #include <string.h>
@@ -91,7 +91,7 @@ int net_unreg_device(netif_t *device) {
     return 0;
 }
 
-struct netif_list * net_get_if_list() {
+struct netif_list * net_get_if_list(void) {
     return &net_if_list;
 }
 
@@ -108,7 +108,7 @@ netif_t *net_set_default(netif_t *n)    {
 }
 
 /* Device detect / init */
-int net_dev_init() {
+int net_dev_init(void) {
     int detected = 0;
     netif_t *cur;
 
@@ -140,7 +140,7 @@ int net_dev_init() {
 }
 
 /* Init */
-int net_init() {
+int net_init(void) {
     int rv = 0;
 
     /* Make sure we haven't already done this */
@@ -189,7 +189,7 @@ int net_init() {
 }
 
 /* Shutdown */
-void net_shutdown() {
+void net_shutdown(void) {
     netif_t *cur;
 
     /* Make sure we actually initialized the net stuff to begin with */

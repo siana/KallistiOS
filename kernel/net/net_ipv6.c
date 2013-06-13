@@ -1,7 +1,7 @@
 /* KallistiOS ##version##
 
    kernel/net/net_ipv6.c
-   Copyright (C) 2010, 2012 Lawrence Sebald
+   Copyright (C) 2010, 2012, 2013 Lawrence Sebald
 
 */
 
@@ -56,7 +56,7 @@ static int is_in_network(netif_t *net, const struct in6_addr *ip) {
 
 /* Send a packet on the specified network adapter */
 int net_ipv6_send_packet(netif_t *net, ipv6_hdr_t *hdr, const uint8 *data,
-                         int data_size) {
+                         size_t data_size) {
     uint8 pkt[data_size + sizeof(ipv6_hdr_t) + sizeof(eth_hdr_t)];
     uint8 dst_mac[6];
     int err;
@@ -127,8 +127,8 @@ int net_ipv6_send_packet(netif_t *net, ipv6_hdr_t *hdr, const uint8 *data,
     return 0;
 }
 
-int net_ipv6_send(netif_t *net, const uint8 *data, int data_size, int hop_limit,
-                  int proto, const struct in6_addr *src,
+int net_ipv6_send(netif_t *net, const uint8 *data, size_t data_size,
+                  int hop_limit, int proto, const struct in6_addr *src,
                   const struct in6_addr *dst) {
     ipv6_hdr_t hdr;
 
@@ -177,12 +177,13 @@ int net_ipv6_send(netif_t *net, const uint8 *data, int data_size, int hop_limit,
     return net_ipv6_send_packet(net, &hdr, data, data_size);
 }
 
-int net_ipv6_input(netif_t *src, const uint8 *pkt, int pktsize,
+int net_ipv6_input(netif_t *src, const uint8 *pkt, size_t pktsize,
                    const eth_hdr_t *eth) {
     ipv6_hdr_t *ip;
     uint8 next_hdr;
     //int pos;
-    int len, rv;
+    size_t len;
+    int rv;
 
     if(pktsize < sizeof(ipv6_hdr_t)) {
         /* This is obviously a bad packet, drop it */
@@ -232,7 +233,7 @@ int net_ipv6_input(netif_t *src, const uint8 *pkt, int pktsize,
     return 0;
 }
 
-net_ipv6_stats_t net_ipv6_get_stats() {
+net_ipv6_stats_t net_ipv6_get_stats(void) {
     return ipv6_stats;
 }
 
@@ -261,7 +262,7 @@ uint16 net_ipv6_checksum_pseudo(const struct in6_addr *src,
     return ~net_ipv4_checksum((uint8 *)&ps, sizeof(ipv6_pseudo_hdr_t), 0);
 }
 
-int net_ipv6_init() {
+int net_ipv6_init(void) {
     /* Make sure we're registered to get "All nodes" multicasts from the
        ethernet layer. */
     uint8 mac[6] = { 0x33, 0x33, 0x00, 0x00, 0x00, 0x01 };
@@ -278,7 +279,7 @@ int net_ipv6_init() {
     return 0;
 }
 
-void net_ipv6_shutdown() {
+void net_ipv6_shutdown(void) {
     uint8 mac[6] = { 0x33, 0x33, 0x00, 0x00, 0x00, 0x01 };
 
     /* Remove from the all nodes multicast group */
