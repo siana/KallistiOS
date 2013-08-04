@@ -75,6 +75,8 @@ static void dma_next_list(ptr_t data) {
 }
 
 void pvr_int_handler(uint32 code) {
+    int bufn = pvr_state.view_target;
+
     // What kind of event did we get?
     switch(code) {
         case ASIC_EVT_PVR_OPAQUEDONE:
@@ -133,16 +135,13 @@ void pvr_int_handler(uint32 code) {
         pvr_sync_stats(PVR_SYNC_PAGEFLIP);
 
         // Switch view address to the "good" buffer
-        if(pvr_state.to_texture != 2)
-            pvr_state.view_target ^= 1;
+        pvr_state.view_target ^= 1;
 
-        pvr_sync_view();
+        if(!pvr_state.to_texture[bufn])
+            pvr_sync_view();
 
         // Clear the render completed flag.
         pvr_state.render_completed = 0;
-
-        // Set the fact that the next frame should be texture rendered, if it is the case
-        pvr_state.to_texture = pvr_state.to_texture == 1 ? 2 : 0;
     }
 
     // If all lists are fully transferred and a render is not in progress,
@@ -162,6 +161,9 @@ void pvr_int_handler(uint32 code) {
         pvr_begin_queued_render();
         pvr_state.render_busy = 1;
         pvr_sync_stats(PVR_SYNC_RNDSTART);
+
+        // Clear the texture render flag if we had it set.
+        pvr_state.to_texture[bufn] = 0;
 
         // If we're not in DMA mode, then signal the client code
         // to continue onwards.

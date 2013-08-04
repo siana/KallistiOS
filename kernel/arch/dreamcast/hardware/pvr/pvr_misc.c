@@ -159,10 +159,11 @@ void pvr_begin_queued_render() {
     uint32      *vrl, *bkgdata;
     uint32      vert_end;
     int     i;
+    int bufn = pvr_state.view_target;
 
     /* Get the appropriate buffer */
     tbuf = pvr_state.ta_buffers + (pvr_state.ta_target ^ 1);
-    rbuf = pvr_state.frame_buffers + (pvr_state.view_target ^ 1);
+    rbuf = pvr_state.frame_buffers + (bufn ^ 1);
 
     /* Calculate background value for below */
     /* Small side note: during setup, the value is originally
@@ -203,11 +204,11 @@ void pvr_begin_queued_render() {
     PVR_SET(PVR_ISP_TILEMAT_ADDR, tbuf->tile_matrix);
     PVR_SET(PVR_ISP_VERTBUF_ADDR, tbuf->vertex);
 
-    if(!pvr_state.to_texture)
+    if(!pvr_state.to_texture[bufn])
         PVR_SET(PVR_RENDER_ADDR, rbuf->frame);
     else {
-        PVR_SET(PVR_RENDER_ADDR, pvr_state.to_txr_addr | (1 << 24));
-        PVR_SET(PVR_RENDER_ADDR_2, pvr_state.to_txr_addr | (1 << 24));
+        PVR_SET(PVR_RENDER_ADDR, pvr_state.to_txr_addr[bufn] | (1 << 24));
+        PVR_SET(PVR_RENDER_ADDR_2, pvr_state.to_txr_addr[bufn] | (1 << 24));
     }
 
     PVR_SET(PVR_BGPLANE_CFG, vert_end); /* Bkg plane location */
@@ -215,10 +216,10 @@ void pvr_begin_queued_render() {
     PVR_SET(PVR_PCLIP_X, pvr_state.pclip_x);
     PVR_SET(PVR_PCLIP_Y, pvr_state.pclip_y);
 
-    if(!pvr_state.to_texture)
+    if(!pvr_state.to_texture[bufn])
         PVR_SET(PVR_RENDER_MODULO, (pvr_state.w * 2) / 8);
     else
-        PVR_SET(PVR_RENDER_MODULO, pvr_state.to_txr_rp);
+        PVR_SET(PVR_RENDER_MODULO, pvr_state.to_txr_rp[bufn]);
 
     // XXX Do we _really_ need this every time?
     // SETREG(PVR_FB_CFG_2, 0x00000009);        /* Alpha mode */
@@ -246,4 +247,3 @@ void pvr_blank_polyhdr_buf(int type, pvr_poly_hdr_t * poly) {
     poly->d1 = poly->d2 = poly->d3 = poly->d4 = 0xffffffff;
 
 }
-

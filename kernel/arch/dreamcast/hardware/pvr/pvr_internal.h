@@ -215,13 +215,13 @@ typedef struct {
     int     fsaa;
 
     // Non-zero if we are rendering to a texture
-    int     to_texture;
+    int     to_texture[2];
 
     // Render pitch for to-texture mode
-    int     to_txr_rp;
+    int     to_txr_rp[2];
 
     // Output address for to-texture mode
-    uint32  to_txr_addr;
+    uint32  to_txr_addr[2];
 } pvr_state_t;
 
 /* There will be exactly one of these in KOS (in pvr_globals.c) */
