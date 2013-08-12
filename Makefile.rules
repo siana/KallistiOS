@@ -7,6 +7,8 @@
 # Global KallistiOS Makefile include
 
 # Build rules
+ifndef KOS_DEPDIR
+
 %.o: %.c
 	kos-cc $(CFLAGS) -c $< -o $@
 
@@ -15,6 +17,21 @@
 
 %.o: %.cpp
 	kos-c++ $(CFLAGS) $(CXXFLAGS) -c $< -o $@
+
+else
+
+%.o: %.c
+	kos-cc $(CFLAGS) -c $< -o $@ -MD -MF $(KOS_DEPDIR)/$(patsubst %.c,%.md,$(subst /,__,$(subst ..,,$<)))
+
+%.o: %.cc
+	kos-c++ $(CFLAGS) $(CXXFLAGS) -c $< -o $@ -MD -MF $(KOS_DEPDIR)/$(patsubst %.c,%.md,$(subst /,__,$(subst ..,,$<)))
+
+%.o: %.cpp
+	kos-c++ $(CFLAGS) $(CXXFLAGS) -c $< -o $@ -MD -MF $(KOS_DEPDIR)/$(patsubst %.c,%.md,$(subst /,__,$(subst ..,,$<)))
+
+-include $(wildcard $(KOS_DEPDIR)/*.md)
+
+endif
 
 %.o: %.s
 	kos-as $< -o $@
