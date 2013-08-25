@@ -637,11 +637,11 @@ retry:
 static int int_rename(fs_ext2_fs_t *fs, const char *fn1, const char *fn2,
                       ext2_inode_t *pinode, ext2_inode_t *finode,
                       uint32_t finode_num, int isfile) {
-    ext2_inode_t *dpinode, *dinode;
-    uint32_t dpinode_num, tmp;
+    ext2_inode_t *dpinode, *dinode = NULL, *sinode;
+    uint32_t dpinode_num, tmp, sinode_num;
     char *cp, *ent;
     int irv, isdir = 0;
-    ext2_dirent_t *dent;
+    ext2_dirent_t *dent, *dent2;
 
     /* Make a writable copy of the destination filename. */
     if(!(cp = strdup(fn2))) {
@@ -718,6 +718,61 @@ static int int_rename(fs_ext2_fs_t *fs, const char *fn1, const char *fn2,
                 ext2_inode_put(dinode);
                 ext2_inode_put(dpinode);
                 return -EBUSY;
+            }
+        }
+    }
+
+    /* Make sure the user isn't trying to do something really stupid, like
+       moving a directory such that it would be an ancestor of itself... Note
+       that this is really inefficient, but without cacheing the entire
+       directory structure as we work down it, I'm not sure how I could make it
+       much better... */
+    if(!isfile && dpinode != pinode) {
+        sinode = dpinode;
+        sinode_num = dpinode_num;
+        ext2_inode_retain(sinode);
+
+        for(;;) {
+            /* If the two entries are the same, there's obviously a problem. */
+            if(sinode == finode) {
+                ext2_inode_put(sinode);
+                ext2_inode_put(dpinode);
+
+                if(dinode)
+                    ext2_inode_put(dinode);
+
+                return -EINVAL;
+            }
+
+            /* Grab the dentry for the next thing up the tree. */
+            dent2 = ext2_dir_entry(fs->fs, sinode, "..");
+            ext2_inode_put(sinode);
+
+            if(!dent2) {
+                /* Uhm... The directory is missing the ".." entry... */
+                ext2_inode_put(dpinode);
+
+                if(dinode)
+                    ext2_inode_put(dinode);
+
+                return -EINVAL;
+            }
+
+            /* Did we reach the end of the line? */
+            if(dent2->inode == sinode_num) {
+                /* We've hit the end of the line without matching, so we should
+                   be safe. */
+                break;
+            }
+
+            /* Grab the parent's inode for the next pass. */
+            if(!(sinode = ext2_inode_get(fs->fs, dent2->inode, &irv))) {
+                ext2_inode_put(dpinode);
+
+                if(dinode)
+                    ext2_inode_put(dinode);
+
+                return irv;
             }
         }
     }
@@ -1818,7 +1873,6 @@ int fs_ext2_sync(const char *mp) {
     mutex_unlock(&ext2_mutex);
     return rv;
 }
-    
 
 int fs_ext2_init(void) {
     if(initted)
