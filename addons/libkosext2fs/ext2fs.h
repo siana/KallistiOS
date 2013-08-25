@@ -19,7 +19,8 @@ __BEGIN_DECLS
 /* Tunable filesystem parameters. These must be set at compile time. */
 
 /* Logarithm (base 2) of the maximum number of entries in the inode cache.
-   Thus, the inode cache will take up (2^n) * 128 bytes of total space in RAM.
+   Thus, the inode cache will take up (2^n) * (128 + k) bytes of total space in
+   RAM (where k is the overhead for accounting information -- 32 bytes in KOS).
    Set this to a larger number to ensure you can have a lot of files open at
    once. Also, note that this is a global cache, regardless of how many
    filesystems you actually have mounted. */

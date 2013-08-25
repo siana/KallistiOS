@@ -135,11 +135,11 @@ struct sockaddr_in6 {
 
 /** \brief  Initialize an IPv6 local host address.
 
-    This macro can be used to initialize a struct in6_addr to any lcoal address.
+    This macro can be used to initialize a struct in6_addr to any local address.
     It functions similarly to INADDR_ANY for IPv4.
 */
 #define IN6ADDR_ANY_INIT {{{ 0, 0, 0, 0, 0, 0, 0, 0, \
-                0, 0, 0, 0, 0, 0, 0, 0 }}}
+                             0, 0, 0, 0, 0, 0, 0, 0 }}}
 
 /** \brief  Initialize an IPv6 loopback address.
 
@@ -147,7 +147,7 @@ struct sockaddr_in6 {
     address.
 */
 #define IN6ADDR_LOOPBACK_INIT {{{ 0, 0, 0, 0, 0, 0, 0, 0, \
-                0, 0, 0, 0, 0, 0, 0, 1 }}}
+                                  0, 0, 0, 0, 0, 0, 0, 1 }}}
 
 /** \brief  IPv6 local host address.
 
@@ -302,6 +302,7 @@ extern const struct in6_addr in6addr_loopback;
 #define IN6_IS_ADDR_SITELOCAL(a)  \
     (((a)->__s6_addr.__s6_addr8[0] == 0xFE) && \
      (((a)->__s6_addr.__s6_addr8[1] & 0xC0) == 0xC0))
+
 /** \brief  Test if an IPv6 Address is a multicast address.
 
     This macro tests whether an IPv6 address (struct in6_addr *) is a multicast
