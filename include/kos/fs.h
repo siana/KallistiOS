@@ -193,6 +193,14 @@ typedef struct vfs_handler {
 
     /** \brief Return the size of an opened file as a 64-bit integer */
     uint64 (*total64)(void *hnd);
+
+    /** \brief Read the value of a symbolic link
+        \note  path will not be passed through realpath() before calling the
+               filesystem function. It is also important to not call realpath()
+               in your implementation as it is possible that readlink() will be
+               called in realpath(). */
+    ssize_t (*readlink)(struct vfs_handler *vfs, const char *path, char *buf,
+                        size_t bufsize);
 } vfs_handler_t;
 
 /** \brief  The number of distinct file descriptors that can be in use at a
@@ -513,6 +521,27 @@ int fs_link(const char *path1, const char *path2);
                             symlinks will simply set errno to ENOSYS.
 */
 int fs_symlink(const char *path1, const char *path2);
+
+/** \brief  Read the value of a symbolic link.
+
+    This function implements the POSIX function readlink(), which simply reads
+    the value of the symbolic link at the end of a path. This does not resolve
+    any internal links and it does not canonicalize the path either.
+
+    \param  path            The symbolic link to read.
+    \param  buf             The buffer to place the link's contents in.
+    \param  bufsize         The number of bytes allocated to buf.
+    \return                 -1 on failure, the number of bytes placed into buf
+                            on success. If the return value is equal to bufsize,
+                            you may not have the whole link -- provide a larger
+                            buffer and try again.
+
+    \note                   Most filesystems in KallistiOS do not support
+                            symbolic links. Filesystems that do not support
+                            symlinks will simply set errno to ENOSYS and return
+                            -1.
+*/
+ssize_t fs_readlink(const char *path, char *buf, size_t bufsize);
 
 /** \brief  Duplicate a file descriptor.
 

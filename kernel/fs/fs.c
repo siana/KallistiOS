@@ -793,6 +793,38 @@ int fs_symlink(const char *path1, const char *path2) {
     }
 }
 
+int fs_readlink(const char *path, char *buf, size_t bufsize) {
+    vfs_handler_t *vfs;
+    char fullpath[PATH_MAX];
+
+    /* Prepend the current working directory if we have to. */
+    if(path[0] == '/') {
+        strcpy(fullpath, path);
+    }
+    else {
+        strcpy(fullpath, fs_getwd());
+        strcat(fullpath, '/');
+        strcat(fullpath, path);
+    }
+
+    /* Look for the handler */
+    vfs = fs_verify_handler(fullpath);
+
+    if(!vfs) {
+        errno = ENOENT;
+        return -1;
+    }
+
+    if(vfs->readlink) {
+        return vfs->readlink(vfs, fullpath + strlen(vfs->nmmgr.pathname), buf,
+                             bufsize);
+    }
+    else {
+        errno = ENOSYS;
+        return -1;
+    }
+}
+
 /* Initialize FS structures */
 int fs_init() {
     return 0;

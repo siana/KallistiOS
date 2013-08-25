@@ -468,6 +468,7 @@ static vfs_handler_t vh = {
     NULL,
     NULL,
     NULL,
+    NULL,
     NULL
 };
 

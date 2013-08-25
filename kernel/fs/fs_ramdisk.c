@@ -670,7 +670,8 @@ static vfs_handler_t vh = {
     NULL,               /* symlink XXX */
     NULL,               /* seek64 XXX */
     NULL,               /* tell64 XXX */
-    NULL                /* total64 XXX */
+    NULL,               /* total64 XXX */
+    NULL                /* readlink XXX */
 };
 
 /* Attach a piece of memory to a file. This works somewhat like open for

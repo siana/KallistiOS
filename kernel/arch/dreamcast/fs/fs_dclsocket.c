@@ -723,7 +723,8 @@ static vfs_handler_t vh = {
     NULL,               /* symlink */
     NULL,               /* seek64 */
     NULL,               /* tell64 */
-    NULL                /* total64 */
+    NULL,               /* total64 */
+    NULL                /* readlink */
 };
 
 /* dbgio handler */

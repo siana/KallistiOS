@@ -1710,6 +1710,44 @@ static int fs_ext2_symlink(vfs_handler_t *vfs, const char *path1,
     return 0;
 }
 
+static ssize_t fs_ext2_readlink(vfs_handler_t *vfs, const char *path, char *buf,
+                                size_t bufsize) {
+    fs_ext2_fs_t *mnt = (fs_ext2_fs_t *)vfs->privdata;
+    int rv;
+    size_t len = bufsize;
+    uint32_t inode_num;
+    ext2_inode_t *inode;
+
+    /* Find a free file handle */
+    mutex_lock(&ext2_mutex);
+
+    /* Find the object in question */
+    if((rv = ext2_inode_by_path(mnt->fs, path, &inode, &inode_num, 2, NULL))) {
+        errno = -rv;
+        mutex_unlock(&ext2_mutex);
+        return -1;
+    }
+
+    /* Read the value of the link. This will return -EINVAL if the object isn't
+       a symlink, so we don't have to worry about checking that here. */
+    if((rv = ext2_resolve_symlink(mnt->fs, inode, buf, &len))) {
+        errno = -rv;
+        ext2_inode_put(inode);
+        mutex_unlock(&ext2_mutex);
+        return -1;
+    }
+
+    /* We're done with the inode, so release it and the lock. */
+    ext2_inode_put(inode);
+    mutex_unlock(&ext2_mutex);
+
+    /* Figure out what we're going to return. */
+    if(len > bufsize)
+        return bufsize;
+
+    return len;
+}
+
 /* This is a template that will be used for each mount */
 static vfs_handler_t vh = {
     /* Name Handler */
@@ -1746,7 +1784,8 @@ static vfs_handler_t vh = {
     fs_ext2_symlink,            /* symlink */
     fs_ext2_seek64,             /* seek64 */
     fs_ext2_tell64,             /* tell64 */
-    fs_ext2_total64             /* total64 */
+    fs_ext2_total64,            /* total64 */
+    fs_ext2_readlink            /* readlink */
 };
 
 static int initted = 0;
