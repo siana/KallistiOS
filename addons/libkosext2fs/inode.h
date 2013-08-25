@@ -126,6 +126,10 @@ int ext2_inode_by_path(ext2_fs_t *fs, const char *path, ext2_inode_t **rv,
 
 void ext2_inode_put(ext2_inode_t *inode);
 
+/* Increment the reference count on an inode that you already have a reference
+   to. */
+void ext2_inode_retain(ext2_inode_t *inode);
+
 void ext2_inode_mark_dirty(ext2_inode_t *inode);
 
 /* Write-back all of the inodes marked as dirty from the specified filesystem to

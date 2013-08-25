@@ -190,6 +190,23 @@ void ext2_inode_put(ext2_inode_t *inode) {
 #endif
 }
 
+void ext2_inode_retain(ext2_inode_t *inode) {
+    struct int_inode *iinode = (struct int_inode *)inode;
+
+    /* Make sure we're not trying anything really dumb. */
+    assert(iinode->refcnt != 0);
+
+    /* Increment the reference counter. */
+    ++iinode->refcnt;
+
+#ifdef EXT2FS_DEBUG
+    /* Technically not thread-safe, but then again, there's many bigger issues
+       with thread-safety in this library than this. */
+    dbglog(DBG_KDEBUG, "ext2_inode_retain: %" PRIu32 " (%" PRIu32 " refs)\n",
+           iinode->inode_num, iinode->refcnt);
+#endif
+}
+
 void ext2_inode_mark_dirty(ext2_inode_t *inode) {
     struct int_inode *iinode = (struct int_inode *)inode;
 
