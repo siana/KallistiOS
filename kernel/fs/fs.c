@@ -803,7 +803,7 @@ int fs_readlink(const char *path, char *buf, size_t bufsize) {
     }
     else {
         strcpy(fullpath, fs_getwd());
-        strcat(fullpath, '/');
+        strcat(fullpath, "/");
         strcat(fullpath, path);
     }
 
