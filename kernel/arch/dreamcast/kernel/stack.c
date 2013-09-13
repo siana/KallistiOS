@@ -44,6 +44,8 @@ void arch_stk_trace_at(uint32 fp, int n) {
 
     dbgio_printf("-------------- End Stack Trace -----------------\n");
 #else
+    (void)fp;
+    (void)n;
     dbgio_printf("Stack Trace: frame pointers not enabled!\n");
 #endif
 }
