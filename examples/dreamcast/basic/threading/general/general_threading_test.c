@@ -97,10 +97,6 @@ void *thd_3(void *v) {
     return NULL;
 }
 
-/* Hardware / basic OS init: IRQs disabled, threads enabled,
-   no initial romdisk */
-KOS_INIT_FLAGS(INIT_THD_PREEMPT);
-
 /* The main program */
 int main(int argc, char **argv) {
     int x, y, i;
@@ -112,24 +108,20 @@ int main(int argc, char **argv) {
     /* Print a banner */
     printf("KOS 1.1.x thread program:\n");
 
-    /* Create two threads, but don't start them yet. Note that at this
-       point in your program, IRQs are still disabled. This is so that you
-       have full control over what happens to the threads. All threads are
-       created as joinable so we can thd_join them later on to wait for them
-       to die. */
-    t0 = thd_create(0, thd_0, NULL);
-    t1 = thd_create(0, thd_1, NULL);
-    t2 = thd_create(0, thd_2, NULL);
-
     /* Create a semaphore for timing purposes */
     sem_init(&sem, 1);
-    /* Enabling IRQs starts the thread scheduler */
-    irq_enable();
 
     /* In the foreground, draw a moire pattern on the screen */
     for(y = 0; y < 480; y++)
         for(x = 320; x < 640; x++)
             vram_s[y * 640 + x] = ((x * x) + (y * y)) & 0x1f;
+
+    /* Create two threads, which can/will start immediately. All threads are
+       created as joinable so we can thd_join them later on to wait for them
+       to die. */
+    t0 = thd_create(0, thd_0, NULL);
+    t1 = thd_create(0, thd_1, NULL);
+    t2 = thd_create(0, thd_2, NULL);
 
     timer_spin_sleep(1000);
     thd_pslist(printf);
@@ -199,12 +191,6 @@ int main(int argc, char **argv) {
 
     for(i = 0; i < 10; i++)
         thd_join(t3[i], NULL);
-
-    /* Disable IRQs, thus turning off threading. All threads that were
-       running are now gone. If your threads were doing anything like
-       PowerVR or other hardware access, I recommend avoiding this sort
-       of brute-force shutdown approach =) */
-    irq_disable();
 
     /* Shut it all down */
     printf("Done.\n");
