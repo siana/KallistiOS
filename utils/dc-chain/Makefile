@@ -135,7 +135,7 @@ $(build_binutils): logdir
 	@echo "+++ Building $(src_dir) to $(build)..."
 	-mkdir -p $(build)
 	> $(log)
-	cd $(build); ../$(src_dir)/configure --target=$(target) --prefix=$(prefix) $(to_log)
+	cd $(build); ../$(src_dir)/configure --target=$(target) --prefix=$(prefix) --disable-werror $(to_log)
 	make $(makejobs) -C $(build) DESTDIR=$(DESTDIR) $(to_log)
 	make -C $(build) install DESTDIR=$(DESTDIR) $(to_log)
 	$(clean_up)
