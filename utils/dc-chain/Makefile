@@ -29,10 +29,11 @@ kos_root=$(CURDIR)/../../..
 # kos_base: equivalent of KOS_BASE (contains include/ and kernel/)
 kos_base=$(CURDIR)/../..
 binutils_ver=2.23.2
-gcc_ver=4.7.3
+gcc_ver=4.8.2
 newlib_ver=2.0.0
 gdb_ver=6.7.1
 insight_ver=6.7.1
+
 # With GCC 4.x versions, the patches provide a kos thread model, so you should
 # use it. With 3.4.6, you probably want posix here. If you really don't want
 # threading support for C++ (or Objective C/Objective C++), you can set this to
@@ -56,6 +57,20 @@ pass2_languages=c,c++,objc,obj-c++
 
 # Change this if you don't have Bash installed in /bin
 SHELL = /bin/bash
+
+# GCC compiles fine with clang, but only if we use libstdc++ instead of libc++.
+UNAME_S := $(shell uname -s)
+ifeq ($(UNAME_S),Darwin)
+  ifneq ($(shell $(CXX) --version | grep clang),)
+    CXX := "$(CXX) -stdlib=libstdc++"
+  endif
+endif
+
+# Catch all...
+ifeq ($(CXX),)
+  CXX := g++
+endif
+
 
 # Makefile variables
 install=$(prefix)/bin
@@ -133,9 +148,11 @@ $(build_binutils): src_dir = binutils-$(binutils_ver)
 $(build_binutils): log = $(logdir)/$(build).log
 $(build_binutils): logdir
 	@echo "+++ Building $(src_dir) to $(build)..."
+	sed -e 's/ @colophon/ @@colophon/' -e 's/doc@cygnus.com/doc@@cygnus.com/' $(src_dir)/bfd/doc/bfd.texinfo > $(src_dir)/bfd/doc/bfd.texinfo2
+	mv $(src_dir)/bfd/doc/bfd.texinfo2 $(src_dir)/bfd/doc/bfd.texinfo
 	-mkdir -p $(build)
 	> $(log)
-	cd $(build); ../$(src_dir)/configure --target=$(target) --prefix=$(prefix) --disable-werror $(to_log)
+	cd $(build); ../$(src_dir)/configure --target=$(target) --prefix=$(prefix) --disable-werror CXX=$(CXX) $(to_log)
 	make $(makejobs) -C $(build) DESTDIR=$(DESTDIR) $(to_log)
 	make -C $(build) install DESTDIR=$(DESTDIR) $(to_log)
 	$(clean_up)
@@ -147,7 +164,7 @@ $(build_gcc_pass1): logdir
 	@echo "+++ Building $(src_dir) to $(build) (pass 1)..."
 	-mkdir -p $(build)
 	> $(log)
-	cd $(build);  ../$(src_dir)/configure --target=$(target) --prefix=$(prefix) --without-headers --with-newlib --enable-languages=c --disable-libssp --disable-tls $(extra_configure_args) $(to_log)
+	cd $(build);  ../$(src_dir)/configure --target=$(target) --prefix=$(prefix) --without-headers --with-newlib --enable-languages=c --disable-libssp --disable-tls $(extra_configure_args) CXX=$(CXX) $(to_log)
 	make $(makejobs) -C $(build) DESTDIR=$(DESTDIR) $(to_log)
 	make -C $(build) install DESTDIR=$(DESTDIR) $(to_log)
 
@@ -185,7 +202,7 @@ $(build_gcc_pass2): logdir
 	-mkdir -p $(build)
 	> $(log)
 	cd $(build);  ../$(src_dir)/configure --target=$(target) --prefix=$(prefix) --with-newlib --disable-libssp --disable-tls \
-	   --enable-threads=$(thread_model) --enable-languages=$(pass2_languages) $(extra_configure_args) $(to_log)
+	   --enable-threads=$(thread_model) --enable-languages=$(pass2_languages) $(extra_configure_args) CXX=$(CXX) $(to_log)
 	make $(makejobs) -C $(build) DESTDIR=$(DESTDIR) $(to_log)
 	make -C $(build) install DESTDIR=$(DESTDIR) $(to_log)
 	$(clean_up)
