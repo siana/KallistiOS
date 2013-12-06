@@ -407,8 +407,8 @@ vid_mode_t vid_builtin[DM_MODE_COUNT] = {
 };
 
 /*-----------------------------------------------------------------------------*/
-volatile uint32 *regs = (uint32*)0xA05F8000;
-vid_mode_t  currmode = { 0 };
+static vuint32 *regs = (uint32*)0xA05F8000;
+static vid_mode_t  currmode = { 0 };
 vid_mode_t  *vid_mode = 0;
 uint16      *vram_s;
 uint32      *vram_l;
@@ -427,12 +427,12 @@ uint32      *vram_l;
    [This is the old KOS function by Dan.]
 */
 int vid_check_cable() {
-    uint32 * porta = (uint32 *)0xff80002c;
+    vuint32 * porta = (vuint32 *)0xff80002c;
 
     *porta = (*porta & 0xfff0ffff) | 0x000a0000;
 
     /* Read port8 and port9 */
-    return (*((uint16*)(porta + 1)) >> 8) & 3;
+    return (*((vuint16*)(porta + 1)) >> 8) & 3;
 }
 
 /*-----------------------------------------------------------------------------*/
