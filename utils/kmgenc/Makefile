@@ -1,8 +1,8 @@
 
 # Makefile for the kmgenc program.
 
-CFLAGS = -O2 -Wall -DINLINE=inline #-g#
-LDFLAGS = -s -lpng -ljpeg -lz #-g
+CFLAGS = -O2 -Wall -DINLINE=inline -I/usr/local/include #-g#
+LDFLAGS = -s -lpng -ljpeg -lz -L/usr/local/lib #-g
 
 all: kmgenc
 

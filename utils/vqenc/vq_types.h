@@ -3,9 +3,11 @@
 #define __VQ_TYPES_H
 
 #ifndef uint8
-typedef unsigned char uint8;
-typedef unsigned short uint16;
-typedef unsigned long uint32;
+#include <stdint.h>
+
+typedef uint8_t uint8;
+typedef uint16_t uint16;
+typedef uint32_t uint32;
 #endif
 
 /* from 2x2 to 1024x1024 */

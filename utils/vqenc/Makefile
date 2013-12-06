@@ -6,8 +6,8 @@
 #LDFLAGS = -s -L/sw/lib -lpng -ljpeg -lz #-g
 
 # Use for other systems
-CFLAGS = -O2 -Wall -DINLINE=inline #-g#
-LDFLAGS = -lpng -ljpeg -lz -lm #-s -g
+CFLAGS = -O2 -Wall -DINLINE=inline -I/usr/local/include #-g#
+LDFLAGS = -lpng -ljpeg -lz -lm -L/usr/local/lib #-s -g
 
 all: vqenc
 

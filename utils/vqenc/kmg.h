@@ -15,9 +15,11 @@
 #else
 
 #ifdef NEED_KOS_TYPES
-typedef unsigned char uint8;
-typedef unsigned short uint16;
-typedef unsigned long uint32;
+#include <stdint.h>
+
+typedef uint8_t uint8;
+typedef uint16_t uint16;
+typedef uint32_t uint32;
 #endif
 
 #endif
@@ -36,7 +38,7 @@ typedef struct kmg_header {
 	uint32		height;		/* Image height */
 	uint32		byte_count;	/* Image's data size in bytes */
 	uint8		padding[36];	/* Pad to a 64-byte header (all zeros) */
-} kmg_header_t;
+} __attribute__((packed)) kmg_header_t;
 
 /* Magic code -- every KMG will start with one of these. */
 #define KMG_MAGIC	0x00474d4b	/* 'KMG\0' */
