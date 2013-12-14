@@ -1,7 +1,7 @@
 /* KallistiOS ##version##
 
    sd.c
-   Copyright (C) 2012 Lawrence Sebald
+   Copyright (C) 2012, 2013 Lawrence Sebald
 */
 
 /* The code contained herein is basically directly implementing what is
@@ -610,6 +610,12 @@ static uint32_t sdb_count_blocks(kos_blockdev_t *d) {
     return data->block_count;
 }
 
+static int sdb_flush(kos_blockdev_t *d) {
+    /* Cache? We don't need no steenkin' cache! */
+    (void)d;
+    return 0;
+}
+
 static kos_blockdev_t sd_blockdev = {
     NULL,                   /* dev_data */
     9,                      /* l_block_size (block size of 512 bytes) */
@@ -617,7 +623,8 @@ static kos_blockdev_t sd_blockdev = {
     &sdb_shutdown,          /* shutdown */
     &sdb_read_blocks,       /* read_blocks */
     &sdb_write_blocks,      /* write_blocks */
-    &sdb_count_blocks       /* count_blocks */
+    &sdb_count_blocks,      /* count_blocks */
+    &sdb_flush              /* flush */
 };
 
 int sd_blockdev_for_partition(int partition, kos_blockdev_t *rv,

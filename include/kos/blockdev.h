@@ -1,7 +1,7 @@
 /* KallistiOS ##version##
 
    kos/blockdev.h
-   Copyright (C) 2012 Lawrence Sebald
+   Copyright (C) 2012, 2013 Lawrence Sebald
 */
 
 #ifndef __KOS_BLOCKDEV_H
@@ -109,6 +109,18 @@ typedef struct kos_blockdev {
         \return             The number of blocks that the device has.
     */
     uint32_t (*count_blocks)(struct kos_blockdev *d);
+
+    /** \brief  Flush the write cache (if any) of the device.
+
+        This function shall signal to the device that any write caches that are
+        present on the device shall be flushed so that all data written to this
+        point shall persist to the underlying storage.
+
+        \param  d           The device to flush caches on.
+        \retval 0           On success.
+        \retval -1          On failure. Set errno as appropriate.
+    */
+    int (*flush)(struct kos_blockdev *d);
 } kos_blockdev_t;
 
 __END_DECLS
