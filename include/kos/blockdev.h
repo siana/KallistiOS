@@ -81,7 +81,7 @@ typedef struct kos_blockdev {
         \retval 0           On success.
         \retval -1          On failure. Set errno as appropriate.
     */
-    int (*read_blocks)(struct kos_blockdev *d, uint32_t block, size_t count,
+    int (*read_blocks)(struct kos_blockdev *d, uint64_t block, size_t count,
                        void *buf);
 
     /** \brief  Write a number of blocks to the device.
@@ -96,7 +96,7 @@ typedef struct kos_blockdev {
         \retval 0           On success.
         \retval -1          On failure. Set errno as appropriate.
     */
-    int (*write_blocks)(struct kos_blockdev *d, uint32_t block, size_t count,
+    int (*write_blocks)(struct kos_blockdev *d, uint64_t block, size_t count,
                         const void *buf);
 
     /** \brief  Count the number of blocks on the device.
@@ -108,7 +108,7 @@ typedef struct kos_blockdev {
         \param  d           The device to read the block count from.
         \return             The number of blocks that the device has.
     */
-    uint32_t (*count_blocks)(struct kos_blockdev *d);
+    uint64_t (*count_blocks)(struct kos_blockdev *d);
 
     /** \brief  Flush the write cache (if any) of the device.
 
