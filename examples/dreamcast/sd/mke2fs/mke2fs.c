@@ -266,7 +266,7 @@ static int write_bg_descs(ext2_superblock_t *sb, kos_blockdev_t *bd,
 
     /* Write them */
     for(i = 0; i < nblks && !rv; ++i) {
-        rv = write_fs_block(sb, bd, blk + i, buf);
+        rv = write_fs_block(sb, bd, blk + i, buf + (block_size * i));
     }
 
     free(buf);
