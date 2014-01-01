@@ -16,6 +16,7 @@ KallistiOS version 2.0.1 -----------------------------------------------
 - *** Cleaned up warnings with -std=c99 for C code [LS]
 - DC  Changed the PVR render-to-texture support to allow for two render-to-
       texture passes without an intervening render-to-screen pass [LS]
+- DC  Added support for ATA devices on the G1 bus [LS]
 
 KallistiOS version 2.0.0 -----------------------------------------------
 - DC  Broadband Adapter driver fixes [Dan Potter == DP]
