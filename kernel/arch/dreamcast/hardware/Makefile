@@ -25,6 +25,9 @@ OBJS += sq.o scif.o
 # SPI device support
 OBJS += scif-spi.o sd.o
 
+# G1 Bus ATA support
+OBJS += g1ata.o
+
 SUBDIRS = pvr network maple modem
 
 include $(KOS_BASE)/Makefile.prefab
