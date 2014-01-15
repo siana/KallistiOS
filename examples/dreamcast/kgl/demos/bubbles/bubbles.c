@@ -6,7 +6,6 @@
 */
 
 #include <kos.h>
-#include <math.h>
 #include <GL/gl.h>
 #include <GL/glu.h>
 
@@ -81,14 +80,14 @@ static void sphere(float radius, int slices, int stacks) {
 
     /* Iterate over stacks */
     for(i = 0; i < stacks; i++) {
-        pitch = 2 * M_PI * ((float)i / (float)stacks);
-        pitch2 = 2 * M_PI * ((float)(i + 1) / (float)stacks);
+        pitch = 2 * F_PI * ((float)i / (float)stacks);
+        pitch2 = 2 * F_PI * ((float)(i + 1) / (float)stacks);
 
         /* Iterate over slices: each entire stack will be one
            long triangle strip. */
         for(j = 0; j <= slices / 2; j++) {
-            yaw = 2 * M_PI * ((float)j / (float)slices);
-            yaw2 = 2 * M_PI * ((float)(j + 1) / (float)slices);
+            yaw = 2 * F_PI * ((float)j / (float)slices);
+            yaw2 = 2 * F_PI * ((float)(j + 1) / (float)slices);
 
             /* x, y+1 */
             x = radius * fcos(yaw) * fcos(pitch2);
@@ -152,7 +151,7 @@ static void sphere_frame_opaque() {
 
     for(i = 0; i < SPHERE_CNT; i++) {
         glPushMatrix();
-        glTranslatef(6.0f * fcos(i * 2 * M_PI / SPHERE_CNT), 0.0f, 6.0f * fsin(i * 2 * M_PI / SPHERE_CNT));
+        glTranslatef(6.0f * fcos(i * 2 * F_PI / SPHERE_CNT), 0.0f, 6.0f * fsin(i * 2 * F_PI / SPHERE_CNT));
         glRotatef(r, 1.0f, 1.0f, 1.0f);
         sphere(1.2f, 20, 20);
         glPopMatrix();
@@ -165,7 +164,7 @@ static void sphere_frame_opaque() {
 
     for(i = 0; i < SPHERE_CNT; i++) {
         glPushMatrix();
-        glTranslatef(3.0f * fcos(i * 2 * M_PI / SPHERE_CNT), 0.0f, 3.0f * fsin(i * 2 * M_PI / SPHERE_CNT));
+        glTranslatef(3.0f * fcos(i * 2 * F_PI / SPHERE_CNT), 0.0f, 3.0f * fsin(i * 2 * F_PI / SPHERE_CNT));
         glRotatef(r, 1.0f, 1.0f, 1.0f);
         sphere(0.8f, 20, 20);
         glPopMatrix();
@@ -176,7 +175,7 @@ static void sphere_frame_opaque() {
     vid_border_color(0, 0, 255);
     glKosFinishFrame();
     r++;
-    phase += 2 * M_PI / 240.0f;
+    phase += 2 * F_PI / 240.0f;
 }
 
 static void sphere_frame_trans() {
@@ -195,7 +194,7 @@ static void sphere_frame_trans() {
 
     for(i = 0; i < SPHERE_CNT; i++) {
         glPushMatrix();
-        glTranslatef(4.0f * fcos(i * 2 * M_PI / SPHERE_CNT), 0.0f, 4.0f * fsin(i * 2 * M_PI / SPHERE_CNT));
+        glTranslatef(4.0f * fcos(i * 2 * F_PI / SPHERE_CNT), 0.0f, 4.0f * fsin(i * 2 * F_PI / SPHERE_CNT));
         glRotatef(r, 1.0f, 1.0f, 1.0f);
         sphere(1.0f, 20, 20);
         glPopMatrix();
@@ -205,7 +204,7 @@ static void sphere_frame_trans() {
     glKosFinishFrame();
     vid_border_color(255, 0, 0);
     r++;
-    phase += 2 * M_PI / 240.0f;
+    phase += 2 * F_PI / 240.0f;
 }
 
 void do_sphere_test() {
