@@ -490,7 +490,7 @@ int g1_ata_flush(void) {
 }
 
 static int g1_ata_scan(void) {
-    uint8_t dsel = IN8(G1_ATA_DEVICE_SELECT);
+    uint8_t dsel = IN8(G1_ATA_DEVICE_SELECT), st;
     int rv, i;
     uint16_t data[256];
 
@@ -507,10 +507,10 @@ static int g1_ata_scan(void) {
     /* Send the IDENTIFY command. */
     OUT8(G1_ATA_COMMAND_REG, ATA_CMD_IDENTIFY);
     timer_spin_sleep(1);
+    st = IN8(G1_ATA_STATUS_REG);
 
     /* Check if there's anything on the bus. */
-    if(!IN8(G1_ATA_STATUS_REG)) {
-        dbglog(DBG_KDEBUG, "g1_ata_scan: no device present\n");
+    if(!st || st == 0xFF) {
         rv = 0;
         goto out;
     }
@@ -773,7 +773,11 @@ int g1_ata_init(void) {
         return -1;
     }
 
-    dbglog(DBG_KDEBUG, "g1_ata_init: Found %d devices\n", devices);
+    if(!devices) {
+        dbglog(DBG_KDEBUG, "g1_ata_init: no adapter or device present\n");
+        return -1;
+    }
+
     initted = 1;
     
     return 0;

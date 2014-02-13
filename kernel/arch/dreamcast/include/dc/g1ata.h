@@ -203,7 +203,7 @@ int g1_ata_blockdev_for_partition(int partition, kos_blockdev_t *rv,
     some devices. Currently only the slave device is scanned, as the master
     device should always be the GD-ROM drive.
 
-    \return                 0 on success. <0 on error.
+    \return                 0 on success, <0 on error or if no device is present
 */
 int g1_ata_init(void);
 
