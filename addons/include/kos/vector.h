@@ -1,31 +1,43 @@
 /* KallistiOS ##version##
 
    kos/vector.h
-   (c)2002 Dan Potter
+   Copyright (C) 2002 Dan Potter
 
 */
 
 #ifndef __KOS_VECTOR_H
 #define __KOS_VECTOR_H
 
+/** \file   kos/vector.h
+    \brief  Primitive matrix, vector, and point types.
+
+    This file provides a few primivite data types that are useful for 3D
+    graphics. These are used by the code in kos/bspline.h and can be useful
+    elsewhere, as well.
+
+    \author Dan Potter
+*/
+
 #include <sys/cdefs.h>
 __BEGIN_DECLS
 
 #include <arch/types.h>
 
-/**
-   KOS Platform independent 4-part vector data types. These are used by
-   the matrix routines in the DC, and by bsplines in misc. */
-
-/* Matrix definition (4x4) */
+/** \brief  Basic 4x4 matrix type.
+    \headerfile kos/vector.h
+*/
 typedef float matrix_t[4][4];
 
-/* Vector definition */
+/** \brief  4-part vector type.
+    \headerfile kos/vector.h
+*/
 typedef struct vectorstr {
     float x, y, z, w;
 } vector_t;
 
-/* Points are just vectors */
+/** \brief  4-part point type (alias to the vector_t type).
+    \headerfile kos/vector.h
+*/
 typedef vector_t point_t;
 
 __END_DECLS

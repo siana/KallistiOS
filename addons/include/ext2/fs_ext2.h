@@ -43,9 +43,6 @@ __BEGIN_DECLS
     the ext2fs layer anyway, as this layer should give you everything you need
     by interfacing with the VFS in the normal fashion.
 
-    Also, at the moment, this is a read-only filesystem. Write support will be
-    forthcoming, but it may take a bit of time to get completely working.
-
     There's one final note that I should make. Everything in fs_ext2 and ext2fs
     is licensed under the same license as the rest of KOS. None of it was
     derived from GPLed sources. Pretty much all of what's in ext2fs was written
