@@ -45,7 +45,7 @@ int dbgio_handler_cnt = sizeof(dbgio_handlers) / sizeof(dbgio_handler_t *);
 /* Auto-init stuff: comment out here if you don't like this stuff
    to be running in your build, and also below in arch_main() */
 /* #if 0 */
-int arch_auto_init() {
+int  __attribute__((weak)) arch_auto_init() {
     /* Initialize memory management */
     mm_init();
 
@@ -139,7 +139,7 @@ int arch_auto_init() {
     return 0;
 }
 
-void arch_auto_shutdown() {
+void  __attribute__((weak)) arch_auto_shutdown() {
     fs_dclsocket_shutdown();
     net_shutdown();
 
