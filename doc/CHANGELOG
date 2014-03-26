@@ -16,7 +16,20 @@ KallistiOS version 2.0.1 -----------------------------------------------
 - *** Cleaned up warnings with -std=c99 for C code [LS]
 - DC  Changed the PVR render-to-texture support to allow for two render-to-
       texture passes without an intervening render-to-screen pass [LS]
+- *** Fixed an issue in fs_ext2 that would allow you to rename a directory to be
+      a child of itself, thus chopping it off from the rest of the directory
+      tree [LS]
+- *** Added a fs_readlink() function to resolve symlinks [LS]
+- *** Fixed the vqenc and kmgenc utilities for compilation on a 64-bit OS [LS]
+- DC  Corrected an issue with video cable detection with GCC 4.8.x [LS]
 - DC  Added support for ATA devices on the G1 bus [LS]
+- DC  Fixed an infinite loop in ATA initialization if nothing except the GD-ROM
+      drive is connected [LS]
+- *** Added documentation for the addons tree [LS]
+- DC  Made the hardware auto-initialization/shutdown functions weakly linked so
+      that they can be overridden without modifying KOS [LS]
+- DC  Corrected render-to-texture mode so that you don't have to wait for a
+      vblank to actually render to the texture [LS]
 
 KallistiOS version 2.0.0 -----------------------------------------------
 - DC  Broadband Adapter driver fixes [Dan Potter == DP]

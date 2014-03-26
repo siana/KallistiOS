@@ -1,14 +1,11 @@
 /* This program is a slight modification of the libdream/ta example program.
    The big difference in this program is that we add in a small bit of user
-   input code, and support render-to-texture mode. */
-
-/* This is a port of my original 3dtest example to KOS. The big difference
-   here is that the background plane is no longer used. */
+   input code, and that we support render-to-texture mode. */
 
 #include <kos.h>
 
-/* A little test program -- creates twelve rainbow polygons and
-   moves them around over a color-shifting background. */
+/* A little test program -- creates six rainbow polygons and
+   moves them around over a white background. */
 typedef struct {
     float   x, y, z;
     float   dx, dy;
@@ -124,7 +121,7 @@ void draw_frame() {
 
     if(!to_texture)
         pvr_scene_begin();
-    else    {
+    else {
         pvr_scene_begin_txr(d_texture, &tx_x, &tx_y);
         to_texture = 2;
     }
@@ -151,7 +148,6 @@ void draw_frame() {
 void draw_textured() {
     pvr_poly_cxt_t cxt;
     pvr_poly_hdr_t hdr;
-    pvr_ptr_t tmp;
     int i;
 
     pvr_poly_cxt_txr(&cxt, PVR_LIST_OP_POLY, PVR_TXRFMT_RGB565 | PVR_TXRFMT_NONTWIDDLED, 1024, 512, d_texture, PVR_FILTER_NONE);
@@ -196,7 +192,8 @@ int main(int argc, char **argv) {
     maple_device_t *cont;
     cont_state_t *state;
     int finished = 0;
-    uint64 timer = timer_ms_gettime64();
+    uint64 timer = timer_ms_gettime64(), start, end;
+    uint32 counter = 0;
 
     pvr_init(&pvr_params);
 
@@ -205,33 +202,40 @@ int main(int argc, char **argv) {
 
     pvr_set_bg_color(1.0f, 1.0f, 1.0f);
 
-    while(!finished)    {
+    start = timer_ms_gettime64();
+
+    while(!finished) {
         cont = maple_enum_type(0, MAPLE_FUNC_CONTROLLER);
 
-        if(cont != NULL)    {
+        if(cont != NULL) {
             state = (cont_state_t *) maple_dev_status(cont);
 
-            if(state != NULL && timer < timer_ms_gettime64())   {
+            if(state != NULL && timer < timer_ms_gettime64()) {
                 if(state->buttons & CONT_START)
                     finished = 1;
-                else if(state->buttons & CONT_A && (to_texture % 2) != 1)   {
+                else if(state->buttons & CONT_A && (to_texture % 2) != 1) {
                     ++to_texture;
                     timer = timer_ms_gettime64() + 200;
                 }
-                else if(state->buttons & CONT_B && to_texture)  {
+                else if(state->buttons & CONT_B && to_texture) {
                     to_texture = 0;
                     timer = timer_ms_gettime64() + 200;
                 }
             }
         }
 
-        if(to_texture < 2)  {
+        if(to_texture < 2)
             draw_frame();
-        }
-        else    {
+        else
             draw_textured();
-        }
+
+        ++counter;
     }
+
+    end = timer_ms_gettime64();
+
+    printf("%lu frames in %llu ms = %f FPS\n", counter, end - start,
+           counter / ((float)end - start) * 1000.0f);
 
     pvr_mem_free(d_texture);
 

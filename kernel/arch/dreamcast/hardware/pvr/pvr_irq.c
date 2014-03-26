@@ -122,9 +122,19 @@ void pvr_int_handler(uint32 code) {
             return;
     }
 
-    // If it's not a vblank, ignore for now for the rest of this.
-    if(code != ASIC_EVT_PVR_VBLINT)
-        return;
+    if(!pvr_state.to_texture[bufn]) {
+        // If it's not a vblank, ignore the rest of this for now.
+        if(code != ASIC_EVT_PVR_VBLINT)
+            return;
+    }
+    else {
+        // We don't need to wait for a vblank for rendering to a texture, but
+        // we really don't care about anything else unless we've actually gotten
+        // all the data submitted to the TA.
+        if(pvr_state.lists_transferred != pvr_state.lists_enabled &&
+           !pvr_state.render_completed)
+            return;
+    }
 
     // If the render-done interrupt has fired then we are ready to flip to the
     // new frame buffer.
