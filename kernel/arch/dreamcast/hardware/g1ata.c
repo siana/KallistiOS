@@ -1,7 +1,7 @@
 /* KallistiOS ##version##
 
    hardware/g1ata.c
-   Copyright (C) 2013 Lawrence Sebald
+   Copyright (C) 2013, 2014 Lawrence Sebald
 */
 
 #include <errno.h>
@@ -9,7 +9,11 @@
 #include <stdlib.h>
 
 #include <dc/g1ata.h>
+#include <dc/asic.h>
+
 #include <kos/dbglog.h>
+#include <kos/sem.h>
+
 #include <arch/timer.h>
 
 /*
@@ -58,7 +62,7 @@ static struct {
     uint16_t cylinders;
     uint16_t heads;
     uint16_t sectors;
-    uint16_t reserved;
+    uint16_t wdma_modes;
 } device;
 
 /* The type of the dev_data in the block device structure */
@@ -87,6 +91,15 @@ typedef struct ata_devdata {
 #define G1_ATA_STATUS_REG       0xA05F709C      /* Read */
 #define G1_ATA_COMMAND_REG      0xA05F709C      /* Write */
 
+/* DMA-related registers. */
+#define G1_ATA_DMA_RACCESS_WAIT 0xA05F74A0      /* Write-only */
+#define G1_ATA_DMA_WACCESS_WAIT 0xA05F74A4      /* Write-only */
+#define G1_ATA_DMA_ADDRESS      0xA05F7404      /* Read/Write */
+#define G1_ATA_DMA_LENGTH       0xA05F7408      /* Read/Write */
+#define G1_ATA_DMA_DIRECTION    0xA05F740C      /* Read/Write */
+#define G1_ATA_DMA_ENABLE       0xA05F7414      /* Read/Write */
+#define G1_ATA_DMA_STATUS       0xA05F7418      /* Read/Write */
+
 /* Bitmasks for the STATUS_REG/ALT_STATUS registers. */
 #define G1_ATA_SR_ERR   0x01
 #define G1_ATA_SR_IDX   0x02
@@ -100,11 +113,27 @@ typedef struct ata_devdata {
 /* ATA Commands we might like to send. */
 #define ATA_CMD_READ_SECTORS        0x20
 #define ATA_CMD_READ_SECTORS_EXT    0x24
+#define ATA_CMD_READ_DMA_EXT        0x25
 #define ATA_CMD_WRITE_SECTORS       0x30
 #define ATA_CMD_WRITE_SECTORS_EXT   0x34
+#define ATA_CMD_READ_DMA            0xC8
 #define ATA_CMD_FLUSH_CACHE         0xE7
 #define ATA_CMD_FLUSH_CACHE_EXT     0xEA
 #define ATA_CMD_IDENTIFY            0xEC
+#define ATA_CMD_SET_FEATURES        0xEF
+
+/* Subcommands we might care about for the SET FEATURES command. */
+#define ATA_FEATURE_TRANSFER_MODE   0x03
+
+/* Transfer mode values. */
+#define ATA_TRANSFER_PIO_DEFAULT    0x00
+#define ATA_TRANSFER_PIO_NOIORDY    0x01
+#define ATA_TRANSFER_PIO_FLOW(x)    0x08 | ((x) & 0x07)
+#define ATA_TRANSFER_WDMA(x)        0x20 | ((x) & 0x07)
+#define ATA_TRANSFER_UDMA(x)        0x40 | ((x) & 0x07)
+
+/* Access timing data. */
+#define G1_ACCESS_WDMA_MODE2        0x00001001
 
 /* Macros to access the ATA registers */
 #define OUT32(addr, data) *((volatile uint32_t *)addr) = data
@@ -117,11 +146,35 @@ typedef struct ata_devdata {
 static int initted = 0;
 static int devices = 0;
 
+/* Variables related to DMA. */
+static int dma_in_progress = 0;
+static int dma_blocking = 0;
+static semaphore_t dma_done = SEM_INITIALIZER(0);
+
 #define g1_ata_wait_nbsy() \
     do {} while((IN8(G1_ATA_ALTSTATUS) & G1_ATA_SR_BSY))
 
 #define g1_ata_wait_drdy() \
     do {} while(!(IN8(G1_ATA_ALTSTATUS) & G1_ATA_SR_DRDY))
+
+static void g1_dma_irq_hnd(uint32 code) {
+    /* XXXX: Probably should look at the code to make sure it isn't an error. */
+    (void)code;
+
+    /* Signal the calling thread to continue, if it is blocking. */
+    if(dma_blocking) {
+        sem_signal(&dma_done);
+        thd_schedule(1, 0);
+        dma_blocking = 0;
+    }
+
+    dma_in_progress = 0;
+}
+
+/* Is a G1 DMA in progress? */
+int g1_dma_in_progress(void) {
+    return IN32(G1_ATA_DMA_STATUS);
+}
 
 /* This one is an inline function since it needs to return something... */
 static inline int g1_ata_wait_drq(void) {
@@ -377,6 +430,155 @@ out:
     return rv;
 }
 
+static int dma_common(uint8_t cmd, size_t nsects, uint32_t addr, int block) {
+    uint8_t status;
+
+    /* Set the DMA parameters up. */
+    OUT32(G1_ATA_DMA_ADDRESS, addr);
+    OUT32(G1_ATA_DMA_LENGTH, nsects * 512);
+    OUT32(G1_ATA_DMA_DIRECTION, 1);
+
+    /* Enable G1 DMA. */
+    OUT32(G1_ATA_DMA_ENABLE, 1);
+
+    /* Wait until the drive is ready to accept the command. */
+    g1_ata_wait_nbsy();
+    g1_ata_wait_drdy();
+
+    /* Write out the command to the device. */
+    OUT8(G1_ATA_COMMAND_REG, cmd);
+
+    /* Start the DMA transfer. */
+    OUT32(G1_ATA_DMA_STATUS, 1);
+
+    if(block)
+        sem_wait(&dma_done);
+
+    /* Ack the IRQ. */
+    status = IN8(G1_ATA_STATUS_REG);
+
+    /* Was there an error doing the transfer? */
+    if(status & G1_ATA_SR_ERR) {
+        errno = EIO;
+        return -1;
+    }
+
+    return 0;
+}
+
+int g1_ata_read_lba_dma(uint64_t sector, size_t count, uint16_t *buf,
+                        int block) {
+    int rv = 0;
+    uint8_t dsel;
+    uint32_t addr;
+    int old;
+
+    /* Make sure we're actually being asked to do work... */
+    if(!count)
+        return 0;
+
+    if(!buf) {
+        errno = EFAULT;
+        return -1;
+    }
+
+    /* Make sure that we've been initialized and there's a disk attached. */
+    if(!devices) {
+        errno = ENXIO;
+        return -1;
+    }
+
+    /* Make sure the disk supports LBA mode. */
+    if(!device.max_lba) {
+        errno = ENOTSUP;
+        return -1;
+    }
+
+    /* Make sure the disk supports Multi-Word DMA mode 2. */
+    if(!device.wdma_modes) {
+        errno = EPERM;
+        return -1;
+    }
+
+    /* Chaining isn't done yet, so make sure we don't need to. */
+    if(count > 256) {
+        errno = EOVERFLOW;
+        return -1;
+    }
+
+    /* Make sure the range of sectors is valid. */
+    if((sector + count) > device.max_lba) {
+        errno = EOVERFLOW;
+        return -1;
+    }
+
+    /* Check the alignment of the address. */
+    addr = ((uint32_t)buf) & 0x0FFFFFFF;
+
+    if(addr & 0x1F) {
+        dbglog(DBG_ERROR, "g1_ata_read_lba_dma: Unaligned output address\n");
+        errno = EFAULT;
+        return -1;
+    }
+
+    /* Disable IRQs temporarily... */
+    old = irq_disable();
+
+    /* Make sure there is no DMA in progress already. */
+    if(dma_in_progress || g1_dma_in_progress()) {
+        irq_restore(old);
+        dbglog(DBG_KDEBUG, "g1_ata_read_lba_dma: DMA in progress\n");
+        errno = EIO;
+        return -1;
+    }
+
+    /* Set the settings for this transfer and reenable IRQs. */
+    dma_blocking = block;
+    dma_in_progress = 1;
+    irq_restore(old);
+
+    /* Wait for the device to signal it is ready. */
+    g1_ata_wait_nbsy();
+
+    /* For now, just assume we're accessing the slave device. We don't care
+       about the primary device, since it should always be the GD-ROM drive. */
+    dsel = IN8(G1_ATA_DEVICE_SELECT);
+
+    /* Which mode are we using: LBA28 or LBA48? */
+    if((sector + count) <= 0x0FFFFFFF) {
+        OUT8(G1_ATA_DEVICE_SELECT, 0xF0 | ((sector >> 24) & 0x0F));
+
+        /* Write out the number of sectors we want and the lower 24-bits of
+           the LBA we're looking for. */
+        OUT8(G1_ATA_SECTOR_COUNT, (uint8_t)count);
+        OUT8(G1_ATA_LBA_LOW,  (uint8_t)((sector >>  0) & 0xFF));
+        OUT8(G1_ATA_LBA_MID,  (uint8_t)((sector >>  8) & 0xFF));
+        OUT8(G1_ATA_LBA_HIGH, (uint8_t)((sector >> 16) & 0xFF));
+
+        /* Do the rest of the work... */
+        rv = dma_common(ATA_CMD_READ_DMA, count, addr, block);
+    }
+    else {
+        OUT8(G1_ATA_DEVICE_SELECT, 0xF0);
+
+        /* Write out the number of sectors we want and the LBA. */
+        OUT8(G1_ATA_SECTOR_COUNT, (uint8_t)(count >> 8));
+        OUT8(G1_ATA_LBA_LOW,  (uint8_t)((sector >> 24) & 0xFF));
+        OUT8(G1_ATA_LBA_MID,  (uint8_t)((sector >> 32) & 0xFF));
+        OUT8(G1_ATA_LBA_HIGH, (uint8_t)((sector >> 40) & 0xFF));
+        OUT8(G1_ATA_SECTOR_COUNT, (uint8_t)count);
+        OUT8(G1_ATA_LBA_LOW,  (uint8_t)((sector >>  0) & 0xFF));
+        OUT8(G1_ATA_LBA_MID,  (uint8_t)((sector >>  8) & 0xFF));
+        OUT8(G1_ATA_LBA_HIGH, (uint8_t)((sector >> 16) & 0xFF));
+
+        /* Do the rest of the work... */
+        rv = dma_common(ATA_CMD_READ_DMA_EXT, count, addr, block);
+    }
+
+    OUT8(G1_ATA_DEVICE_SELECT, dsel);
+    return rv;
+}
+
 int g1_ata_write_lba(uint64_t sector, size_t count, const uint16_t *buf) {
     int rv = 0;
     unsigned int i, j;
@@ -489,6 +691,33 @@ int g1_ata_flush(void) {
     return 0;
 }
 
+static int g1_ata_set_transfer_mode(uint8_t mode) {
+    uint8_t status;
+
+    /* Fill in the registers as is required. */
+    OUT8(G1_ATA_FEATURES, ATA_FEATURE_TRANSFER_MODE);
+    OUT8(G1_ATA_SECTOR_COUNT, mode);
+    OUT8(G1_ATA_CHS_SECTOR, 0);
+    OUT8(G1_ATA_CHS_CYL_LOW, 0);
+    OUT8(G1_ATA_CHS_CYL_HIGH, 0);
+
+    /* Send the SET FEATURES command. */
+    OUT8(G1_ATA_COMMAND_REG, ATA_CMD_SET_FEATURES);
+    timer_spin_sleep(1);
+
+    /* Wait for command completion. */
+    g1_ata_wait_nbsy();
+
+    /* See if the command completed. */
+    status = IN8(G1_ATA_STATUS_REG);
+    if((status & G1_ATA_SR_ERR) || (status & G1_ATA_SR_DF)) {
+        dbglog(DBG_KDEBUG, "Error setting transfer mode %02x\n", mode);
+        return -1;
+    }
+
+    return 0;
+}
+
 static int g1_ata_scan(void) {
     uint8_t dsel = IN8(G1_ATA_DEVICE_SELECT), st;
     int rv, i;
@@ -535,6 +764,7 @@ static int g1_ata_scan(void) {
     /* Read off some information we might need. */
     device.command_sets = (uint32_t)(data[82]) | ((uint32_t)(data[83]) << 16);
     device.capabilities = (uint32_t)(data[49]) | ((uint32_t)(data[50]) << 16);
+    device.wdma_modes = data[63];
 
     /* See if we support LBA mode or not... */
     if(!(device.capabilities & (1 << 9))) {
@@ -564,6 +794,24 @@ static int g1_ata_scan(void) {
     }
 
     rv = 1;
+
+    /* Set our transfer modes. */
+    g1_ata_set_transfer_mode(ATA_TRANSFER_PIO_DEFAULT);
+
+    /* Do we support Multiword DMA mode 2? If so, enable it. Otherwise, we won't
+       even bother doing DMA at all. */
+    if(device.wdma_modes & 0x0004) {
+        if(!g1_ata_set_transfer_mode(ATA_TRANSFER_WDMA(2))) {
+            OUT32(G1_ATA_DMA_RACCESS_WAIT, G1_ACCESS_WDMA_MODE2);
+            OUT32(G1_ATA_DMA_WACCESS_WAIT, G1_ACCESS_WDMA_MODE2);
+        }
+        else {
+            device.wdma_modes = 0;
+        }
+    }
+    else {
+        device.wdma_modes = 0;
+    }
 
 out:
     OUT8(G1_ATA_DEVICE_SELECT, dsel);
@@ -597,6 +845,19 @@ static int atab_read_blocks(kos_blockdev_t *d, uint64_t block, size_t count,
     }
 
     return g1_ata_read_lba(block + data->start_block, count, (uint16_t *)buf);
+}
+
+static int atab_read_blocks_dma(kos_blockdev_t *d, uint64_t block, size_t count,
+                                void *buf) {
+    ata_devdata_t *data = (ata_devdata_t *)d->dev_data;
+
+    if(block + count > data->end_block) {
+        errno = EOVERFLOW;
+        return -1;
+    }
+
+    return g1_ata_read_lba_dma(block + data->start_block, count,
+                               (uint16_t *)buf, 1);
 }
 
 static int atab_write_blocks(kos_blockdev_t *d, uint64_t block, size_t count,
@@ -674,6 +935,17 @@ static kos_blockdev_t ata_blockdev = {
     &atab_flush             /* flush */
 };
 
+static kos_blockdev_t ata_blockdev_dma = {
+    NULL,                   /* dev_data */
+    9,                      /* l_block_size (block size of 512 bytes) */
+    &atab_init,             /* init */
+    &atab_shutdown,         /* shutdown */
+    &atab_read_blocks_dma,  /* read_blocks */
+    &atab_write_blocks,     /* XXXX: write_blocks */
+    &atab_count_blocks,     /* count_blocks */
+    &atab_flush             /* flush */
+};
+
 static kos_blockdev_t ata_blockdev_chs = {
     NULL,                   /* dev_data */
     9,                      /* l_block_size (block size of 512 bytes) */
@@ -685,7 +957,7 @@ static kos_blockdev_t ata_blockdev_chs = {
     &atab_flush             /* flush */
 };
 
-int g1_ata_blockdev_for_partition(int partition, kos_blockdev_t *rv,
+int g1_ata_blockdev_for_partition(int partition, int dma, kos_blockdev_t *rv,
                                   uint8_t *partition_type) {
     uint8_t buf[512];
     int pval;
@@ -744,10 +1016,15 @@ int g1_ata_blockdev_for_partition(int partition, kos_blockdev_t *rv,
     }
 
     /* Copy in the template block device and fill it in */
-    if(device.max_lba)
-        memcpy(rv, &ata_blockdev, sizeof(kos_blockdev_t));
-    else
+    if(device.max_lba) {
+        if(dma && device.wdma_modes)
+            memcpy(rv, &ata_blockdev_dma, sizeof(kos_blockdev_t));
+        else
+            memcpy(rv, &ata_blockdev, sizeof(kos_blockdev_t));
+    }
+    else {
         memcpy(rv, &ata_blockdev_chs, sizeof(kos_blockdev_t));
+    }
 
     /* It doesn't matter whether we're using CHS or LBA... We only bother to
        parse out the LBA information from the MBR. Should be valid either
@@ -778,6 +1055,14 @@ int g1_ata_init(void) {
         return -1;
     }
 
+    /* Hook all the DMA related events. */
+    asic_evt_set_handler(ASIC_EVT_GD_DMA, g1_dma_irq_hnd);
+    asic_evt_enable(ASIC_EVT_GD_DMA, ASIC_IRQ_DEFAULT);
+    asic_evt_set_handler(ASIC_EVT_GD_DMA_OVERRUN, g1_dma_irq_hnd);
+    asic_evt_enable(ASIC_EVT_GD_DMA_OVERRUN, ASIC_IRQ_DEFAULT);
+    asic_evt_set_handler(ASIC_EVT_GD_DMA_ILLADDR, g1_dma_irq_hnd);
+    asic_evt_enable(ASIC_EVT_GD_DMA_ILLADDR, ASIC_IRQ_DEFAULT);
+
     initted = 1;
     
     return 0;
@@ -791,4 +1076,12 @@ void g1_ata_shutdown(void) {
     initted = 0;
 
     memset(&device, 0, sizeof(device));
+
+    /* Unhook the events and disable the IRQs. */
+    asic_evt_disable(ASIC_EVT_GD_DMA, ASIC_IRQ_DEFAULT);
+    asic_evt_set_handler(ASIC_EVT_GD_DMA, NULL);
+    asic_evt_disable(ASIC_EVT_GD_DMA_OVERRUN, ASIC_IRQ_DEFAULT);
+    asic_evt_set_handler(ASIC_EVT_GD_DMA_OVERRUN, NULL);
+    asic_evt_disable(ASIC_EVT_GD_DMA_ILLADDR, ASIC_IRQ_DEFAULT);
+    asic_evt_set_handler(ASIC_EVT_GD_DMA_ILLADDR, NULL);
 }

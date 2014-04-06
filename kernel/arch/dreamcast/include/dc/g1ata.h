@@ -1,7 +1,7 @@
 /* KallistiOS ##version##
 
    dc/g1ata.h
-   Copyright (C) 2013 Lawrence Sebald
+   Copyright (C) 2013, 2014 Lawrence Sebald
 */
 
 /** \file   dc/g1ata.h
@@ -36,6 +36,16 @@ __BEGIN_DECLS
 
 #include <stdint.h>
 #include <kos/blockdev.h>
+
+/** \brief  Is there a G1 DMA in progress currently?
+
+    This function returns non-zero if a DMA is in progress. This can be used to
+    check on the completion of DMA transfers when non-blocking mode was selected
+    at transfer time.
+
+    \return                 0 if no DMA is in progress, nonzero otherwise.
+*/
+int g1_dma_in_progress(void);
 
 /** \brief  Read one or more disk sectors with Cylinder-Head-Sector addressing.
 
@@ -127,6 +137,41 @@ int g1_ata_write_chs(uint16_t c, uint8_t h, uint8_t s, size_t count,
 */
 int g1_ata_read_lba(uint64_t sector, size_t count, uint16_t *buf);
 
+/** \brief  DMA read disk sectors with Linear Block Addressing (LBA).
+
+    This function reads one or more 512-byte disk blocks from the slave device
+    on the G1 ATA bus using LBA mode (either 28 or 48 bits, as appropriate).
+    This function uses DMA and optionally blocks until the data is read.
+
+    \param  sector          The sector to start reading from.
+    \param  count           The number of disk sectors to read.
+    \param  buf             Storage for the read-in disk sectors. This should be
+                            at least (count * 512) bytes in length, and must be
+                            at least 32-byte aligned.
+    \param  block           Non-zero to block until the transfer completes.
+    \return                 0 on success. < 0 on failure, setting errno as
+                            appropriate.
+
+    \note                   If errno is set to ENOTSUP after calling this
+                            function, you must use a CHS addressed transfer
+                            function instead, like g1_ata_read_chs().
+
+    \note                   If errno is set to EPERM after calling this
+                            function, DMA mode is not supported. You should use
+                            a PIO transfer function like g1_ata_read_lba()
+                            instead.
+
+    \par    Error Conditions:
+    \em     EIO - an I/O error occurred in reading data \n
+    \em     ENXIO - ATA support not initialized or no device attached \n
+    \em     EOVERFLOW - one or more of the requested sectors is out of the
+                        range of the disk \n
+    \em     ENOTSUP - LBA mode not supported by the device \n
+    \em     EPERM - device does not support DMA
+*/
+int g1_ata_read_lba_dma(uint64_t sector, size_t count, uint16_t *buf,
+                        int block);
+
 /** \brief  Write one or more disk sectors with Linear Block Addressing (LBA).
 
     This function writes one or more 512-byte disk blocks to the slave device
@@ -176,6 +221,8 @@ int g1_ata_flush(void);
     filesystems on the device.
 
     \param  partition       The partition number (0-3) to use.
+    \param  dma             Set to 1 to use DMA for reads/writes on the device,
+                            if available.
     \param  rv              Used to return the block device. Must be non-NULL.
     \param  partition_type  Used to return the partition type. Must be non-NULL.
     \retval 0               On success.
@@ -193,7 +240,7 @@ int g1_ata_flush(void);
     \note   This interface currently only supports MBR-formatted disks. There
             is currently no support for GPT partition tables.
 */
-int g1_ata_blockdev_for_partition(int partition, kos_blockdev_t *rv,
+int g1_ata_blockdev_for_partition(int partition, int dma, kos_blockdev_t *rv,
                                   uint8_t *partition_type);
 
 /** \brief  Initialize G1 ATA support.
