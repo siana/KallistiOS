@@ -198,6 +198,40 @@ int g1_ata_read_lba_dma(uint64_t sector, size_t count, uint16_t *buf,
 */
 int g1_ata_write_lba(uint64_t sector, size_t count, const uint16_t *buf);
 
+/** \brief  DMA Write disk sectors with Linear Block Addressing (LBA).
+
+    This function writes one or more 512-byte disk blocks to the slave device
+    on the G1 ATA bus using LBA mode (either 28 or 48 bits, as appropriate).
+    This function uses DMA and optionally blocks until the data is written.
+
+    \param  sector          The sector to start writing to.
+    \param  count           The number of disk sectors to write.
+    \param  buf             The data to write to the disk. This should be
+                            (count * 512) bytes in length and must be at least
+                            32-byte aligned.
+    \param  block           Non-zero to block until the transfer completes.
+    \return                 0 on success. < 0 on failure, setting errno as
+                            appropriate.
+
+    \note                   If errno is set to ENOTSUP after calling this
+                            function, you must use the g1_ata_write_chs()
+                            function instead.
+
+    \note                   If errno is set to EPERM after calling this
+                            function, DMA mode is not supported. You should use
+                            a PIO transfer function like g1_ata_write_lba()
+                            instead.
+
+    \par    Error Conditions:
+    \em     ENXIO - ATA support not initialized or no device attached \n
+    \em     EOVERFLOW - one or more of the requested sectors is out of the
+                        range of the disk \n
+    \em     ENOTSUP - LBA mode not supported by the device \n
+    \em     EPERM - device does not support DMA
+*/
+int g1_ata_write_lba_dma(uint64_t sector, size_t count, const uint16_t *buf,
+                         int block);
+
 /** \brief  Flush the write cache on the attached disk.
 
     This function flushes the write cache on the disk attached as the slave
