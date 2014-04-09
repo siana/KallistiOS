@@ -164,6 +164,12 @@ static semaphore_t dma_done = SEM_INITIALIZER(0);
 #define g1_ata_wait_drdy() \
     do {} while(!(IN8(G1_ATA_ALTSTATUS) & G1_ATA_SR_DRDY))
 
+static inline int use_lba28(uint64_t sector, size_t count) {
+    return ((sector + count) < 0x0FFFFFFF) && (count <= 256);
+}
+
+#define CAN_USE_LBA48() ((device.command_sets & (1 << 26)))
+
 static void g1_dma_irq_hnd(uint32 code) {
     /* XXXX: Probably should look at the code to make sure it isn't an error. */
     (void)code;
@@ -480,7 +486,7 @@ int g1_ata_read_lba_dma(uint64_t sector, size_t count, uint16_t *buf,
     int rv = 0;
     uint8_t dsel;
     uint32_t addr;
-    int old;
+    int old, can_lba48 = CAN_USE_LBA48();
 
     /* Make sure we're actually being asked to do work... */
     if(!count)
@@ -510,7 +516,7 @@ int g1_ata_read_lba_dma(uint64_t sector, size_t count, uint16_t *buf,
     }
 
     /* Chaining isn't done yet, so make sure we don't need to. */
-    if(count > 256) {
+    if(count > 65536 || (!can_lba48 && count > 256)) {
         errno = EOVERFLOW;
         return -1;
     }
@@ -554,11 +560,12 @@ int g1_ata_read_lba_dma(uint64_t sector, size_t count, uint16_t *buf,
     dsel = IN8(G1_ATA_DEVICE_SELECT);
 
     /* Which mode are we using: LBA28 or LBA48? */
-    if((sector + count) <= 0x0FFFFFFF) {
+    if(!can_lba48 || use_lba28(sector, count)) {
         OUT8(G1_ATA_DEVICE_SELECT, 0xF0 | ((sector >> 24) & 0x0F));
 
         /* Write out the number of sectors we want and the lower 24-bits of
-           the LBA we're looking for. */
+           the LBA we're looking for. Note that putting 0 into the sector count
+           register returns 256 sectors. */
         OUT8(G1_ATA_SECTOR_COUNT, (uint8_t)count);
         OUT8(G1_ATA_LBA_LOW,  (uint8_t)((sector >>  0) & 0xFF));
         OUT8(G1_ATA_LBA_MID,  (uint8_t)((sector >>  8) & 0xFF));
@@ -570,7 +577,9 @@ int g1_ata_read_lba_dma(uint64_t sector, size_t count, uint16_t *buf,
     else {
         OUT8(G1_ATA_DEVICE_SELECT, 0xF0);
 
-        /* Write out the number of sectors we want and the LBA. */
+        /* Write out the number of sectors we want and the LBA. Note that in
+           LBA48 mode, putting 0 into the sector count register returns 65536
+           sectors (not that we have that much RAM on the Dreamcast). */
         OUT8(G1_ATA_SECTOR_COUNT, (uint8_t)(count >> 8));
         OUT8(G1_ATA_LBA_LOW,  (uint8_t)((sector >> 24) & 0xFF));
         OUT8(G1_ATA_LBA_MID,  (uint8_t)((sector >> 32) & 0xFF));
@@ -678,7 +687,7 @@ int g1_ata_write_lba_dma(uint64_t sector, size_t count, const uint16_t *buf,
     int rv = 0;
     uint8_t dsel;
     uint32_t addr;
-    int old;
+    int old, can_lba48 = CAN_USE_LBA48();
 
     /* Make sure we're actually being asked to do work... */
     if(!count)
@@ -708,7 +717,7 @@ int g1_ata_write_lba_dma(uint64_t sector, size_t count, const uint16_t *buf,
     }
 
     /* Chaining isn't done yet, so make sure we don't need to. */
-    if(count > 256) {
+    if(count > 65536 || (!can_lba48 && count > 256)) {
         errno = EOVERFLOW;
         return -1;
     }
@@ -723,7 +732,7 @@ int g1_ata_write_lba_dma(uint64_t sector, size_t count, const uint16_t *buf,
     addr = ((uint32_t)buf) & 0x0FFFFFFF;
 
     if(addr & 0x1F) {
-        dbglog(DBG_ERROR, "g1_ata_write_lba_dma: Unaligned output address\n");
+        dbglog(DBG_ERROR, "g1_ata_write_lba_dma: Unaligned input address\n");
         errno = EFAULT;
         return -1;
     }
@@ -755,11 +764,12 @@ int g1_ata_write_lba_dma(uint64_t sector, size_t count, const uint16_t *buf,
     dsel = IN8(G1_ATA_DEVICE_SELECT);
 
     /* Which mode are we using: LBA28 or LBA48? */
-    if((sector + count) <= 0x0FFFFFFF) {
+    if(!can_lba48 || use_lba28(sector, count)) {
         OUT8(G1_ATA_DEVICE_SELECT, 0xF0 | ((sector >> 24) & 0x0F));
 
-        /* Write out the number of sectors we want and the lower 24-bits of
-           the LBA we're looking for. */
+        /* Write out the number of sectors we have and the lower 24-bits of
+           the LBA we're looking for. Note that putting 0 into the sector count
+           register writes 256 sectors. */
         OUT8(G1_ATA_SECTOR_COUNT, (uint8_t)count);
         OUT8(G1_ATA_LBA_LOW,  (uint8_t)((sector >>  0) & 0xFF));
         OUT8(G1_ATA_LBA_MID,  (uint8_t)((sector >>  8) & 0xFF));
@@ -772,7 +782,9 @@ int g1_ata_write_lba_dma(uint64_t sector, size_t count, const uint16_t *buf,
     else {
         OUT8(G1_ATA_DEVICE_SELECT, 0xF0);
 
-        /* Write out the number of sectors we want and the LBA. */
+        /* Write out the number of sectors we have and the LBA. Note that in
+           LBA48 mode, putting 0 into the sector count register writes 65536
+           sectors (not that we have that much RAM on the Dreamcast). */
         OUT8(G1_ATA_SECTOR_COUNT, (uint8_t)(count >> 8));
         OUT8(G1_ATA_LBA_LOW,  (uint8_t)((sector >> 24) & 0xFF));
         OUT8(G1_ATA_LBA_MID,  (uint8_t)((sector >> 32) & 0xFF));
