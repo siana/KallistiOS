@@ -15,6 +15,7 @@
 #include <kos/sem.h>
 
 #include <arch/timer.h>
+#include <arch/cache.h>
 
 /*
    This file implements support for accessing devices over the G1 bus by the
@@ -727,6 +728,9 @@ int g1_ata_write_lba_dma(uint64_t sector, size_t count, const uint16_t *buf,
         return -1;
     }
 
+    /* Flush the dcache over the range of the data. */
+    dcache_flush_range((uint32)buf, count * 512);
+
     /* Disable IRQs temporarily... */
     old = irq_disable();
 
@@ -995,6 +999,19 @@ static int atab_write_blocks(kos_blockdev_t *d, uint64_t block, size_t count,
 
     return g1_ata_write_lba(block + data->start_block, count,
                             (const uint16_t *)buf);
+}
+
+static int atab_write_blocks_dma(kos_blockdev_t *d, uint64_t block,
+                                 size_t count, const void *buf) {
+    ata_devdata_t *data = (ata_devdata_t *)d->dev_data;
+
+    if(block + count > data->end_block) {
+        errno = EOVERFLOW;
+        return -1;
+    }
+
+    return g1_ata_write_lba_dma(block + data->start_block, count,
+                                (const uint16_t *)buf, 1);
 }
 
 static int atab_read_blocks_chs(kos_blockdev_t *d, uint64_t block, size_t count,
