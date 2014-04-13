@@ -13,9 +13,6 @@ KOS_CFLAGS += -Wextra
 
 # Add stuff to DIRS to auto-compile it with the big tree.
 DIRS = utils
-ifdef KOS_CCPLUS
-	DIRS += libk++
-endif
 DIRS += kernel addons # examples
 
 # Detect a non-working or missing environ.sh file.
