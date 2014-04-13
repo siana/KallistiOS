@@ -2,7 +2,14 @@
    The big difference in this program is that we add in a small bit of user
    input code, and that we support render-to-texture mode. */
 
-#include <kos.h>
+#include <stdio.h>
+
+#include <arch/types.h>
+#include <arch/timer.h>
+
+#include <dc/pvr.h>
+#include <dc/maple.h>
+#include <dc/maple/controller.h>
 
 /* A little test program -- creates six rainbow polygons and
    moves them around over a white background. */
@@ -104,7 +111,7 @@ void draw_one_textured_poly(polyplace_t *p) {
     pvr_prim(&vert, sizeof(vert));
 }
 
-int to_texture = 0;
+int to_texture = 1;
 pvr_ptr_t d_texture;
 uint32 tx_x = 1024, tx_y = 512;
 
@@ -121,10 +128,8 @@ void draw_frame() {
 
     if(!to_texture)
         pvr_scene_begin();
-    else {
+    else
         pvr_scene_begin_txr(d_texture, &tx_x, &tx_y);
-        to_texture = 2;
-    }
 
     pvr_list_begin(PVR_LIST_OP_POLY);
 
@@ -142,7 +147,8 @@ void draw_frame() {
     pvr_scene_finish();
 
     /* Move all polygons */
-    move_polys();
+    if(!to_texture)
+        move_polys();
 }
 
 void draw_textured() {
@@ -150,19 +156,17 @@ void draw_textured() {
     pvr_poly_hdr_t hdr;
     int i;
 
-    pvr_poly_cxt_txr(&cxt, PVR_LIST_OP_POLY, PVR_TXRFMT_RGB565 | PVR_TXRFMT_NONTWIDDLED, 1024, 512, d_texture, PVR_FILTER_NONE);
+    draw_frame();
+
+    pvr_poly_cxt_txr(&cxt, PVR_LIST_OP_POLY,
+                     PVR_TXRFMT_RGB565 | PVR_TXRFMT_NONTWIDDLED, 1024, 512,
+                     d_texture, PVR_FILTER_NONE);
     pvr_poly_compile(&hdr, &cxt);
 
-    /* Start opaque poly list */
     pvr_wait_ready();
+    pvr_scene_begin();
 
-    if(to_texture == 3) {
-        pvr_scene_begin_txr(d_texture, &tx_x, &tx_y);
-        to_texture = 2;
-    }
-    else
-        pvr_scene_begin();
-
+    /* Start opaque poly list */
     pvr_list_begin(PVR_LIST_OP_POLY);
 
     /* Send polygon header to the TA using store queues */
@@ -184,7 +188,8 @@ void draw_textured() {
 
 /* Main program: init and loop drawing polygons */
 pvr_init_params_t pvr_params = {
-    { PVR_BINSIZE_16, PVR_BINSIZE_0, PVR_BINSIZE_0, PVR_BINSIZE_0, PVR_BINSIZE_0 },
+    { PVR_BINSIZE_16, PVR_BINSIZE_0, PVR_BINSIZE_0,
+      PVR_BINSIZE_0, PVR_BINSIZE_0 },
     64 * 1024
 };
 
@@ -194,6 +199,7 @@ int main(int argc, char **argv) {
     int finished = 0;
     uint64 timer = timer_ms_gettime64(), start, end;
     uint32 counter = 0;
+    pvr_stats_t stats;
 
     pvr_init(&pvr_params);
 
@@ -224,18 +230,24 @@ int main(int argc, char **argv) {
             }
         }
 
-        if(to_texture < 2)
+        if(!to_texture) {
             draw_frame();
-        else
+            ++counter;
+        }
+        else {
             draw_textured();
-
-        ++counter;
+            counter += 2;
+        }
     }
 
     end = timer_ms_gettime64();
 
     printf("%lu frames in %llu ms = %f FPS\n", counter, end - start,
-           counter / ((float)end - start) * 1000.0f);
+           counter / ((float)end - start) * 1000.0);
+
+    pvr_get_stats(&stats);
+    printf("From pvr_get_stats:\n\tVBlank Count: %lu\n\tFrame Count: %lu\n",
+           stats.vbl_count, stats.frame_count);
 
     pvr_mem_free(d_texture);
 
