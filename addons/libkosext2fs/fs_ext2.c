@@ -9,6 +9,8 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
+#include <fcntl.h>
+#include <limits.h>
 #include <sys/queue.h>
 
 #include <kos/fs.h>
@@ -20,9 +22,6 @@
 #include "ext2fs.h"
 #include "inode.h"
 #include "directory.h"
-
-/* For some reason, Newlib doesn't seem to define this function in stdlib.h. */
-extern char *realpath(const char *, const char *);
 
 #ifdef __STRICT_ANSI__
 /* These don't necessarily get prototyped in string.h in standard-compliant mode
@@ -1075,75 +1074,6 @@ static int fs_ext2_unlink(vfs_handler_t *vfs, const char *fn) {
     return 0;    
 }
 
-static int fs_ext2_stat(vfs_handler_t *vfs, const char *fn, stat_t *rv) {
-    fs_ext2_fs_t *fs = (fs_ext2_fs_t *)vfs->privdata;
-    int irv;
-    ext2_inode_t *inode;
-    uint32_t inode_num;
-
-    if(!rv) {
-        errno = EINVAL;
-        return -1;
-    }
-
-    mutex_lock(&ext2_mutex);
-
-    /* Find the object in question */
-    if((irv = ext2_inode_by_path(fs->fs, fn, &inode, &inode_num, 1, NULL))) {
-        mutex_unlock(&ext2_mutex);
-        errno = -irv;
-        return -1;
-    }
-
-    /* Fill in the easy parts of the structure. */
-    rv->dev = vfs;
-    rv->unique = inode_num;
-    rv->time = inode->i_mtime;
-    rv->attr = 0;
-
-    /* Parse out the ext2 mode bits */
-    switch(inode->i_mode & 0xF000) {
-        case EXT2_S_IFLNK:
-            rv->type = STAT_TYPE_SYMLINK;
-            rv->size = inode->i_size;
-            break;
-
-        case EXT2_S_IFREG:
-            rv->type = STAT_TYPE_FILE;
-            rv->size = ext2_inode_size(inode);
-            break;
-
-        case EXT2_S_IFDIR:
-            rv->type = STAT_TYPE_DIR;
-            rv->size = inode->i_size;
-            break;
-
-        case EXT2_S_IFSOCK:
-        case EXT2_S_IFIFO:
-        case EXT2_S_IFBLK:
-        case EXT2_S_IFCHR:
-            rv->type = STAT_TYPE_PIPE;
-            rv->size = 0;
-            break;
-
-        default:
-            rv->type = STAT_TYPE_NONE;
-            rv->size = 0;
-            break;
-    }
-
-    /* Set the attribute bits based on the user permissions on the file. */
-    if(inode->i_mode & EXT2_S_IRUSR)
-        rv->attr |= STAT_ATTR_R;
-    if(inode->i_mode & EXT2_S_IWUSR)
-        rv->attr |= STAT_ATTR_W;
-
-    ext2_inode_put(inode);
-    mutex_unlock(&ext2_mutex);
-
-    return 0;
-}
-
 static int fs_ext2_mkdir(vfs_handler_t *vfs, const char *fn) {
     fs_ext2_fs_t *fs = (fs_ext2_fs_t *)vfs->privdata;
     int irv;
@@ -1746,6 +1676,92 @@ static ssize_t fs_ext2_readlink(vfs_handler_t *vfs, const char *path, char *buf,
         return bufsize;
 
     return len;
+}
+
+int fs_ext2_stat(vfs_handler_t *vfs, const char *path, struct stat *buf,
+                 int flag) {
+
+    fs_ext2_fs_t *fs = (fs_ext2_fs_t *)vfs->privdata;
+    int irv;
+    ext2_inode_t *inode;
+    uint32_t inode_num;
+    int rl = 1;
+    uint64_t sz;
+
+    /* Do we want the status of a symlink or of the thing it points at if we end
+       up with a symlink at the end of path resolution? */
+    if(flag & AT_SYMLINK_NOFOLLOW)
+        rl = 2;
+
+    mutex_lock(&ext2_mutex);
+
+    /* Find the object in question */
+    if((irv = ext2_inode_by_path(fs->fs, path, &inode, &inode_num, rl, NULL))) {
+        mutex_unlock(&ext2_mutex);
+        errno = -irv;
+        return -1;
+    }
+
+    /* Fill in the structure */
+    memset(buf, 0, sizeof(struct stat));
+    buf->st_dev = (dev_t)((ptr_t)vfs);
+    buf->st_ino = inode_num;
+    buf->st_mode = inode->i_mode & 0x0FFF;
+    buf->st_nlink = inode->i_links_count;
+    buf->st_uid = inode->i_uid;
+    buf->st_gid = inode->i_gid;
+
+    buf->st_atime = inode->i_atime;
+    buf->st_mtime = inode->i_mtime;
+    buf->st_ctime = inode->i_ctime;
+    buf->st_blksize = 512;
+    buf->st_blocks = inode->i_blocks;
+
+    /* The rest depends on what type of inode this is... */
+    switch(inode->i_mode & 0xF000) {
+        case EXT2_S_IFLNK:
+            buf->st_mode |= S_IFLNK;
+            buf->st_size = inode->i_size;
+            break;
+
+        case EXT2_S_IFREG:
+            buf->st_mode |= S_IFREG;
+            sz = ext2_inode_size(inode);
+
+            if(sz > LONG_MAX) {
+                errno = EOVERFLOW;
+                irv = -1;
+            }
+
+            buf->st_size = sz;
+            break;
+
+        case EXT2_S_IFDIR:
+            buf->st_mode |= S_IFDIR;
+            buf->st_size = inode->i_size;
+            break;
+
+        case EXT2_S_IFSOCK:
+            buf->st_mode |= S_IFSOCK;
+            break;
+
+        case EXT2_S_IFIFO:
+            buf->st_mode |= S_IFIFO;
+            break;
+
+        case EXT2_S_IFBLK:
+            buf->st_mode |= S_IFBLK;
+            break;
+
+        case EXT2_S_IFCHR:
+            buf->st_mode |= S_IFCHR;
+            break;
+    }
+
+    ext2_inode_put(inode);
+    mutex_unlock(&ext2_mutex);
+
+    return irv;
 }
 
 /* This is a template that will be used for each mount */

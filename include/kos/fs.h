@@ -17,6 +17,7 @@ __BEGIN_DECLS
 #include <time.h>
 #include <sys/queue.h>
 #include <stdarg.h>
+#include <sys/stat.h>
 
 #include <kos/nmmgr.h>
 
@@ -133,10 +134,10 @@ typedef struct vfs_handler {
     ssize_t (*write)(void *hnd, const void *buffer, size_t cnt);
 
     /** \brief Seek in a previously opened file */
-    off_t(*seek)(void *hnd, off_t offset, int whence);
+    off_t (*seek)(void *hnd, off_t offset, int whence);
 
     /** \brief Return the current position in a previously opened file */
-    off_t(*tell)(void *hnd);
+    off_t (*tell)(void *hnd);
 
     /** \brief Return the total size of a previously opened file */
     size_t (*total)(void *hnd);
@@ -160,8 +161,13 @@ typedef struct vfs_handler {
                file */
     int (*complete)(void *fd, ssize_t *rv);
 
-    /** \brief Get status information on a file on the given VFS */
-    int (*stat)(struct vfs_handler *vfs, const char *fn, stat_t *rv);
+    /** \brief Get status information on a file on the given VFS
+        \note  path will not be passed through realpath() before calling the
+               filesystem-level function. It is also important to not call
+               realpath() in any implementation of this function as it is
+               possible that realpath() will call this function. */
+    int (*stat)(struct vfs_handler *vfs, const char *path, struct stat *buf,
+                int flag);
 
     /** \brief Make a directory on the given VFS */
     int (*mkdir)(struct vfs_handler *vfs, const char *fn);
@@ -196,9 +202,9 @@ typedef struct vfs_handler {
 
     /** \brief Read the value of a symbolic link
         \note  path will not be passed through realpath() before calling the
-               filesystem function. It is also important to not call realpath()
-               in your implementation as it is possible that readlink() will be
-               called in realpath(). */
+               filesystem-level function. It is also important to not call
+               realpath() in any implementation of this function as it is
+               possible that realpath() will call this function. */
     ssize_t (*readlink)(struct vfs_handler *vfs, const char *path, char *buf,
                         size_t bufsize);
 } vfs_handler_t;
@@ -426,37 +432,31 @@ int fs_chdir(const char *fn);
     up to the original length of the file, will be written back to the file when
     it is closed, assuming that the file is opened for writing.
 
-    Note that some of the filesystems in KallistiOS do not support this
-    operation.
-
     \param  hnd             The descriptor to memory map.
     \return                 The memory mapped buffer, or NULL on failure.
+
+    \note                   Some of the filesystems in KallistiOS do not support
+                            this operation. If you attempt to use this function
+                            on a filesystem that does not support it, the
+                            function will return NULL and set errno to EINVAL.
 */
 void *fs_mmap(file_t hnd);
 
 /** \brief  Perform an I/O completion on the given file descriptor.
 
     This function is used with asynchronous I/O to perform an I/O completion on
-    the given file descriptor. Most filesystems do not support this operation
-    on KallistiOS.
+    the given file descriptor.
 
     \param  fd              The descriptor to complete I/O on.
     \param  rv              A buffer to store the size of the I/O in.
     \return                 0 on success, -1 on failure.
+
+    \note                   Most of the filesystems in KallistiOS do not support
+                            this operation. If you attempt to use this function
+                            on a filesystem that does not support it, the
+                            function will return -1 and set errno to EINVAL.
 */
 int fs_complete(file_t fd, ssize_t *rv);
-
-/** \brief  Retrieve information about the specified path.
-
-    This function retrieves the stat_t structure for the given path on the VFS.
-    This function is similar to the standard POSIX function stat(), but provides
-    slightly different data than it does.
-
-    \param  fn              The path to retrieve information about.
-    \param  rv              The buffer to store stat information in.
-    \return                 0 on success, -1 on failure.
-*/
-int fs_stat(const char *fn, stat_t *rv);
 
 /** \brief  Create a directory.
 
@@ -498,10 +498,9 @@ int fs_fcntl(file_t fd, int cmd, ...);
     \return                 0 on success, -1 on failure.
 
     \note                   Most filesystems in KallistiOS do not support hard
-                            links. Unlike most other VFS functions, this one
-                            does not set errno to ENOSYS in that case, but
-                            rather to EMLINK to preserve existing the original
-                            behavior in KOS.
+                            links. If you call this function on a filesystem
+                            that does not support hard links, the function will
+                            return -1 and set errno to EMLINK.
 */
 int fs_link(const char *path1, const char *path2);
 
@@ -518,7 +517,8 @@ int fs_link(const char *path1, const char *path2);
 
     \note                   Most filesystems in KallistiOS do not support
                             symbolic links. Filesystems that do not support
-                            symlinks will simply set errno to ENOSYS.
+                            symlinks will simply set errno to ENOSYS and return
+                            -1.
 */
 int fs_symlink(const char *path1, const char *path2);
 
@@ -542,6 +542,23 @@ int fs_symlink(const char *path1, const char *path2);
                             -1.
 */
 ssize_t fs_readlink(const char *path, char *buf, size_t bufsize);
+
+/** \brief  Retrieve information about the specified path.
+
+    This function retrieves status information on the given path. This function
+    now returns the normal POSIX-style struct stat, rather than the old KOS
+    stat_t structure. In addition, you can specify whether or not this function
+    should resolve symbolic links on filesystems that support symlinks.
+
+    \param  path            The path to retrieve information about.
+    \param  buf             The buffer to store stat information in.
+    \param  flag            Specifies whether or not to resolve a symbolic link.
+                            If you don't want to resolve any symbolic links at
+                            the end of the path, pass AT_SYMLINK_NOFOLLOW,
+                            otherwise pass 0.
+    \return                 0 on success, -1 on failure.
+*/
+int fs_stat(const char *path, struct stat *buf, int flag);
 
 /** \brief  Duplicate a file descriptor.
 

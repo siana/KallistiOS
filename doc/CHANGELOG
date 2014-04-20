@@ -30,6 +30,8 @@ KallistiOS version 2.0.1 -----------------------------------------------
       that they can be overridden without modifying KOS [LS]
 - DC  Corrected render-to-texture mode so that you don't have to wait for a
       vblank to actually render to the texture [LS]
+- *** Modified fs_stat to conform (mostly) to the POSIX standard for the stat
+      function [LS]
 
 KallistiOS version 2.0.0 -----------------------------------------------
 - DC  Broadband Adapter driver fixes [Dan Potter == DP]
@@ -282,7 +284,7 @@ KallistiOS version 1.2.0 -----------------------------------------------
 - DC  Fix for potential incorrectness in NDEBUG mode in pvr_txr_load_ex [DP]
 - DC  Remove float usage in timer_ms_gettime() [DP]
 - *** More proper condvar impl using genwaits [DP]
-- DC  Strip trailing dots on extensionless ISO filenames (thanks waltervn for 
+- DC  Strip trailing dots on extensionless ISO filenames (thanks waltervn for
       pointing this out) [DP]
 - *** Fix file descriptor owner bug in fdopen [Bero]
 - *** Zlib workaround for KOS file descriptors being non-POSIX [Bero]
@@ -552,7 +554,7 @@ KallistiOS version 1.1.7 ------------------------------------------------
 - DC  Fixed rtc_unix_secs() [DP]
 - DC  Added clock example [DP]
 - DC  Added pvr_set_bg_color to glClearColor in glmisc.c [PB]
-- DC  Added texture wrapping enums and functionality to KGL. Cleaned up 
+- DC  Added texture wrapping enums and functionality to KGL. Cleaned up
       glTexParameteri in gltex.c in the process. [PB]
 - DC  Added texwrap example [PB]
 - DC  Fixed some locking issues, added real date/time support to fs_vmu [DP]
@@ -642,7 +644,7 @@ KallistiOS version 1.1.6 ------------------------------------------------
 - DC  Cleaned up cruft in DC spinlock.h [DP]
 - DC  Pre-bundled libm.a updated to latest newlib release [DP]
 
-* Xavier Bouchoux sent this to me earlier, but I was too lazy to get 
+* Xavier Bouchoux sent this to me earlier, but I was too lazy to get
   it integrated ^_^;
 
 KallistiOS version 1.1.5 ------------------------------------------------
@@ -845,7 +847,7 @@ KallistiOS version 0.90 -------------------------------------------------
 - fs_romdisk now supports directories
 - Although this doesn't really affect anything in the code, the naming
   convention for KOS executables is now to make their extension '.klf'
-  instead of '.elf'. 
+  instead of '.elf'.
 - Default 'zclip' in TA module is now 0.01
 
 KallistiOS version 0.80 -------------------------------------------------

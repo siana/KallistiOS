@@ -2,7 +2,7 @@
 
    fs_vmu.c
    Copyright (C) 2003 Dan Potter
-   Copyright (C) 2012, 2013 Lawrence Sebald
+   Copyright (C) 2012, 2013, 2014 Lawrence Sebald
 
 */
 
@@ -561,34 +561,38 @@ static int vmu_unlink(vfs_handler_t * vfs, const char *path) {
     return vmufs_delete(dev, path + 4);
 }
 
-static int vmu_stat(vfs_handler_t * vfs, const char * fn, stat_t * rv) {
+static int vmu_stat(vfs_handler_t *vfs, const char *fn, struct stat *rv,
+                    int flag) {
     maple_device_t * dev;
+    size_t len = strlen(fn);
 
-    (void)vfs;
-
-    if(rv == NULL) {
-        dbglog(DBG_ERROR, "vmu_stat: null output pointer\n");
-        return -1;
-    }
+    (void)flag;
 
     /* The only thing we can stat right now is full VMUs, and what that
        will get you is a count of free blocks in "size". */
+    if(len > 4) {
+        /* XXXX: This isn't right, but it'll keep the old functionality of this
+           function, at least. */
+        errno = ENOTDIR;
+        return -1;
+    }
+
     dev = vmu_path_to_addr(fn);
 
-    if(dev == NULL) {
-        dbglog(DBG_ERROR, "vmu_stat: couldn't resolve VMU name '%s'\n", fn);
+    if(!dev) {
+        errno = ENOENT;
         return -1;
     }
 
     /* Get the number of free blocks */
-    rv->size = vmufs_free_blocks(dev);
-    rv->dev = NULL;
-    rv->unique = 0;
-    rv->type = STAT_TYPE_DIR;
-    rv->attr = STAT_ATTR_RW;
-    rv->time = 0;
+    memset(rv, 0, sizeof(struct stat));
+    rv->st_size = vmufs_free_blocks(dev);
+    rv->st_dev = (dev_t)((ptr_t)vfs);
+    rv->st_mode = S_IFDIR | S_IRWXU | S_IRWXG | S_IRWXO;
+    rv->st_nlink = 1;
+    rv->st_blksize = 512;
 
-    return (rv->size < 0) ? -1 : 0;
+    return 0;
 }
 
 static int vmu_fcntl(void *fd, int cmd, va_list ap) {
@@ -644,15 +648,15 @@ static vfs_handler_t vh = {
     vmu_open,
     vmu_close,
     vmu_read,
-    vmu_write,          /* the write function */
-    vmu_seek,           /* the seek function */
+    vmu_write,
+    vmu_seek,
     vmu_tell,
     vmu_total,
-    vmu_readdir,        /* readdir */
+    vmu_readdir,
     NULL,               /* ioctl */
     NULL,               /* rename/move */
-    vmu_unlink,         /* unlink */
-    vmu_mmap,           /* mmap */
+    vmu_unlink,
+    vmu_mmap,
     NULL,               /* complete */
     vmu_stat,           /* stat */
     NULL,               /* mkdir */

@@ -601,6 +601,45 @@ static void * ramdisk_mmap(void * h) {
     return rv;
 }
 
+static int ramdisk_stat(vfs_handler_t *vfs, const char *path, struct stat *buf,
+                        int flag) {
+    rd_file_t *f;
+    int rv = -1;
+
+    (void)flag;
+
+    mutex_lock(&rd_mutex);
+
+    /* Find the file */
+    f = ramdisk_find_path(rootdir, path, 0);
+
+    if(f) {
+        memset(buf, 0, sizeof(struct stat));
+        buf->st_dev = (dev_t)((ptr_t)vfs);
+        buf->st_mode = S_IRUSR | S_IWUSR;
+
+        if(f->type == STAT_TYPE_DIR)
+            buf->st_mode |= S_IFDIR;
+        else
+            buf->st_mode |= S_IFREG;
+
+        buf->st_nlink = 1;
+        buf->st_size = f->datasize;
+        buf->st_blksize = 1024;
+        buf->st_blocks = f->datasize >> 10;
+
+        if(f->datasize & 0x3ff)
+            ++buf->st_blocks;
+    }
+    else {
+        errno = ENOENT;
+        rv = -1;
+    }
+
+    mutex_unlock(&rd_mutex);
+    return rv;
+}
+
 static int ramdisk_fcntl(void *h, int cmd, va_list ap) {
     file_t fd = (file_t)h;
     int rv = -1;
@@ -661,7 +700,7 @@ static vfs_handler_t vh = {
     ramdisk_unlink,
     ramdisk_mmap,
     NULL,               /* complete */
-    NULL,               /* stat XXX */
+    ramdisk_stat,
     NULL,               /* mkdir XXX */
     NULL,               /* rmdir XXX */
     ramdisk_fcntl,

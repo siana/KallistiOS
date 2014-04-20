@@ -449,27 +449,27 @@ static vfs_handler_t vh = {
     romdisk_open,
     romdisk_close,
     romdisk_read,
-    NULL,
+    NULL,                       /* write */
     romdisk_seek,
     romdisk_tell,
     romdisk_total,
     romdisk_readdir,
-    NULL,
-    NULL,
-    NULL,
+    NULL,                       /* ioctl */
+    NULL,                       /* rename */
+    NULL,                       /* unlink */
     romdisk_mmap,
-    NULL,
-    NULL,
-    NULL,
-    NULL,
+    NULL,                       /* complete */
+    NULL,                       /* stat */
+    NULL,                       /* mkdir */
+    NULL,                       /* rmdir */
     romdisk_fcntl,
-    NULL,
-    NULL,
-    NULL,
-    NULL,
-    NULL,
-    NULL,
-    NULL
+    NULL,                       /* poll */
+    NULL,                       /* link */
+    NULL,                       /* symlink */
+    NULL,                       /* seek64 */
+    NULL,                       /* tell64 */
+    NULL,                       /* total64 */
+    NULL                        /* readlink */
 };
 
 /* Are we initialized? */

@@ -565,14 +565,13 @@ static int dcls_unlink(vfs_handler_t *vfs, const char *fn) {
     return retval;
 }
 
-static int dcls_stat(vfs_handler_t *vfs, const char *fn, stat_t *rv) {
+static int dcls_stat(vfs_handler_t *vfs, const char *fn, struct stat *rv,
+                     int flag) {
     command_t *cmd = (command_t *)pktbuf;
     dcload_stat_t filestat;
     int locked;
 
-    if(!rv) {
-        return -1;
-    }
+    (void)flag;
 
     locked = mutex_trylock(&mutex);
 
@@ -594,19 +593,20 @@ static int dcls_stat(vfs_handler_t *vfs, const char *fn, stat_t *rv) {
     dcls_recv_loop();
 
     if(!retval) {
-        rv->dev = vfs;
-        rv->unique = filestat.st_ino;
-
-        if(filestat.st_mode & S_IFDIR) {
-            rv->type = STAT_TYPE_DIR;
-            rv->size = -1;
-        }
-        else {
-            rv->type = STAT_TYPE_FILE;
-            rv->size = filestat.st_size;
-        }
-
-        rv->time = filestat.st_mtime;
+        memset(rv, 0, sizeof(struct stat));
+        rv->st_dev = (dev_t)((ptr_t)vfs);
+        rv->st_ino = filestat.st_ino;
+        rv->st_mode = filestat.st_mode;
+        rv->st_nlink = filestat.st_nlink;
+        rv->st_uid = filestat.st_uid;
+        rv->st_gid = filestat.st_gid;
+        rv->st_rdev = filestat.st_rdev;
+        rv->st_size = filestat.st_size;
+        rv->st_atime = filestat.st_atime;
+        rv->st_mtime = filestat.st_mtime;
+        rv->st_ctime = filestat.st_ctime;
+        rv->st_blksize = filestat.st_blksize;
+        rv->st_blocks = filestat.st_blocks;
 
         mutex_unlock(&mutex);
         return 0;

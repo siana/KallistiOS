@@ -2,7 +2,7 @@
 
    newlib_stat.c
    Copyright (C) 2004 Dan Potter
-   Copyright (C) 2011 Lawrence Sebald
+   Copyright (C) 2011, 2013 Lawrence Sebald
 
 */
 
@@ -11,32 +11,51 @@
 #include <sys/reent.h>
 #include <kos/fs.h>
 #include <errno.h>
+#include <fcntl.h>
 
-int _stat_r(struct _reent * reent, const char * fn, struct stat * pstat) {
-    file_t fp = fs_open(fn, O_RDONLY);
-    mode_t md = S_IFREG;
+static int stat_int(const char *path, struct stat *buf, int flag) {
+    int err = errno, rv;
+    file_t fp;
+    mode_t md;
 
-    (void)reent;
+    /* Try to use the native stat function first... */
+    if(!(rv = fs_stat(path, buf, flag)) || errno != ENOSYS)
+        return rv;
+
+    /* If this filesystem doesn't implement stat, then fake it to get a few
+       important pieces... */
+    errno = err;
+    fp = fs_open(path, O_RDONLY);
+    md = S_IFREG;
 
     /* If we couldn't get it as a file, try as a directory */
     if(fp == FILEHND_INVALID) {
-        fp = fs_open(fn, O_RDONLY | O_DIR);
+        fp = fs_open(path, O_RDONLY | O_DIR);
         md = S_IFDIR;
     }
 
     /* If we still don't have it, then we're not going to get it. */
     if(fp == FILEHND_INVALID) {
-        reent->_errno = ENOENT;
+        errno = ENOENT;
         return -1;
     }
 
     /* This really doesn't convey all that much information, but it should help
        with at least some uses of stat. */
-    pstat->st_mode = md;
-    pstat->st_size = (off_t)fs_total(fp);
+    buf->st_mode = md;
+    buf->st_size = (off_t)fs_total(fp);
 
     /* Clean up after ourselves. */
     fs_close(fp);
 
     return 0;
+}
+
+int _stat_r(struct _reent *reent, const char *path, struct stat *buf) {
+    (void)reent;
+    return stat_int(path, buf, 0);
+}
+
+int lstat(const char *path, struct stat *buf) {
+    return stat_int(path, buf, AT_SYMLINK_NOFOLLOW);
 }

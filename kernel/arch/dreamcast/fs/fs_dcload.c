@@ -357,6 +357,42 @@ int dcload_unlink(vfs_handler_t * vfs, const char *fn) {
     return ret;
 }
 
+static int dcload_stat(vfs_handler_t *vfs, const char *fn, struct stat *rv,
+                       int flag) {
+    dcload_stat_t filestat;
+    int retval;
+
+    (void)flag;
+
+    if(lwip_dclsc && irq_inside_int())
+        return 0;
+
+    spinlock_lock(&mutex);
+    retval = dclsc(DCLOAD_STAT, fn, &filestat);
+    spinlock_unlock(&mutex);
+
+    if(!retval) {
+        memset(rv, 0, sizeof(struct stat));
+        rv->st_dev = (dev_t)((ptr_t)vfs);
+        rv->st_ino = filestat.st_ino;
+        rv->st_mode = filestat.st_mode;
+        rv->st_nlink = filestat.st_nlink;
+        rv->st_uid = filestat.st_uid;
+        rv->st_gid = filestat.st_gid;
+        rv->st_rdev = filestat.st_rdev;
+        rv->st_size = filestat.st_size;
+        rv->st_atime = filestat.st_atime;
+        rv->st_mtime = filestat.st_mtime;
+        rv->st_ctime = filestat.st_ctime;
+        rv->st_blksize = filestat.st_blksize;
+        rv->st_blocks = filestat.st_blocks;
+
+        return 0;
+    }
+
+    return -1;
+}
+
 static int dcload_fcntl(void *h, int cmd, va_list ap) {
     int rv = -1;
 
@@ -409,7 +445,7 @@ static vfs_handler_t vh = {
     dcload_unlink,
     NULL,               /* mmap */
     NULL,               /* complete */
-    NULL,               /* stat */
+    dcload_stat,
     NULL,               /* mkdir */
     NULL,               /* rmdir */
     dcload_fcntl,

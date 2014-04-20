@@ -643,26 +643,6 @@ int fs_complete(file_t fd, ssize_t * rv) {
     return h->handler->complete(h->hnd, rv);
 }
 
-int fs_stat(const char * fn, stat_t * rv) {
-    vfs_handler_t   *cur;
-    char        rfn[PATH_MAX];
-
-    if(!realpath(fn, rfn))
-        return -1;
-
-    /* Look for a handler */
-    cur = fs_verify_handler(rfn);
-
-    if(cur == NULL) return -1;
-
-    if(cur->stat)
-        return cur->stat(cur, rfn + strlen(cur->nmmgr.pathname), rv);
-    else {
-        errno = EINVAL;
-        return -1;
-    }
-}
-
 int fs_mkdir(const char * fn) {
     vfs_handler_t   *cur;
     char        rfn[PATH_MAX];
@@ -818,6 +798,48 @@ int fs_readlink(const char *path, char *buf, size_t bufsize) {
     if(vfs->readlink) {
         return vfs->readlink(vfs, fullpath + strlen(vfs->nmmgr.pathname), buf,
                              bufsize);
+    }
+    else {
+        errno = ENOSYS;
+        return -1;
+    }
+}
+
+int fs_stat(const char *path, struct stat *buf, int flag) {
+    vfs_handler_t *vfs;
+    char fullpath[PATH_MAX];
+
+    /* Verify the input... */
+    if(!buf || !path) {
+        errno = EFAULT;
+        return -1;
+    }
+    else if(flag & (~AT_SYMLINK_NOFOLLOW)) {
+        errno = EINVAL;
+        return -1;
+    }
+
+    /* Prepend the current working directory if we have to. */
+    if(path[0] == '/') {
+        strcpy(fullpath, path);
+    }
+    else {
+        strcpy(fullpath, fs_getwd());
+        strcat(fullpath, "/");
+        strcat(fullpath, path);
+    }
+
+    /* Look for the handler */
+    vfs = fs_verify_handler(fullpath);
+
+    if(!vfs) {
+        errno = ENOENT;
+        return -1;
+    }
+
+    if(vfs->stat) {
+        return vfs->stat(vfs, fullpath + strlen(vfs->nmmgr.pathname), buf,
+                         flag);
     }
     else {
         errno = ENOSYS;
