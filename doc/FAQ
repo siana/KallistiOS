@@ -1,6 +1,6 @@
 KallistiOS ##version## FAQ
 Copyright (C) 2001 Dan Potter
-Copyright (C) 2012, 2013 Lawrence Sebald
+Copyright (C) 2012-2014 Lawrence Sebald
 
 Here you may find some answers to some common questions we hear
 regarding the usage of KOS. We will be adding more to this file over
@@ -289,7 +289,7 @@ make sure there's a /tmp path mount for bin2o's usage.
 2.1
 
 Q) How can I determine how much RAM I have allocated / how much RAM my
-program is using? 
+program is using?
 
 A) This won't always be accurate, but in the kernel space you can call
 malloc_stats(). The output is sent to the kernel console.
@@ -321,13 +321,17 @@ similar facility for the PVR on the DC port.
 
 Q) Does KOS have any kind of TCP/IP stack? Network support at all?
 
-A) Yes. There is a very primitive and rudimentary driver for the Sega
-broadband adapter (an RTL8193C based 10/100 card) and the Lan Adapter on
-the DC. With regards to TCP/IP and friends, there are two choices: either
-you can use the built-in network stack or you can use lwIP, which is in
-the kos-ports tree. Note that lwIP is pretty much considered deprecated
-now, and isn't actively tested anymore. You should use the internal
-network stack for all new code.
+A) Yes. There is a working driver for the Sega broadband adapter (an
+RTL8193C based 10/100 card) and the Lan Adapter on the DC. With regards
+to TCP/IP and friends, there are two choices: either you can use the
+built-in network stack or you can use lwIP, which is in the kos-ports
+tree. Note that lwIP is pretty much considered deprecated now, and
+isn't actively tested anymore. You should use the internal network stack
+for all new code.
+
+There is also a driver for the Dreamcast modem, however there is no PPP
+stack, which would be needed to connect to the internet and the rest of
+the TCP/IP stack with it.
 
 
 3.2
@@ -346,7 +350,7 @@ thread primitives now in KOS this might not be as hard.
 
 4 --- Building -----------------------------------------------------
 
-4.1 
+4.1
 
 Q) I'm having an issue building KOS; it gives me errors about not
 finding Makefiles or not finding include files.
@@ -363,7 +367,7 @@ Q) Where is the source to bin2o? All your other stuff has source...
 
 A) Examine the file more closely. It _is_ the source code =). bin2o is
 a bash shell script that runs from a real bash on a *nix, or under the
-Cygwin bash. There were some issues with it running under Cygwin 
+Cygwin bash. There were some issues with it running under Cygwin
 previously but those should now be fixed.
 
 
@@ -374,13 +378,10 @@ previously but those should now be fixed.
 Q) I work on a DC; I don't have a serial cable so how can I see the
 debug output?
 
-Q) I work on a PS2; how can I see debug output?
-
-A) For #1, use dc-load-ip and it has a very nice console mode also. For
-#2, I give you basically the same answer: put ps2-load-ip on your Linux
-memory card and add it to your RTE menu. Use that to load any KOS
-programs and you will have a choice of both GS-based and ethernet-based
-consoles.
+A) Use dc-load-ip with your broadband adapter or lan adapter on the
+Dreamcast. If you don't have one of those, you might look into fb_console,
+which you can redirect to either the whole framebuffer or a texture
+somewhere in VRAM.
 
 
 5.2
