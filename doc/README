@@ -1,15 +1,15 @@
 KallistiOS ##version##
 README
 Copyright (C) 2000-2003 Dan Potter
-Copyright (C) 2012-2013 Lawrence Sebald
+Copyright (C) 2012-2014 Lawrence Sebald
 
 OVERVIEW
 --------
 KallistiOS is a pseudo-real-time operating system for gaming consoles,
 licensed under the terms of the *new* BSD license (the one without the
-advertising clause). It has currently been ported to the Dreamcast*,
-Gameboy Advance*, PlayStation 2*, and Intel* ia32 platforms, though the
-DC port is still the most advanced and functional of the lot.
+advertising clause). It is currently available for the Dreamcast*, but
+ports previously existed for the Gameboy Advance*, PlayStation 2*, and
+Intel* ia32 platforms, although none were particularly complete.
 
 Depending on whether you wish to see the fnords, you can pronounce it
 "kallisti-o's" (like a cereal) or "kallisti o s" (like an operating
@@ -92,11 +92,8 @@ PREREQUISITES
 -------------
 Building KallistiOS from source entirely requires two things:
 - GNU Binutils / GCC, cross-compile to the platform of your choice; for
-  DC this is a compiler targeted for "sh-elf", for GBA this is
-  a compiler targeted for "arm-elf", and for PS2 you'll need the
-  PS2DEV "ee" compiler. On ia32, you can just use any PC version
-  of GCC that writes ELF files (e.g., Linux compiler). See below about
-  version notes.
+  DC this is a compiler targeted for "sh-elf", as well as (optionally)
+  a compiler targeted for "arm-eabi". See below about version notes.
 - GNU Binutils / GCC / GNU Make for your host platform
 
 For the Dreamcast version, a Makefile is provided to build the requisite
@@ -105,10 +102,8 @@ GCC, Binutils, and Newlib versions in the utils/dc-chain directory.
 If you don't have any of the above, please see one of the following sites
 for some more instructions (and perhaps a build script that may help you):
 
-DC:  http://gamedev.allusion.net/softprj/kos/setup.php
-DC:  http://dcemulation.org/
-GBA: http://www.gbadev.org/
-PS2: http://wiki.ps2dev.org/
+  http://gamedev.allusion.net/softprj/kos/setup.php
+  http://dcemulation.org/
 
 On the Dreamcast, the 4.x series of GCC works pretty well. Look at the patches
 provided in utils/dc-chain/patches to see what versions have been tested and
@@ -128,20 +123,6 @@ and doesn't support Thumb mode at all, so keep that in mind when building GCC.
 You do not necessarily need an ARM version of GCC to build KOS for the DC, as
 precompiled binaries are provided of the necessary code. As long as you don't
 intend to modify the sound driver, you don't need the ARM tools.
-
-On the GBA, any fairly new GCC 3.0.x and above works fine. It includes the
-new ARM-supplied backend for that CPU target. It also provides a compiler
-that works with both ARM and Thumb mode code, including interworking
-(though good luck getting that to work!).
-
-For PS2, you're stuck with a 2.95.2 derivative for the EE, because that's
-what Sony provided and no one has managed to fully update to the latest
-versions AFAIK. YMMV, there may be a new one by now. Note that the PS2 port
-currently only builds for the RTE sub-arch, which is the loader DVD used
-with the PS2 Linux Kit. So using KOS for PS2 currently requires that you
-have a Linux Kit. You used to be able to buy one here:
-
-http://us.playstation.com/hardware/more/SCPH-97047.asp
 
 
 BUILDING
@@ -207,10 +188,20 @@ contains a lot of reformatting, sloppy coding, things at cross-purposes with
 the primary thrust of KOS, etc), but I will make an effort to at least
 examine and comment on any submitted patches.
 
-Please also read coding_style.txt if you want to submit things to the
-KOS core. Except in some exceptional circumstances, I will want the
-code to match up style-wise in at least the core lib. Things in add-ons
-aren't quite as important.
+Code should be relatively well formatted, especially in the core library/kernel
+portions. There are tools out there to help you reformat your code so that it
+will match the rest of KOS a lot more nicely. One such tool is Artistic Style
+(http://astyle.sourceforge.net/). Here's a nice set of flags to feed to the
+astyle program to make your code match up nicely with the rest of KOS:
+  astyle --style=attach -s4 -c -S -w -y -f -U -p -m0 -xn -xc -xl -xk -C -N -Y \
+    -k3 -xL -xM -xQ -xP0 [your files go here]
+I don't guarantee that this produces the exact same formatting as the rest of
+the code, but it should be pretty much correct (and I won't reject your patch
+for styling if you use this set of flags to astyle on it). You might also want
+to take a look at the coding_style.txt file (in the same directory as this
+README in the KOS tree) for some rationale for most of that formatting stuff.
+Note that some of that has changed over time (mainly when the maintainer of KOS
+changes), but it is still mostly right. ;-)
 
 
 OS MODE IS GONE FOR GOOD
@@ -234,45 +225,10 @@ Dreamcast*
   and look at sndmp3_mpglib.c in that dir.
 - libs3m is present but doesn't really work. It needs serious porting work.
 
-Gameboy Advance*
+There are no other supported platforms after KOS 2.0.0. They were all pretty
+much broken and unmaintained anyway, so they were removed shortly after the
+release of KOS 2.0.0.
 
-- This port is was being maintained by Gil Megidish, however it appears
-  that is no longer the case. If someone wants to maintain it, please let
-  me know! Otherwise, this port will probably be removed from the tree in
-  the not-too-distant future.
-- There is not a lot of hardware support yet. IRQs aren't even supported,
-  so don't even think about trying to use threads yet =). This port is
-  somewhat immature however, so I expect the support to improve over
-  time.
-- KOS is currently configured to run as Thumb code from the ROM. This can
-  be changed by editing the config script to set the compiler flags and
-  editing kernel/arch/gba/kernel/startup.s to remove the "bx" call and
-  make it a regular jump.
-- In future versions I hope to have a more elegant system to combine Thumb
-  and ARM mode code (including automated copying of your ARM code into RAM
-  with the data segment). You can see the beginnings of this in the linker
-  script.
-
-PlayStation 2*
-
-- This port currently only supports booting on the Linux Kit RTE. If anyone
-  who has a raw PS2DEV setup would like to port things around to work on
-  the raw PS2 as well, I'd be happy to accept any help.
-- It is designed to be used with ps2-load-ip as a loader.
-- There is basically no hardware support yet, just a CPU/kernel-core port.
-- This port is pretty much unmaintained at this point. Unless someone steps
-  up to maintain it, it will probably be cut from the tree sometime in the
-  future.
-
-Intel* IA32
-
-- This platform was essentially a test just to see if it could be done,
-  but I suspect it would be pretty useful for people writing things like
-  embedded MP3 players.
-- It was written using the very old KOS 1.3.x snapshot, so it probably
-  doesn't compile right now. But it could probably be fixed pretty easily.
-- If nobody is interested in this port, it will likely be removed from the
-  tree in the nearish future as well.
 
 END
 ---
@@ -288,9 +244,9 @@ to SourceForge for all console-related things.
 					http://gamedev.allusion.net/
 
 
-* "Sega" and "Dreamcast" are registered trademarks of Sega Enterprises, Ltd. 
+* "Sega" and "Dreamcast" are registered trademarks of Sega Enterprises, Ltd.
   "Nintendo" and "Gameboy Advance" are registered trademarks of Nintendo of America
-  Kalisto Software is a registered trademark of Kalisto Software, Inc. 
+  Kalisto Software is a registered trademark of Kalisto Software, Inc.
   "PlayStation" is a registered trademark of Sony Computer Entertainment America
   "Intel" is a registered trademark of Intel, Inc.
   Any other trademarks are trademarks of their respective owners.
