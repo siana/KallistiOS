@@ -1,6 +1,62 @@
 KallistiOS ##version##
 Copyright (C) 2002, 2003 Dan Potter
-Copyright (C) 2012, 2013 Lawrence Sebald
+Copyright (C) 2012-2014 Lawrence Sebald
+
+RELEASE NOTES for 2.0.1
+-----------------------
+There are a lot less major changes in this release than in the previous one,
+that is for sure. Of course, this isn't to say that there hasn't been some
+interesting changes along the way.
+
+The first change is that all targets deprecated in 2.0.0 were removed entirely
+from the tree. That is to say, there are no remnants of the GBA, PS2, or ia32
+ports of KOS in the tree anymore. If someone REALLY wants them back, please let
+me know at some point and we can work that out. I doubt this will come up at
+all, however.
+
+Further standards compliance issues were worked out for this release. KOS' core
+should now compile cleanly with a relatively new GCC with the -std=c99 flag
+(as well as -Wall and -Wextra). Older (prior to 4.7.x) versions of GCC might
+complain about one or two things here and there, but that is not of any
+particular concern.
+
+The fs_stat() function has been completely reworked to actually map cleanly onto
+the normal C stat() function. This means you must use a struct stat when calling
+the function, rather than the removed stat_t (you'll get an error if you try to
+use the old struct, since it is completely gone now). If I recall correctly, the
+only filesystem to actually have any direct support for fs_stat() before was
+fs_vmu (which only supported it in a strange manner to get the free space left
+on the VMU in question). The fs_vmu behavior has been retained so that if you do
+something like fs_stat("/vmu/a1", &buf, 0), you will still get the number of
+free blocks in buf.st_size (the standard doesn't say what to do with the st_size
+value on a stat() call about a directory, so this is actually compliant with the
+standard, oddly enough). More filesystems support fs_stat() directly now, such
+as fs_dcload/fs_dclsocket.
+
+Hardware-wise, a new driver was added for accessing a hard drive that might be
+hooked directly up to the GD-ROM port. The GD-ROM itself is actually a bit of a
+strange ATA device, and it is entirely possible to chain a slave device off the
+connector with a bit of a hardware modification. The new driver is in g1ata.c
+(in the kernel/arch/dreamcast/hardware directory), and should work relatively
+well with devices that comply with the ATA standard. The driver supports both
+PIO and Multi-word DMA based access to the hard drive device, and can vastly
+surpass the potential speed of the GD-ROM itself (with DMA, I get around 12.5
+megabytes per second reading sequential sectors off the drive in testing). There
+have been a few small modifications to the cdrom.c file to accommodate the
+possibility that a device other than the GD-ROM drive might be selected on the
+bus (the BIOS syscalls do not check what device is selected). GD-ROM access is
+still done through the BIOS syscalls for various reasons (including dcload ISO
+redirection, which relies on the syscalls being used). The hard drive access
+layer exports a kos_blockdev_t interface to interact with the drive, so you
+should be able to use libkosext2fs with hard drives without any difficulties.
+
+The microphone driver (for the Seaman mic) has been changed around a bit. The
+internal buffer has been removed in favor of a callback-based sampling approach.
+The callback will be called each frame (in an IRQ handler context) while
+sampling with the samples collected that frame. The idea is that you'd copy the
+samples into some buffer in your program and basically return immediately from
+the callback (it is called in an IRQ handler context, so you really shouldn't be
+doing a lot of work in the callback).
 
 RELEASE NOTES for 2.0.0
 -----------------------
@@ -28,7 +84,7 @@ The build system (including environ.sh) has seen some overhauling. You'll
 need to build a new environ.sh from a sample again. Additionally, your
 Makefile may need to change. See the examples.
 
-The sound stream system has changed to accomidate multiple streams. Please see
+The sound stream system has changed to accommodate multiple streams. Please see
 kernel/arch/dreamcast/include/dc/sound/* for the new info. In particular, you
 will need to call snd_stream_init from your program before using any of the
 libraries like OggVorbis. Also if you are a stream user, you need to alloc
@@ -160,7 +216,7 @@ A very early port to the PS2 RTE has been added to the source tree, but
 will not be released as binaries (not mature enough yet). If anyone plays
 with this or has fixes, I'd very much like to hear from you.
 
-The SYSCALL macro was _very_ broken, as in "I'm surprised it works" 
+The SYSCALL macro was _very_ broken, as in "I'm surprised it works"
 magnitude of broken. This may be responsible for some of the apparent
 breakage with newer compilers.
 
@@ -192,7 +248,7 @@ external change is that the "more data" callback now returns not only a
 block of data, but the amount of data.
 
 The deprecated TA API has been removed entirely. You need to convert any
-remaining code to the new PVR API or KGL. You can take a look at the 
+remaining code to the new PVR API or KGL. You can take a look at the
 examples to see how this works, but here is a quick rundown:
    - poly_hdr_t becomes pvr_poly_hdr_t
    - ta_poly_hdr_txr becomes pvr_poly_cxt_txr
@@ -322,7 +378,7 @@ when the program starts. For the most part, the examples have been
 updated to do this.
 
 KGL has become a lot more OpenGL(tm) compliant. This means, for example,
-that the usage of radians has been deprecated in favor of degrees, 
+that the usage of radians has been deprecated in favor of degrees,
 images are expected to be loaded inverted, etc. If you program which
 previously worked under KGL is having some issues, you should probably
 check to see what changed there. Paul has helpfully created a KGL manual
