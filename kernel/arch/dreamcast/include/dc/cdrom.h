@@ -36,7 +36,7 @@ __BEGIN_DECLS
 /** \defgroup cd_cmd_codes          CD-ROM syscall command codes
 
     These are the syscall command codes used to actually do stuff with the
-    GD-ROM drive. These were originally provided by thanks maiwe.
+    GD-ROM drive. These were originally provided by maiwe.
 
     @{
 */
