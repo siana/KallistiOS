@@ -2,11 +2,14 @@
 
    cdrom.c
 
-   (c)2000 Dan Potter
+   Copyright (C) 2000 Dan Potter
+   Copyright (C) 2014 Lawrence Sebald
 
  */
 
 #include <dc/cdrom.h>
+#include <dc/g1ata.h>
+
 #include <kos/thread.h>
 #include <kos/mutex.h>
 
@@ -86,7 +89,7 @@ static void gdc_abort_cmd(int cmd) {
 #endif
 
 /* The CD access mutex */
-static mutex_t mutex;
+mutex_t _g1_ata_mutex;
 static int initted = 0;
 static int sector_size = 2048;   /*default 2048, 2352 for raw data reading*/
 
@@ -99,6 +102,9 @@ void cdrom_set_sector_size(int size) {
 int cdrom_exec_cmd(int cmd, void *param) {
     int status[4] = {0};
     int f, n;
+
+    /* Make sure to select the GD-ROM drive. */
+    g1_ata_select_device(G1_ATA_MASTER);
 
     /* Submit the command and wait for it to finish */
     f = gdc_req_cmd(cmd, param);
@@ -139,12 +145,15 @@ int cdrom_get_status(int *status, int *disc_type) {
        flushing, so make sure we're not interrupting something
        already in progress. */
     if(irq_inside_int()) {
-        if(mutex_is_locked(&mutex))
+        if(mutex_trylock(&_g1_ata_mutex))
             return -1;
     }
     else {
-        mutex_lock(&mutex);
+        mutex_lock(&_g1_ata_mutex);
     }
+
+    /* Make sure to select the GD-ROM drive. */
+    g1_ata_select_device(G1_ATA_MASTER);
 
     rv = gdc_get_drv_stat(params);
 
@@ -163,8 +172,7 @@ int cdrom_get_status(int *status, int *disc_type) {
             *disc_type = -1;
     }
 
-    if(!irq_inside_int())
-        mutex_unlock(&mutex);
+    mutex_unlock(&_g1_ata_mutex);
 
     return rv;
 }
@@ -176,11 +184,14 @@ int cdrom_reinit() {
     uint32  params[4];
     int timeout;
 
-    mutex_lock(&mutex);
+    mutex_lock(&_g1_ata_mutex);
 
     /* Try a few times; it might be busy. If it's still busy
        after this loop then it's probably really dead. */
     timeout = 10 * 1000 / 20; /* 10 second timeout */
+
+    /* Make sure to select the GD-ROM drive. */
+    g1_ata_select_device(G1_ATA_MASTER);
 
     while(timeout > 0) {
         r = cdrom_exec_cmd(CMD_INIT, NULL);
@@ -228,7 +239,7 @@ int cdrom_reinit() {
     }
 
 exit:
-    mutex_unlock(&mutex);
+    mutex_unlock(&_g1_ata_mutex);
     return rv;
 }
 
@@ -240,13 +251,13 @@ int cdrom_read_toc(CDROM_TOC *toc_buffer, int session) {
     } params;
     int rv;
 
-    mutex_lock(&mutex);
+    mutex_lock(&_g1_ata_mutex);
 
     params.session = session;
     params.buffer = toc_buffer;
     rv = cdrom_exec_cmd(CMD_GETTOC2, &params);
 
-    mutex_unlock(&mutex);
+    mutex_unlock(&_g1_ata_mutex);
     return rv;
 }
 
@@ -259,7 +270,7 @@ int cdrom_read_sectors(void *buffer, int sector, int cnt) {
     } params;
     int rv;
 
-    mutex_lock(&mutex);
+    mutex_lock(&_g1_ata_mutex);
 
     params.sec = sector;    /* Starting sector */
     params.num = cnt;   /* Number of sectors */
@@ -267,7 +278,7 @@ int cdrom_read_sectors(void *buffer, int sector, int cnt) {
     params.dunno = 0;   /* ? */
     rv = cdrom_exec_cmd(CMD_PIOREAD, &params);
 
-    mutex_unlock(&mutex);
+    mutex_unlock(&_g1_ata_mutex);
     return rv;
 }
 
@@ -312,14 +323,14 @@ int cdrom_cdda_play(uint32 start, uint32 end, uint32 repeat, int mode) {
     params.end = end;
     params.repeat = repeat;
 
-    mutex_lock(&mutex);
+    mutex_lock(&_g1_ata_mutex);
 
     if(mode == CDDA_TRACKS)
         rv = cdrom_exec_cmd(CMD_PLAY, &params);
     else
         rv = cdrom_exec_cmd(CMD_PLAY2, &params);
 
-    mutex_unlock(&mutex);
+    mutex_unlock(&_g1_ata_mutex);
 
     return rv;
 }
@@ -328,9 +339,9 @@ int cdrom_cdda_play(uint32 start, uint32 end, uint32 repeat, int mode) {
 int cdrom_cdda_pause() {
     int rv;
 
-    mutex_lock(&mutex);
+    mutex_lock(&_g1_ata_mutex);
     rv = cdrom_exec_cmd(CMD_PAUSE, NULL);
-    mutex_unlock(&mutex);
+    mutex_unlock(&_g1_ata_mutex);
 
     return rv;
 }
@@ -339,9 +350,9 @@ int cdrom_cdda_pause() {
 int cdrom_cdda_resume() {
     int rv;
 
-    mutex_lock(&mutex);
+    mutex_lock(&_g1_ata_mutex);
     rv = cdrom_exec_cmd(CMD_RELEASE, NULL);
-    mutex_unlock(&mutex);
+    mutex_unlock(&_g1_ata_mutex);
 
     return rv;
 }
@@ -350,9 +361,9 @@ int cdrom_cdda_resume() {
 int cdrom_spin_down() {
     int rv;
 
-    mutex_lock(&mutex);
+    mutex_lock(&_g1_ata_mutex);
     rv = cdrom_exec_cmd(CMD_STOP, NULL);
-    mutex_unlock(&mutex);
+    mutex_unlock(&_g1_ata_mutex);
 
     return rv;
 }
@@ -374,11 +385,14 @@ int cdrom_init() {
         (void)bios[p];
     }
 
+    /* Make sure to select the GD-ROM drive. */
+    g1_ata_select_device(G1_ATA_MASTER);
+
     /* Reset system functions */
     gdc_init_system();
 
     /* Initialize mutex */
-    mutex_init(&mutex, MUTEX_TYPE_NORMAL);
+    mutex_init(&_g1_ata_mutex, MUTEX_TYPE_NORMAL);
 
     /* Do an initial initialization */
     cdrom_reinit();
@@ -390,7 +404,6 @@ void cdrom_shutdown() {
     if(!initted)
         return;
 
-    mutex_destroy(&mutex);
+    mutex_destroy(&_g1_ata_mutex);
     initted = 0;
 }
-

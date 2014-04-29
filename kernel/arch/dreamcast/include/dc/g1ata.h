@@ -37,6 +37,63 @@ __BEGIN_DECLS
 #include <stdint.h>
 #include <kos/blockdev.h>
 
+/** \defgroup ata_devices           ATA device definitions
+
+    The constants here represent the valid values that can be set as the active
+    device on the ATA bus. You should pass one of these values to the
+    g1_ata_select_device() function to select the appropriate device.
+
+    \note   Many times, the value returned by the g1_ata_select_device()
+            function will have other bits set than the constants below. You
+            should AND the value returned from that function with 0x10 if you
+            really need to know what device is actually selected. If the value
+            returned is true when ANDed with 0x10, then the slave device was
+            selected, otherwise the master device was. The other bits are either
+            command-specific or are reserved for compatibility sake.
+
+    @{
+*/
+/** \brief  ATA master device.
+
+    This constant selects the master device on the ATA bus. This is normally the
+    GD-ROM drive.
+
+    \note   The GD-ROM really does not like the reserved bits being set in the
+            device select register, hence why this constant doesn't select them.
+            Some hard drives may require them, however. If you find one that
+            does, then you should use the \ref G1_ATA_MASTER_ALT constant to
+            access it if it is the master device on the bus.
+*/
+#define G1_ATA_MASTER       0x00
+
+/** \brief  ATA master device (compatible with old drives).
+
+    This constant selects the master device on the ATA bus, with the old
+    reserved bits set to 1. If you have a drive that predates ATA-2, then this
+    will probably be the constant you want to access it as the master device.
+
+    \note   Do not use this constant to access the GD-ROM. It will not work. Use
+            \ref G1_ATA_MASTER instead.
+*/
+#define G1_ATA_MASTER_ALT   0x90
+
+/** \brief  ATA slave device.
+
+    This constant selects the slave device on the ATA bus. This is where you
+    would find a hard drive, if the user has an adapter installed.
+*/
+#define G1_ATA_SLAVE        0xB0
+
+/** \brief  Select LBA addressing mode.
+
+    OR this constant with one of the device constants (\ref G1_ATA_MASTER or
+    \ref G1_ATA_SLAVE) to select LBA addressing mode. The various g1_ata_*
+    functions all do this as appropriate already, so you shouldn't have to worry
+    about this one at all. This bit is irrelevant for packet devices.
+*/
+#define G1_ATA_LBA_MODE     0x40
+/** @} */
+
 /** \brief  Is there a G1 DMA in progress currently?
 
     This function returns non-zero if a DMA is in progress. This can be used to
@@ -46,6 +103,47 @@ __BEGIN_DECLS
     \return                 0 if no DMA is in progress, nonzero otherwise.
 */
 int g1_dma_in_progress(void);
+
+/** \brief  Lock the G1 ATA mutex.
+
+    This function locks the mutex that arbitrates access to the ATA bus. You
+    should never have to do this on your own unless you're accessing devices
+    manually yourself.
+
+    \return                 0 on success, -1 on failure.
+    \note                   Failure conditions are exactly the same as the
+                            \ref mutex_lock() function.
+*/
+int g1_ata_mutex_lock(void);
+
+/** \brief  Unlock the G1 ATA mutex.
+
+    This function unlocks the mutex that arbitrates access to the ATA bus. You
+    should never have to do this on your own unless you're accessing devices
+    manually yourself.
+
+    \return                 0 on success, -1 on failure.
+    \note                   Failure conditions are exactly the same as the
+                            \ref mutex_unlock() function.
+*/
+int g1_ata_mutex_unlock(void);
+
+/** \brief  Set the active ATA device.
+
+    This function sets the device that any further ATA commands will go to. You
+    shouldn't have to ever call this yourself, as it should be done for you by
+    any of the access functions. This must be called with the ATA lock held.
+
+    \param  dev             The device to access (generally either
+                            \ref G1_ATA_MASTER or \ref G1_ATA_SLAVE).
+    \return                 The previous active device (or 0x0F if the function
+                            would block in an IRQ handler).
+
+    \note                   This function may block if there is a transfer
+                            ongoing. If called in an IRQ handler and the call
+                            would otherwise block, 0x0F is returned.
+*/
+uint8_t g1_ata_select_device(uint8_t dev);
 
 /** \brief  Read one or more disk sectors with Cylinder-Head-Sector addressing.
 
