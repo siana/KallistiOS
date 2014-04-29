@@ -51,23 +51,6 @@ typedef struct kos_dirent {
 /* Forward declaration */
 struct vfs_handler;
 
-/** \brief  File status information.
-
-    This structure, while different from the standard POSIX stat structure,
-    provides much of the same information. We limit it to only what is relevant
-    for KOS.
-
-    \headerfile kos/fs.h.
-*/
-typedef struct {
-    struct vfs_handler *dev;    /**< \brief The VFS handler for this file/dir */
-    uint32 unique;              /**< \brief A unique identifier on the VFS for this file/dir */
-    uint32 type;                /**< \brief File/Dir type */
-    uint32 attr;                /**< \brief Attributes */
-    off_t size;                 /**< \brief Total file size, if applicable */
-    time_t time;                /**< \brief Last access/mod/change time (depends on VFS) */
-} stat_t;
-
 /* stat_t.unique */
 /**< \brief stat_t.unique: Constant to use denoting the file has no unique ID */
 #define STAT_UNIQUE_NONE    0
