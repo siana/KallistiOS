@@ -34,6 +34,11 @@ output and look to make sure.
 
 */
 
+/* Parts of the a CD-ROM sector to read. These are possible values for the
+   third parameter word sent with the change data type syscall. */
+#define CDROM_READ_WHOLE_SECTOR 0x1000
+#define CDROM_READ_DATA_AREA    0x2000
+
 
 /* GD-Rom BIOS calls... named mostly after Marcus' code. None have more
    than two parameters; R7 (fourth parameter) needs to describe
@@ -221,15 +226,15 @@ int cdrom_reinit() {
     gdc_get_drv_stat(params);
     if(sector_size != 2352) {
         cdxa = params[1] == 32;
-        params[0] = 0;              /* 0 = set, 1 = get */
-        params[1] = 8192;           /* ? */
-        params[2] = cdxa ? 2048 : 1024;     /* CD-XA mode 1/2 */
-        params[3] = sector_size;        /* sector size */
+        params[0] = 0;                       /* 0 = set, 1 = get */
+        params[1] = CDROM_READ_DATA_AREA;    /* Part of the sector to read */
+        params[2] = cdxa ? 2048 : 1024;      /* Sector type */
+        params[3] = sector_size;             /* Sector size */
     }
     else {
         params[0] = 0;
-        params[1] = 4096;
-        params[2] = 1024;
+        params[1] = CDROM_READ_WHOLE_SECTOR;
+        params[2] = 0;
         params[3] = 2352;
     }
 
