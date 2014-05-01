@@ -603,6 +603,9 @@ int g1_ata_read_lba_dma(uint64_t sector, size_t count, uint16_t *buf,
         return -1;
     }
 
+    /* Invalidate the dcache over the range of the data. */
+    dcache_inval_range((uint32)buf, count * 512);
+
     /* Lock the mutex. It will be unlocked later in the IRQ handler. */
     if(g1_ata_mutex_lock())
         return -1;
