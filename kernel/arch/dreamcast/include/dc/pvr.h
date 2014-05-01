@@ -1839,6 +1839,20 @@ void pvr_txr_load_ex(void * src, pvr_ptr_t dst, uint32 w, uint32 h, uint32 flags
     \param  flags           Some set of flags, ORed together.
 
     \see    pvr_txrload_constants
+    \note                   Unless you explicitly tell this function to not
+                            twiddle the texture (by ORing
+                            \ref PVR_TXRLOAD_FMT_NOTWIDDLE or it's equivalent
+                            \ref PVR_TXRLOAD_FMT_TWIDDLED with flags), this
+                            function will twiddle the texture while loading.
+                            Keep that in mind when setting the texture format in
+                            polygon headers later.
+    \note                   You cannot specify both
+                            \ref PVR_TXRLOAD_FMT_NOTWIDDLE (or equivalently
+                            \ref PVR_TXRLOAD_FMT_TWIDDLED) and
+                            \ref PVR_TXRLOAD_INVERT_Y in the flags.
+    \note                   DMA and Store Queue based loading is not available
+                            from this function if it twiddles the texture while
+                            loading.
 */
 void pvr_txr_load_kimg(kos_img_t *img, pvr_ptr_t dst, uint32 flags);
 
@@ -1960,4 +1974,3 @@ void pvr_dma_shutdown();
 __END_DECLS
 
 #endif
-
