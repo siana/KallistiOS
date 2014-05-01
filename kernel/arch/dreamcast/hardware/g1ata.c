@@ -180,20 +180,6 @@ static inline int use_lba28(uint64_t sector, size_t count) {
 
 #define CAN_USE_LBA48() ((device.command_sets & (1 << 26)))
 
-static void g1_dma_irq_hnd(uint32 code) {
-    /* XXXX: Probably should look at the code to make sure it isn't an error. */
-    (void)code;
-
-    /* Signal the calling thread to continue, if it is blocking. */
-    if(dma_blocking) {
-        sem_signal(&dma_done);
-        thd_schedule(1, 0);
-        dma_blocking = 0;
-    }
-
-    dma_in_progress = 0;
-}
-
 /* Is a G1 DMA in progress? */
 int g1_dma_in_progress(void) {
     return IN32(G1_ATA_DMA_STATUS);
@@ -209,6 +195,23 @@ inline int g1_ata_mutex_lock(void) {
 
 inline int g1_ata_mutex_unlock(void) {
     return mutex_unlock(&_g1_ata_mutex);
+}
+
+static void g1_dma_irq_hnd(uint32 code) {
+    /* XXXX: Probably should look at the code to make sure it isn't an error. */
+    (void)code;
+
+    if(dma_in_progress) {
+        /* Signal the calling thread to continue, if it is blocking. */
+        if(dma_blocking) {
+            sem_signal(&dma_done);
+            thd_schedule(1, 0);
+            dma_blocking = 0;
+        }
+
+        dma_in_progress = 0;
+        g1_ata_mutex_unlock();
+    }
 }
 
 /* Set the device select register to select a particular device. */
@@ -291,6 +294,9 @@ static int dma_common(uint8_t cmd, size_t nsects, uint32_t addr, int dir,
             errno = EIO;
             return -1;
         }
+
+        /* Since we're blocking, make sure the drive is completely done. */
+        g1_ata_wait_bsydrq();
     }
 
     return 0;
@@ -301,7 +307,6 @@ int g1_ata_read_chs(uint16_t c, uint8_t h, uint8_t s, size_t count,
     int rv = 0;
     unsigned int i, j;
     uint8_t nsects = (uint8_t)count;
-    uint8_t dsel;
 
     /* Make sure that we've been initialized and there's a disk attached. */
     if(!devices) {
@@ -314,17 +319,13 @@ int g1_ata_read_chs(uint16_t c, uint8_t h, uint8_t s, size_t count,
         return -1;
 
     /* Wait for the device to signal it is ready. */
-    g1_ata_wait_nbsy();
-
-    /* For now, just assume we're accessing the slave device. We don't care
-       about the primary device, since it should always be the GD-ROM drive. */
-    dsel = IN8(G1_ATA_DEVICE_SELECT);
+    g1_ata_wait_bsydrq();
 
     while(count) {
         nsects = count > 255 ? 255 : (uint8_t)count;
         count -= nsects;
 
-        OUT8(G1_ATA_DEVICE_SELECT, 0xB0 | (h & 0x0F));
+        g1_ata_select_device(G1_ATA_SLAVE | (h & 0x0F));
 
         /* Write out the number of sectors we want as well as the cylinder and
            sector. */
@@ -372,7 +373,6 @@ int g1_ata_read_chs(uint16_t c, uint8_t h, uint8_t s, size_t count,
     rv = 0;
 
 out:
-    OUT8(G1_ATA_DEVICE_SELECT, dsel);
     g1_ata_mutex_unlock();
 
     return rv;
@@ -383,7 +383,6 @@ int g1_ata_write_chs(uint16_t c, uint8_t h, uint8_t s, size_t count,
     int rv = 0;
     unsigned int i, j;
     uint8_t nsects = (uint8_t)count;
-    uint8_t dsel;
 
     /* Make sure that we've been initialized and there's a disk attached. */
     if(!devices) {
@@ -396,17 +395,13 @@ int g1_ata_write_chs(uint16_t c, uint8_t h, uint8_t s, size_t count,
         return -1;
 
     /* Wait for the device to signal it is ready. */
-    g1_ata_wait_nbsy();
-
-    /* For now, just assume we're accessing the slave device. We don't care
-       about the primary device, since it should always be the GD-ROM drive. */
-    dsel = IN8(G1_ATA_DEVICE_SELECT);
+    g1_ata_wait_bsydrq();
 
     while(count) {
         nsects = count > 255 ? 255 : (uint8_t)count;
         count -= nsects;
 
-        OUT8(G1_ATA_DEVICE_SELECT, 0xB0 | (h & 0x0F));
+        g1_ata_select_device(G1_ATA_SLAVE | (h & 0x0F));
 
         /* Write out the number of sectors we want as well as the cylinder and
            sector. */
@@ -446,11 +441,10 @@ int g1_ata_write_chs(uint16_t c, uint8_t h, uint8_t s, size_t count,
     }
 
     /* Wait for the device to signal that it has finished writing the data. */
-    g1_ata_wait_nbsy();
+    g1_ata_wait_bsydrq();
 
     rv = 0;
 
-    OUT8(G1_ATA_DEVICE_SELECT, dsel);
     g1_ata_mutex_unlock();
 
     return rv;
@@ -460,7 +454,6 @@ int g1_ata_read_lba(uint64_t sector, size_t count, uint16_t *buf) {
     int rv = 0;
     unsigned int i, j;
     uint8_t nsects = (uint8_t)count;
-    uint8_t dsel;
 
     /* Make sure that we've been initialized and there's a disk attached. */
     if(!devices) {
@@ -485,11 +478,7 @@ int g1_ata_read_lba(uint64_t sector, size_t count, uint16_t *buf) {
         return -1;
 
     /* Wait for the device to signal it is ready. */
-    g1_ata_wait_nbsy();
-
-    /* For now, just assume we're accessing the slave device. We don't care
-       about the primary device, since it should always be the GD-ROM drive. */
-    dsel = IN8(G1_ATA_DEVICE_SELECT);
+    g1_ata_wait_bsydrq();
 
     while(count) {
         nsects = count > 255 ? 255 : (uint8_t)count;
@@ -497,7 +486,8 @@ int g1_ata_read_lba(uint64_t sector, size_t count, uint16_t *buf) {
 
         /* Which mode are we using: LBA28 or LBA48? */
         if((sector + nsects) <= 0x0FFFFFFF) {
-            OUT8(G1_ATA_DEVICE_SELECT, 0xF0 | ((sector >> 24) & 0x0F));
+            g1_ata_select_device(G1_ATA_SLAVE | G1_ATA_LBA_MODE |
+                                 ((sector >> 24) & 0x0F));
 
             /* Write out the number of sectors we want and the lower 24-bits of
                the LBA we're looking for. */
@@ -514,7 +504,7 @@ int g1_ata_read_lba(uint64_t sector, size_t count, uint16_t *buf) {
             OUT8(G1_ATA_COMMAND_REG, ATA_CMD_READ_SECTORS);
         }
         else {
-            OUT8(G1_ATA_DEVICE_SELECT, 0xF0);
+            g1_ata_select_device(G1_ATA_SLAVE | G1_ATA_LBA_MODE);
 
             /* Write out the number of sectors we want and the LBA. */
             OUT8(G1_ATA_SECTOR_COUNT, 0);
@@ -554,7 +544,6 @@ int g1_ata_read_lba(uint64_t sector, size_t count, uint16_t *buf) {
     rv = 0;
 
 out:
-    OUT8(G1_ATA_DEVICE_SELECT, dsel);
     g1_ata_mutex_unlock();
 
     return rv;
@@ -563,7 +552,6 @@ out:
 int g1_ata_read_lba_dma(uint64_t sector, size_t count, uint16_t *buf,
                         int block) {
     int rv = 0;
-    uint8_t dsel;
     uint32_t addr;
     int old, can_lba48 = CAN_USE_LBA48();
 
@@ -615,7 +603,7 @@ int g1_ata_read_lba_dma(uint64_t sector, size_t count, uint16_t *buf,
         return -1;
     }
 
-    /* Lock the mutex. */
+    /* Lock the mutex. It will be unlocked later in the IRQ handler. */
     if(g1_ata_mutex_lock())
         return -1;
 
@@ -637,15 +625,12 @@ int g1_ata_read_lba_dma(uint64_t sector, size_t count, uint16_t *buf,
     irq_restore(old);
 
     /* Wait for the device to signal it is ready. */
-    g1_ata_wait_nbsy();
-
-    /* For now, just assume we're accessing the slave device. We don't care
-       about the primary device, since it should always be the GD-ROM drive. */
-    dsel = IN8(G1_ATA_DEVICE_SELECT);
+    g1_ata_wait_bsydrq();
 
     /* Which mode are we using: LBA28 or LBA48? */
     if(!can_lba48 || use_lba28(sector, count)) {
-        OUT8(G1_ATA_DEVICE_SELECT, 0xF0 | ((sector >> 24) & 0x0F));
+        g1_ata_select_device(G1_ATA_SLAVE | G1_ATA_LBA_MODE |
+                             ((sector >> 24) & 0x0F));
 
         /* Write out the number of sectors we want and the lower 24-bits of
            the LBA we're looking for. Note that putting 0 into the sector count
@@ -659,7 +644,7 @@ int g1_ata_read_lba_dma(uint64_t sector, size_t count, uint16_t *buf,
         rv = dma_common(ATA_CMD_READ_DMA, count, addr, G1_DMA_TO_MEMORY, block);
     }
     else {
-        OUT8(G1_ATA_DEVICE_SELECT, 0xF0);
+        g1_ata_select_device(G1_ATA_SLAVE | G1_ATA_LBA_MODE);
 
         /* Write out the number of sectors we want and the LBA. Note that in
            LBA48 mode, putting 0 into the sector count register returns 65536
@@ -678,9 +663,6 @@ int g1_ata_read_lba_dma(uint64_t sector, size_t count, uint16_t *buf,
                         block);
     }
 
-    OUT8(G1_ATA_DEVICE_SELECT, dsel);
-    g1_ata_mutex_unlock();
-
     return rv;
 }
 
@@ -688,7 +670,6 @@ int g1_ata_write_lba(uint64_t sector, size_t count, const uint16_t *buf) {
     int rv = 0;
     unsigned int i, j;
     uint8_t nsects = (uint8_t)count;
-    uint8_t dsel;
 
     /* Make sure that we've been initialized and there's a disk attached. */
     if(!devices) {
@@ -713,11 +694,7 @@ int g1_ata_write_lba(uint64_t sector, size_t count, const uint16_t *buf) {
         return -1;
 
     /* Wait for the device to signal it is ready. */
-    g1_ata_wait_nbsy();
-
-    /* For now, just assume we're accessing the slave device. We don't care
-       about the primary device, since it should always be the GD-ROM drive. */
-    dsel = IN8(G1_ATA_DEVICE_SELECT);
+    g1_ata_wait_bsydrq();
 
     while(count) {
         nsects = count > 255 ? 255 : (uint8_t)count;
@@ -725,7 +702,8 @@ int g1_ata_write_lba(uint64_t sector, size_t count, const uint16_t *buf) {
 
         /* Which mode are we using: LBA28 or LBA48? */
         if((sector + nsects) <= 0x0FFFFFFF) {
-            OUT8(G1_ATA_DEVICE_SELECT, 0xF0 | ((sector >> 24) & 0x0F));
+            g1_ata_select_device(G1_ATA_SLAVE | G1_ATA_LBA_MODE |
+                                 ((sector >> 24) & 0x0F));
 
             /* Write out the number of sectors we want and the lower 24-bits of
                the LBA we're looking for. */
@@ -738,7 +716,7 @@ int g1_ata_write_lba(uint64_t sector, size_t count, const uint16_t *buf) {
             OUT8(G1_ATA_COMMAND_REG, ATA_CMD_WRITE_SECTORS);
         }
         else {
-            OUT8(G1_ATA_DEVICE_SELECT, 0xF0);
+            g1_ata_select_device(G1_ATA_SLAVE | G1_ATA_LBA_MODE);
 
             /* Write out the number of sectors we want and the LBA. */
             OUT8(G1_ATA_SECTOR_COUNT, 0);
@@ -767,11 +745,10 @@ int g1_ata_write_lba(uint64_t sector, size_t count, const uint16_t *buf) {
     }
 
     /* Wait for the device to signal that it has finished writing the data. */
-    g1_ata_wait_nbsy();
+    g1_ata_wait_bsydrq();
 
     rv = 0;
 
-    OUT8(G1_ATA_DEVICE_SELECT, dsel);
     g1_ata_mutex_unlock();
 
     return rv;
@@ -780,7 +757,6 @@ int g1_ata_write_lba(uint64_t sector, size_t count, const uint16_t *buf) {
 int g1_ata_write_lba_dma(uint64_t sector, size_t count, const uint16_t *buf,
                          int block) {
     int rv = 0;
-    uint8_t dsel;
     uint32_t addr;
     int old, can_lba48 = CAN_USE_LBA48();
 
@@ -835,7 +811,7 @@ int g1_ata_write_lba_dma(uint64_t sector, size_t count, const uint16_t *buf,
     /* Flush the dcache over the range of the data. */
     dcache_flush_range((uint32)buf, count * 512);
 
-    /* Lock the mutex. */
+    /* Lock the mutex. It will be unlocked in the IRQ handler later. */
     if(g1_ata_mutex_lock())
         return -1;
 
@@ -857,15 +833,12 @@ int g1_ata_write_lba_dma(uint64_t sector, size_t count, const uint16_t *buf,
     irq_restore(old);
 
     /* Wait for the device to signal it is ready. */
-    g1_ata_wait_nbsy();
-
-    /* For now, just assume we're accessing the slave device. We don't care
-       about the primary device, since it should always be the GD-ROM drive. */
-    dsel = IN8(G1_ATA_DEVICE_SELECT);
+    g1_ata_wait_bsydrq();
 
     /* Which mode are we using: LBA28 or LBA48? */
     if(!can_lba48 || use_lba28(sector, count)) {
-        OUT8(G1_ATA_DEVICE_SELECT, 0xF0 | ((sector >> 24) & 0x0F));
+        g1_ata_select_device(G1_ATA_SLAVE | G1_ATA_LBA_MODE |
+                             ((sector >> 24) & 0x0F));
 
         /* Write out the number of sectors we have and the lower 24-bits of
            the LBA we're looking for. Note that putting 0 into the sector count
@@ -880,7 +853,7 @@ int g1_ata_write_lba_dma(uint64_t sector, size_t count, const uint16_t *buf,
                         block);
     }
     else {
-        OUT8(G1_ATA_DEVICE_SELECT, 0xF0);
+        g1_ata_select_device(G1_ATA_SLAVE | G1_ATA_LBA_MODE);
 
         /* Write out the number of sectors we have and the LBA. Note that in
            LBA48 mode, putting 0 into the sector count register writes 65536
@@ -899,15 +872,10 @@ int g1_ata_write_lba_dma(uint64_t sector, size_t count, const uint16_t *buf,
                         block);
     }
 
-    OUT8(G1_ATA_DEVICE_SELECT, dsel);
-    g1_ata_mutex_unlock();
-
     return rv;
 }
 
 int g1_ata_flush(void) {
-    uint8_t dsel;
-
     /* Make sure that we've been initialized and there's a disk attached. */
     if(!devices) {
         errno = ENXIO;
@@ -919,8 +887,7 @@ int g1_ata_flush(void) {
         return -1;
 
     /* Select the slave device. */
-    dsel = IN8(G1_ATA_DEVICE_SELECT);
-    OUT8(G1_ATA_DEVICE_SELECT, 0xF0);
+    g1_ata_select_device(G1_ATA_SLAVE | G1_ATA_LBA_MODE);
     timer_spin_sleep(1);
 
     /* Flush the disk's write cache to make sure everything gets written out. */
@@ -930,10 +897,7 @@ int g1_ata_flush(void) {
         OUT8(G1_ATA_COMMAND_REG, ATA_CMD_FLUSH_CACHE);
 
     timer_spin_sleep(1);
-    g1_ata_wait_nbsy();
-
-    /* Restore the old selected device and return. */
-    OUT8(G1_ATA_DEVICE_SELECT, dsel);
+    g1_ata_wait_bsydrq();
     g1_ata_mutex_unlock();
 
     return 0;
