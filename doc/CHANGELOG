@@ -32,6 +32,11 @@ KallistiOS version 2.0.1 -----------------------------------------------
       vblank to actually render to the texture [LS]
 - *** Modified fs_stat to conform (mostly) to the POSIX standard for the stat
       function [LS]
+- DC  Modified the cdrom driver so that it will set itself as the active ATA
+      device before trying to do any CD related reading [LS]
+- DC  Fixed potential race conditions between the cdrom code and g1ata [LS]
+- DC  Fixed full sector reading of non-data CDs (thanks to SWAT for pointing out
+      that it needed fixing) [LS]
 
 KallistiOS version 2.0.0 -----------------------------------------------
 - DC  Broadband Adapter driver fixes [Dan Potter == DP]
