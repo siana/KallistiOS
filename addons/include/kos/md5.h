@@ -70,6 +70,19 @@ void kos_md5_hash_block(kos_md5_cxt_t *cxt, const uint8 *input, uint32 size);
 */
 void kos_md5_finish(kos_md5_cxt_t *cxt, uint8 output[16]);
 
+/** \brief  Compute the hash of a block of data with MD5.
+
+    This function is used to hash a full block of data without messing around
+    with any contexts or anything else of the sort. This is appropriate if you
+    have all the data you want to hash readily available. It takes care of all
+    of the context setup and teardown for you.
+
+    \param  input       The data to hash.
+    \param  size        The number of bytes of input data passed in.
+    \param  output      Where to store the final message digest.
+*/
+void kos_md5(const uint8 *input, uint32 size, uint8 output[16]);
+
 __END_DECLS
 
 #endif /* !__KOS_MD5_H */

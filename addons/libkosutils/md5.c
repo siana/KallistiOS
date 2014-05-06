@@ -272,3 +272,12 @@ void kos_md5_finish(kos_md5_cxt_t *cxt, uint8 output[16]) {
         output[i] = (uint8)(cxt->hash[i >> 2] >> ((i & 0x03) << 3));
     }
 }
+
+/* Convenience function for computing an MD5 of a complete block. */
+void kos_md5(const uint8 *input, uint32 size, uint8 output[16]) {
+    kos_md5_cxt_t cxt;
+
+    kos_md5_start(&cxt);
+    kos_md5_hash_block(&cxt, input, size);
+    kos_md5_finish(&cxt, output);
+}
