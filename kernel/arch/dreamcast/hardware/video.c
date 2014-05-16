@@ -617,12 +617,8 @@ void vid_set_mode_ex(vid_mode_t *mode) {
     vid_flip(0);
 
     /* Set cable type */
-    if(mode->cable_type & 1) {
-        *((vuint32*)0xa0702c00) |= 0x300;
-    }
-    else {
-        *((vuint32*)0xa0702c00) &= ~0x300;
-    }
+    *((vuint32*)0xa0702c00) = (*((vuint32*)0xa0702c00) & 0xfffffcff) |
+        ((ct & 3) << 8);
 
     /* Re-enable the display */
     regs[0x3A] &= ~8;
@@ -756,5 +752,3 @@ void vid_shutdown() {
     /* Play nice with loaders, like KOS used to do. */
     vid_init(DM_640x480, PM_RGB565);
 }
-
-
