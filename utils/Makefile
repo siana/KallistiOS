@@ -4,7 +4,7 @@
 # (c)2001 Dan Potter
 #
 
-DIRS = genromfs wav2adpcm vqenc gba-crcfix
+DIRS = genromfs wav2adpcm vqenc scramble
 
 # Ok for these to fail atm...
 
