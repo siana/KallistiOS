@@ -15,9 +15,9 @@ the header:
 * KOS License (README.KOS) for more details.
 *
 * You should have received a copy of the KOS License along with this
-* program; if not, please visit Cryptic Allusion DCDev at:
+* program; if not, please visit Cryptic Allusion Game Dev at:
 *
-*   http://dcdev.allusion.net/
+*   http://gamedev.allusion.net/
 *
 
 The text of that license follows. In layman's terms, all it really
@@ -28,9 +28,10 @@ documentation is ok) and there is no warranty.
 							Dan Potter
 
 All of the documentation and software included in the KallistiOS Releases
-is copyrighted (C) 2000-2013 by Dan Potter and others (as noted in each file).
+is copyrighted (C) 2000-2014 by Dan Potter, Lawrence Sebald, and others (as
+noted in each file).
 
-Copyright (C) 1997-2013 KallistiOS Contributors. All rights reserved.
+Copyright (C) 1997-2014 KallistiOS Contributors. All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions
@@ -55,4 +56,3 @@ HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
 LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
 OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 SUCH DAMAGE.
-

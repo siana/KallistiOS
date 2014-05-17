@@ -1,7 +1,8 @@
 /* KallistiOS ##version##
 
-   matrix.h
-   (c)2000 Dan Potter
+   dc/matrix.h
+   Copyright (C) 2000 Dan Potter
+   Copyright (C) 2013, 2014 Josh "PH3NOM" Pearson
 
 */
 
@@ -13,6 +14,7 @@
     functionality is built off of these operations.
 
     \author Dan Potter
+    \author Josh "PH3NOM" Pearson
     \see    dc/matrix3d.h
 */
 
@@ -117,8 +119,8 @@ void mat_transform_sq(void * input, void * output, int veccnt);
     This macro is an inline assembly operation to transform a single vertex. It
     works most efficiently if the x value is in fr0, y is in fr1, z is in
     fr2, and w is in fr3 before using the macro. This macro is similar to
-    mat_trans_single(), but this one allows an input to and preserves the Z/W
-    value.
+    \ref mat_trans_single(), but this one allows an input to and preserves the
+    Z/W value.
 
     \param  x               The X coordinate to transform.
     \param  y               The Y coordinate to transform.
@@ -148,8 +150,9 @@ void mat_transform_sq(void * input, void * output, int veccnt);
 
     This macro is an inline assembly operation to transform a single vertex. It
     works most efficiently if the x value is in fr0, y is in fr1, and z is in
-    fr2 before using the macro. This macro is similar to mat_trans_single(), but
-    this one leaves z/w instead of 1/w for the z component.
+    fr2 before using the macro. This macro is similar to
+    \ref mat_trans_single(), but this one leaves z/w instead of 1/w for the z
+    component.
 
     \param  x               The X coordinate to transform.
     \param  y               The Y coordinate to transform.
@@ -177,7 +180,7 @@ void mat_transform_sq(void * input, void * output, int veccnt);
     This macro is an inline assembly operation to transform a single vertex. It
     works most efficiently if the x value is in fr0, y is in fr1, z is in
     fr2, and w is in fr3 before using the macro. This macro is similar to
-    mat_trans_single(), but this one does not do any perspective division.
+    \ref mat_trans_single(), but this one does not do any perspective division.
 
     \param  x               The X coordinate to transform.
     \param  y               The Y coordinate to transform.
@@ -196,8 +199,214 @@ void mat_transform_sq(void * input, void * output, int veccnt);
         x = __x; y = __y; z = __z; w = __w; \
     }
 
+/** \brief  Macro to transform a single 3d vertex coordinate by the internal
+            matrix with no perspective division.
+
+    This macro is an inline assembly operation to transform a 3 float vertex
+    coordinate. It works most efficiently if the x value is in fr12, y is in
+    fr13, and z is in fr14 before using the macro. This macro is similar to
+    \ref mat_trans_nodiv(), but this one sets the W component to 1 for use with
+    a 3d vector.
+
+    \param  x               The X coordinate to transform.
+    \param  y               The Y coordinate to transform.
+    \param  z               The Z coordinate to transform.
+*/
+#define mat_trans_single3_nodiv(x, y, z) { \
+        register float __x __asm__("fr12") = (x); \
+        register float __y __asm__("fr13") = (y); \
+        register float __z __asm__("fr14") = (z); \
+        __asm__ __volatile__( \
+                              "fldi1 fr15\n" \
+                              "ftrv  xmtrx, fv12\n" \
+                              : "=f" (__x), "=f" (__y), "=f" (__z) \
+                              : "0" (__x), "1" (__y), "2" (__z) ); \
+        x = __x; y = __y; z = __z; \
+    }
+
+/** \brief  Macro to transform a single 3d vertex coordinate by the internal
+            matrix with perspective division.
+
+    This macro is an inline assembly operation to transform a 3 float vertex
+    coordinate. It works most efficiently if the x value is in fr12, y is in
+    fr13, and z is in fr14 before using the macro. This macro is similar to
+    \ref mat_trans_single(), but this one does not modify the input operands,
+    instead storing the transformed vector to the output operands.
+
+    \param  x               The X coordinate to input transform.
+    \param  y               The Y coordinate to input transform.
+    \param  z               The Z coordinate to input transform.
+    \param  x2              The X coordinate to output transform.
+    \param  y2              The Y coordinate to output transform.
+    \param  z2              The Z coordinate to output transform.
+*/
+#define mat_trans_single3_nomod(x, y, z, x2, y2, z2) { \
+        register float __x __asm__("fr12") = (x); \
+        register float __y __asm__("fr13") = (y); \
+        register float __z __asm__("fr14") = (z); \
+        __asm__ __volatile__( \
+                              "fldi1 fr15\n" \
+                              "ftrv    xmtrx, fv12\n" \
+                              "fldi1 fr14\n" \
+                              "fdiv    fr15, fr14\n" \
+                              "fmul    fr14, fr12\n" \
+                              "fmul    fr14, fr13\n" \
+                              : "=f" (__x), "=f" (__y), "=f" (__z) \
+                              : "0" (__x), "1" (__y), "2" (__z) \
+                              : "fr15" ); \
+        x2 = __x; y2 = __y; z2 = __z; \
+    }
+
+/** \brief  Macro to transform a single 3d vertex coordinate by the internal
+            matrix.
+
+    This macro is an inline assembly operation to transform a 3 float vertex
+    coordinate. It works most efficiently if the x value is in fr12, y is in
+    fr13, and z is in fr14 before using the macro. This macro is similar to
+    \ref mat_trans_single3_nodiv(), but this one does not modify the input
+    operands, instead storing the transformed vector to the output operands.
+
+    \param  x               The X coordinate to input transform.
+    \param  y               The Y coordinate to input transform.
+    \param  z               The Z coordinate to input transform.
+    \param  x2              The X coordinate to output transform.
+    \param  y2              The Y coordinate to output transform.
+    \param  z2              The Z coordinate to output transform.
+*/
+#define mat_trans_single3_nodiv_nomod(x, y, z, x2, y2, z2) { \
+        register float __x __asm__("fr12") = (x); \
+        register float __y __asm__("fr13") = (y); \
+        register float __z __asm__("fr14") = (z); \
+        __asm__ __volatile__( \
+                              "fldi1 fr15\n" \
+                              "ftrv  xmtrx, fv12\n" \
+                              : "=f" (__x), "=f" (__y), "=f" (__z) \
+                              : "0" (__x), "1" (__y), "2" (__z) ); \
+        x2 = __x; y2 = __y; z2 = __z; \
+    }
+
+/** \brief  Macro to transform a single 3d vertex coordinate by the internal
+            matrix.
+
+    This macro is an inline assembly operation to transform a 3 float vertex
+    coordinate. It works most efficiently if the x value is in fr12, y is in
+    fr13, and z is in fr14 before using the macro. This macro is similar to
+    \ref mat_trans_single3_nodiv(), but this one stores the W component of
+    transform for later perspective divide.
+
+    \param  x               The X coordinate to transform.
+    \param  y               The Y coordinate to transform.
+    \param  z               The Z coordinate to transform.
+    \param  w               The W coordinate output of transform.
+*/
+#define mat_trans_single3_nodivw(x, y, z, w) { \
+        register float __x __asm__("fr12") = (x); \
+        register float __y __asm__("fr13") = (y); \
+        register float __z __asm__("fr14") = (z); \
+        register float __w __asm__("fr15"); \
+        __asm__ __volatile__( \
+                              "fldi1 fr15\n" \
+                              "ftrv  xmtrx, fv12\n" \
+                              : "=f" (__x), "=f" (__y), "=f" (__z) \
+                              : "0" (__x), "1" (__y), "2" (__z) ); \
+        x = __x; y = __y; z = __z; w = __w; \
+    }
+
+/** \brief  Macro to transform a single 3d vertex coordinate by the internal
+            matrix both with and without perspective division.
+
+    This macro is an inline assembly operation to transform a 3 float vertex
+    coordinate. It works most efficiently if the x value is in fr0, y is in fr1,
+    and z is in fr2 before using the macro. This macro is similar to
+    \ref mat_trans_single(), but this one is used for transforming input vertex
+    with and without perspective division.
+
+    \param  x               The X coordinate to transform without perspective
+                            divide.
+    \param  y               The Y coordinate to transform without perspective
+                            divide.
+    \param  z               The Z coordinate to transform without perspective
+                            divide.
+    \param  xd              The X coordinate to output transform with
+                            perspective divide.
+    \param  yd              The Y coordinate to output transform with
+                            perspective divide.
+    \param  zd              The Z coordinate to output transform with
+                            perspective divide.
+*/
+#define mat_trans_single3_nodiv_div(x, y, z, xd, yd, zd) { \
+        register float __x __asm__("fr0") = (x); \
+        register float __y __asm__("fr1") = (y); \
+        register float __z __asm__("fr2") = (z); \
+        register float __xd __asm__("fr4"); \
+        register float __yd __asm__("fr5"); \
+        register float __zd __asm__("fr6"); \
+        __asm__ __volatile__( \
+                              "fldi1 fr3\n" \
+                              "ftrv  xmtrx, fv0\n" \
+                              "fmov  fr0, fr4\n" \
+                              "fmov  fr1, fr5\n" \
+                              "fmov  fr3, fr7\n" \
+                              "fldi1 fr6\n" \
+                              "fdiv    fr7, fr6\n" \
+                              "fmul    fr6, fr4\n" \
+                              "fmul    fr6, fr5\n" \
+                              : "=f" (__x), "=f" (__y), "=f" (__z) \
+                              : "0" (__x), "1" (__y), "2" (__z) ); \
+        x = __x; y = __y; z = __z; xd = __xd; yd = __yd; zd = __zd; \
+    }
+
+/** \brief  Macro to transform a single vertex normal by the internal matrix.
+
+    This macro is an inline assembly operation to transform a 3 float vertex
+    normal. It works most efficiently if the x value is in fr8, y is in fr9,
+    and z is in fr10 before using the macro. This macro is similar to
+    \ref mat_trans_nodiv(), but this one sets the W component to 0 in order to
+    transform a vertex normal, rather than 1 for a vertex position.
+
+    \param  x               The X normal to transform.
+    \param  y               The Y normal to transform.
+    \param  z               The Z normal to transform.
+*/
+#define mat_trans_normal3(x, y, z) { \
+        register float __x __asm__("fr8") = (x); \
+        register float __y __asm__("fr9") = (y); \
+        register float __z __asm__("fr10") = (z); \
+        __asm__ __volatile__( \
+                              "fldi0 fr11\n" \
+                              "ftrv  xmtrx, fv8\n" \
+                              : "=f" (__x), "=f" (__y), "=f" (__z) \
+                              : "0" (__x), "1" (__y), "2" (__z) ); \
+        x = __x; y = __y; z = __z; \
+    }
+
+/** \brief  Macro to transform a single vertex normal by the internal matrix.
+
+    This macro is an inline assembly operation to transform a 3 float vertex
+    normal. It works most efficiently if the x value is in fr8, y is in fr9,
+    and z is in fr10 before using the macro. This macro is similar to
+    \ref mat_trans_normal3(), but this one does not modify the input operands,
+    instead storing the transformed vector to the output operands.
+
+    \param  x               The X normal to input transform.
+    \param  y               The Y normal to input transform.
+    \param  z               The Z normal to input transform.
+    \param  x2              The X normal to output transform.
+    \param  y2              The Y normal to output transform.
+    \param  z2              The Z normal to output transform.
+*/
+#define mat_trans_normal3_nomod(x, y, z, x2, y2, z2) { \
+        register float __x __asm__("fr8") = (x); \
+        register float __y __asm__("fr9") = (y); \
+        register float __z __asm__("fr10") = (z); \
+        __asm__ __volatile__( \
+                              "fldi0 fr11\n" \
+                              "ftrv  xmtrx, fv8\n" \
+                              : "=f" (__x), "=f" (__y), "=f" (__z) \
+                              : "0" (__x), "1" (__y), "2" (__z) ); \
+        x2 = __x; y2 = __y; z2 = __z; \
+    }
 
 __END_DECLS
 
-#endif  /* __DC_MATRIX_H */
-
+#endif  /* !__DC_MATRIX_H */

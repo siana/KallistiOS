@@ -1,6 +1,8 @@
 Platform independent changes are marked with '***', otherwise the
-applicable platform is listed. If someone besides me found the bug or
-suggested the fix, I'll put their name in [ ].
+applicable platform is listed. The name/initials of the person who
+is responsible for the change are listed in [square brackets] for most
+versions (where they are missing from early versions, assume that they
+should be attributed to Dan Potter).
 
 KallistiOS version 2.0.1 -----------------------------------------------
 - *** Cleaned up generated stubs files on a make clean [Lawrence Sebald = LS]
@@ -37,6 +39,7 @@ KallistiOS version 2.0.1 -----------------------------------------------
 - DC  Fixed potential race conditions between the cdrom code and g1ata [LS]
 - DC  Fixed full sector reading of non-data CDs (thanks to SWAT for pointing out
       that it needed fixing) [LS]
+- DC  Added many new matrix/vector math-related macros [Josh Pearson = JP]
 
 KallistiOS version 2.0.0 -----------------------------------------------
 - DC  Broadband Adapter driver fixes [Dan Potter == DP]
