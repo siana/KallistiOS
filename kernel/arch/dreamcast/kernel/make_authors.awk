@@ -1,7 +1,7 @@
 # KallistiOS ##version##
 #
 # arch/dreamcast/kernel/make_authors.awk
-# Copyright (C) 2013 Lawrence Sebald
+# Copyright (C) 2013, 2014 Lawrence Sebald
 
 # This script processes the AUTHORS file in the root directory of the source
 # distribution to create the authors.h file that is needed in banner.c. This
@@ -28,6 +28,7 @@ BEGIN {
         exit;
     }
     else if(phase == 2 && $0 != "") {
+        gsub(/"/, "\\\"", $1)
         print "\"Copyright (C)" $2, $1 "\\n\"";
     }
 }
