@@ -121,6 +121,17 @@ int net_ipv4_send_packet(netif_t *net, ip_hdr_t *hdr, const uint8 *data,
 
         return 0;
     }
+    else if(net->flags & NETIF_NOETH) {
+        /* Put the IP header / data into our packet */
+        memcpy(pkt, hdr, 4 * (hdr->version_ihl & 0x0f));
+        memcpy(pkt + 4 * (hdr->version_ihl & 0x0f), data, size);
+
+        ++ipv4_stats.pkt_sent;
+
+        /* Send it away */
+        return net->if_tx(net, pkt, 4 * (hdr->version_ihl & 0x0f) + size,
+                          NETIF_BLOCK);
+    }
 
     /* Are we sending a broadcast packet? */
     if(hdr->dest == 0xFFFFFFFF || is_broadcast(dest_ip, net->broadcast)) {

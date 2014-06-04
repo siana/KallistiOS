@@ -83,6 +83,16 @@ int net_ipv6_send_packet(netif_t *net, ipv6_hdr_t *hdr, const uint8 *data,
         net_ipv6_input(NULL, pkt, sizeof(ipv6_hdr_t) + data_size, NULL);
         return 0;
     }
+    else if(net->flags & NETIF_NOETH) {
+        memcpy(pkt, hdr, sizeof(ipv6_hdr_t));
+        memcpy(pkt + sizeof(ipv6_hdr_t), data, data_size);
+
+        ++ipv6_stats.pkt_sent;
+
+        /* Send the packet away */
+        return net->if_tx(net, pkt, sizeof(ipv6_hdr_t) + data_size,
+                          NETIF_BLOCK);
+    }
     else if(IN6_IS_ADDR_MULTICAST(&hdr->dst_addr)) {
         dst_mac[0] = dst_mac[1] = 0x33;
         dst_mac[2] = hdr->dst_addr.__s6_addr.__s6_addr8[12];

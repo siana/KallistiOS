@@ -182,6 +182,7 @@ typedef struct knetif {
 #define NETIF_RUNNING       0x00000008      /**< \brief Has start() been called? */
 #define NETIF_PROMISC       0x00010000      /**< \brief Promiscuous mode */
 #define NETIF_NEEDSPOLL     0x01000000      /**< \brief Needs to be polled for input */
+#define NETIF_NOETH         0x10000000      /**< \brief Does not use ethernet */
 /** @} */
 
 /* Return types for if_tx */
@@ -762,4 +763,3 @@ void net_shutdown(void);
 __END_DECLS
 
 #endif  /* __KOS_NET_H */
-
