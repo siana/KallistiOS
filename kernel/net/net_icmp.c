@@ -70,7 +70,7 @@ static void icmp_default_echo_cb(const uint8 *ip, uint16 seq, uint64 delta_us,
 net_echo_cb net_icmp_echo_cb = icmp_default_echo_cb;
 
 /* Handle Echo Reply (ICMP type 0) packets */
-static void net_icmp_input_0(netif_t *src, ip_hdr_t *ip, icmp_hdr_t *icmp,
+static void net_icmp_input_0(netif_t *src, const ip_hdr_t *ip, icmp_hdr_t *icmp,
                              const uint8 *d, size_t s) {
     uint64 tmr, otmr;
     uint16 seq;
@@ -94,7 +94,7 @@ static void net_icmp_input_0(netif_t *src, ip_hdr_t *ip, icmp_hdr_t *icmp,
 }
 
 /* Handle Echo (ICMP type 8) packets */
-static void net_icmp_input_8(netif_t *src, ip_hdr_t *ip, icmp_hdr_t *icmp,
+static void net_icmp_input_8(netif_t *src, const ip_hdr_t *ip, icmp_hdr_t *icmp,
                              const uint8 *d, size_t s) {
     /* Set type to echo reply */
     icmp->type = ICMP_MESSAGE_ECHO_REPLY;
@@ -110,7 +110,7 @@ static void net_icmp_input_8(netif_t *src, ip_hdr_t *ip, icmp_hdr_t *icmp,
     net_ipv4_send(src, d, s, ip->packet_id, 255, 1, ip->dest, ip->src);
 }
 
-int net_icmp_input(netif_t *src, ip_hdr_t *ip, const uint8 *d, size_t s) {
+int net_icmp_input(netif_t *src, const ip_hdr_t *ip, const uint8 *d, size_t s) {
     icmp_hdr_t *icmp;
     int i;
 

@@ -211,9 +211,8 @@ int net_ipv4_send(netif_t *net, const uint8 *data, size_t size, int id, int ttl,
 
 int net_ipv4_input(netif_t *src, const uint8 *pkt, size_t pktsize,
                    const eth_hdr_t *eth) {
-    ip_hdr_t *ip;
-    uint16 i;
-    uint8 *data;
+    const ip_hdr_t *ip;
+    const uint8 *data;
     size_t hdrlen;
     uint8 ipa[4];
 
@@ -223,7 +222,7 @@ int net_ipv4_input(netif_t *src, const uint8 *pkt, size_t pktsize,
         return -1;
     }
 
-    ip = (ip_hdr_t*) pkt;
+    ip = (const ip_hdr_t *)pkt;
     hdrlen = (ip->version_ihl & 0x0F) << 2;
 
     if(pktsize < hdrlen) {
@@ -233,17 +232,13 @@ int net_ipv4_input(netif_t *src, const uint8 *pkt, size_t pktsize,
     }
 
     /* Check ip header checksum */
-    i = ip->checksum;
-    ip->checksum = 0;
-    ip->checksum = net_ipv4_checksum((uint8 *)ip, hdrlen, 0);
-
-    if(i != ip->checksum) {
+    if(net_ipv4_checksum((uint8 *)ip, hdrlen, 0)) {
         /* The checksums don't match, bail */
         ++ipv4_stats.pkt_recv_bad_chksum;
         return -1;
     }
 
-    data = (uint8 *)(pkt + hdrlen);
+    data = (const uint8 *)(pkt + hdrlen);
 
     /* Add the sender to the ARP cache, if they're not already there. */
     if(eth) {
@@ -255,7 +250,7 @@ int net_ipv4_input(netif_t *src, const uint8 *pkt, size_t pktsize,
     return net_ipv4_reassemble(src, ip, data, ntohs(ip->length) - hdrlen);
 }
 
-int net_ipv4_input_proto(netif_t *src, ip_hdr_t *ip, const uint8 *data) {
+int net_ipv4_input_proto(netif_t *src, const ip_hdr_t *ip, const uint8 *data) {
     size_t hdrlen = (ip->version_ihl & 0x0F) << 2;
     size_t datalen = ntohs(ip->length) - hdrlen;
     int rv;

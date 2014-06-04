@@ -243,7 +243,7 @@ int net_ipv4_frag_send(netif_t *net, ip_hdr_t *hdr, const uint8 *data,
 /* IPv4 fragment reassembly procedure. This (along with the frag_import function
    above are basically a direct implementation of the example IP reassembly
    routine on pages 27-29 of RFC 791. */
-int net_ipv4_reassemble(netif_t *src, ip_hdr_t *hdr, const uint8 *data,
+int net_ipv4_reassemble(netif_t *src, const ip_hdr_t *hdr, const uint8 *data,
                         size_t size) {
     uint16 flags = ntohs(hdr->flags_frag_offs);
     struct ip_frag *f;
@@ -269,7 +269,7 @@ int net_ipv4_reassemble(netif_t *src, ip_hdr_t *hdr, const uint8 *data,
     /* Find the packet if we already have this one in our data buffer. */
     TAILQ_FOREACH(f, &frags, listhnd) {
         if(f->src == hdr->src && f->dst == hdr->dest &&
-                f->ident == hdr->packet_id && f->proto == hdr->protocol) {
+           f->ident == hdr->packet_id && f->proto == hdr->protocol) {
             /* We've got it, import the data (this function handles unlocking
                the mutex when its done). */
             return frag_import(src, hdr, data, size, flags, f);
