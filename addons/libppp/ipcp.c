@@ -55,12 +55,21 @@ static int ipcp_send_client_cfg(ppp_protocol_t *self, int resend) {
     uint8_t rawpkt[100];
     ipcp_pkt_t *pkt = (ipcp_pkt_t *)rawpkt;
     int len = 0;
-    uint32_t addr = 0;
+    uint8_t addr[4] = { 0, 0, 0, 0 }, dns[4] = { 0, 0, 0, 0 };
 
     (void)self;
 
-    if(ipcp_state.ppp_state->netif)
-        addr = (uint32_t)net_ipv4_address(ipcp_state.ppp_state->netif->ip_addr);
+    if(ipcp_state.ppp_state->netif) {
+        addr[0] = ipcp_state.ppp_state->netif->ip_addr[0];
+        addr[1] = ipcp_state.ppp_state->netif->ip_addr[1];
+        addr[2] = ipcp_state.ppp_state->netif->ip_addr[2];
+        addr[3] = ipcp_state.ppp_state->netif->ip_addr[3];
+
+        dns[0] = ipcp_state.ppp_state->netif->dns[0];
+        dns[1] = ipcp_state.ppp_state->netif->dns[1];
+        dns[2] = ipcp_state.ppp_state->netif->dns[2];
+        dns[3] = ipcp_state.ppp_state->netif->dns[3];
+    }
 
     /* Fill in the code and identifier, then move onto the data. We'll get the
        length when we're done with the data. */
@@ -73,10 +82,17 @@ static int ipcp_send_client_cfg(ppp_protocol_t *self, int resend) {
 
     pkt->data[len++] = IPCP_CONFIGURE_IP_ADDRESS;
     pkt->data[len++] = 6;
-    pkt->data[len++] = (uint8_t)(addr >> 24);
-    pkt->data[len++] = (uint8_t)(addr >> 16);
-    pkt->data[len++] = (uint8_t)(addr >> 8);
-    pkt->data[len++] = (uint8_t)addr;
+    pkt->data[len++] = addr[0];
+    pkt->data[len++] = addr[1];
+    pkt->data[len++] = addr[2];
+    pkt->data[len++] = addr[3];
+
+    pkt->data[len++] = IPCP_CONFIGURE_PRIMARY_DNS;
+    pkt->data[len++] = 6;
+    pkt->data[len++] = dns[0];
+    pkt->data[len++] = dns[1];
+    pkt->data[len++] = dns[2];
+    pkt->data[len++] = dns[3];
 
     len += 4;
     pkt->len = htons(len);
@@ -145,7 +161,7 @@ static int ipcp_handle_configure_req(ppp_protocol_t *self,
     uint8_t response_len = 4, nak_len = 4;
 
     /* Parameters and their default values. */
-    uint32_t addr = 0, dns1 = 0, dns2 = 0;
+    uint32_t addr = 0;
 
     (void)pkt;
 
@@ -213,9 +229,6 @@ static int ipcp_handle_configure_req(ppp_protocol_t *self,
 
             case IPCP_CONFIGURE_PRIMARY_DNS:
                 if(opt_len == 6) {
-                    dns2 = (pkt->data[ptr + 2] << 24) |
-                        (pkt->data[ptr + 3] << 16) | (pkt->data[ptr + 4] << 8) |
-                        pkt->data[ptr + 5];
                     DBG("    primary DNS: %d.%d.%d.%d\n",
                         (int)pkt->data[ptr + 2], (int)pkt->data[ptr + 3],
                         (int)pkt->data[ptr + 4], (int)pkt->data[ptr + 5]);
@@ -240,9 +253,6 @@ static int ipcp_handle_configure_req(ppp_protocol_t *self,
 
             case IPCP_CONFIGURE_SECONDARY_DNS:
                 if(opt_len == 6) {
-                    dns2 = (pkt->data[ptr + 2] << 24) |
-                        (pkt->data[ptr + 3] << 16) | (pkt->data[ptr + 4] << 8) |
-                        pkt->data[ptr + 5];
                     DBG("    secondary DNS: %d.%d.%d.%d\n",
                         (int)pkt->data[ptr + 2], (int)pkt->data[ptr + 3],
                         (int)pkt->data[ptr + 4], (int)pkt->data[ptr + 5]);
@@ -297,13 +307,6 @@ reject_opt:
             nif->gateway[1] = (uint8)(addr >> 16);
             nif->gateway[2] = (uint8)(addr >> 8);
             nif->gateway[3] = (uint8)addr;
-
-            nif->dns[0] = (uint8)(dns1 >> 24);
-            nif->dns[1] = (uint8)(dns1 >> 16);
-            nif->dns[2] = (uint8)(dns1 >> 8);
-            nif->dns[3] = (uint8)dns1;
-
-            (void)dns2;
         }
 
         if(ipcp_state.state == PPP_STATE_ACK_RECEIVED) {
@@ -410,7 +413,7 @@ static int ipcp_handle_configure_ack(ppp_protocol_t *self,
 
 static int ipcp_handle_configure_nak(ppp_protocol_t *self,
                                      const ipcp_pkt_t *pkt, size_t len) {
-    uint32_t addr = 0;
+    uint32_t addr = 0, dns = 0;
     size_t ptr = 0;
     uint8_t opt_len;
 
@@ -487,6 +490,20 @@ static int ipcp_handle_configure_nak(ppp_protocol_t *self,
                 }
                 break;
 
+            case IPCP_CONFIGURE_PRIMARY_DNS:
+                if(opt_len == 6) {
+                    dns = (pkt->data[ptr + 2] << 24) |
+                        (pkt->data[ptr + 3] << 16) | (pkt->data[ptr + 4] << 8) |
+                        pkt->data[ptr + 5];
+                    DBG("    DNS 1: %d.%d.%d.%d\n", (int)pkt->data[ptr + 2],
+                        (int)pkt->data[ptr + 3], (int)pkt->data[ptr + 4],
+                        (int)pkt->data[ptr + 5]);
+                }
+                else {
+                    DBG("    DNS 1 (bad length)\n");
+                }
+                break;
+
             /* If we don't know about the option, ignore it. */
             default:
                 DBG("    unknown option: %d (len %d)\n", pkt->data[ptr],
@@ -505,6 +522,11 @@ static int ipcp_handle_configure_nak(ppp_protocol_t *self,
         nif->ip_addr[1] = (uint8)(addr >> 16);
         nif->ip_addr[2] = (uint8)(addr >> 8);
         nif->ip_addr[3] = (uint8)addr;
+
+        nif->dns[0] = (uint8)(dns >> 24);
+        nif->dns[1] = (uint8)(dns >> 16);
+        nif->dns[2] = (uint8)(dns >> 8);
+        nif->dns[3] = (uint8)dns;
     }
 
     return ipcp_send_client_cfg(self, 0);
