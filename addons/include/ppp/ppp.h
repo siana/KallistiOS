@@ -361,6 +361,27 @@ int ppp_connect(void);
 */
 int ppp_scif_init(int bps);
 
+/** \brief  Initialize the Dreamcast modem for a PPP link.
+
+    This function sets up the Dreamcast serial port to act as a communications
+    link for a point-to-point connection. This includes dialing the specified
+    phone number and establishing the low-level link.
+
+    \param  number      The phone number to dial out.
+    \param  blind       Non-zero to blind dial (don't wait for a dial tone).
+    \param  conn_rate   Storage for the connection rate, in bits per second. Set
+                        to NULL if you do not need this value back from the
+                        function.
+    \retval 0           On success.
+    \retval -1          If modem initialization fails.
+    \retval -2          If not using blind dial and no dial tone is detected
+                        within 5 seconds of opening the line.
+    \retval -3          If dialing the modem fails.
+    \retval -4          If a connection is not established in 60 seconds after
+                        dialing.
+*/
+int ppp_modem_init(const char *number, int blind, int *conn_rate);
+
 /** \brief  Initialize the PPP library.
 
     This function initializes the PPP library, preparing internal structures for
