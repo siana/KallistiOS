@@ -156,11 +156,17 @@ struct sockaddr_storage {
 #define MSG_DONTWAIT    0x80    /**< \brief Make this call non-blocking (non-standard) */
 /** @} */
 
+/** \brief  Unspecified address family. */
+#define AF_UNSPEC   0
+
 /** \brief  Internet domain sockets for use with IPv4 addresses. */
 #define AF_INET     1
 
 /** \brief  Internet domain sockets for use with IPv6 addresses. */
 #define AF_INET6    2
+
+/** \brief  Unspecified protocol family. */
+#define PF_UNSPEC   AF_UNSPEC
 
 /** \brief  Protocol family for Internet domain sockets (IPv4). */
 #define PF_INET     AF_INET
