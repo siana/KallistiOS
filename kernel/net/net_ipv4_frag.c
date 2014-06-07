@@ -125,7 +125,7 @@ static inline int all_bits_set(const uint8 *bitfield, int end) {
 
 /* Import the data for a fragment, potentially passing it onward in processing,
    if the whole datagram has arrived. */
-static int frag_import(netif_t *src, ip_hdr_t *hdr, const uint8 *data,
+static int frag_import(netif_t *src, const ip_hdr_t *hdr, const uint8 *data,
                        size_t size, uint16 flags, struct ip_frag *frag) {
     void *tmp;
     int fo = flags & 0x1FFF;
