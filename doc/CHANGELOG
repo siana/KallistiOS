@@ -40,6 +40,8 @@ KallistiOS version 2.0.1 -----------------------------------------------
 - DC  Fixed full sector reading of non-data CDs (thanks to SWAT for pointing out
       that it needed fixing) [LS]
 - DC  Added many new matrix/vector math-related macros [Josh Pearson = JP]
+- *** Added libppp for dialup internet access to the addons tree [LS]
+- *** Added DNS resolver functions getaddrinfo() and gethostbyname() [LS]
 
 KallistiOS version 2.0.0 -----------------------------------------------
 - DC  Broadband Adapter driver fixes [Dan Potter == DP]
