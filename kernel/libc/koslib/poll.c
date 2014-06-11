@@ -33,7 +33,7 @@ void __poll_event_trigger(int fd, short event) {
     short mask;
 
     if(irq_inside_int()) {
-        if(mutex_trylock(&mutex)) 
+        if(mutex_trylock(&mutex))
             /* XXXX: Uhh... this is bad... */
             return;
     }
@@ -133,18 +133,9 @@ int poll(struct pollfd fds[], nfds_t nfds, int timeout) {
 
     tmp = errno;
     if(cond_wait_timed(&p.cv, &mutex, timeout)) {
-        if(errno == EAGAIN) {
-            errno = tmp;
-            tmp = 0;
-            goto out;
-        }
-        else {
-            /* The mutex won't be locked if errno != EAGAIN */
-            mutex_lock(&mutex);
-            errno = EINTR;
-            tmp = -1;
-            goto out;
-        }
+        errno = tmp;
+        tmp = 0;
+        goto out;
     }
 
     tmp = p.nmatched;
