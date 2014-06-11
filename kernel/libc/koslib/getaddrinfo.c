@@ -28,7 +28,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <errno.h>
-#include <kos/dbglog.h>
+#include <poll.h>
 
 #include <netdb.h>
 #include <sys/socket.h>
@@ -36,8 +36,13 @@
 #include <netinet/in.h>
 
 #include <kos/net.h>
+#include <kos/dbglog.h>
 
-#define printf(...) dbglog(DBG_KDEBUG, __VA_ARGS__);
+/* How many attempts to make at contacting the DNS server before giving up. */
+#define DNS_ATTEMPTS    4
+
+/* How long to wait between attempts. */
+#define DNS_TIMEOUT     500
 
 /*
    This performs a simple DNS A-record query. It hasn't been tested extensively
@@ -411,9 +416,10 @@ static int getaddrinfo_dns(const char *name, struct addrinfo *hints,
     struct sockaddr_in toaddr;
     uint8_t qb[512];
     size_t size;
-    int sock, rv;
+    int sock, rv, tries;
     in_addr_t raddr;
-    ssize_t rsize;
+    ssize_t rsize = 0;
+    struct pollfd pfd;
 
     /* Make sure we have a network device to communicate on. */
     if(!net_default_dev) {
@@ -462,18 +468,39 @@ static int getaddrinfo_dns(const char *name, struct addrinfo *hints,
         return EAI_SYSTEM;
     }
 
-    /* Send the query to the server. */
-    if(send(sock, qb, size, 0) < 0) {
-        return EAI_SYSTEM;
-    }
+    /* Set up the structure we'll use to feed to the poll function. */
+    pfd.fd = sock;
+    pfd.events = POLLIN;
+    pfd.revents = 0;
 
-    /* Get the response. */
-    if((rsize = recv(sock, qb, 512, 0)) < 0) {
-        return EAI_SYSTEM;
+    for(tries = 0; tries < DNS_ATTEMPTS; ++tries) {
+        /* Send the query to the server. */
+        if(send(sock, qb, size, 0) < 0) {
+            return EAI_SYSTEM;
+        }
+
+        /* Wait for the timeout to expire or for us to get the response. */
+        if(poll(&pfd, 1, DNS_TIMEOUT) == 1) {
+            /* Get the response. */
+            if((rsize = recv(sock, qb, 512, 0)) < 0) {
+                return EAI_SYSTEM;
+            }
+
+            break;
+        }
     }
 
     /* Close the socket */
     close(sock);
+
+    /* If we never actually got a response, then there's probably a problem with
+       the server on the other end. I'm not entirely sure what to return in that
+       case, to be perfectly honest. I suppose that EAI_SYSTEM + ETIMEDOUT would
+       make the most sense, since that's really what happened... */
+    if(!rsize) {
+        errno = ETIMEDOUT;
+        return EAI_SYSTEM;
+    }
 
     /* Parse the response. */
     rv = dns_parse_response((dnsmsg_t *)qb, hints, port, res);

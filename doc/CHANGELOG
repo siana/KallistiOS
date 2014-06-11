@@ -42,7 +42,9 @@ KallistiOS version 2.0.1 -----------------------------------------------
 - DC  Added many new matrix/vector math-related macros [Josh Pearson = JP]
 - *** Added libppp for dialup internet access to the addons tree [LS]
 - *** Added DNS resolver functions getaddrinfo() and gethostbyname() [LS]
-- *** Fix a problem where poll() would deadlock if the timeout expired [LS]
+- *** Fixed a problem where poll() would deadlock if the timeout expired [LS]
+- *** Modified getaddrinfo() so that it would try multiple times to contact the
+      DNS server with a timeout between messages [LS]
 
 KallistiOS version 2.0.0 -----------------------------------------------
 - DC  Broadband Adapter driver fixes [Dan Potter == DP]
