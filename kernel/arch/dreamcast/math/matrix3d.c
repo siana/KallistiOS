@@ -1,7 +1,8 @@
 /* KallistiOS ##version##
 
    matrix3d.c
-   (c)2000-2002 Dan Potter and Jordan DeLong
+   Copyright (C) 2000-2002 Dan Potter and Jordan DeLong
+   Copyright (C) 2014 Josh Pearson
 
    Some 3D utils to use with the matrix functions
    Based on example code by Marcus Comstedt
@@ -11,6 +12,7 @@
 #include <dc/fmath.h>
 #include <dc/matrix.h>
 #include <dc/matrix3d.h>
+#include <dc/vec3f.h>
 
 static matrix_t tr_m __attribute__((aligned(32))) = {
     { 1.0f, 0.0f, 0.0f, 0.0f },
@@ -45,9 +47,9 @@ static matrix_t rx_m __attribute__((aligned(32))) = {
     { 0.0f, 0.0f, 0.0f, 1.0f }
 };
 void mat_rotate_x(float r) {
-    rx_m[1][1] = rx_m[2][2] = fcos(r);
-    rx_m[2][1] = fsin(r);
-    rx_m[1][2] = -fsin(r);
+    __fsincosr(r, rx_m[2][1], rx_m[1][1]);
+    rx_m[2][2] = rx_m[1][1];
+    rx_m[1][2] = -rx_m[2][1];
     mat_apply(&rx_m);
 }
 
@@ -58,9 +60,9 @@ static matrix_t ry_m  __attribute__((aligned(32))) = {
     { 0.0f, 0.0f, 0.0f, 1.0f }
 };
 void mat_rotate_y(float r) {
-    ry_m[0][0] = ry_m[2][2] = fcos(r);
-    ry_m[2][0] = -fsin(r);
-    ry_m[0][2] = fsin(r);
+    __fsincosr(r, ry_m[0][2], ry_m[0][0]);
+    ry_m[2][2] = ry_m[0][0];
+    ry_m[2][0] = -ry_m[0][2];
     mat_apply(&ry_m);
 }
 
@@ -71,9 +73,9 @@ static matrix_t rz_m  __attribute__((aligned(32))) = {
     { 0.0f, 0.0f, 0.0f, 1.0f }
 };
 void mat_rotate_z(float r) {
-    rz_m[0][0] = rz_m[1][1] = fcos(r);
-    rz_m[1][0] = fsin(r);
-    rz_m[0][1] = -fsin(r);
+    __fsincosr(r, rz_m[1][0], rz_m[0][0]);
+    rz_m[1][1] = rz_m[0][0];
+    rz_m[0][1] = -rz_m[1][0];
     mat_apply(&rz_m);
 }
 
@@ -124,20 +126,7 @@ void mat_perspective(float xcenter, float ycenter, float cot_fovy_2,
 
 /* The following lookat code is based heavily on KGL's gluLookAt */
 
-/* Should these be publically accessible somewhere? */
-static void normalize(vector_t * p) {
-    float r;
-
-    r = fsqrt(p->x * p->x + p->y * p->y + p->z * p->z);
-
-    if(r == 0.0) return;
-
-    p->x /= r;
-    p->y /= r;
-    p->z /= r;
-}
-
-static void cross(const vector_t * v1, const vector_t * v2, vector_t * r) {
+static void cross(const vec3f_t *v1, const vec3f_t *v2, vec3f_t *r) {
     r->x = v1->y * v2->z - v1->z * v2->y;
     r->y = v1->z * v2->x - v1->x * v2->z;
     r->z = v1->x * v2->y - v1->y * v2->x;
@@ -150,8 +139,9 @@ static matrix_t ml __attribute__((aligned(32))) = {
     { 0.0f, 0.0f, 0.0f, 1.0f }
 };
 
-void mat_lookat(const point_t * eye, const point_t * center, const vector_t * upi) {
-    point_t forward, side, up;
+void mat_lookat(const point_t *eye, const point_t *center,
+                const vector_t *upi) {
+    vec3f_t forward, side, up;
 
     forward.x = center->x - eye->x;
     forward.y = center->y - eye->y;
@@ -161,11 +151,11 @@ void mat_lookat(const point_t * eye, const point_t * center, const vector_t * up
     up.y = upi->y;
     up.z = upi->z;
 
-    normalize(&forward);
+    vec3f_normalize(forward.x, forward.y, forward.z);
 
     /* Side = forward x up */
     cross(&forward, &up, &side);
-    normalize(&side);
+    vec3f_normalize(side.x, side.y, side.z);
 
     /* Recompute up as: up = side x forward */
     cross(&side, &forward, &up);

@@ -85,7 +85,7 @@ void mat_transform(vector_t *invecs, vector_t *outvecs, int veccnt, int vecskip)
                             appropriately BEFORE calling this function.
     \author Jim Ursetto
 */
-void mat_transform_sq(void * input, void * output, int veccnt);
+void mat_transform_sq(void *input, void *output, int veccnt);
 
 /** \brief  Macro to transform a single vertex by the internal matrix.
 

@@ -2,6 +2,7 @@
 
    dc/fmath_base.h
    Copyright (C) 2001 Andrew Kieschnick
+   Copyright (C) 2014 Josh Pearson
 
 */
 
@@ -15,6 +16,7 @@ __BEGIN_DECLS
     \file dc/fmath_base.h
     \brief  Base definitions for the DC's special math instructions
     \author Andrew Kieschnick
+    \author Josh Pearson
 */
 
 /** PI constant (if you don't want full math.h) */
@@ -87,6 +89,27 @@ __BEGIN_DECLS
                 : "fpul", "fr0", "fr1"); \
         __value; })
 
+#define __fsincos(r, s, c) \
+    ({  register float __r __asm__("fr10") = r; \
+        register float __a __asm__("fr11") = 182.04444443; \
+        __asm__("fmul fr11, fr10\n\t" \
+                "ftrc fr10, fpul\n\t" \
+                "fsca fpul, dr10\n\t" \
+                : "+f" (__r), "+f" (__a) \
+                : "0" (__r), "1" (__a) \
+                : "fpul"); \
+        s = __r; c = __a; })
+
+#define __fsincosr(r, s, c) \
+    ({  register float __r __asm__("fr10") = r; \
+        register float __a __asm__("fr11") = 10430.37835; \
+        __asm__("fmul fr11, fr10\n\t" \
+                "ftrc fr10, fpul\n\t" \
+                "fsca fpul, dr10\n\t" \
+                : "+f" (__r), "+f" (__a) \
+                : "0" (__r), "1" (__a) \
+                : "fpul"); \
+        s = __r; c = __a; })
 
 #define __fsqrt(x) \
     ({ float __arg = (x); \

@@ -57,3 +57,10 @@ float frsqrt(float f) {
     return __frsqrt(f);
 }
 
+void fsincos(float f, float *s, float *c) {
+    __fsincos(f, *s, *c);
+}
+
+void fsincosr(float f, float *s, float *c) {
+    __fsincosr(f, *s, *c);
+}

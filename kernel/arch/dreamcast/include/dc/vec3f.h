@@ -22,7 +22,12 @@
 #include <sys/cdefs.h>
 __BEGIN_DECLS
 
-#include <kos/vector.h>
+typedef struct vec3f {
+    float x, y, z;
+} vec3f_t;
+
+#define R_DEG 182.04444443623349541909523793743
+#define R_RAD 10430.37835
 
 /** \brief  Macro to return the scalar dot product of two 3d vectors.
 
@@ -173,6 +178,258 @@ __BEGIN_DECLS
                               : "0" (__x), "1" (__y), "2" (__z) \
                               : "fr3" ); \
         x3 = __x; y3 = __y; z3 = __z; \
+    }
+
+/** \brief  Macro to rotate a vector about its origin on the x, y plane.
+
+    This macro is an inline assembly operation using the SH4's fast
+    (approximate) math instructions. The return vector is stored into the first
+    vertex parameter: x1, y1, and z1.
+
+    \param  px               The X coordinate of vector to rotate.
+    \param  py               The Y coordinate of vector to rotate.
+    \param  pz               The Z coordinate of vector to rotate.
+    \param  cx               The X coordinate of origin vector.
+    \param  cy               The Y coordinate of origin vector.
+    \param  cz               The Z coordinate of origin vector.
+    \param  r                The angle (in radians) of rotation.
+*/
+#define vec3f_rotr_xy(px, py, pz, cx, cy, cz, r) { \
+        register float __px __asm__("fr0") = px; \
+        register float __py __asm__("fr1") = py; \
+        register float __cx __asm__("fr4") = cx; \
+        register float __cy __asm__("fr5") = cy; \
+        register float __r  __asm__("fr6") = r; \
+        register float __s __asm__("fr7") = R_RAD; \
+        __asm__ __volatile__( \
+                              "fmul fr7, fr6\n" \
+                              "ftrc fr6, fpul\n" \
+                              "fsca fpul, dr6\n" \
+                              "fsub fr4, fr0\n" \
+                              "fsub fr5, fr1\n" \
+                              "fmov fr0, fr2\n" \
+                              "fmov fr1, fr3\n" \
+                              "fmul fr7, fr0\n" \
+                              "fmul fr6, fr1\n" \
+                              "fmul fr6, fr2\n" \
+                              "fmul fr7, fr3\n" \
+                              "fadd fr0, fr4\n" \
+                              "fsub fr1, fr4\n" \
+                              "fadd fr2, fr5\n" \
+                              "fadd fr3, fr5\n" \
+                              : "+f" (__cx), "+f" (__cy) \
+                              : "f" (__px), "f" (__py), "f" (__r), "f" (__s) ); \
+        px = __cx; py = __cy; \
+    }
+
+/** \brief  Macro to rotate a vector about its origin on the x, z plane.
+
+    This macro is an inline assembly operation using the SH4's fast
+    (approximate) math instructions. The return vector is stored into the first
+    vertex parameter: x1, y1, and z1.
+
+    \param  px               The X coordinate of vector to rotate.
+    \param  py               The Y coordinate of vector to rotate.
+    \param  pz               The Z coordinate of vector to rotate.
+    \param  cx               The X coordinate of origin vector.
+    \param  cy               The Y coordinate of origin vector.
+    \param  cz               The Z coordinate of origin vector.
+    \param  r                The angle (in radians) of rotation.
+*/
+#define vec3f_rotr_xz(px, py, pz, cx, cy, cz, r) { \
+        register float __px __asm__("fr0") = px; \
+        register float __pz __asm__("fr1") = pz; \
+        register float __cx __asm__("fr4") = cx; \
+        register float __cz __asm__("fr5") = cz; \
+        register float __r  __asm__("fr6") = r; \
+        register float __s __asm__("fr7") = R_RAD; \
+        __asm__ __volatile__( \
+                              "fmul fr7, fr6\n" \
+                              "ftrc fr6, fpul\n" \
+                              "fsca fpul, dr6\n" \
+                              "fsub fr4, fr0\n" \
+                              "fsub fr5, fr1\n" \
+                              "fmov fr0, fr2\n" \
+                              "fmov fr1, fr3\n" \
+                              "fmul fr7, fr0\n" \
+                              "fmul fr6, fr1\n" \
+                              "fmul fr6, fr2\n" \
+                              "fmul fr7, fr3\n" \
+                              "fadd fr0, fr4\n" \
+                              "fsub fr1, fr4\n" \
+                              "fadd fr2, fr5\n" \
+                              "fadd fr3, fr5\n" \
+                              : "+f" (__cx), "+f" (__cz) \
+                              : "f" (__px), "f" (__pz), "f" (__r), "f" (__s) ); \
+        px = __cx; pz = __cz; \
+    }
+
+/** \brief  Macro to rotate a vector about its origin on the y, z plane.
+
+    This macro is an inline assembly operation using the SH4's fast
+    (approximate) math instructions. The return vector is stored into the first
+    vertex parameter: x1, y1, and z1.
+
+    \param  px               The X coordinate of vector to rotate.
+    \param  py               The Y coordinate of vector to rotate.
+    \param  pz               The Z coordinate of vector to rotate.
+    \param  cx               The X coordinate of origin vector.
+    \param  cy               The Y coordinate of origin vector.
+    \param  cz               The Z coordinate of origin vector.
+    \param  r                The angle (in radians) of rotation.
+*/
+#define vec3f_rotr_yz(px, py, pz, cx, cy, cz, r) { \
+        register float __py __asm__("fr0") = py; \
+        register float __pz __asm__("fr1") = pz; \
+        register float __cy __asm__("fr4") = cy; \
+        register float __cz __asm__("fr5") = cz; \
+        register float __r  __asm__("fr6") = r; \
+        register float __s __asm__("fr7") = R_RAD; \
+        __asm__ __volatile__( \
+                              "fmul fr7, fr6\n" \
+                              "ftrc fr6, fpul\n" \
+                              "fsca fpul, dr6\n" \
+                              "fsub fr4, fr0\n" \
+                              "fsub fr5, fr1\n" \
+                              "fmov fr0, fr2\n" \
+                              "fmov fr1, fr3\n" \
+                              "fmul fr7, fr0\n" \
+                              "fmul fr6, fr1\n" \
+                              "fmul fr6, fr2\n" \
+                              "fmul fr7, fr3\n" \
+                              "fadd fr0, fr4\n" \
+                              "fsub fr1, fr4\n" \
+                              "fadd fr2, fr5\n" \
+                              "fadd fr3, fr5\n" \
+                              : "+f" (__cy), "+f" (__cz) \
+                              : "f" (__py), "f" (__pz), "f" (__r), "f" (__s) ); \
+        py = __cy; pz = __cz; \
+    }
+
+/** \brief  Macro to rotate a vector about its origin on the x, y plane.
+
+    This macro is an inline assembly operation using the SH4's fast
+    (approximate) math instructions. The return vector is stored into the first
+    vertex parameter: x1, y1, and z1.
+
+    \param  px               The X coordinate of vector to rotate.
+    \param  py               The Y coordinate of vector to rotate.
+    \param  pz               The Z coordinate of vector to rotate.
+    \param  cx               The X coordinate of origin vector.
+    \param  cy               The Y coordinate of origin vector.
+    \param  cz               The Z coordinate of origin vector.
+    \param  r                The angle (in degrees) of rotation.
+*/
+#define vec3f_rotd_xy(px, py, pz, cx, cy, cz, r) { \
+        register float __px __asm__("fr0") = px; \
+        register float __pz __asm__("fr1") = pz; \
+        register float __cx __asm__("fr4") = cx; \
+        register float __cz __asm__("fr5") = cz; \
+        register float __r  __asm__("fr6") = r; \
+        register float __s __asm__("fr7") = R_DEG; \
+        __asm__ __volatile__( \
+                              "fmul fr7, fr6\n" \
+                              "ftrc fr6, fpul\n" \
+                              "fsca fpul, dr6\n" \
+                              "fsub fr4, fr0\n" \
+                              "fsub fr5, fr1\n" \
+                              "fmov fr0, fr2\n" \
+                              "fmov fr1, fr3\n" \
+                              "fmul fr7, fr0\n" \
+                              "fmul fr6, fr1\n" \
+                              "fmul fr6, fr2\n" \
+                              "fmul fr7, fr3\n" \
+                              "fadd fr0, fr4\n" \
+                              "fsub fr1, fr4\n" \
+                              "fadd fr2, fr5\n" \
+                              "fadd fr3, fr5\n" \
+                              : "+f" (__cx), "+f" (__cz) \
+                              : "f" (__px), "f" (__pz), "f" (__r), "f" (__s) ); \
+        px = __cx; pz = __cz; \
+    }
+
+/** \brief  Macro to rotate a vector about its origin on the x, z plane.
+
+    This macro is an inline assembly operation using the SH4's fast
+    (approximate) math instructions. The return vector is stored into the first
+    vertex parameter: x1, y1, and z1.
+
+    \param  px               The X coordinate of vector to rotate.
+    \param  py               The Y coordinate of vector to rotate.
+    \param  pz               The Z coordinate of vector to rotate.
+    \param  cx               The X coordinate of origin vector.
+    \param  cy               The Y coordinate of origin vector.
+    \param  cz               The Z coordinate of origin vector.
+    \param  r                The angle (in degrees) of rotation.
+*/
+#define vec3f_rotd_xz(px, py, pz, cx, cy, cz, r) { \
+        register float __px __asm__("fr0") = px; \
+        register float __pz __asm__("fr1") = pz; \
+        register float __cx __asm__("fr4") = cx; \
+        register float __cz __asm__("fr5") = cz; \
+        register float __r  __asm__("fr6") = r; \
+        register float __s __asm__("fr7") = R_DEG; \
+        __asm__ __volatile__( \
+                              "fmul fr7, fr6\n" \
+                              "ftrc fr6, fpul\n" \
+                              "fsca fpul, dr6\n" \
+                              "fsub fr4, fr0\n" \
+                              "fsub fr5, fr1\n" \
+                              "fmov fr0, fr2\n" \
+                              "fmov fr1, fr3\n" \
+                              "fmul fr7, fr0\n" \
+                              "fmul fr6, fr1\n" \
+                              "fmul fr6, fr2\n" \
+                              "fmul fr7, fr3\n" \
+                              "fadd fr0, fr4\n" \
+                              "fsub fr1, fr4\n" \
+                              "fadd fr2, fr5\n" \
+                              "fadd fr3, fr5\n" \
+                              : "+f" (__cx), "+f" (__cz) \
+                              : "f" (__px), "f" (__pz), "f" (__r), "f" (__s) ); \
+        px = __cx; pz = __cz; \
+    }
+
+/** \brief  Macro to rotate a vector about its origin on the y, z plane.
+
+    This macro is an inline assembly operation using the SH4's fast
+    (approximate) math instructions. The return vector is stored into the first
+    vertex parameter: x1, y1, and z1.
+
+    \param  px               The X coordinate of vector to rotate.
+    \param  py               The Y coordinate of vector to rotate.
+    \param  pz               The Z coordinate of vector to rotate.
+    \param  cx               The X coordinate of origin vector.
+    \param  cy               The Y coordinate of origin vector.
+    \param  cz               The Z coordinate of origin vector.
+    \param  r                The angle (in degrees) of rotation.
+*/
+#define vec3f_rotd_yz(px, py, pz, cx, cy, cz, r) { \
+        register float __py __asm__("fr0") = py; \
+        register float __pz __asm__("fr1") = pz; \
+        register float __cy __asm__("fr4") = cy; \
+        register float __cz __asm__("fr5") = cz; \
+        register float __r  __asm__("fr6") = r; \
+        register float __s __asm__("fr7") = R_DEG; \
+        __asm__ __volatile__( \
+                              "fmul fr7, fr6\n" \
+                              "ftrc fr6, fpul\n" \
+                              "fsca fpul, dr6\n" \
+                              "fsub fr4, fr0\n" \
+                              "fsub fr5, fr1\n" \
+                              "fmov fr0, fr2\n" \
+                              "fmov fr1, fr3\n" \
+                              "fmul fr7, fr0\n" \
+                              "fmul fr6, fr1\n" \
+                              "fmul fr6, fr2\n" \
+                              "fmul fr7, fr3\n" \
+                              "fadd fr0, fr4\n" \
+                              "fsub fr1, fr4\n" \
+                              "fadd fr2, fr5\n" \
+                              "fadd fr3, fr5\n" \
+                              : "+f" (__cy), "+f" (__cz) \
+                              : "f" (__py), "f" (__pz), "f" (__r), "f" (__s) ); \
+        py = __cy; pz = __cz; \
     }
 
 __END_DECLS

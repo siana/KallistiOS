@@ -2,7 +2,7 @@
 
    dc/fmath.h
    Copyright (C) 2001 Andrew Kieschnick
-   Copyright (C) 2013 Lawrence Sebald
+   Copyright (C) 2013, 2014 Lawrence Sebald
 
 */
 
@@ -16,9 +16,10 @@ __BEGIN_DECLS
 #include <dc/fmath_base.h>
 
 /**
-    \file dc/fmath.h
+    \file   dc/fmath.h
     \brief  Inline functions for the DC's special math instructions
     \author Andrew Kieschnick
+    \author Lawrence Sebald
 */
 
 /* Sigh... C99 treats inline stuff a lot differently than traditional GCC did,
@@ -118,6 +119,32 @@ __FMINLINE float frsqrt(float f) {
     return __frsqrt(f);
 }
 
+/** \brief  Calculate the sine and cosine of a value in degrees.
+
+    This function uses the fsca instruction to calculate an approximation of the
+    sine and cosine of the input value.
+
+    \param  f               The value to calculate the sine and cosine of.
+    \param  s               Storage for the returned sine value.
+    \param  c               Storage for the returned cosine value.
+*/
+__FMINLINE void fsincos(float f, float *s, float *c) {
+    __fsincos(f, *s, *c);
+}
+
+/** \brief  Calculate the sine and cosine of a value in radians.
+
+    This function uses the fsca instruction to calculate an approximation of the
+    sine and cosine of the input value.
+
+    \param  f               The value to calculate the sine and cosine of.
+    \param  s               Storage for the returned sine value.
+    \param  c               Storage for the returned cosine value.
+*/
+__FMINLINE void fsincosr(float f, float *s, float *c) {
+    __fsincosr(f, *s, *c);
+}
+
 /* Make sure we declare the non-inline versions for C99 and non-gcc. Why they'd
    ever be needed, since they're inlined above, who knows? I guess in case
    someone tries to take the address of one of them? */
@@ -134,10 +161,11 @@ extern float ficos(int d);
 extern float fitan(int d);
 extern float fsqrt(float f);
 extern float frsqrt(float f);
+extern void fsincos(float f, float *s, float *c);
+extern void fsincosr(float f, float *s, float *c);
 #endif /* __STDC_VERSION__ >= 199901L || !defined(__GNUC__) */
 /** \endcond */
 
 __END_DECLS
 
 #endif  /* __DC_FMATH_H */
-
