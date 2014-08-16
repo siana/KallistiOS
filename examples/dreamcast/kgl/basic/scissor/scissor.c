@@ -1,10 +1,11 @@
-/* KallistiOS ##version##
+/* 
+   KallistiOS 2.0.0
 
    scissor.c
+   (c)2014 Josh Pearson
    (c)2002 Paul Boese
 
-   Demonstrates the use of glScissor( ) using both the normal
-   GL_SCISSOR_TEST and GL_KOS_USERCLIP_OUTSIDE clip modes.
+   Demonstrates the use of glScissor( ) using GL_SCISSOR_TEST.
 
    Use the 'A' button to cycle though the following demos.
    Use the 'DPAD' to move the clip rectangle in the first two demos.
@@ -14,13 +15,13 @@
     DISABLE glScissor
     4 viewports not clipped
     4 viewports clipped
-
 */
 
 #include <kos.h>
+
 #include <GL/gl.h>
 #include <GL/glu.h>
-#include <pcx/pcx.h>
+#include <GL/glut.h>
 
 #define NUM_DEMOS 5
 enum { USERCLIP_INSIDE = 0, USERCLIP_OUTSIDE, USERCLIP_DISABLED,
@@ -39,23 +40,103 @@ static GLfloat rot = 0.0f;
 static GLfloat rtri = 0.0f, rquad = 0.0f;
 static GLuint texture;
 
-/* Load a texture using pcx_load_texture and glKosTex2D */
-void loadtxr(const char *fn, GLuint *txr) {
-    kos_img_t img;
-    pvr_ptr_t txaddr;
+/* Load a texture */
+void loadtxr(const char *fname, GLuint *txr) {
+#define PVR_HDR_SIZE 0x20
+    FILE *tex = NULL;
+    unsigned char *texBuf;
+    unsigned int texID, texSize;
 
-    if(pcx_to_img(fn, &img) < 0) {
-        printf("can't load %s\n", fn);
-        return;
+    tex = fopen(fname, "rb");
+
+    if(tex == NULL) {
+        printf("FILE READ ERROR: %s\n", fname);
+
+        while(1);
     }
 
-    txaddr = pvr_mem_malloc(img.w * img.h * 2);
-    pvr_txr_load_kimg(&img, txaddr, PVR_TXRLOAD_INVERT_Y);
-    kos_img_free(&img, 0);
+    fseek(tex, 0, SEEK_END);
+    texSize = ftell(tex);
+
+    texBuf = malloc(texSize);
+    fseek(tex, 0, SEEK_SET);
+    fread(texBuf, 1, texSize, tex);
+    fclose(tex);
+
+    int texW = texBuf[PVR_HDR_SIZE - 4] | texBuf[PVR_HDR_SIZE - 3] << 8;
+    int texH = texBuf[PVR_HDR_SIZE - 2] | texBuf[PVR_HDR_SIZE - 1] << 8;
+    int texFormat, texColor;
+
+    switch((unsigned int)texBuf[PVR_HDR_SIZE - 8]) {
+        case 0x00:
+            texColor = PVR_TXRFMT_ARGB1555;
+            break; //(bilevel translucent alpha 0,255)
+
+        case 0x01:
+            texColor = PVR_TXRFMT_RGB565;
+            break; //(non translucent RGB565 )
+
+        case 0x02:
+            texColor = PVR_TXRFMT_ARGB4444;
+            break; //(translucent alpha 0-255)
+
+        case 0x03:
+            texColor = PVR_TXRFMT_YUV422;
+            break; //(non translucent UYVY )
+
+        case 0x04:
+            texColor = PVR_TXRFMT_BUMP;
+            break; //(special bump-mapping format)
+
+        case 0x05:
+            texColor = PVR_TXRFMT_PAL4BPP;
+            break; //(4-bit palleted texture)
+
+        case 0x06:
+            texColor = PVR_TXRFMT_PAL8BPP;
+            break; //(8-bit palleted texture)
+
+        default:
+            break;
+    }
+
+    switch((unsigned int)texBuf[PVR_HDR_SIZE - 7]) {
+        case 0x01:
+            texFormat = PVR_TXRFMT_TWIDDLED;
+            break;//SQUARE TWIDDLED
+
+        case 0x03:
+            texFormat = PVR_TXRFMT_VQ_ENABLE;
+            break;//VQ TWIDDLED
+
+        case 0x09:
+            texFormat = PVR_TXRFMT_NONTWIDDLED;
+            break;//RECTANGLE
+
+        case 0x0B:
+            texFormat = PVR_TXRFMT_STRIDE | PVR_TXRFMT_NONTWIDDLED;
+            break;//RECTANGULAR STRIDE
+
+        case 0x0D:
+            texFormat = PVR_TXRFMT_TWIDDLED;
+            break;//RECTANGULAR TWIDDLED
+
+        case 0x10:
+            texFormat = PVR_TXRFMT_VQ_ENABLE | PVR_TXRFMT_NONTWIDDLED;
+            break;//SMALL VQ
+
+        default:
+            texFormat = PVR_TXRFMT_NONE;
+            break;
+    }
+
+    printf("TEXTURE Resolution: %ix%i\n", texW, texH);
 
     glGenTextures(1, txr);
     glBindTexture(GL_TEXTURE_2D, *txr);
-    glKosTex2D(GL_RGB565_TWID, img.w, img.h, txaddr);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB,
+                 texW, texH, 0,
+                 texFormat, texColor, texBuf + PVR_HDR_SIZE);
 }
 
 void quad(int x, int y) {
@@ -236,16 +317,11 @@ int main(int argc, char **argv) {
     cont_state_t *state;
     static GLboolean ap = GL_FALSE;
 
-    /* Initialize KOS */
-    pvr_init(&params);
-
-    printf("texwrap beginning\n");
-
     /* Get basic stuff initialized */
     glKosInit();
 
     /* Set up the texture */
-    loadtxr("/rd/checker.pcx", &texture);
+    loadtxr("/rd/glass.pvr", &texture);
 
     printf("\n[glScissor Demo]\n");
     printf("DPAD moves glScissor( ) defined rectangle.\n");
@@ -297,10 +373,6 @@ int main(int argc, char **argv) {
         if(!(state->buttons & CONT_A))
             ap = GL_FALSE;
 
-
-        /* Begin frame */
-        glKosBeginFrame();
-
         /* top row, non-alpha texture */
         glBindTexture(GL_TEXTURE_2D, texture);
 
@@ -309,9 +381,11 @@ int main(int argc, char **argv) {
             case QUAD_SCREEN_CLIPPED:
                 glEnable(GL_SCISSOR_TEST);
                 break;
+
             case USERCLIP_OUTSIDE:
-                glEnable(GL_KOS_USERCLIP_OUTSIDE);
+                //glEnable(GL_KOS_USERCLIP_OUTSIDE);
                 break;
+
             case USERCLIP_DISABLED:
             case QUAD_SCREEN_UNCLIPPED:
                 glDisable(GL_SCISSOR_TEST);
@@ -329,6 +403,7 @@ int main(int argc, char **argv) {
                 draw_ortho_scene();
 
                 break;
+
             case QUAD_SCREEN_UNCLIPPED:
             case QUAD_SCREEN_CLIPPED:
 
@@ -341,7 +416,7 @@ int main(int argc, char **argv) {
         }
 
         /* Finish the frame */
-        glKosFinishFrame();
+        glutSwapBuffers();
     }
 
     return 0;

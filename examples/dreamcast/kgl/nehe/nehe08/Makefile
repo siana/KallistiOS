@@ -1,26 +1,30 @@
 #
-# KallistiGL test program
+# Nehe08 example adapted from KGL
+# (c)2013-2014 Josh Pearson
 # (c)2001 Benoit Miller
 #   
 
 TARGET = nehe08.elf
-OBJS = nehe08.o
+
+OBJS = main.o
+
+OBJS += romdisk.o
 
 all: rm-elf $(TARGET)
 
 include $(KOS_BASE)/Makefile.rules
 
 clean:
-	-rm -f $(TARGET) $(OBJS) romdisk.*
+	-rm -f $(TARGET) $(OBJS)
 
 rm-elf:
-	-rm -f $(TARGET) romdisk.*
+	-rm -f $(TARGET)
 
-$(TARGET): $(OBJS) romdisk.o
+$(TARGET): $(OBJS)
 	$(KOS_CC) $(KOS_CFLAGS) $(KOS_LDFLAGS) -o $(TARGET) $(KOS_START) \
-		$(OBJS) romdisk.o $(OBJEXTRA) -L$(KOS_BASE)/lib -lgl -lpcx -lkosutils $(KOS_LIBS)
+		$(OBJS) $(OBJEXTRA) -L$(KOS_BASE)/lib -lgl -lm $(KOS_LIBS)
 
-romdisk.img:
+romdisk.img: 
 	$(KOS_GENROMFS) -f romdisk.img -d romdisk -v
 
 romdisk.o: romdisk.img
@@ -30,6 +34,6 @@ run: $(TARGET)
 	$(KOS_LOADER) $(TARGET)
 
 dist:
-	rm -f $(OBJS) romdisk.o romdisk.img
+	rm -f $(OBJS)
 	$(KOS_STRIP) $(TARGET)
 

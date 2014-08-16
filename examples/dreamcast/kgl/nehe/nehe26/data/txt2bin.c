@@ -1,5 +1,5 @@
 /*
- * Kallistios ##version##
+ * Kallistios 2.0.0
  *
  * txt2bin.c
  * (c)2002, Paul Boese

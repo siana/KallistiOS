@@ -1,5 +1,6 @@
 #
 # KallistiGL test program
+# (c)2013-2014 Josh PH3NOM Pearson
 # (c)2001 Dan Potter
 #   
 

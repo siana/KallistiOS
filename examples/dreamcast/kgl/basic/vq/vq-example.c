@@ -1,19 +1,23 @@
-/* KallistiOS ##version##
+/* 
+   KallistiOS 2.0.0
 
    vq-example.c
+   (c)2014 Josh Pearson
+   (c)2002 Gil Megidish
+   (c)2001 Benoit Miller
 
    This is a modified nehe06.c that shows the capabilities of
-   VQ compression. Original code (c)2001 Benoit Miller
-   Modified version (c)2002 Gil Megidish
+   VQ compression.
 
    Texture is copyright (c)2002 Mayang Murni Adnin; for more
    incredible textures, go to www.mayang.com
 */
 
 #include <kos.h>
+
 #include <GL/gl.h>
 #include <GL/glu.h>
-#include <math.h>
+#include <GL/glut.h>
 
 GLfloat xrot;   /* X Rotation */
 GLfloat yrot;   /* Y Rotation */
@@ -25,23 +29,26 @@ GLuint texture[1];
 extern unsigned char fruit[];
 extern unsigned char fruit_end[];
 
-/* Load a texture and glKosTex2D */
+/* Load a texture and glTexImage2D, not glKosTex2D */
+/* Notice with glTexImage2D, OpenGL will handle allocating and transfering texture data into VRAM */
 static int loadtxr() {
-    GLuint size;
-    pvr_ptr_t txaddr;
-
-    size = fruit_end - fruit;
-    txaddr = pvr_mem_malloc(size);
-
-    if(txaddr == NULL)
-        return -1;
-
-    /* all writes to vram must be 16/32 bit */
-    memcpy2(txaddr, fruit, size);
 
     glGenTextures(1, texture);
     glBindTexture(GL_TEXTURE_2D, texture[0]);
-    glKosTex2D(GL_RGB565_TWID | GL_VQ_ENABLE, 512, 512, txaddr);
+
+    glTexImage2D(GL_TEXTURE_2D,  /* This must be GL_TEXTURE_2D */
+                 0,             /* 0 = Texture does not contain Mip-Maps | 1 = Texture contains Mip-Maps */
+                 GL_RGB,        /* This bit is actually ignored by this OpenGL API */
+                 512,           /* Texture Width */
+                 512,           /* Texture Height */
+                 0,             /* This bit is actually ignored by this OpenGL API */
+                 PVR_TXRFMT_VQ_ENABLE,   /* PVR texture format */
+                 PVR_TXRFMT_RGB565,      /* PVR texture color - You can use GL_UNSIGNED_SHORT_5_6_5 as PVR_TXRFMT_RGB565,
+                                                                    GL_UNSIGNED_SHORT_1_5_5_5 as PVR_TXRFMT_ARGB1555, or
+                                                                    GL_UNSIGNED_SHORT_4_4_4_4 as PVR_TXRFMT_ARGB4444. */
+                 fruit);       /* Address of texture data in RAM: OpenGL will load the texture into VRAM for you.
+                                            Because of this, make sure to call glDelTextures() as needed, as that will
+                                            free the VRAM allocated for the texture. */
     return 0;
 }
 
@@ -142,9 +149,6 @@ int main(int argc, char **argv) {
     maple_device_t *cont;
     cont_state_t *state;
 
-    /* Initialize KOS */
-    pvr_init_defaults();
-
     /* Get basic stuff initialized */
     glKosInit();
 
@@ -186,15 +190,14 @@ int main(int argc, char **argv) {
         if(state->buttons & CONT_START)
             break;
 
-        /* Begin frame */
-        glKosBeginFrame();
-
         /* Draw the GL "scene" */
         draw_gl();
 
         /* Finish the frame */
-        glKosFinishFrame();
+        glutSwapBuffers();
     }
+
+    glDelTextures(1, texture);
 
     return 0;
 }

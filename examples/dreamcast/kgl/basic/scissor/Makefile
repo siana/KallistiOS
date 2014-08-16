@@ -1,5 +1,5 @@
 #
-# KallistiGL ##version##
+# OpenGL (c)2013-2014 Josh PH3NOM Pearson
 #
 # scissor test
 # (c)2002 Paul Boese

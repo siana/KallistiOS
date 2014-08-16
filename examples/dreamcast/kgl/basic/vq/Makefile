@@ -1,3 +1,4 @@
+# OpenGL (c)2013-2014 Josh PH3NOM Pearson
 
 TARGET = vq-example.elf
 OBJS = vq-example.o fruit.o 

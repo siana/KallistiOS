@@ -1,6 +1,8 @@
-/* KallistiGL ##version##
+/* 
+   KallistiGL 2.0.0
 
-   quadmark.c
+   trimark.c
+   (c)2014 Josh Pearson
    (c)2002 Dan Potter, Paul Boese
 */
 
@@ -57,9 +59,7 @@ int check_start() {
 pvr_poly_hdr_t hdr;
 
 void setup() {
-    pvr_init(&pvr_params);
     glKosInit();
-    pvr_set_bg_color(0, 0, 0);
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
     glOrtho(0, 640, 0, 480, -100, 100);
@@ -73,8 +73,6 @@ void do_frame() {
     int i;
     float col;
 
-    glKosBeginFrame();
-    vid_border_color(0, 255, 0);
     glBegin(GL_TRIANGLES);
 
     for(i = 0; i < polycnt; i++) {
@@ -92,9 +90,7 @@ void do_frame() {
 
     glEnd();
 
-    vid_border_color(255, 0, 0);
-    glKosFinishFrame();
-    vid_border_color(0, 0, 0);
+    glutSwapBuffers();
 }
 
 time_t start;

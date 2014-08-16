@@ -1,5 +1,6 @@
 #
-# KallistiGL test program
+# Nehe16 example adapted from KGL
+# (c)2013-2014 Josh Pearson
 # (c)2001 Benoit Miller
 #   
 
@@ -18,7 +19,7 @@ rm-elf:
 
 $(TARGET): $(OBJS) romdisk.o
 	$(KOS_CC) $(KOS_CFLAGS) $(KOS_LDFLAGS) -o $(TARGET) $(KOS_START) \
-		$(OBJS) romdisk.o $(OBJEXTRA) -L$(KOS_BASE)/lib -lgl -lpcx -lkosutils $(KOS_LIBS)
+		$(OBJS) romdisk.o $(OBJEXTRA) -L$(KOS_BASE)/lib -lgl $(KOS_LIBS)
 
 romdisk.img:
 	$(KOS_GENROMFS) -f romdisk.img -d romdisk -v

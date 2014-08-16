@@ -1,10 +1,12 @@
 #
-# KallistiGL test program
+# Nehe02 example adapted from KGL
+# (c)2013-2014 Josh Pearson
 # (c)2001 Benoit Miller
 #   
 
 TARGET = nehe02.elf
-OBJS = nehe02.o
+
+OBJS = main.o
 
 all: rm-elf $(TARGET)
 
@@ -18,7 +20,7 @@ rm-elf:
 
 $(TARGET): $(OBJS)
 	$(KOS_CC) $(KOS_CFLAGS) $(KOS_LDFLAGS) -o $(TARGET) $(KOS_START) \
-		$(OBJS) $(OBJEXTRA) -L$(KOS_BASE)/lib -lgl $(KOS_LIBS)
+		$(OBJS) $(OBJEXTRA) -L$(KOS_BASE)/lib -lgl -lm $(KOS_LIBS)
 
 run: $(TARGET)
 	$(KOS_LOADER) $(TARGET)

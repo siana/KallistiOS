@@ -2,12 +2,13 @@
 #
 # examples/dreamcast/kgl/basic/Makefile
 # 
+# (c)2014 Josh Pearson
 # (c)2002 Paul Boese
 #
 # This will make all the examples, leaving only the elf files.
 # If you want to clean everything, use 'clean'.
 
-SUBDIRS = gl scissor texenv texwrap vfzclip vq
+SUBDIRS = elements gl scissor txrenv vq zclip_arrays
 
 all: $(patsubst %, _dir_%, $(SUBDIRS))
 

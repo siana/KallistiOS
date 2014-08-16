@@ -1,21 +1,41 @@
-/* KallistiOS ##version##
+/* 
+   KallistiOS 2.0.0
 
    gltest.c
+   (c)2014 Josh Pearson.
    (c)2001 Dan Potter
 */
 
 #include <kos.h>
+
 #include <GL/gl.h>
 #include <GL/glu.h>
-#include <pcx/pcx.h>
+#include <GL/glut.h>
 
 /*
 
 This is a really simple KallistiGL example. It shows off several things:
-basic matrix control, perspective, the AUTO_UV feature, and controlling
-the image with maple input.
+basic matrix control, perspective, and controlling the image with maple input.
 
-Thanks to NeHe's tutorials for the crate image.
+Thanks to NeHe's tutorials for the texture.
+
+*/
+
+/*
+
+This example demonstrates some of the differences between KGL and OpenGL.
+
+Notice how we actually call glEnable(GL_BLEND) to enable transparency.
+This remains in effect untill we call glDisable(GL_BLEND).
+In OpenGL, there is no glKosFinishList() like in KGL.
+
+Also, in OpenGL we call glutSwapBuffers() to flush the vertices to the GPU.
+There is no glKosBeginFrame() or glKosFinishFrame() like in KGL.
+
+Another thing, in OpenGL there is no GL_KOS_AUTO_UV, so forget about that.
+
+Finally, OpenGL will initialize the PVR for you, so do not call pvr_init.
+OpenGL is initialized with glKosInit().
 
 */
 
@@ -29,69 +49,166 @@ void cube(float r) {
     glBegin(GL_QUADS);
 
     /* Front face */
+    glTexCoord2f(0.0f, 0.0f);
     glVertex3f(-1.0f, 1.0f, 1.0f);
+    glTexCoord2f(1.0f, 0.0f);
     glVertex3f(1.0f, 1.0f, 1.0f);
+    glTexCoord2f(1.0f, 1.0f);
     glVertex3f(1.0f, -1.0f, 1.0f);
+    glTexCoord2f(0.0f, 1.0f);
     glVertex3f(-1.0f, -1.0f, 1.0f);
 
     /* Back face */
+    glTexCoord2f(0.0f, 0.0f);
     glVertex3f(-1.0f, -1.0f, -1.0f);
+    glTexCoord2f(1.0f, 0.0f);
     glVertex3f(1.0f, -1.0f, -1.0f);
+    glTexCoord2f(1.0f, 1.0f);
     glVertex3f(1.0f, 1.0f, -1.0f);
+    glTexCoord2f(0.0f, 1.0f);
     glVertex3f(-1.0f, 1.0f, -1.0f);
 
     /* Left face */
+    glTexCoord2f(0.0f, 0.0f);
     glVertex3f(-1.0f, 1.0f, 1.0f);
+    glTexCoord2f(1.0f, 0.0f);
     glVertex3f(-1.0f, -1.0f, 1.0f);
+    glTexCoord2f(1.0f, 1.0f);
     glVertex3f(-1.0f, -1.0f, -1.0f);
+    glTexCoord2f(0.0f, 1.0f);
     glVertex3f(-1.0f, 1.0f, -1.0f);
 
     /* Right face */
+    glTexCoord2f(0.0f, 0.0f);
     glVertex3f(1.0f, 1.0f, -1.0f);
+    glTexCoord2f(1.0f, 0.0f);
     glVertex3f(1.0f, -1.0f, -1.0f);
+    glTexCoord2f(1.0f, 1.0f);
     glVertex3f(1.0f, -1.0f, 1.0f);
+    glTexCoord2f(0.0f, 1.0f);
     glVertex3f(1.0f, 1.0f, 1.0f);
 
     /* Top face */
+    glTexCoord2f(0.0f, 0.0f);
     glVertex3f(1.0f, 1.0f, 1.0f);
+    glTexCoord2f(1.0f, 0.0f);
     glVertex3f(-1.0f, 1.0f, 1.0f);
+    glTexCoord2f(1.0f, 1.0f);
     glVertex3f(-1.0f, 1.0f, -1.0f);
+    glTexCoord2f(0.0f, 1.0f);
     glVertex3f(1.0f, 1.0f, -1.0f);
 
     /* Bottom face */
+    glTexCoord2f(0.0f, 0.0f);
     glVertex3f(1.0f, -1.0f, -1.0f);
+    glTexCoord2f(1.0f, 0.0f);
     glVertex3f(-1.0f, -1.0f, -1.0f);
+    glTexCoord2f(1.0f, 1.0f);
     glVertex3f(-1.0f, -1.0f, 1.0f);
+    glTexCoord2f(0.0f, 1.0f);
     glVertex3f(1.0f, -1.0f, 1.0f);
     glEnd();
 }
 
-/* Load a texture using pcx_load_texture and glKosTex2D */
-void loadtxr(const char *fn, GLuint *txr) {
-    kos_img_t img;
-    pvr_ptr_t txaddr;
+/* Load a PVR texture using glTexImage2D */
+void loadtxr(const char *fname, GLuint *txr) {
+#define PVR_HDR_SIZE 0x20
+    FILE *tex = NULL;
+    unsigned char *texBuf;
+    unsigned int texSize;
 
-    if(pcx_to_img(fn, &img) < 0) {
-        printf("can't load %s\n", fn);
-        return;
+    tex = fopen(fname, "rb");
+
+    if(tex == NULL) {
+        printf("FILE READ ERROR: %s\n", fname);
+
+        while(1);
     }
 
-    txaddr = pvr_mem_malloc(img.w * img.h * 2);
-    pvr_txr_load_kimg(&img, txaddr, PVR_TXRLOAD_INVERT_Y);
-    kos_img_free(&img, 0);
+    fseek(tex, 0, SEEK_END);
+    texSize = ftell(tex);
+
+    texBuf = malloc(texSize);
+    fseek(tex, 0, SEEK_SET);
+    fread(texBuf, 1, texSize, tex);
+    fclose(tex);
+
+    int texW = texBuf[PVR_HDR_SIZE - 4] | texBuf[PVR_HDR_SIZE - 3] << 8;
+    int texH = texBuf[PVR_HDR_SIZE - 2] | texBuf[PVR_HDR_SIZE - 1] << 8;
+    int texFormat, texColor;
+
+    switch((unsigned int)texBuf[PVR_HDR_SIZE - 8]) {
+        case 0x00:
+            texColor = PVR_TXRFMT_ARGB1555;
+            break; //(bilevel translucent alpha 0,255)
+
+        case 0x01:
+            texColor = PVR_TXRFMT_RGB565;
+            break; //(non translucent RGB565 )
+
+        case 0x02:
+            texColor = PVR_TXRFMT_ARGB4444;
+            break; //(translucent alpha 0-255)
+
+        case 0x03:
+            texColor = PVR_TXRFMT_YUV422;
+            break; //(non translucent UYVY )
+
+        case 0x04:
+            texColor = PVR_TXRFMT_BUMP;
+            break; //(special bump-mapping format)
+
+        case 0x05:
+            texColor = PVR_TXRFMT_PAL4BPP;
+            break; //(4-bit palleted texture)
+
+        case 0x06:
+            texColor = PVR_TXRFMT_PAL8BPP;
+            break; //(8-bit palleted texture)
+
+        default:
+			texColor = PVR_TXRFMT_RGB565;
+            break;
+    }
+
+    switch((unsigned int)texBuf[PVR_HDR_SIZE - 7]) {
+        case 0x01:
+            texFormat = PVR_TXRFMT_TWIDDLED;
+            break;//SQUARE TWIDDLED
+
+        case 0x03:
+            texFormat = PVR_TXRFMT_VQ_ENABLE;
+            break;//VQ TWIDDLED
+
+        case 0x09:
+            texFormat = PVR_TXRFMT_NONTWIDDLED;
+            break;//RECTANGLE
+
+        case 0x0B:
+            texFormat = PVR_TXRFMT_STRIDE | PVR_TXRFMT_NONTWIDDLED;
+            break;//RECTANGULAR STRIDE
+
+        case 0x0D:
+            texFormat = PVR_TXRFMT_TWIDDLED;
+            break;//RECTANGULAR TWIDDLED
+
+        case 0x10:
+            texFormat = PVR_TXRFMT_VQ_ENABLE | PVR_TXRFMT_NONTWIDDLED;
+            break;//SMALL VQ
+
+        default:
+            texFormat = PVR_TXRFMT_NONE;
+            break;
+    }
+
+    printf("TEXTURE Resolution: %ix%i\n", texW, texH);
 
     glGenTextures(1, txr);
     glBindTexture(GL_TEXTURE_2D, *txr);
-    glKosTex2D(GL_RGB565_TWID, img.w, img.h, txaddr);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB,
+                 texW, texH, 0,
+                 texFormat, texColor, texBuf + PVR_HDR_SIZE);
 }
-
-pvr_init_params_t params = {
-    /* Enable opaque and translucent polygons with size 16 */
-    { PVR_BINSIZE_16, PVR_BINSIZE_0, PVR_BINSIZE_16, PVR_BINSIZE_0, PVR_BINSIZE_0 },
-
-    /* Vertex buffer size 512K */
-    512 * 1024
-};
 
 extern uint8 romdisk[];
 KOS_INIT_ROMDISK(romdisk);
@@ -103,17 +220,8 @@ int main(int argc, char **argv) {
     float   dr = 2;
     float   z = -14.0f;
     GLuint  texture;
-    GLuint  dummy;
     int trans = 0;
     pvr_stats_t stats;
-
-    /* Initialize KOS */
-
-    /* Use this to test other video modes */
-    /* vid_init(DM_320x240, PM_RGB565); */
-
-    /* Normal init */
-    pvr_init(&params);
 
     printf("gltest beginning\n");
 
@@ -124,7 +232,6 @@ int main(int argc, char **argv) {
     gluPerspective(45.0f, 640.0f / 480.0f, 0.1f, 100.0f);
     glMatrixMode(GL_MODELVIEW);
     glEnable(GL_TEXTURE_2D);
-    glEnable(GL_KOS_AUTO_UV);
 
     /* Expect CW verts */
     glFrontFace(GL_CW);
@@ -133,7 +240,7 @@ int main(int argc, char **argv) {
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
     /* Load a texture and make to look nice */
-    loadtxr("/rd/crate.pcx", &texture);
+    loadtxr("/rd/glass.pvr", &texture);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_FILTER, GL_FILTER_BILINEAR);
     glTexEnvi(GL_TEXTURE_2D, GL_TEXTURE_ENV_MODE, GL_MODULATEALPHA);
 
@@ -189,9 +296,6 @@ int main(int argc, char **argv) {
 
         r += dr;
 
-        /* Begin frame */
-        glKosBeginFrame();
-
         /* Draw four cubes */
         glLoadIdentity();
         glTranslatef(0.0f, 0.0f, z);
@@ -208,10 +312,12 @@ int main(int argc, char **argv) {
 
         /* Potentially do two as translucent */
         if(trans & 1) {
-            glKosFinishList();
+            glEnable(GL_BLEND);
             glColor4f(1.0f, 1.0f, 1.0f, 0.5f);
             glDisable(GL_CULL_FACE);
         }
+        else
+            glDisable(GL_BLEND);
 
         glPopMatrix();
         glPushMatrix();
@@ -227,7 +333,7 @@ int main(int argc, char **argv) {
         }
 
         /* Finish the frame */
-        glKosFinishFrame();
+        glutSwapBuffers();
     }
 
     pvr_get_stats(&stats);

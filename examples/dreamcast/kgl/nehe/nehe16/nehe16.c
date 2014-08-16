@@ -1,22 +1,22 @@
-/* KallistiOS ##version##
+/* 
+   KallistiOS 2.0.0
 
    nehe16.c
-   (c)2001 Paul Boese
-
-   Parts (c)2000 Tom Stanis/Jeff Molofee/Benoit Miller
+   (c)2014 Josh Pearson
+   (c)2001 Benoit Miller
+   (c)2000 Jeff Molofee
 */
 
 #include <kos.h>
+
 #include <GL/gl.h>
 #include <GL/glu.h>
-#include <pcx/pcx.h>
+#include <GL/glut.h>
 
 /* Simple GL example to demonstrate fog (PVR table fog).
 
    Essentially the same thing as NeHe's lesson16 code.
    To learn more, go to http://nehe.gamedev.net/.
-
-   There is no lighting yet in GL, so it has not been included.
 
    DPAD controls the cube rotation, button A & B control the depth
    of the cube, button X toggles fog on/off, and button Y toggles fog type.
@@ -37,24 +37,105 @@ char cfogMode[3][10] = {"GL_EXP   ", "GL_EXP2  ", "GL_LINEAR" };
 GLfloat fogColor[4] = { 0.5f, 0.5f, 0.5f, 1.0f }; /* Fog Color */
 int fog = GL_TRUE;
 
+unsigned int glTextureLoadPVR(char *fname) {
+#define PVR_HDR_SIZE 0x20
+    FILE *tex = NULL;
+    unsigned char *texBuf;
+    unsigned int texID, texSize;
 
-/* Load a texture using pcx_load_texture and glKosTex2D */
-void loadtxr(const char *fn, GLuint *txr) {
-    kos_img_t img;
-    pvr_ptr_t txaddr;
+    tex = fopen(fname, "rb");
 
-    if(pcx_to_img(fn, &img) < 0) {
-        printf("can't load %s\n", fn);
-        return;
+    if(tex == NULL) {
+        printf("FILE READ ERROR: %s\n", fname);
+
+        while(1);
     }
 
-    txaddr = pvr_mem_malloc(img.w * img.h * 2);
-    pvr_txr_load_kimg(&img, txaddr, PVR_TXRLOAD_INVERT_Y);
-    kos_img_free(&img, 0);
+    fseek(tex, 0, SEEK_END);
+    texSize = ftell(tex);
 
-    glGenTextures(1, txr);
-    glBindTexture(GL_TEXTURE_2D, *txr);
-    glKosTex2D(GL_RGB565_TWID, img.w, img.h, txaddr);
+    texBuf = malloc(texSize);
+    fseek(tex, 0, SEEK_SET);
+    fread(texBuf, 1, texSize, tex);
+    fclose(tex);
+
+    int texW = texBuf[PVR_HDR_SIZE - 4] | texBuf[PVR_HDR_SIZE - 3] << 8;
+    int texH = texBuf[PVR_HDR_SIZE - 2] | texBuf[PVR_HDR_SIZE - 1] << 8;
+    int texFormat, texColor;
+
+    switch((unsigned int)texBuf[PVR_HDR_SIZE - 8]) {
+        case 0x00:
+            texColor = PVR_TXRFMT_ARGB1555;
+            break; //(bilevel translucent alpha 0,255)
+
+        case 0x01:
+            texColor = PVR_TXRFMT_RGB565;
+            break; //(non translucent RGB565 )
+
+        case 0x02:
+            texColor = PVR_TXRFMT_ARGB4444;
+            break; //(translucent alpha 0-255)
+
+        case 0x03:
+            texColor = PVR_TXRFMT_YUV422;
+            break; //(non translucent UYVY )
+
+        case 0x04:
+            texColor = PVR_TXRFMT_BUMP;
+            break; //(special bump-mapping format)
+
+        case 0x05:
+            texColor = PVR_TXRFMT_PAL4BPP;
+            break; //(4-bit palleted texture)
+
+        case 0x06:
+            texColor = PVR_TXRFMT_PAL8BPP;
+            break; //(8-bit palleted texture)
+
+        default:
+            texColor = PVR_TXRFMT_RGB565;
+            break;
+    }
+
+    switch((unsigned int)texBuf[PVR_HDR_SIZE - 7]) {
+        case 0x01:
+            texFormat = PVR_TXRFMT_TWIDDLED;
+            break;//SQUARE TWIDDLED
+
+        case 0x03:
+            texFormat = PVR_TXRFMT_VQ_ENABLE;
+            break;//VQ TWIDDLED
+
+        case 0x09:
+            texFormat = PVR_TXRFMT_NONTWIDDLED;
+            break;//RECTANGLE
+
+        case 0x0B:
+            texFormat = PVR_TXRFMT_STRIDE | PVR_TXRFMT_NONTWIDDLED;
+            break;//RECTANGULAR STRIDE
+
+        case 0x0D:
+            texFormat = PVR_TXRFMT_TWIDDLED;
+            break;//RECTANGULAR TWIDDLED
+
+        case 0x10:
+            texFormat = PVR_TXRFMT_VQ_ENABLE | PVR_TXRFMT_NONTWIDDLED;
+            break;//SMALL VQ
+
+        default:
+            texFormat = PVR_TXRFMT_NONE;
+            break;
+    }
+
+    printf("TEXTURE Resolution: %ix%i\n", texW, texH);
+
+    glGenTextures(1, &texID);
+    glBindTexture(GL_TEXTURE_2D, texID);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB,
+                 texW, texH, 0,
+                 texFormat, texColor, texBuf + PVR_HDR_SIZE);
+
+    return texID;
 }
 
 void draw_gl(void) {
@@ -134,14 +215,6 @@ void draw_gl(void) {
     yrot += yspeed;
 }
 
-pvr_init_params_t params = {
-    /* Enable opaque and translucent polygons with size 16 */
-    { PVR_BINSIZE_16, PVR_BINSIZE_0, PVR_BINSIZE_16, PVR_BINSIZE_0, PVR_BINSIZE_0 },
-
-    /* Vertex buffer size 512K */
-    512 * 1024
-};
-
 extern uint8 romdisk[];
 KOS_INIT_ROMDISK(romdisk);
 
@@ -150,9 +223,6 @@ int main(int argc, char **argv) {
     cont_state_t *state;
     GLboolean xp = GL_FALSE;
     GLboolean yp = GL_FALSE;
-
-    /* Initialize KOS */
-    pvr_init(&params);
 
     printf("nehe16 beginning\n");
 
@@ -175,6 +245,10 @@ int main(int argc, char **argv) {
     glColor4f(1.0f, 1.0f, 1.0f, 0.5);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE);
 
+    /* Enable Lighting and GL_LIGHT0 */
+    glEnable(GL_LIGHTING);
+    glEnable(GL_LIGHT0);
+
     /* Set up the fog */
     glFogi(GL_FOG_MODE, fogMode[fogType]);     /* Fog Mode */
     glFogfv(GL_FOG_COLOR, fogColor);           /* Set Fog Color */
@@ -185,7 +259,7 @@ int main(int argc, char **argv) {
     glEnable(GL_FOG);                          /* Enables GL_FOG */
 
     /* Set up the textures */
-    loadtxr("/rd/crate.pcx", &texture);
+    texture = glTextureLoadPVR("/rd/glass.pvr");
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_FILTER, GL_FILTER_BILINEAR);
 
     while(1) {
@@ -240,9 +314,6 @@ int main(int argc, char **argv) {
         if(state->buttons & CONT_DPAD_RIGHT)
             yspeed += 0.01f;
 
-        /* Begin frame */
-        glKosBeginFrame();
-
         /* Switch fog off/on */
         if(fog) {
             glEnable(GL_FOG);
@@ -255,7 +326,7 @@ int main(int argc, char **argv) {
         draw_gl();
 
         /* Finish the frame */
-        glKosFinishFrame();
+        glutSwapBuffers();
     }
 
     return 0;
