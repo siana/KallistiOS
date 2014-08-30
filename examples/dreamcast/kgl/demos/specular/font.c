@@ -12,7 +12,7 @@
 
 #include <GL/gl.h>
 
-#include "Font.h"
+#include "font.h"
 
 Font *FontInit(float TexW, float TexH,
                unsigned char RowStride, unsigned char ColStride,
