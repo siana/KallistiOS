@@ -28,13 +28,12 @@
 
 
 /* First, implementation of the syscall wrappers. */
+typedef int (*flashrom_sc)(int, void *, int, int);
 
 int flashrom_info(int part, int * start_out, int * size_out) {
-    int (*sc)(int, uint32*, int, int);
+    flashrom_sc sc = (flashrom_sc)(*((uint32 *)0x8c0000b8));
     uint32  ptrs[2];
     int rv;
-
-    *((uint32 *)&sc) = *((uint32 *)0x8c0000b8);
 
     if(sc(part, ptrs, 0, 0) == 0) {
         *start_out = ptrs[0];
@@ -48,21 +47,19 @@ int flashrom_info(int part, int * start_out, int * size_out) {
 }
 
 int flashrom_read(int offset, void * buffer_out, int bytes) {
-    int (*sc)(int, void*, int, int);
+    flashrom_sc sc = (flashrom_sc)(*((uint32 *)0x8c0000b8));
     int rv;
 
-    *((uint32 *)&sc) = *((uint32 *)0x8c0000b8);
     rv = sc(offset, buffer_out, bytes, 1);
     return rv;
 }
 
 int flashrom_write(int offset, void * buffer, int bytes) {
 #ifdef ENABLE_WRITES
-    int (*sc)(int, void*, int, int);
+    flashrom_sc sc = (flashrom_sc)(*((uint32 *)0x8c0000b8));
     int old, rv;
 
     old = irq_disable();
-    *((uint32 *)&sc) = *((uint32 *)0x8c0000b8);
     rv = sc(offset, buffer, bytes, 2);
     irq_restore(old);
     return rv;
@@ -76,11 +73,10 @@ int flashrom_write(int offset, void * buffer, int bytes) {
 
 int flashrom_delete(int offset) {
 #ifdef ENABLE_WRITES
-    int (*sc)(int, int, int, int);
+    flashrom_sc sc = (flashrom_sc)(*((uint32 *)0x8c0000b8));
     int old, rv;
 
     old = irq_disable();
-    *((uint32 *)&sc) = *((uint32 *)0x8c0000b8);
     rv = sc(offset, 0, 0, 3);
     irq_restore(old);
     return rv;
