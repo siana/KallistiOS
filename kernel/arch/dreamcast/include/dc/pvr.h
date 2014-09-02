@@ -2,10 +2,11 @@
 
    dc/pvr.h
    Copyright (C) 2002 Dan Potter
+   Copyright (C) 2014 Lawrence Sebald
 
    Low-level PVR 3D interface for the DC
    Note: this API does _not_ handle any sort of transformations
-    (including perspective!) so for that, you should look to KGL.
+   (including perspective!) so for that, you should look to KGL.
 */
 
 /** \file   dc/pvr.h
@@ -1076,6 +1077,15 @@ typedef struct {
         setting and stretching your image to double the native screen width, you
         can get horizontal full-screen anti-aliasing. */
     int     fsaa_enabled;
+
+    /** \brief  Disable translucent polygon autosort?
+
+        Set to non-zero to disable translucent polygon autosorting. By enabling
+        this setting, the PVR acts more like a traditional Z-buffered system
+        when rendering translucent polygons, meaning you must pre-sort them
+        yourself if you want them to appear in the right order. */
+    int     autosort_disabled;
+
 } pvr_init_params_t;
 
 /** \brief  Initialize the PVR chip to ready status.
@@ -1441,6 +1451,22 @@ void * pvr_vertbuf_tail(pvr_list_t list);
     \param  amt             Number of bytes written. Must be a multiple of 32.
 */
 void pvr_vertbuf_written(pvr_list_t list, uint32 amt);
+
+/** \brief  Set the translucent polygon sort mode for the next frame.
+
+    This function sets the translucent polygon sort mode for the next frame of
+    output, potentially switching between autosort and presort mode.
+
+    For most programs, you'll probably want to set this at initialization time
+    (with the autosort_disabled field in the pvr_init_params_t structure) and
+    not mess with it per-frame. It is recommended that if you do use this
+    function to change the mode that you should set it each frame to ensure that
+    the mode is set properly.
+
+    \param  presort         Set to 1 to set the presort mode for translucent
+                            polygons, set to 0 to use autosort mode.
+*/
+void pvr_set_presort_mode(int presort);
 
 /** \brief  Begin collecting data for a frame of 3D output to the off-screen
             frame buffer.

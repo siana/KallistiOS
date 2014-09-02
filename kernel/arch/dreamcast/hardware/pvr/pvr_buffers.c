@@ -1,7 +1,8 @@
 /* KallistiOS ##version##
 
    pvr_buffers.c
-   Copyright (C)2002,2004 Dan Potter
+   Copyright (C) 2002, 2004 Dan Potter
+   Copyright (C) 2014 Lawrence Sebald
 
  */
 
@@ -22,7 +23,7 @@
 /* Fill Tile Matrix buffers. This function takes a base address and sets up
    the rendering structures there. Each tile of the screen (32x32) receives
    a small buffer space. */
-void pvr_init_tile_matrix(int which) {
+static void pvr_init_tile_matrix(int which, int presort) {
     volatile pvr_ta_buffers_t   *buf;
     int     x, y;
     uint32      *vr;
@@ -66,7 +67,7 @@ void pvr_init_tile_matrix(int which) {
     for(x = 0; x < pvr_state.tw; x++) {
         for(y = 0; y < pvr_state.th; y++) {
             /* Control word */
-            vr[0] = (y << 8) | (x << 2);
+            vr[0] = (y << 8) | (x << 2) | (presort << 29);
 
             /* Opaque poly buffer */
             vr[1] = buf->opb_type[0] + opbs[0] * pvr_state.tw * y + opbs[0] * x;
@@ -93,11 +94,15 @@ void pvr_init_tile_matrix(int which) {
 }
 
 /* Fill all tile matrices */
-void pvr_init_tile_matrices() {
+void pvr_init_tile_matrices(int presort) {
     int i;
 
     for(i = 0; i < 2; i++)
-        pvr_init_tile_matrix(i);
+        pvr_init_tile_matrix(i, presort);
+}
+
+void pvr_set_presort_mode(int presort) {
+    pvr_init_tile_matrix(pvr_state.ta_target, presort);
 }
 
 
@@ -286,5 +291,3 @@ void pvr_allocate_buffers(pvr_init_params_t *params) {
            0x800000 - pvr_state.texture_base);
 #endif  /* !NDEBUG */
 }
-
-

@@ -1,7 +1,7 @@
 /* KallistiOS ##version##
 
    pvr_init_shutdown.c
-   Copyright (C)2002,2004 Dan Potter
+   Copyright (C) 2002, 2004 Dan Potter
 
  */
 
@@ -36,6 +36,9 @@ int pvr_init_defaults() {
         0,
 
         /* No FSAA */
+        0,
+
+        /* Translucent Autosort enabled. */
         0
     };
 
@@ -87,7 +90,7 @@ int pvr_init(pvr_init_params_t *params) {
     pvr_allocate_buffers(params);
 
     // Initialize tile matrices
-    pvr_init_tile_matrices();
+    pvr_init_tile_matrices(!!params->autosort_disabled);
 
     // Setup all pipeline targets. Yes, this is redundant. :) I just
     // like to have it explicit.
@@ -238,5 +241,3 @@ int pvr_shutdown() {
     /* Return success */
     return 0;
 }
-
-

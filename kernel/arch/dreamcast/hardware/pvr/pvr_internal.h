@@ -1,7 +1,7 @@
 /* KallistiOS ##version##
 
    pvr_internal.h
-   Copyright (C)2002,2003,2004 Dan Potter
+   Copyright (C) 2002, 2003, 2004 Dan Potter
 
  */
 
@@ -251,11 +251,8 @@ typedef struct pvr_bkg_poly {
 /* Initialize buffers for TA/ISP/TSP usage */
 void pvr_allocate_buffers(pvr_init_params_t *params);
 
-/* Fill in a single tile matrix (used by pvr_init_tile_matrices) */
-void pvr_init_tile_matrix(int which);
-
 /* Fill the tile matrices (after it's initialized) */
-void pvr_init_tile_matrices();
+void pvr_init_tile_matrices(int presort);
 
 
 /**** pvr_misc.c ******************************************************/
@@ -297,4 +294,3 @@ void pvr_int_handler(uint32 code);
 
 
 #endif
-
