@@ -22,11 +22,6 @@
 #include <dc/flashrom.h>
 #include <arch/irq.h>
 
-/* This is the fateful define. Re-enable this at the peril of your
-   Dreamcast's soul ;) */
-/* #define ENABLE_WRITES 1 */
-
-
 /* First, implementation of the syscall wrappers. */
 typedef int (*flashrom_sc)(int, void *, int, int);
 
@@ -55,7 +50,6 @@ int flashrom_read(int offset, void * buffer_out, int bytes) {
 }
 
 int flashrom_write(int offset, void * buffer, int bytes) {
-#ifdef ENABLE_WRITES
     flashrom_sc sc = (flashrom_sc)(*((uint32 *)0x8c0000b8));
     int old, rv;
 
@@ -63,16 +57,9 @@ int flashrom_write(int offset, void * buffer, int bytes) {
     rv = sc(offset, buffer, bytes, 2);
     irq_restore(old);
     return rv;
-#else
-    (void)offset;
-    (void)buffer;
-    (void)bytes;
-    return -1;
-#endif
 }
 
 int flashrom_delete(int offset) {
-#ifdef ENABLE_WRITES
     flashrom_sc sc = (flashrom_sc)(*((uint32 *)0x8c0000b8));
     int old, rv;
 
@@ -80,10 +67,6 @@ int flashrom_delete(int offset) {
     rv = sc(offset, 0, 0, 3);
     irq_restore(old);
     return rv;
-#else
-    (void)offset;
-    return -1;
-#endif
 }
 
 
