@@ -1,6 +1,6 @@
 
 #ifndef __VQ_INTERNAL_H
-#define __VQ_INTENRAL_H
+#define __VQ_INTERNAL_H
 
 #include "vq_types.h"
 
