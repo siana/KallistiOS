@@ -33,6 +33,14 @@
 
 #include "pvr_mem_core.h"
 
+#include <kos/opts.h>
+
+#undef DEBUG
+
+#ifdef PVR_MALLOC_DEBUG
+#define DEBUG 1
+#endif
+
 /* Defined in pvr_mem.c */
 extern void * pvr_int_sbrk(size_t amt);
 

@@ -43,9 +43,6 @@ int dcln_syscall_retval;
 unsigned char *dcln_syscall_data;
 int dcln_escape_loop;
 
-// #define DEBUG
-// #define DEBUG_VERBOSE
-
 /* This uses an addition to dc-load-ip 1.0.3 */
 typedef struct {
     uint32  toolip;
@@ -64,7 +61,7 @@ static void get_tool_ip() {
     dcln_our_ip = hi.ourip;
     memcpy(dcln_tool_mac, hi.toolmac, 6);
 
-#ifdef DEBUG
+#ifdef DCLN_DEBUG
     printf("tool = %08lx/%d, us = %08lx\n",
            dcln_tool_ip, dcln_tool_port, dcln_our_ip);
 #endif
@@ -92,7 +89,7 @@ static net_input_func ni_old;
 static int dcln_input(netif_t * src, uint8 * pkt, int pktsize) {
     int idx = pkt_head;
 
-#ifdef DEBUG
+#ifdef DCLN_DEBUG
     printf("received a packet\n");
 #endif
 
@@ -100,7 +97,7 @@ static int dcln_input(netif_t * src, uint8 * pkt, int pktsize) {
     if(pkt_cnt >= PKT_BUF_CNT)
         return 0;
 
-#ifdef DEBUG
+#ifdef DCLN_DEBUG
     printf("storing it as index %d\n", idx);
 #endif
 
@@ -120,11 +117,11 @@ static int dcln_input(netif_t * src, uint8 * pkt, int pktsize) {
    we don't have an output device yet, just scan for the single present
    device and cache it. */
 void dcln_tx(uint8 * pkt, int len) {
-#ifdef DEBUG
+#ifdef DCLN_DEBUG
     int i;
 
     printf("transmitting a packet of len %d:\n", len);
-#ifdef DEBUG_VERBOSE
+#ifdef DCLN_DEBUG_VERBOSE
 
     for(i = 0; i < len; i++) {
         printf("%02x ", pkt[i]);
@@ -148,14 +145,14 @@ void dcln_rx_loop() {
 
     while(!dcln_escape_loop) {
         /* Wait for some data to arrive */
-#ifdef DEBUG
+#ifdef DCLN_DEBUG
         printf("waiting for a packet\n");
 #endif
         sem_wait(pkt_sem);
 
-#ifdef DEBUG
+#ifdef DCLN_DEBUG
         printf("received a packet on slot %d w/size %d:\n", pkt_tail, pkt_sizes[pkt_tail]);
-#ifdef DEBUG_VERBOSE
+#ifdef DCLN_DEBUG_VERBOSE
 
         for(i = 0; i < pkt_sizes[pkt_tail]; i++) {
             printf("%02x ", pkt_bufs[pkt_tail][i]);
@@ -448,7 +445,7 @@ int fs_dclnative_init() {
     netif_t * n;
 
     /* Find our output device */
-#ifdef DEBUG
+#ifdef DCLN_DEBUG
     printf("finding device:\n");
 #endif
     LIST_FOREACH(n, &net_if_list, if_list) {
@@ -464,7 +461,7 @@ int fs_dclnative_init() {
         return -1;
     }
 
-#ifdef DEBUG
+#ifdef DCLN_DEBUG
     printf("found device at %p (%s)\n", outdev, outdev->descr);
 #endif
 
@@ -494,19 +491,11 @@ int fs_dclnative_init() {
 
     /* Enable us on the networking. I have no idea why this stupid
        line warns without the cast. */
-#ifdef DEBUG
+#ifdef DCLN_DEBUG
     printf("setting net target\n");
 #endif
     ni_old = net_input_set_target((net_input_func)dcln_input);
 
-    /* Hook printk */
-//#ifndef DEBUG
-//#else
-    thd_sleep(1000);
-    dclnative_printk("Test through dcl_native\n");
-    dclnative_printk("switching printfs!\n");
-    old_printk = dbgio_set_printk(dclnative_printk);
-//#endif
 
     /* Register with VFS */
     return fs_handler_add("/pc", &vh);
@@ -529,4 +518,3 @@ int fs_dclnative_shutdown() {
 
     return 0;
 }
-

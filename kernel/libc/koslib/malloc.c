@@ -23,22 +23,16 @@
 #include <arch/spinlock.h>
 #include <arch/arch.h>
 
+#include <kos/opts.h>
+
+#undef DEBUG
+
+#ifdef MALLOC_DEBUG
 /* Enable to allow extra debugging checks in the malloc code itself.
    This sometimes catches corrupted blocks. Recommended during debugging
    phases. */
 #define DEBUG 1
-
-/* Enable this define if you want costly malloc debugging (buffer
-   sentinel checking, block leak checking, etc). Recommended during
-   debugging phases, but you should probably take it out before you
-   start your final testing. */
-#define KM_DBG
-
-/* Enable this define if you want REALLY verbose debugging (print
-   every time a block is allocated or freed). Only enable this if you
-   are having some serious issues. */
-// #define KM_DBG_VERBOSE
-
+#endif
 
 /* KOS specific things */
 #define USE_MALLOC_LOCK
@@ -1862,6 +1856,7 @@ int mem_check_block(Void_t* m) {
 
     return retv;
 #else
+    (void)m;
     return 0;
 #endif
 }

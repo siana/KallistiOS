@@ -12,6 +12,8 @@
 
 #include <malloc.h> /* For the struct mallinfo defs */
 
+#include <kos/opts.h>
+
 /*
 
 This module basically serves as a KOS-friendly front end and support routines
@@ -25,13 +27,6 @@ instead. ^_^;
 
 */
 
-/* Uncomment this line to enable leak checking */
-/* #define KM_DBG */
-
-/* Uncomment this if you want REALLY verbose debugging (print
-   every time a block is allocated or freed) */
-/* #define KM_DBG_VERBOSE */
-
 /* Bring in some prototypes from pvr_mem_core.c */
 /* We can't directly include its header because of name clashes with
    the real malloc header */
@@ -42,7 +37,7 @@ extern void pvr_int_mem_reset();
 extern void pvr_int_malloc_stats();
 
 
-#ifdef KM_DBG
+#ifdef PVR_KM_DBG
 
 #include <kos/thread.h>
 #include <arch/arch.h>
@@ -58,7 +53,7 @@ typedef struct memctl {
 
 static LIST_HEAD(memctl_list, memctl) block_list;
 
-#endif  /* KM_DBG */
+#endif  /* PVR_KM_DBG */
 
 
 /* PVR RAM base; NULL is considered invalid */
@@ -90,10 +85,10 @@ void * pvr_int_sbrk(size_t amt) {
    will be relative to the base of texture memory (zero-based) */
 pvr_ptr_t pvr_mem_malloc(size_t size) {
     uint32 rv32;
-#ifdef KM_DBG
+#ifdef PVR_KM_DBG
     uint32      ra = arch_get_ret_addr();
     memctl_t    * ctl;
-#endif  /* KM_DBG */
+#endif  /* PVR_KM_DBG */
 
     CHECK_MEM_BASE;
 
@@ -101,16 +96,16 @@ pvr_ptr_t pvr_mem_malloc(size_t size) {
     assert_msg((rv32 & 0x1f) == 0,
                "dlmalloc's alignment is broken; please make a bug report");
 
-#ifdef KM_DBG
+#ifdef PVR_KM_DBG
     ctl = malloc(sizeof(memctl_t));
     ctl->size = size;
     ctl->thread = thd_current->tid;
     ctl->addr = ra;
     ctl->block = (pvr_ptr_t)rv32;
     LIST_INSERT_HEAD(&block_list, ctl, list);
-#endif  /* KM_DBG */
+#endif  /* PVR_KM_DBG */
 
-#ifdef KM_DBG_VERBOSE
+#ifdef PVR_KM_DBG_VERBOSE
     printf("Thread %d/%08lx allocated %d bytes at %08lx\n",
            ctl->thread, ctl->addr, ctl->size, rv32);
 #endif
@@ -120,20 +115,20 @@ pvr_ptr_t pvr_mem_malloc(size_t size) {
 
 /* Free a previously allocated chunk of memory */
 void pvr_mem_free(pvr_ptr_t chunk) {
-#ifdef KM_DBG
+#ifdef PVR_KM_DBG
     uint32      ra = arch_get_ret_addr();
     memctl_t    * ctl;
     int     found;
-#endif  /* KM_DBG */
+#endif  /* PVR_KM_DBG */
 
     CHECK_MEM_BASE;
 
-#ifdef KM_DBG_VERBOSE
+#ifdef PVR_KM_DBG_VERBOSE
     printf("Thread %d/%08lx freeing block @ %08lx\n",
            thd_current->tid, ra, (uint32)chunk);
 #endif
 
-#ifdef KM_DBG
+#ifdef PVR_KM_DBG
     found = 0;
 
     LIST_FOREACH(ctl, &block_list, list) {
@@ -150,14 +145,14 @@ void pvr_mem_free(pvr_ptr_t chunk) {
                (uint32)chunk, thd_current->tid, ra);
     }
 
-#endif  /* KM_DBG */
+#endif  /* PVR_KM_DBG */
 
     pvr_int_free((void *)chunk);
 }
 
 /* Check the memory block list to see what's allocated */
 void pvr_mem_print_list() {
-#ifdef KM_DBG
+#ifdef PVR_KM_DBG
     memctl_t    * ctl;
 
     printf("pvr_mem_print_list block list:\n");
@@ -166,7 +161,7 @@ void pvr_mem_print_list() {
                ctl->block, ctl->size, ctl->thread, ctl->addr);
     }
     printf("pvr_mem_print_list end block list\n");
-#endif  /* KM_DBG */
+#endif  /* PVR_KM_DBG */
 }
 
 /* Return the number of bytes available still in the memory pool */
@@ -199,8 +194,7 @@ void pvr_mem_stats() {
     printf("pvr_mem_stats():\n");
     pvr_int_malloc_stats();
     printf("max sbrk base: %08lx\n", (uint32)pvr_mem_base);
-#ifdef KM_DBG
+#ifdef PVR_KM_DBG
     pvr_mem_print_list();
 #endif
 }
-
