@@ -1,8 +1,8 @@
 /* KallistiOS ##version##
 
    dc/cdrom.h
-   (c)2000-2001 Dan Potter
-
+   Copyright (C) 2000-2001 Dan Potter
+   Copyright (C) 2014 Donald Haase
 */
 
 #ifndef __DC_CDROM_H
@@ -25,8 +25,8 @@ __BEGIN_DECLS
     CD, it will automatically detect and react to disc changes for you.
 
     This file only facilitates reading raw sectors and doing other fairly low-
-    level things with CDs. If you're looking for higher-level stuff, like normal
-    file reading, consult with the stuff for the fs and for fs_iso9660.
+    level things with CDs. If you're looking for higher-level stuff, like 
+    normal file reading, consult with the stuff for the fs and for fs_iso9660.
 
     \author Dan Potter
     \see    kos/fs.h
@@ -89,6 +89,40 @@ __BEGIN_DECLS
 */
 #define CDDA_TRACKS     1   /**< \brief Play by track number */
 #define CDDA_SECTORS    2   /**< \brief Play by sector number */
+/** @} */
+
+/** \defgroup cd_read_sector_part    CD-ROM Read Sector Part
+
+    Parts of the a CD-ROM sector to read. These are possible values for the
+    third parameter word sent with the change data type syscall. 
+    @{
+*/
+#define CDROM_READ_WHOLE_SECTOR 0x1000    /**< \brief Read the whole sector */
+#define CDROM_READ_DATA_AREA    0x2000    /**< \brief Read the data area */
+/** @} */
+
+/** \defgroup cd_read_subcode_type    CD-ROM Read Subcode Type
+
+    Types of data available to read from the sector subcode. These are 
+    possible values for the first parameter sent to the GETSCD syscall.
+    @{
+*/
+#define CD_SUB_Q_CHANNEL        0    /**< \brief Read Q Channel Subcode Data */
+#define CD_SUB_CURRENT_POSITION 1    /**< \brief Read all Subcode Data for 
+                                                 most recent sector */
+#define CD_SUB_MEDIA_CATALOG    2    /**< \brief Read the Media Catalog 
+                                                 Subcode Data */
+#define CD_SUB_TRACK_ISRC       3    /**< \brief Read the ISRC Subcode Data */
+/** @} */
+
+/** \defgroup cd_read_sector_mode    CD-ROM Read Sector Mode
+
+    How to read the sectors of a CD, via PIO or DMA. 4th parameter of 
+    cdrom_read_sectors_ex.
+    @{
+*/
+#define CDROM_READ_PIO 0    /**< \brief Read sector(s) in PIO mode */
+#define CDROM_READ_DMA 1    /**< \brief Read sector(s) in DMA mode */
 /** @} */
 
 /** \defgroup cd_status_values      CD-ROM status values
@@ -170,20 +204,23 @@ typedef struct {
     sectors) or 2352 (for reading raw sectors).
 
     \param  size            The size of the sector data.
+
+    \return                 \ref cd_cmd_response
 */
-void cdrom_set_sector_size(int size);
+int cdrom_set_sector_size(int size);
 
 /** \brief  Execute a CD-ROM command.
 
     This function executes the specified command using the BIOS syscall for
-    executing GD-ROM commands.
+    executing GD-ROM commands. This is *NOT* thread-safe. You must track the 
+	G1_ATA mutex yourself.
 
     \param  cmd             The command number to execute.
     \param  param           Data to pass to the syscall.
 
     \return                 \ref cd_cmd_response
 */
-int cdrom_exec_cmd(int cmd, void *param);
+static int cdrom_exec_cmd(int cmd, void *param);
 
 /** \brief  Get the status of the GD-ROM drive.
 
@@ -196,14 +233,47 @@ int cdrom_exec_cmd(int cmd, void *param);
 */
 int cdrom_get_status(int *status, int *disc_type);
 
-/** \brief  Re-initialize the GD-ROM drive.
+/** \brief    Change the datatype of disc.
 
-    This function is for reinitializing the GD-ROM drive after a disc change,
-    or something of the like.
+    This function will take in all parameters to pass to the change_datatype 
+    syscall. This allows these parameters to be modified without a reinit. 
+    Each parameter allows -1 as a default, which is tied to the former static 
+    values provided by cdrom_reinit and cdrom_set_sector_size.
+
+    \param sector_part      How much of each sector to return.
+    \param cdxa             What CDXA mode to read as (if applicable).
+    \param sector_size      What sector size to read (eg. - 2048, 2532).
 
     \return                 \ref cd_cmd_response
+    \see    cd_read_sector_part
+*/
+int cdrom_change_dataype(int sector_part, int cdxa, int sector_size);
+
+/** \brief  Re-initialize the GD-ROM drive.
+
+    This function is for reinitializing the GD-ROM drive after a disc change to
+    its default settings. Calls cdrom_reinit(-1,-1,-1)
+
+    \return                 \ref cd_cmd_response
+    \see    cdrom_reinit_ex
 */
 int cdrom_reinit();
+
+/** \brief    Re-initialize the GD-ROM drive with custom parameters.
+
+    At the end of each cdrom_reinit(), cdrom_change_datatype is called. 
+    This passes in the requested values to that function after 
+    reinitialization, as opposed to defaults.
+
+    \param sector_part      How much of each sector to return.
+    \param cdxa             What CDXA mode to read as (if applicable).
+    \param sector_size      What sector size to read (eg. - 2048, 2532).
+
+    \return                 \ref cd_cmd_response
+    \see    cd_read_sector_part
+    \see    cdrom_change_datatype
+*/
+int cdrom_reinit_ex(int sector_part, int cdxa, int sector_size);
 
 /** \brief  Read the table of contents from the disc.
 
@@ -219,15 +289,44 @@ int cdrom_read_toc(CDROM_TOC *toc_buffer, int session);
 
     This function reads the specified number of sectors from the disc, starting
     where requested. This will respect the size of the sectors set with
-    cdrom_set_sector_size(). The buffer must have enough space to store the
+    cdrom_change_dataype(). The buffer must have enough space to store the
     specified number of sectors.
 
     \param  buffer          Space to store the read sectors.
     \param  sector          The sector to start reading from.
     \param  cnt             The number of sectors to read.
+    \param  mode            DMA or PIO
     \return                 \ref cd_cmd_response
+    \see    cd_read_sector_mode
+*/
+int cdrom_read_sectors_ex(void *buffer, int sector, int cnt, int mode);
+
+/** \brief  Read one or more sector from a CD-ROM in PIO mode.
+
+    Default version of cdrom_read_sectors_ex, which forces PIO mode.
+
+    \param  buffer          Space to store the read sectors.
+    \param  sector          The sector to start reading from.
+    \param  cnt             The number of sectors to read.
+    \return                 \ref cd_cmd_response
+    \see    cdrom_read_sectors_ex
 */
 int cdrom_read_sectors(void *buffer, int sector, int cnt);
+
+/** \brief    Read subcode data from the most recently read sectors.
+
+    After reading sectors, this can pull subcode data regarding the sectors 
+    read. If reading all subcode data with CD_SUB_CURRENT_POSITION, this needs 
+    to be performed one sector at a time.
+
+    \param  buffer          Space to store the read subcode data.
+    \param  buflen          Amount of data to be read.
+    \param  which           Which subcode type do you wish to get.
+
+    \return                 \ref cd_cmd_response
+    \see    cd_read_subcode_type
+*/
+int cdrom_get_subcode(void *buffer, int buflen, int which);
 
 /** \brief  Locate the sector of the data track.
 
@@ -277,7 +376,7 @@ int cdrom_spin_down();
     handling initial setup of the disc.
 
     \retval 0               On success.
-    \retval -1              If cdrom_init() has already been called.
+    \retval -1              Already initted, shutdown before initting again.
 */
 int cdrom_init();
 
