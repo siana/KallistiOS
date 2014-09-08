@@ -18,35 +18,25 @@
 /* Load a PVR texture - located in pvr-texture.c */
 extern GLuint glTextureLoadPVR(char *fname, unsigned char isMipMapped, unsigned char glMipMap);
 
-GLfloat VERTEX_ARRAY[4 * 3 * 2] = { -100.0f, -10.0f, 100.0f,
+GLfloat VERTEX_ARRAY[4 * 3 * 1] = { -100.0f, -10.0f, 100.0f,
                                     100.0f, -10.0f, 100.0f,
                                     100.0f, -10.0f, -100.0f,
                                     -100.0f, -10.0f, -100.0f
                                   };
 
-GLfloat TEXCOORD_ARRAY[4 * 2 * 2] = { 0, 0,
+GLfloat TEXCOORD_ARRAY[4 * 2 * 1] = { 0, 0,
                                       1, 0,
                                       1, 1,
-                                      0, 1,
-                                      1, 0,
-                                      0, 0,
-                                      0, 1,
-                                      1, 1
+                                      0, 1
                                     };
 
-GLfloat NORMAL_ARRAY[4 * 3 * 2] = { 0, -1, 0,
-                                    0, 1, 0,
-                                    0, 1, 0,
-                                    0, 1, 0,
-                                    0, 1, 0,
+GLfloat NORMAL_ARRAY[4 * 3 * 1] = { 0, -1, 0,
                                     0, 1, 0,
                                     0, 1, 0,
                                     0, 1, 0
                                   };
 
-GLubyte INDEX_ARRAY[4 * 2] = { 0, 1, 2, 3,
-                               4, 5, 6, 7
-                             };
+GLubyte INDEX_ARRAY[4 * 1] = { 0, 1, 2, 3 };
 
 /* Example using Open GL Vertex Array Submission using glDrawElements().*/
 static float rx = 1.0f;
@@ -71,7 +61,7 @@ void RenderCallback(GLuint texID) {
     glBindTexture(GL_TEXTURE_2D, texID);
 
     /* Bind Array Data */
-    glNormalPointer(3, GL_FLOAT, 0, NORMAL_ARRAY);
+    glNormalPointer(GL_FLOAT, 0, NORMAL_ARRAY);
     glTexCoordPointer(2, GL_FLOAT, 0, TEXCOORD_ARRAY);
     glVertexPointer(3, GL_FLOAT, 0, VERTEX_ARRAY);
 

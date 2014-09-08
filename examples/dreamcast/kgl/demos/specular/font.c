@@ -53,16 +53,16 @@ void FontDrawChar(Font *font, int index, float x, float y, float w, float h) {
     glColor1ui(font->Color);
 
     glTexCoord2f(font->TexUV[index][0], font->TexUV[index][3]);
-    glVertex2f(x, y + h);
+    glKosVertex2f(x, y + h);
 
     glTexCoord2f(font->TexUV[index][1], font->TexUV[index][3]);
-    glVertex2f(x + w, y + h);
+    glKosVertex2f(x + w, y + h);
 
     glTexCoord2f(font->TexUV[index][1], font->TexUV[index][2]);
-    glVertex2f(x + w, y);
+    glKosVertex2f(x + w, y);
 
     glTexCoord2f(font->TexUV[index][0], font->TexUV[index][2]);
-    glVertex2f(x, y);
+    glKosVertex2f(x, y);
 }
 
 void FontPrintString(Font *font, char *str, float xpos, float ypos,

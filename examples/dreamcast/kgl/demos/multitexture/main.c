@@ -81,19 +81,19 @@ void RenderMultiTexturedQuadCentered(GLuint texID0, GLuint texID1, GLfloat width
 
     glMultiTexCoord2f(GL_TEXTURE0, 0.0f, 0.0f);
     glMultiTexCoord2f(GL_TEXTURE1, 0.2f, 0.2f);
-    glVertex2f(x1, y1);
+    glKosVertex2f(x1, y1);
 
     glMultiTexCoord2f(GL_TEXTURE0, 1.0f, 0.0f);
     glMultiTexCoord2f(GL_TEXTURE1, 0.8f, 0.2f);
-    glVertex2f(x2, y1);
+    glKosVertex2f(x2, y1);
 
     glMultiTexCoord2f(GL_TEXTURE0, 1.0f, 1.0f);
     glMultiTexCoord2f(GL_TEXTURE1, 0.8f, 0.8f);
-    glVertex2f(x2, y2);
+    glKosVertex2f(x2, y2);
 
     glMultiTexCoord2f(GL_TEXTURE0, 0.0f, 1.0f);
     glMultiTexCoord2f(GL_TEXTURE1, 0.2f, 0.8f);
-    glVertex2f(x1, y2);
+    glKosVertex2f(x1, y2);
 
     glEnd();
 

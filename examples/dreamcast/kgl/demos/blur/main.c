@@ -71,8 +71,6 @@ void InitRenderTexture(long unsigned int width, long unsigned int height) {
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_FILTER, GL_LINEAR);
 }
 
-#define DEBUG_NULL_DC 1
-
 void RenderBlurEffect(int times, float inc, long unsigned int width, long unsigned int height,
                       GLuint texID)
 
@@ -81,20 +79,6 @@ void RenderBlurEffect(int times, float inc, long unsigned int width, long unsign
     float alphainc = 0.9f / times;     // Fade Speed For Alpha Blending
     float alpha = 0.2f;                // Starting Alpha Value
     float U, V;
-
-#ifdef DEBUG_NULL_DC                   // Null DC does not accuratley handle render-to-texture u/v coords
-
-    if(width > (float)vid_mode->width)
-        U = 1;
-    else
-        U = width / (float)vid_mode->width;
-
-    if(height > (float)vid_mode->height)
-        V = 1;
-    else
-        V = height / (float)vid_mode->height;
-
-#else
 
     if(width > (float)vid_mode->width)
         U = (float)vid_mode->width / width;
@@ -106,7 +90,6 @@ void RenderBlurEffect(int times, float inc, long unsigned int width, long unsign
     else
         V = 1;
 
-#endif
     float W = (float)vid_mode->width;
     float H = (float)vid_mode->height;
 
@@ -127,16 +110,16 @@ void RenderBlurEffect(int times, float inc, long unsigned int width, long unsign
         glColor4f(1.0f, 1.0f, 1.0f, alpha);     // Set The Alpha Value (Starts At 0.2)
 
         glTexCoord2f(0 + spost, 0 + spost);
-        glVertex2f(0, 0);
+        glKosVertex2f(0, 0);
 
         glTexCoord2f(U - spost, 0 + spost);
-        glVertex2f(W, 0);
+        glKosVertex2f(W, 0);
 
         glTexCoord2f(U - spost, V - spost);
-        glVertex2f(W, H);
+        glKosVertex2f(W, H);
 
         glTexCoord2f(0 + spost, V - spost);
-        glVertex2f(0, H);
+        glKosVertex2f(0, H);
 
         spost += inc;                   // Gradually Increase spost (Zooming Closer To Texture Center)
 
@@ -323,7 +306,7 @@ int main(int argc, char **argv) {
     /* Set the Render Texture and Render-To-Texture Viewport Dimensions - Must be Power of two */
     InitRenderTexture(1024, 512);
 
-    GLubyte enable_radial = 0, radial_iterations = 1;
+    GLubyte enable_radial = 0, radial_iterations = 8;
 
     while(1) {
         /* Draw the GL "scene" */
