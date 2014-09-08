@@ -220,7 +220,7 @@ int cdrom_set_sector_size(int size);
 
     \return                 \ref cd_cmd_response
 */
-static int cdrom_exec_cmd(int cmd, void *param);
+int cdrom_exec_cmd(int cmd, void *param);
 
 /** \brief  Get the status of the GD-ROM drive.
 
