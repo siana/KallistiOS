@@ -109,6 +109,8 @@ int cdrom_set_sector_size(int size) {
 int cdrom_exec_cmd(int cmd, void *param) {
     int status[4] = {0};
     int f, n;
+    
+    mutex_lock(&_g1_ata_mutex);
 
     /* Make sure to select the GD-ROM drive. */
     g1_ata_select_device(G1_ATA_MASTER);
@@ -124,6 +126,8 @@ int cdrom_exec_cmd(int cmd, void *param) {
             thd_pass();
     }
     while(n == PROCESSING);
+    
+    mutex_unlock(&_g1_ata_mutex);
 
     if(n == COMPLETED)
         return ERR_OK;
