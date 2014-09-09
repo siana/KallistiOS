@@ -102,10 +102,7 @@ int cdrom_set_sector_size(int size) {
 }
 
 /* Command execution sequence */
-/* XXX: It might make sense to have a version of this that takes a timeout.
-   The only time this could cause an issue is if for some inane reason a user
-   were to cdrom_init/reinit in one thread and expect to be able to get a 
-   reliable read in another. */
+/* XXX: It might make sense to have a version of this that takes a timeout. */
 int cdrom_exec_cmd(int cmd, void *param) {
     int status[4] = {0};
     int f, n;
