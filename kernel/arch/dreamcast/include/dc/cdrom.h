@@ -212,7 +212,7 @@ int cdrom_set_sector_size(int size);
 /** \brief  Execute a CD-ROM command.
 
     This function executes the specified command using the BIOS syscall for
-    executing GD-ROM commands. 
+    executing GD-ROM commands.
 
     \param  cmd             The command number to execute.
     \param  param           Data to pass to the syscall.
