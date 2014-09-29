@@ -207,7 +207,7 @@ void loadtxr(const char *fname, GLuint *txr) {
     glBindTexture(GL_TEXTURE_2D, *txr);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB,
                  texW, texH, 0,
-                 texFormat, texColor, texBuf + PVR_HDR_SIZE);
+                 GL_RGB, texFormat | texColor, texBuf + PVR_HDR_SIZE);
 }
 
 extern uint8 romdisk[];
@@ -242,7 +242,7 @@ int main(int argc, char **argv) {
     /* Load a texture and make to look nice */
     loadtxr("/rd/glass.pvr", &texture);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_FILTER, GL_FILTER_BILINEAR);
-    glTexEnvi(GL_TEXTURE_2D, GL_TEXTURE_ENV_MODE, GL_MODULATEALPHA);
+    glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATEALPHA);
 
     glClearColor(0.3f, 0.4f, 0.5f, 1.0f);
 

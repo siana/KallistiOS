@@ -122,7 +122,7 @@ GLuint glTextureLoadPVR(char *fname, unsigned char UseMipMap) {
     glBindTexture(GL_TEXTURE_2D, texID);
     glTexImage2D(GL_TEXTURE_2D, UseMipMap, GL_RGB,
                  texW, texH, 0,
-                 texFormat, texColor, texBuf + PVR_HDR_SIZE);
+                  GL_RGB, texFormat | texColor, texBuf + PVR_HDR_SIZE);
 
     return texID;
 }
@@ -140,13 +140,13 @@ void glDrawQuads(float x, float y, float w, float h, int count,
 
     while(count--) {
         glTexCoord2f(0.0f + 0.01f, 0.0f + 0.01f);
-        glVertex2f(x, y);
+        glKosVertex2f(x, y);
         glTexCoord2f(1.0f - 0.01f, 0.0f + 0.01f);
-        glVertex2f(x + w, y);
+        glKosVertex2f(x + w, y);
         glTexCoord2f(1.0f - 0.01f, 1.0f - 0.01f);
-        glVertex2f(x + w, y + h);
+        glKosVertex2f(x + w, y + h);
         glTexCoord2f(0.0f + 0.01f, 1.0f - 0.01f);
-        glVertex2f(x, y + h);
+        glKosVertex2f(x, y + h);
 
         x += w * 2;
     }
@@ -227,6 +227,7 @@ int main(int argc, char **argv) {
     glShadeModel(GL_SMOOTH);
     glEnable(GL_DEPTH_TEST);
     glDepthFunc(GL_LEQUAL);
+	glEnable(GL_TEXTURE_2D);
 
     tex[0] = glTextureLoadPVR("/rd/wp001vq.pvr", 0);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_FILTER, GL_LINEAR);

@@ -45,7 +45,7 @@ void loadtxr(const char *fname, GLuint *txr) {
 #define PVR_HDR_SIZE 0x20
     FILE *tex = NULL;
     unsigned char *texBuf;
-    unsigned int texID, texSize;
+    unsigned int texSize;
 
     tex = fopen(fname, "rb");
 
@@ -136,7 +136,7 @@ void loadtxr(const char *fname, GLuint *txr) {
     glBindTexture(GL_TEXTURE_2D, *txr);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB,
                  texW, texH, 0,
-                 texFormat, texColor, texBuf + PVR_HDR_SIZE);
+                 GL_RGB, texFormat | texColor, texBuf + PVR_HDR_SIZE);
 }
 
 void quad(int x, int y) {

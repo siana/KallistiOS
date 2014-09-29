@@ -122,19 +122,17 @@ int glTextureLoadPVR(char *fname) {
 
     glGenTextures(1, &texID);
     glBindTexture(GL_TEXTURE_2D, texID);
-    /* Note that the semantics for glTexImage2D are specific to this OpenGL API */
+
     glTexImage2D(GL_TEXTURE_2D,  /* This must be GL_TEXTURE_2D */
                  0,             /* 0 = Texture does not contain Mip-Maps | 1 = Texture contains Mip-Maps */
-                 GL_RGB,        /* This bit is actually ignored by this OpenGL API */
-                 texW,          /* Texture Width */
-                 texH,          /* Texture Height */
+                 GL_RGB,        /* GL_RGB = Has No ALPHA, GL_RGBA = Has ALPHA */
+                 texW,           /* Texture Width */
+                 texH,           /* Texture Height */
                  0,             /* This bit is actually ignored by this OpenGL API */
-                 texFormat,     /* PVR texture format - This is the PVR texture format, look at the above switch for an idea of possibilites */
-                 texColor,      /* PVR texture color - You can use GL_UNSIGNED_SHORT_5_6_5 as PVR_TXRFMT_RGB565,
-                                                                    GL_UNSIGNED_SHORT_1_5_5_5 as PVR_TXRFMT_ARGB1555, or
-                                                                    GL_UNSIGNED_SHORT_4_4_4_4 as PVR_TXRFMT_ARGB4444. */
-                 texBuf + PVR_HDR_SIZE); /* Address of texture data in RAM: OpenGL will load the texture into VRAM for you.
-                                            Because of this, make sure to call glDeleteTextures() as needed, as that will
+                 GL_RGB,        /* Must Match Previous Format  */
+                 texFormat | texColor,    /* Texture color and Format */
+                 texBuf + PVR_HDR_SIZE);  /* Address of texture data in RAM: OpenGL will load the texture into VRAM for you.
+                                            Because of this, make sure to call glDelTextures() as needed, as that will
                                             free the VRAM allocated for the texture. */
 
     return texID;

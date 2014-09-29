@@ -128,7 +128,7 @@ int glTextureLoadPVR(char *fname) {
     glBindTexture(GL_TEXTURE_2D, texID);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB,
                  texW, texH, 0,
-                 texFormat, texColor, texBuf + PVR_HDR_SIZE);
+                 GL_RGB, texFormat | texColor , texBuf + PVR_HDR_SIZE);
 
     return texID;
 }

@@ -12,6 +12,7 @@
 #include <kos.h>
 
 #include <GL/gl.h>
+#include <GL/glext.h>
 #include <GL/glu.h>
 #include <GL/glut.h>
 
@@ -45,30 +46,46 @@ static GLfloat xspeed;      /* X Rotation Speed */
 static GLfloat yspeed;      /* Y Rotation Speed */
 static GLfloat z = -5.0f;   /* Depth Into The Screen */
 
-static pvr_ptr_t *RENDER_TEXTURE = NULL;   /* PVR Memory Pointer for Render-To-Texture result */
 static GLuint      RENDER_TEXTURE_ID;      /* Render-To-Texture GL Texture ID */
 static long unsigned int RENDER_TEXTURE_W; /* Render-To-Texture width */
 static long unsigned int RENDER_TEXTURE_H; /* Render-To-Texture height */
 
+static GLuint fbo[1];
+
 extern GLuint glTextureLoadPVR(char *fname, unsigned char isMipMapped, unsigned char glMipMap);
 
-void InitRenderTexture(long unsigned int width, long unsigned int height) {
-    /* 1.) Allcoate PVR Texture Memory for Render-To-Texture */
+GLubyte InitRenderTexture(GLsizei width, GLsizei height) {
     RENDER_TEXTURE_W = width;
     RENDER_TEXTURE_H = height;
-    RENDER_TEXTURE = pvr_mem_malloc(RENDER_TEXTURE_W * RENDER_TEXTURE_H * 2);
 
-    /* 2.) Generate a texture for Open GL, and bind that texxture */
+    /* Generate a texture for Open GL, and bind that texture */
     glGenTextures(1, &RENDER_TEXTURE_ID);
     glBindTexture(GL_TEXTURE_2D, RENDER_TEXTURE_ID);
 
-    /* 3.) Use glKosTexImage2D() to bind the texture address for the Render-To-Texture */
-    glKosTexImage2D(GL_TEXTURE_2D, 0, GL_RGB,
-                    RENDER_TEXTURE_W, RENDER_TEXTURE_H, 0,
-                    PVR_TXRFMT_NONTWIDDLED, PVR_TXRFMT_RGB565, RENDER_TEXTURE);
+    /* Submit an empty texture for storing the Frame Buffer Texture */
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB,
+                 RENDER_TEXTURE_W, RENDER_TEXTURE_H, 0,
+                 GL_RGB, GL_UNSIGNED_SHORT_5_6_5, 0);
 
-    /* 4.) Enable GL_LINEAR Texture Filter to enable the PVR's bilinear filtering */
+    /* Enable GL_LINEAR Texture Filter to enable bilinear filtering */
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_FILTER, GL_LINEAR);
+
+	/* Generate and Bind A Frame Buffer Object (FBO) For Open GL */
+	glGenFramebuffers(1, fbo);
+    glBindFramebuffer(GL_FRAMEBUFFER, fbo[0]);
+
+	/* Set the Generated texture as the storage for the FBO */
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D,
+                           RENDER_TEXTURE_ID, 0);
+
+	/* Verify the Frame Buffer Object is ready */
+    if(glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
+        return 0;
+
+	/* Un-bind the Frame Buffer Object, to restore the window-frame-buffer */
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+	return 1;
 }
 
 void RenderBlurEffect(int times, float inc, long unsigned int width, long unsigned int height,
@@ -134,7 +151,7 @@ void RenderBlurEffect(int times, float inc, long unsigned int width, long unsign
     glEnable(GL_LIGHTING);                      // Enable Lighting
 }
 
-void draw_gl(GLuint texID) {
+void DrawGL(GLuint texID) {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glLoadIdentity();
     glTranslatef(0.0f, 0.0f, z);
@@ -301,7 +318,7 @@ int main(int argc, char **argv) {
 
     /* Set up the textures */
     GLuint tex0 = glTextureLoadPVR("/rd/glass.pvr", 0, 0);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_FILTER, GL_FILTER_BILINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_FILTER, GL_LINEAR);
 
     /* Set the Render Texture and Render-To-Texture Viewport Dimensions - Must be Power of two */
     InitRenderTexture(1024, 512);
@@ -309,16 +326,31 @@ int main(int argc, char **argv) {
     GLubyte enable_radial = 0, radial_iterations = 8;
 
     while(1) {
-        /* Draw the GL "scene" */
-        draw_gl(tex0);
 
+        /* Draw the GL "scene" */
         if(enable_radial) {
-            glutCopyBufferToTexture(RENDER_TEXTURE, &RENDER_TEXTURE_W, &RENDER_TEXTURE_H);
+			/* Bind the Frame Buffer Object to GL, for render-to-texture */
+			glBindFramebuffer(GL_FRAMEBUFFER, fbo[0]);
+             
+			DrawGL(tex0);
+
+            glutSwapBuffers(); 
+
+			/* Un-Bind the Frame Buffer Object, for render-to-window */
+			glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+			DrawGL(tex0);
 
             RenderBlurEffect(radial_iterations, 0.02f, RENDER_TEXTURE_W, RENDER_TEXTURE_H, RENDER_TEXTURE_ID);
-        }
 
-        glutSwapBuffers(); /* Finish the GL "scene" */
+			glutSwapBuffers(); /* Finish the GL "scene" */
+        }
+		else{
+		    DrawGL(tex0);
+
+			glutSwapBuffers(); /* Finish the GL "scene" */
+		}
+		
 
         /* Very simple callback to handle user input based on static global vars */
         switch(InputCallback()) {
