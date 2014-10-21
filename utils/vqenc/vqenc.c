@@ -33,6 +33,7 @@ static int use_hq = 0;
 static int use_kmg = 0;
 static int use_alpha = 0;
 
+#define PACK1555(a, r, g, b) ( (a ? 0x8000 : 0) | ((r>>3)<<10) | ((g>>3)<<5) | ((b >>3)))
 #define PACK4444(a, r, g, b) ( ((a>>4) << 12) | ((r>>4)<<8) | ((g>>4)<<4) | ((b>>4)) )
 #define PACK565(r, g, b) (((r>>3)<<11) | ((g>>2)<<5) | ((b>>3)))
 #define LIMIT(x,low,high) (x) < low ? low : (x) > high ? high : (x);
@@ -256,8 +257,10 @@ static uint16 pack(fcolor_t *c) {
     g = LIMIT(c->g, 0, 255);
     b = LIMIT(c->b, 0, 255);
 
-    if(use_alpha)
+    if(use_alpha == 1)
         return PACK4444(a, r, g, b);
+    else if(use_alpha == 2)
+        return PACK1555(a, r, g, b);
     else
         return PACK565(r, g, b);
 }
@@ -404,7 +407,13 @@ static int save(const char *filename, context_t *cb, mipmap_t *m, image_t *img) 
         hdr.magic = KMG_MAGIC;
         hdr.version = KMG_VERSION;
         hdr.platform = KMG_PLAT_DC;
-        hdr.format = (use_alpha ? KMG_DCFMT_ARGB4444 : KMG_DCFMT_RGB565) | KMG_DCFMT_VQ;
+
+        if(use_alpha == 1)
+            hdr.format = KMG_DCFMT_ARGB4444 | KMG_DCFMT_VQ;
+        else if(use_alpha == 2)
+            hdr.format = KMG_DCFMT_ARGB1555 | KMG_DCFMT_VQ;
+        else
+            hdr.format = KMG_DCFMT_RGB565 | KMG_DCFMT_VQ;
 
         if(use_twiddle)
             hdr.format |= KMG_DCFMT_TWIDDLED;
@@ -479,6 +488,7 @@ static void banner(const char *progname) {
     printf("\t-q, --highq\thigher quality (much slower)\n");
     printf("\t-k, --kmg\twrite a KMG for output\n");
     printf("\t-a, --alpha\tuse alpha channel (and output ARGB4444)\n");
+    printf("\t-b, --amask\tuse 1-bit alpha mask (and output ARGB1555)\n");
 }
 
 static int mipmap_index(int s) {
@@ -797,6 +807,8 @@ static int process_long_options(char *arg) {
         use_kmg = 1;
     else if(! strcmp(arg, "alpha"))
         use_alpha = 1;
+    else if(! strcmp(arg, "amask"))
+        use_alpha = 2;
     else
         return -EINVAL;
 
@@ -835,6 +847,10 @@ static int process_option(char *arg) {
 
         case 'a':
             use_alpha = 1;
+            return 0;
+
+        case 'b':
+            use_alpha = 2;
             return 0;
 
         case '-':
