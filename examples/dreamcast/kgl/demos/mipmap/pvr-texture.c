@@ -1,8 +1,8 @@
-/* 
+/*
    KallistiOS 2.0.0
 
    pvr-texture.c
-   (c)2014 Josh Pearson
+   (c)2014 Josh PH3NOM Pearson
 
    Load A PVR Texture to the PVR using Open GL
 */
@@ -72,10 +72,10 @@ GLuint glTextureLoadPVR(char *fname, unsigned char isMipMapped, unsigned char gl
 
     /* If the texture is MipMapped, tell Open GL to use the MipMap levels of the texture */
     if(isMipMapped || glMipMap)
-        glTexImage2D(GL_TEXTURE_2D, 1, GL_RGB, texW, texH, 0, texFormat, texColor, TEX0);
+        glTexImage2D(GL_TEXTURE_2D, 1, GL_RGB, texW, texH, 0, GL_RGB, texFormat | texColor, TEX0);
     /* If the texture is not MipMapped, tell Open GL to use the base level of the texture */
     else
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, texW, texH, 0, texFormat, texColor, TEX0);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, texW, texH, 0, GL_RGB, texFormat | texColor, TEX0);
 
     free(TEX0);
 

@@ -7,7 +7,11 @@
 */
 
 #include <kos.h>
+
 #include <GL/gl.h>
+#include <GL/glut.h>
+
+#include <stdlib.h>
 #include <time.h>
 
 pvr_init_params_t pvr_params = {

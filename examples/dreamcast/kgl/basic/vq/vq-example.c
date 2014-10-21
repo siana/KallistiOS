@@ -38,17 +38,15 @@ static int loadtxr() {
 
     glTexImage2D(GL_TEXTURE_2D,  /* This must be GL_TEXTURE_2D */
                  0,             /* 0 = Texture does not contain Mip-Maps | 1 = Texture contains Mip-Maps */
-                 GL_RGB,        /* This bit is actually ignored by this OpenGL API */
+                 GL_RGB,        /* GL_RGB = Has No ALPHA, GL_RGBA = Has ALPHA */
                  512,           /* Texture Width */
                  512,           /* Texture Height */
                  0,             /* This bit is actually ignored by this OpenGL API */
-                 PVR_TXRFMT_VQ_ENABLE,   /* PVR texture format */
-                 PVR_TXRFMT_RGB565,      /* PVR texture color - You can use GL_UNSIGNED_SHORT_5_6_5 as PVR_TXRFMT_RGB565,
-                                                                    GL_UNSIGNED_SHORT_1_5_5_5 as PVR_TXRFMT_ARGB1555, or
-                                                                    GL_UNSIGNED_SHORT_4_4_4_4 as PVR_TXRFMT_ARGB4444. */
+                 GL_RGB,        /* Must Match Previous Format  */
+                 GL_UNSIGNED_SHORT_5_6_5_VQ_TWID,      /* Texture color and Format */
                  fruit);       /* Address of texture data in RAM: OpenGL will load the texture into VRAM for you.
-                                            Because of this, make sure to call glDelTextures() as needed, as that will
-                                            free the VRAM allocated for the texture. */
+                                  Because of this, make sure to call glDeleteTextures() as needed, as that will
+                                  free the VRAM allocated for the texture. */
     return 0;
 }
 
@@ -197,7 +195,7 @@ int main(int argc, char **argv) {
         glutSwapBuffers();
     }
 
-    glDelTextures(1, texture);
+    glDeleteTextures(1, texture);
 
     return 0;
 }

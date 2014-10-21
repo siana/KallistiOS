@@ -98,13 +98,11 @@ GLuint glTextureLoadPVR(char *fname, unsigned char UseMipMap) {
             break;
     }
 
-    printf("TEXTURE Resolution: %ix%i\n", texW, texH);
-
     glGenTextures(1, &texID);
     glBindTexture(GL_TEXTURE_2D, texID);
     glTexImage2D(GL_TEXTURE_2D, UseMipMap, GL_RGB,
                  texW, texH, 0,
-                 texFormat, texColor, texBuf + PVR_HDR_SIZE);
+                 GL_RGB, texFormat | texColor, texBuf + PVR_HDR_SIZE);
 
     return texID;
 }
