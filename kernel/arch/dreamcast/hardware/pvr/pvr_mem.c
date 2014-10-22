@@ -1,7 +1,7 @@
 /* KallistiOS ##version##
 
    pvr_mem.c
-   (C)2002 Dan Potter
+   Copyright (C) 2002 Dan Potter
 
  */
 
@@ -171,10 +171,11 @@ static uint32 pvr_mem_available_int() {
     /* This magic formula is modeled after mstats() */
     return mi.arena - mi.uordblks;
 }
+
 uint32 pvr_mem_available() {
     CHECK_MEM_BASE;
 
-    return pvr_mem_available_int();
+    return pvr_mem_available_int() + (PVR_RAM_INT_TOP - (uint32)pvr_mem_base);
 }
 
 /* Reset the memory pool, equivalent to freeing all textures currently

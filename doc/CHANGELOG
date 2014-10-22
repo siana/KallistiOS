@@ -45,6 +45,8 @@ KallistiOS version 2.0.1 -----------------------------------------------
 - *** Fixed a problem where poll() would deadlock if the timeout expired [LS]
 - *** Modified getaddrinfo() so that it would try multiple times to contact the
       DNS server with a timeout between messages [LS]
+- DC  Fixed pvr_mem_available() to report all available texture memory, not just
+      what was available in the pvr_malloc() arena [LS]
 
 KallistiOS version 2.0.0 -----------------------------------------------
 - DC  Broadband Adapter driver fixes [Dan Potter == DP]
