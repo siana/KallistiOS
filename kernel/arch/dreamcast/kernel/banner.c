@@ -8,7 +8,7 @@
 #include "authors.h"
 
 static const char license[] =
-"Copyright (C) 1997-2013 KallistiOS Contributors. All rights reserved.\n"
+"Copyright (C) 1997-2014 KallistiOS Contributors. All rights reserved.\n"
 "\n"
 "Redistribution and use in source and binary forms, with or without\n"
 "modification, are permitted provided that the following conditions\n"
