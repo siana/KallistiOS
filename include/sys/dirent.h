@@ -1,12 +1,12 @@
 /* KallistiOS ##version##
 
    dirent.h
-   Copyright (C)2003 Dan Potter
+   Copyright (C) 2003 Dan Potter
 
 */
 
 /** \file   dirent.h
-    \brief  Standard POSIX dirent functionality
+    \brief  Directory entry functionality.
 
     This partially implements the standard POSIX dirent.h functionality.
 
@@ -20,64 +20,96 @@
 #include <arch/types.h>
 #include <kos/fs.h>
 
-/** \brief The POSIX dirent which describes a directory entry
+/** \brief  POSIX directory entry structure.
+
+    This structure contains information about a single entry in a directory in
+    the VFS.
+
+    \headerfile sys/dirent.h
  */
 struct dirent {
-    int d_ino; /**< \brief the file number */
-    off_t   d_off; /**< \brief the file offset */
-    uint16  d_reclen; /**< \brief the record length */
-    uint8   d_type; /**< \brief the type */
-    char    d_name[256]; /**< \brief the entry name */
+    int     d_ino;              /**< \brief File unique identifier. */
+    off_t   d_off;              /**< \brief File offset */
+    uint16  d_reclen;           /**< \brief Record length */
+    uint8   d_type;             /**< \brief File type */
+    char    d_name[256];        /**< \brief Filename */
 };
 
-/** \brief the DIR structure in KOS
+/** \brief  Type representing a directory stream.
 
-    In KOS, DIR * is just an fd, but we use a struct so we can also include the
-    POSIX dirent.
+    This type represents a directory stream and is used by the directory reading
+    functions to trace their position in the directory.
+
+    The values in this function are all private and subject to change. Do not
+    attempt to use any of them directly.
+
+    \headerfile sys/dirent.h
 */
 typedef struct {
-    file_t      fd; /**< \brief the file descriptor */
-    struct dirent   d_ent; /**< \brief the POSIX dirent */
+    file_t          fd;         /**< \brief File descriptor for the directory */
+    struct dirent   d_ent;      /**< \brief Current directory entry */
 } DIR;
 
 // Standard UNIX dir functions. Not all of these are fully functional
 // right now due to lack of support in KOS.
 
-// All of these work.
-/** \brief Opens a directory based on the specified name
+/** \brief  Open a directory based on the specified name.
 
-    The directory specified by name is opened if it exists and returns a
-    directory structure that must be later closed with closedir.
+    The directory specified is opened if it exists. A directory stream object is
+    returned for accessing the entries of the directory.
 
-    \param name The string name of the dir to open.
-    \return A directory structure that can be used with readdir
-    \note I believe you can use relative paths with opendir, but it depends on
-        the current working directory (getcwd)
-    \see closedir
-    \see readdir
+    \param  name        The name of the directory to open.
+    \return             A directory stream object to be used with readdir() on
+                        success, NULL on failure. Sets errno as appropriate.
+    \note               As with other functions for opening files on the VFS,
+                        relative paths are permitted for the name parameter of
+                        this function.
+    \see    closedir
+    \see    readdir
 */
 DIR *opendir(const char *name);
 
-/** \brief Closes a currently opened directory
+/** \brief  Closes a directory that was previously opened.
 
-    Close a DIR that was previously opened with opendir.
+    This function is used to close a directory stream that was previously opened
+    with the opendir() function. You must do this to clean up any resources
+    associated with the directory stream.
 
-    \param dir The DIR that was returned from an opendir.
-    \return 0 on success, or -1 on error.
+    \param  dir         The directory stream to close.
+    \return             0 on success. -1 on error, setting errno as appropriate.
 */
 int closedir(DIR *dir);
 
-/** \brief Read the contents of an open directory
+/** \brief  Read an entry from a directory stream.
 
-    Read the contents of an open directory and returns a pointer to the current
-    directory entry. Recurring calls to readdir return the next directory entry.
+    This function reads the next entry from the directory stream provided,
+    returning the directory entry associated with the next object in the
+    directory.
 
-    \note Do not free the returned dirent
-    \param dir The directory structure that was returned from an opendir
-    \return A pointer to the current diretory entry or NULL when there are no
-        more entries.
+    \param  dir         The directory stream to read from.
+    \return             A pointer to the next directory entry in the directory
+                        or NULL if there are no other entries in the directory.
+                        If an error is incurred, NULL will be returned and errno
+                        set to indicate the error.
+
+    \note               Do not free the returned dirent!
 */
 struct dirent *readdir(DIR *dir);
+
+/** \brief  Retrieve the file descriptor of an opened directory stream.
+
+    This function retrieves the file descriptor of a directory stream that was
+    previously opened with opendir().
+
+    \param  dir         The directory stream to retrieve the descriptor of.
+    \return             The file descriptor from the directory stream on success
+                        or -1 on failure (sets errno as appropriate).
+
+    \note               Do not close() the returned file descriptor. It will be
+                        closed when closedir() is called on the directory
+                        stream.
+*/
+int dirfd(DIR *dirp);
 
 /** \brief Not implemented */
 void rewinddir(DIR *dir);
@@ -91,4 +123,3 @@ void seekdir(DIR *dir, off_t offset);
 off_t telldir(DIR *dir);
 
 #endif
-
