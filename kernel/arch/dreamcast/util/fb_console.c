@@ -8,6 +8,7 @@
 #include <string.h>
 #include <errno.h>
 #include <kos/dbgio.h>
+#include <kos/string.h>
 #include <dc/fb_console.h>
 #include <dc/biosfont.h>
 #include <dc/video.h>
@@ -21,10 +22,6 @@ static uint16 *fb;
 static int fb_w, fb_h;
 static int cur_x, cur_y;
 static int min_x, min_y, max_x, max_y;
-
-/* I don't think this is in a header anywhere any more. */
-extern void *memcpy2(void *dest, const void *src, size_t count);
-extern void *memset2(void *s, unsigned short c, size_t count);
 
 #define FONT_CHAR_WIDTH 12
 #define FONT_CHAR_HEIGHT 24
