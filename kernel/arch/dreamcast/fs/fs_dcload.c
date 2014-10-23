@@ -281,10 +281,15 @@ dirent_t *dcload_readdir(void * h) {
     char *fn;
     uint32 hnd = (uint32)h;
 
-    if(lwip_dclsc && irq_inside_int())
-        return 0;
+    if(lwip_dclsc && irq_inside_int()) {
+        errno = EAGAIN;
+        return NULL;
+    }
 
-    if(hnd < 100) return NULL;  /* hack */
+    if(hnd < 100) {
+        errno = EBADF;
+        return NULL;
+    }
 
     spinlock_lock(&mutex);
 
@@ -573,4 +578,3 @@ int fs_dcload_init_lwip(void *p) {
     /* Register with VFS */
     return nmmgr_handler_add(&vh.nmmgr);
 }
-

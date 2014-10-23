@@ -820,8 +820,11 @@ static dirent_t *iso_readdir(void * h) {
 
     file_t fd = (file_t)h;
 
-    if(fd >= MAX_ISO_FILES || fh[fd].first_extent == 0 || !fh[fd].dir || fh[fd].broken)
+    if(fd >= MAX_ISO_FILES || fh[fd].first_extent == 0 || !fh[fd].dir ||
+       fh[fd].broken) {
+        errno = EBADF;
         return NULL;
+    }
 
     /* Scan forwards until we find the next valid entry, an
        end-of-entry mark, or run out of dir size. */

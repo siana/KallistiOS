@@ -549,6 +549,9 @@ static dirent_t *ramdisk_readdir(void * h) {
 
         rv = &fh[fd].dirent;
     }
+    else {
+        errno = EBADF;
+    }
 
     mutex_unlock(&rd_mutex);
 

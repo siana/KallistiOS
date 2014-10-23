@@ -509,6 +509,7 @@ static dirent_t *vmu_readdir(void * fd) {
 
     /* Check the handle */
     if(!vmu_verify_hnd(fd, VMU_DIR)) {
+        errno = EBADF;
         return NULL;
     }
 

@@ -620,14 +620,13 @@ static dirent_t * pty_readdir(void * h) {
     assert(h);
 
     if(fdobj->type != PF_DIR) {
-        errno = EINVAL;
+        errno = EBADF;
         return NULL;
     }
 
     dl = fdobj->d.d;
 
     if(dl->ptr >= dl->cnt) {
-        errno = 0;  /* no error */
         return NULL;
     }
 
@@ -781,4 +780,3 @@ int fs_pty_shutdown() {
 
     return 0;
 }
-

@@ -354,7 +354,7 @@ static dirent_t *romdisk_readdir(void * h) {
     file_t      fd = (file_t)h;
 
     if(fd >= MAX_RD_FILES || fh[fd].index == 0 || !fh[fd].dir) {
-        errno = EINVAL;
+        errno = EBADF;
         return NULL;
     }
 

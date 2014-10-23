@@ -510,12 +510,16 @@ uint64 fs_total64(file_t fd) {
 dirent_t *fs_readdir(file_t fd) {
     fs_hnd_t *h = fs_map_hnd(fd);
 
-    if(h == NULL) return NULL;
+    if(h == NULL) {
+        errno = EBADF;
+        return NULL;
+    }
 
-    if(h->handler == NULL) return fs_root_readdir(h);
+    if(h->handler == NULL)
+        return fs_root_readdir(h);
 
     if(h->handler->readdir == NULL) {
-        errno = EINVAL;
+        errno = ENOSYS;
         return NULL;
     }
 
