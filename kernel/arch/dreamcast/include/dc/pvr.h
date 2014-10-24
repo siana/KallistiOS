@@ -1141,6 +1141,24 @@ int pvr_shutdown();
 */
 void pvr_set_bg_color(float r, float g, float b);
 
+/** \brief  Set cheap shadow parameters.
+
+    This function sets up the PVR cheap shadow parameters for use. You can only
+    specify one scale value per frame, so the effect that you can get from this
+    is somewhat limited, but if you want simple shadows, this is the easiest way
+    to do it.
+
+    Polygons affected by a shadow modifier volume will effectively multiply
+    their final color by the scale value set here when shadows are enabled and
+    the polygon is inside the modifier (or outside for exclusion volumes).
+
+    \param  enable          Set to non-zero to enable cheap shadow mode.
+    \param  scale_value     Floating point value (between 0 and 1) representing
+                            how colors of polygons affected by and inside the
+                            volume will be modified by the shadow volume.
+*/
+void pvr_set_shadow_scale(int enable, float scale_value);
+
 /** \brief  Retrieve the current VBlank count.
 
     This function retrieves the number of VBlank interrupts that have occurred

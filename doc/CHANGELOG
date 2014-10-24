@@ -47,6 +47,9 @@ KallistiOS version 2.0.1 -----------------------------------------------
       DNS server with a timeout between messages [LS]
 - DC  Fixed pvr_mem_available() to report all available texture memory, not just
       what was available in the pvr_malloc() arena [LS]
+- DC  Added a utility function to the PVR code for controlling the cheap shadow
+      scale register [LS]
+- DC  Added an example of the PVR's cheap shadow functionality [LS]
 
 KallistiOS version 2.0.0 -----------------------------------------------
 - DC  Broadband Adapter driver fixes [Dan Potter == DP]

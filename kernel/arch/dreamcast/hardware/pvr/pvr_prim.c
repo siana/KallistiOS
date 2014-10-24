@@ -1,7 +1,7 @@
 /* KallistiOS ##version##
 
    pvr_prim.c
-   (C)2002 Dan Potter
+   Copyright (C) 2002 Dan Potter
 
  */
 
@@ -143,7 +143,7 @@ void pvr_poly_compile(pvr_poly_hdr_t *dst, pvr_poly_cxt_t *src) {
         dst->mode3 |= txr_base;
     }
 
-    if(src->fmt.modifier) {
+    if(src->fmt.modifier && src->gen.modifier_mode) {
         /* If we're affected by a modifier volume, silently promote the header
            to the one that is affected by a modifier volume. */
         dst->d1 = dst->mode2;

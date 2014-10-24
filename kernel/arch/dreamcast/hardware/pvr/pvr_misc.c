@@ -1,7 +1,8 @@
 /* KallistiOS ##version##
 
    pvr_misc.c
-   (C)2002 Dan Potter
+   Copyright (C) 2002 Dan Potter
+   Copyright (C) 2014 Lawrence Sebald
 
  */
 
@@ -27,6 +28,13 @@ void pvr_set_bg_color(float r, float g, float b) {
     ib = (int)(255 * b);
 
     pvr_state.bg_color = (ir << 16) | (ig << 8) | (ib << 0);
+}
+
+/* Enable/disable cheap shadow mode and set the cheap shadow scale register. */
+void pvr_set_shadow_scale(int enable, float scale_value) {
+    int s = (int)(scale_value * 255);
+
+    PVR_SET(PVR_CHEAP_SHADOW, ((!!enable) << 8) | (s & 0xFF));
 }
 
 /* Return the current VBlank count */
