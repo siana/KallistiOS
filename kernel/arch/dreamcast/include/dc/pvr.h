@@ -90,6 +90,8 @@ typedef struct {
         int     clip_mode;      /**< \brief Clipping mode
                                      \see   pvr_clip_modes */
         int     modifier_mode;  /**< \brief Modifier mode */
+        int     specular;       /**< \brief Offset color enable/disable outside modifier
+                                     \see   pvr_offset_switch */
         int     alpha2;         /**< \brief Enable/disable alpha inside modifier
                                      \see   pvr_alpha_switch */
         int     fog_type2;      /**< \brief Fog type inside modifier
@@ -374,6 +376,22 @@ typedef struct {
 */
 #define PVR_CLRCLAMP_DISABLE    0   /**< \brief Disable color clamping */
 #define PVR_CLRCLAMP_ENABLE     1   /**< \brief Enable color clamping */
+/** @} */
+
+/** \defgroup pvr_offset_switch     Enable or disable offset color
+
+    Enabling offset color calculation allows for "specular" like effects on a
+    per-vertex basis, by providing an additive color in the calculation of the
+    final pixel colors. In vertex types with a "oargb" parameter, that's what it
+    is for.
+
+    Note that this must be enabled for bumpmap polygons in order to allow you to
+    specify the parameters in the oargb field of the vertices.
+
+    @{
+*/
+#define PVR_SPECULAR_DISABLE    0   /**< \brief Disable offset colors */
+#define PVR_SPECULAR_ENABLE     1   /**< \brief Enable offset colors */
 /** @} */
 
 /** \defgroup pvr_alpha_switch      Enable or disable alpha blending
@@ -835,6 +853,9 @@ Striplength set to 2 */
 
 #define PVR_TA_CMD_CLRFMT_SHIFT     4
 #define PVR_TA_CMD_CLRFMT_MASK      (7 << PVR_TA_CMD_CLRFMT_SHIFT)
+
+#define PVR_TA_CMD_SPECULAR_SHIFT   2
+#define PVR_TA_CMD_SPECULAR_MASK    (1 << PVR_TA_CMD_SPECULAR_SHIFT)
 
 #define PVR_TA_CMD_SHADE_SHIFT      1
 #define PVR_TA_CMD_SHADE_MASK       (1 << PVR_TA_CMD_SHADE_SHIFT)

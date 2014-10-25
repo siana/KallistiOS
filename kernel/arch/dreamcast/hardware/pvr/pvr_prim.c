@@ -41,6 +41,7 @@ void pvr_poly_compile(pvr_poly_hdr_t *dst, pvr_poly_cxt_t *src) {
     dst->cmd |= (src->gen.clip_mode << PVR_TA_CMD_USERCLIP_SHIFT) & PVR_TA_CMD_USERCLIP_MASK;
     dst->cmd |= (src->fmt.modifier << PVR_TA_CMD_MODIFIER_SHIFT) & PVR_TA_CMD_MODIFIER_MASK;
     dst->cmd |= (src->gen.modifier_mode << PVR_TA_CMD_MODIFIERMODE_SHIFT) & PVR_TA_CMD_MODIFIERMODE_MASK;
+    dst->cmd |= (src->gen.specular << PVR_TA_CMD_SPECULAR_SHIFT) & PVR_TA_CMD_SPECULAR_MASK;
 
     /* Polygon mode 1 */
     dst->mode1  = (src->depth.comparison << PVR_TA_PM1_DEPTHCMP_SHIFT) & PVR_TA_PM1_DEPTHCMP_MASK;
@@ -476,6 +477,7 @@ void pvr_poly_mod_compile(pvr_poly_mod_hdr_t *dst, pvr_poly_cxt_t *src) {
     dst->cmd |= (src->gen.clip_mode << PVR_TA_CMD_USERCLIP_SHIFT) & PVR_TA_CMD_USERCLIP_MASK;
     dst->cmd |= (src->fmt.modifier << PVR_TA_CMD_MODIFIER_SHIFT) & PVR_TA_CMD_MODIFIER_MASK;
     dst->cmd |= (src->gen.modifier_mode << PVR_TA_CMD_MODIFIERMODE_SHIFT) & PVR_TA_CMD_MODIFIERMODE_MASK;
+    dst->cmd |= (src->gen.specular << PVR_TA_CMD_SPECULAR_SHIFT) & PVR_TA_CMD_SPECULAR_MASK;
 
     /* Polygon mode 1 */
     dst->mode1  = (src->depth.comparison << PVR_TA_PM1_DEPTHCMP_SHIFT) & PVR_TA_PM1_DEPTHCMP_MASK;
