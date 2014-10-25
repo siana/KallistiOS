@@ -50,6 +50,8 @@ KallistiOS version 2.0.1 -----------------------------------------------
 - DC  Added a utility function to the PVR code for controlling the cheap shadow
       scale register [LS]
 - DC  Added an example of the PVR's cheap shadow functionality [LS]
+- DC  Added a tool for generation of bumpmaps that was sent to the mailing list
+      all the way back in 2005 [Fredrik Ehnbom = FE]
 
 KallistiOS version 2.0.0 -----------------------------------------------
 - DC  Broadband Adapter driver fixes [Dan Potter == DP]
