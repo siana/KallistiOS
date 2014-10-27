@@ -2,7 +2,7 @@
 # Makefile stolen from the kmgenc program.
 
 CFLAGS = -O2 -Wall -DINLINE=inline -I/usr/local/include
-LDFLAGS = -s -lpng -ljpeg -lz -L/usr/local/lib
+LDFLAGS = -s -lpng -ljpeg -lm -lz -L/usr/local/lib
 
 all: dcbumpgen
 
