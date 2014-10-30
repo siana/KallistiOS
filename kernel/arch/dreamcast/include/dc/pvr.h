@@ -195,25 +195,27 @@ typedef struct {
     int     list_type;          /**< \brief Primitive list
                                      \see   pvr_lists */
     struct {
-        int     alpha;          /**< \brief Enable or disable alpha outside modifier
+        int     alpha;          /**< \brief Enable or disable alpha
                                      \see   pvr_alpha_switch */
-        int     fog_type;       /**< \brief Fog type outside modifier
+        int     fog_type;       /**< \brief Fog type
                                      \see   pvr_fog_types */
         int     culling;        /**< \brief Culling mode
                                      \see   pvr_cull_modes */
-        int     color_clamp;    /**< \brief Color clamp enable/disable outside modifier
+        int     color_clamp;    /**< \brief Color clamp enable/disable
                                      \see   pvr_colclamp_switch */
         int     clip_mode;      /**< \brief Clipping mode
                                      \see   pvr_clip_modes */
+        int     specular;       /**< \brief Offset color enable/disable
+                                     \see   pvr_offset_switch */
     } gen;                      /**< \brief General parameters */
     struct {
-        int     src;            /**< \brief Source blending mode outside modifier
+        int     src;            /**< \brief Source blending mode
                                      \see   pvr_blend_modes */
-        int     dst;            /**< \brief Dest blending mode outside modifier
+        int     dst;            /**< \brief Dest blending mode
                                      \see   pvr_blend_modes */
-        int     src_enable;     /**< \brief Source blending enable outside modifier
+        int     src_enable;     /**< \brief Source blending enable
                                      \see   pvr_blend_switch */
-        int     dst_enable;     /**< \brief Dest blending enable outside modifier
+        int     dst_enable;     /**< \brief Dest blending enable
                                      \see   pvr_blend_switch */
     } blend;
     struct {
@@ -818,8 +820,6 @@ static inline uint32 PVR_PACK_16BIT_UV(float u, float v) {
     return (((*((uint32 *) &u)) >> 0) & 0xFFFF0000) |
            (((*((uint32 *) &v)) >> 16) & 0x0000FFFF);
 }
-
-/* ... other vertex structs omitted for now ... */
 
 /** \defgroup pvr_commands          TA command values
 

@@ -338,6 +338,7 @@ void pvr_sprite_compile(pvr_sprite_hdr_t *dst, pvr_sprite_cxt_t *src) {
     dst->cmd |= (src->list_type << PVR_TA_CMD_TYPE_SHIFT) & PVR_TA_CMD_TYPE_MASK;
     dst->cmd |= (PVR_UVFMT_16BIT << PVR_TA_CMD_UVFMT_SHIFT) & PVR_TA_CMD_UVFMT_MASK;
     dst->cmd |= (src->gen.clip_mode << PVR_TA_CMD_USERCLIP_SHIFT) & PVR_TA_CMD_USERCLIP_MASK;
+    dst->cmd |= (src->gen.specular << PVR_TA_CMD_SPECULAR_SHIFT) & PVR_TA_CMD_SPECULAR_MASK;
 
     /* Polygon mode 1 */
     dst->mode1  = (src->depth.comparison << PVR_TA_PM1_DEPTHCMP_SHIFT) & PVR_TA_PM1_DEPTHCMP_MASK;
