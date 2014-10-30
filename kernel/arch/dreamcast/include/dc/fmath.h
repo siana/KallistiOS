@@ -145,6 +145,41 @@ __FMINLINE void fsincosr(float f, float *s, float *c) {
     __fsincosr(f, *s, *c);
 }
 
+/** \brief  Calculate the offset color value for a set of bumpmap parameters.
+
+    This function calculates the value to be placed into the oargb value for the
+    use of bumpmapping on a polygon. The angles specified should be expressed in
+    radians and within the limits specified for the individual parameter.
+
+    \param  h               Weighting value in the range [0, 1] for how defined
+                            the bumpiness of the surface should be.
+    \param  t               Spherical elevation angle in the range [0, pi/2]
+                            between the surface and the lighting source. A value
+                            of pi/2 implies that the light is directly overhead.
+    \param  q               Spherical rotation angle in the range [0, 2*pi]
+                            between the surface and the lighting source.
+    \return                 32-bit packed value to be used as an offset color on
+                            the surface to be bump mapped.
+
+    \note   For more information about how bumpmapping on the PVR works, refer
+            to <a href="https://google.com/patents/US6819319">US Patent
+            6,819,319</a>, which describes the algorithm implemented in the
+            hardware (specifically look at Figures 2 and 3, along with the
+            description in the Detailed Description section).
+    \note   Thanks to Fredrik Ehnbom for figuring this stuff out and posting it
+            to the mailing list back in 2005!
+*/
+__FMINLINE uint32 pvr_pack_bump(float h, float t, float q) {
+    uint8 hp = (uint8)(h * 255.0f);
+    uint8 k1 = ~hp;
+    uint8 k2 = (uint8)(hp * __fsin(t));
+    uint8 k3 = (uint8)(hp * __fcos(t));
+    uint8 qp = (uint8)((q / (2 * F_PI)) * 255.0f);
+
+
+    return (k1 << 24) | (k2 << 16) | (k3 << 8) | qp;
+}
+
 /* Make sure we declare the non-inline versions for C99 and non-gcc. Why they'd
    ever be needed, since they're inlined above, who knows? I guess in case
    someone tries to take the address of one of them? */

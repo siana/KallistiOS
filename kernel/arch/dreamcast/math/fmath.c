@@ -4,6 +4,7 @@
    Copyright (C) 2001 Andrew Kieschnick
 */
 
+#include <arch/types.h>
 #include <dc/fmath_base.h>
 
 /* v1 dot v2 (inner product) */
@@ -63,4 +64,14 @@ void fsincos(float f, float *s, float *c) {
 
 void fsincosr(float f, float *s, float *c) {
     __fsincosr(f, *s, *c);
+}
+
+uint32 pvr_pack_bump(float h, float t, float q) {
+    uint8 hp = (uint8)(h * 255.0f);
+    uint8 k1 = ~hp;
+    uint8 k2 = (uint8)(hp * __fsin(t));
+    uint8 k3 = (uint8)(hp * __fcos(t));
+    uint8 qp = (uint8)((q / (2 * F_PI)) * 255.0f);
+
+    return (k1 << 24) | (k2 << 16) | (k3 << 8) | qp;
 }
