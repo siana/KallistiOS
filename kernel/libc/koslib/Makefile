@@ -1,7 +1,7 @@
 # KallistiOS ##version##
 #
 # kernel/libc/koslib/Makefile
-# Copyright (C)2004 Dan Potter
+# Copyright (C) 2004 Dan Potter
 #
 
 # In here we have pieces of the KOS libc that are either too custom or too
@@ -13,6 +13,6 @@ OBJS = abort.o byteorder.o memset2.o memset4.o memcpy2.o memcpy4.o \
 	telldir.o usleep.o inet_addr.o realpath.o getcwd.o chdir.o mkdir.o \
 	creat.o sleep.o rmdir.o rename.o inet_pton.o inet_ntop.o \
 	inet_ntoa.o inet_aton.o poll.o select.o symlink.o readlink.o \
-	gethostbyname.o getaddrinfo.o dirfd.o
+	gethostbyname.o getaddrinfo.o dirfd.o nanosleep.o
 
 include $(KOS_BASE)/Makefile.prefab
