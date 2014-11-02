@@ -2,7 +2,7 @@
 
    kos/fs.h
    Copyright (C) 2000, 2001, 2002, 2003 Dan Potter
-   Copyright (C) 2012, 2013 Lawrence Sebald
+   Copyright (C) 2012, 2013, 2014 Lawrence Sebald
 
 */
 
@@ -631,6 +631,28 @@ ssize_t fs_copy(const char *src, const char *dst);
     \return                 The size of the file on success, -1 otherwise.
 */
 ssize_t fs_load(const char *src, void **out_ptr);
+
+/** \brief  Append a path component to a string.
+
+    This function acts mostly like the function strncat(), with a few slight
+    differences. First, if the destination string doesn't end in a '/'
+    character, this function will add it. Second, it returns the length of the
+    resulting string, including the NUL terminator. Finally, no modification of
+    the destination string will occur if there isn't enough space left in the
+    string to do so.
+
+    \param  dst             The string to modify.
+    \param  src             The path component to append.
+    \param  len             The length allocated for dst.
+    \return                 The length of the new string (including the NUL
+                            terminator) on success, -1 otherwise.
+
+    \par    Error Conditions:
+    \em     EFAULT - src or dst is a NULL pointer \n
+    \em     EINVAL - len is zero \n
+    \em     ENAMETOOLONG - the resulting path would be longer than len bytes \n
+*/
+ssize_t fs_path_append(char *dst, const char *src, size_t len);
 
 /** \brief  Initialize the virtual filesystem.
 

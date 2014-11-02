@@ -1,7 +1,8 @@
 /* KallistiOS ##version##
 
    fs_utils.c
-   Copyright (C)2002 Dan Potter
+   Copyright (C) 2002 Dan Potter
+   Copyright (C) 2014 Lawrence Sebald
 
 */
 
@@ -16,6 +17,8 @@ XXX This probably belongs in something like libc...
 #include <stdio.h>
 #include <malloc.h>
 #include <assert.h>
+#include <string.h>
+#include <errno.h>
 
 /* Copies a file from 'src' to 'dst'. The amount of the file
    actually copied without error is returned. */
@@ -118,4 +121,46 @@ ssize_t fs_load(const char * src, void ** out_ptr) {
     fs_close(f);
 
     return total;
+}
+
+/* Basically, this is like strcat, but for path components. It'll automatically
+   put a / in the middle if there isn't one there. */
+ssize_t fs_path_append(char *dst, const char *src, size_t len) {
+    size_t dlen, slen;
+
+    /* Verify the arguments passed in. */
+    if(!src || !dst) {
+        errno = EFAULT;
+        return -1;
+    }
+
+    if(!len) {
+        errno = EINVAL;
+        return -1;
+    }
+
+    /* Find the lengths of the strings. */
+    dlen = strlen(dst);
+    slen = strlen(src);
+
+    /* Will we run out of space? */
+    if(*(dst + dlen - 1) != '/') {
+        if(dlen + slen + 2 > len) {
+            errno = ENAMETOOLONG;
+            return -1;
+        }
+
+        dst[dlen++] = '/';
+    }
+    else if(dlen + slen + 1 > len) {
+        errno = ENAMETOOLONG;
+        return -1;
+    }
+
+    /* Concatenate the src string on the dst, copying the NUL terminator while
+       we are at it. */
+    memcpy(dst + dlen, src, slen + 1);
+
+    /* Return the current length of the string, including the NUL terminator. */
+    return (ssize_t)(dlen + slen + 1);
 }
