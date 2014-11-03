@@ -460,7 +460,8 @@ static vfs_handler_t vh = {
     NULL,               /* seek64 */
     NULL,               /* tell64 */
     NULL,               /* total64 */
-    NULL                /* readlink */
+    NULL,               /* readlink */
+    NULL                /* rewinddir */
 };
 
 // We have to provide a minimal interface in case dcload usage is

@@ -2,7 +2,7 @@
 
    fs.c
    Copyright (C) 2000, 2001, 2002, 2003 Dan Potter
-   Copyright (C) 2012, 2013 Lawrence Sebald
+   Copyright (C) 2012, 2013, 2014 Lawrence Sebald
 
 */
 
@@ -523,7 +523,6 @@ dirent_t *fs_readdir(file_t fd) {
         return NULL;
     }
 
-    errno = 0;
     return h->handler->readdir(h->hnd);
 }
 
@@ -849,6 +848,27 @@ int fs_stat(const char *path, struct stat *buf, int flag) {
         errno = ENOSYS;
         return -1;
     }
+}
+
+int fs_rewinddir(file_t fd) {
+    fs_hnd_t *h = fs_map_hnd(fd);
+
+    if(!h) {
+        errno = EBADF;
+        return -1;
+    }
+
+    if(h->handler == NULL) {
+        h->hnd = (void *)0;
+        return 0;
+    }
+
+    if(h->handler->rewinddir == NULL) {
+        errno = ENOSYS;
+        return -1;
+    }
+
+    return h->handler->rewinddir(h->hnd);
 }
 
 /* Initialize FS structures */

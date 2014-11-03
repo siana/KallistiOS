@@ -4,7 +4,7 @@
    Copyright (C) 2000, 2001, 2003 Dan Potter
    Copyright (C) 2001 Andrew Kieschnick
    Copyright (C) 2002 Bero
-   Copyright (C) 2012, 2013 Lawrence Sebald
+   Copyright (C) 2012, 2013, 2014 Lawrence Sebald
 
 */
 
@@ -900,6 +900,20 @@ static dirent_t *iso_readdir(void * h) {
     return &fh[fd].dirent;
 }
 
+static int iso_rewinddir(void * h) {
+    file_t fd = (file_t)h;
+
+    if(fd >= MAX_ISO_FILES || fh[fd].first_extent == 0 || !fh[fd].dir ||
+       fh[fd].broken) {
+        errno = EBADF;
+        return -1;
+    }
+
+    /* Rewind to the beginning of the directory. */
+    fh[fd].ptr = 0;
+    return 0;
+}
+
 int iso_reset() {
     iso_break_all();
     bclear();
@@ -1013,7 +1027,8 @@ static vfs_handler_t vh = {
     NULL,               /* seek64 */
     NULL,               /* tell64 */
     NULL,               /* total64 */
-    NULL                /* readlink */
+    NULL,               /* readlink */
+    iso_rewinddir
 };
 
 /* Initialize the file system */

@@ -2,7 +2,7 @@
 
    fs_pty.c
    Copyright (C) 2003 Dan Potter
-   Copyright (C) 2012 Lawrence Sebald
+   Copyright (C) 2012, 2014 Lawrence Sebald
 
 */
 
@@ -639,6 +639,22 @@ static dirent_t * pty_readdir(void * h) {
     return &dl->dirent;
 }
 
+static int pty_rewinddir(void *h) {
+    pipefd_t *fdobj = (pipefd_t *)h;
+    dirlist_t *dl;
+
+    assert(h);
+
+    if(fdobj->type != PF_DIR) {
+        errno = EBADF;
+        return -1;
+    }
+
+    dl = fdobj->d.d;
+    dl->ptr = 0;
+    return 0;
+}
+
 static int pty_fcntl(void *h, int cmd, va_list ap) {
     pipefd_t *fd = (pipefd_t *)h;
     int rv = -1;
@@ -713,7 +729,8 @@ static vfs_handler_t vh = {
     NULL,
     NULL,
     NULL,
-    NULL
+    NULL,
+    pty_rewinddir
 };
 
 /* Are we initialized? */

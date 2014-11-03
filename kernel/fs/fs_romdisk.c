@@ -2,7 +2,7 @@
 
    fs_romdisk.c
    Copyright (C) 2001, 2002, 2003 Dan Potter
-   Copyright (C) 2012, 2013 Lawrence Sebald
+   Copyright (C) 2012, 2013, 2014 Lawrence Sebald
 
 */
 
@@ -349,14 +349,19 @@ static size_t romdisk_total(void * h) {
 
 /* Read a directory entry */
 static dirent_t *romdisk_readdir(void * h) {
-    romdisk_file_t  *fhdr;
-    int     type;
-    file_t      fd = (file_t)h;
+    romdisk_file_t *fhdr;
+    int type;
+    file_t fd = (file_t)h;
 
     if(fd >= MAX_RD_FILES || fh[fd].index == 0 || !fh[fd].dir) {
         errno = EBADF;
         return NULL;
     }
+
+    /* This happens if we hit the end of the directory on advancing the pointer
+       last time through. */
+    if(fh[fd].ptr == (uint32)-1)
+        return NULL;
 
     /* Get the current file header */
     fhdr = (romdisk_file_t *)(fh[fd].mnt->image + fh[fd].index + fh[fd].ptr);
@@ -366,10 +371,10 @@ static dirent_t *romdisk_readdir(void * h) {
     type = fh[fd].ptr & 0x0f;
     fh[fd].ptr = fh[fd].ptr & 0xfffffff0;
 
-    if(fh[fd].ptr == 0)
-        fh[fd].index = 0;
-    else
+    if(fh[fd].ptr != 0)
         fh[fd].ptr = fh[fd].ptr - fh[fd].index;
+    else
+        fh[fd].ptr = (uint32)-1;
 
     /* Copy out the requested data */
     strcpy(fh[fd].dirent.name, fhdr->filename);
@@ -432,6 +437,18 @@ static int romdisk_fcntl(void *h, int cmd, va_list ap) {
     return rv;
 }
 
+static int romdisk_rewinddir(void *h) {
+    file_t fd = (file_t)h;
+
+    if(fd >= MAX_RD_FILES || fh[fd].index == 0 || !fh[fd].dir) {
+        errno = EBADF;
+        return -1;
+    }
+
+    fh[fd].ptr = 0;
+    return 0;
+}
+
 /* This is a template that will be used for each mount */
 static vfs_handler_t vh = {
     /* Name Handler */
@@ -469,7 +486,8 @@ static vfs_handler_t vh = {
     NULL,                       /* seek64 */
     NULL,                       /* tell64 */
     NULL,                       /* total64 */
-    NULL                        /* readlink */
+    NULL,                       /* readlink */
+    romdisk_rewinddir
 };
 
 /* Are we initialized? */

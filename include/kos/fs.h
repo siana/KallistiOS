@@ -190,6 +190,9 @@ typedef struct vfs_handler {
                possible that realpath() will call this function. */
     ssize_t (*readlink)(struct vfs_handler *vfs, const char *path, char *buf,
                         size_t bufsize);
+
+    /** \brief Rewind a directory stream to the start */
+    int (*rewinddir)(void *hnd);
 } vfs_handler_t;
 
 /** \brief  The number of distinct file descriptors that can be in use at a
@@ -542,6 +545,20 @@ ssize_t fs_readlink(const char *path, char *buf, size_t bufsize);
     \return                 0 on success, -1 on failure.
 */
 int fs_stat(const char *path, struct stat *buf, int flag);
+
+/** \brief  Rewind a directory to the start.
+
+    This function rewinds the position of a directory stream to the beginning of
+    the directory.
+
+    \param  hnd             The opened directory's file descriptor.
+    \return                 0 on success, -1 on failure.
+
+    \note                   Some filesystems may not support this function. If a
+                            filesystem doesn't support it, errno will be set to
+                            ENOSYS and -1 will be returned.
+*/
+int fs_rewinddir(file_t hnd);
 
 /** \brief  Duplicate a file descriptor.
 

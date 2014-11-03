@@ -633,6 +633,25 @@ static int vmu_fcntl(void *fd, int cmd, va_list ap) {
     return rv;
 }
 
+static int vmu_rewinddir(void * fd) {
+    vmu_dh_t *dh;
+
+    /* Check the handle */
+    if(!vmu_verify_hnd(fd, VMU_DIR)) {
+        errno = EBADF;
+        return -1;
+    }
+
+    /* Rewind to the beginning of the directory. */
+    dh = (vmu_dh_t*)fd;
+    dh->entry = 0;
+
+    /* TODO: Technically, we need to re-scan the directory here, but for now we
+       will punt on that requirement. */
+
+    return 0;
+}
+
 /* handler interface */
 static vfs_handler_t vh = {
     /* Name handler */
@@ -669,7 +688,8 @@ static vfs_handler_t vh = {
     NULL,               /* seek64 */
     NULL,               /* tell64 */
     NULL,               /* total64 */
-    NULL                /* readlink */
+    NULL,               /* readlink */
+    vmu_rewinddir
 };
 
 int fs_vmu_init() {

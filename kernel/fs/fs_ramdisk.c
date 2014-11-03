@@ -2,7 +2,7 @@
 
    fs_ramdisk.c
    Copyright (C) 2002, 2003 Dan Potter
-   Copyright (C) 2012, 2013 Lawrence Sebald
+   Copyright (C) 2012, 2013, 2014 Lawrence Sebald
 
 */
 
@@ -676,6 +676,26 @@ static int ramdisk_fcntl(void *h, int cmd, va_list ap) {
     return rv;
 }
 
+static int ramdisk_rewinddir(void * h) {
+    int rv = 0;
+    file_t fd = (file_t)h;
+
+    mutex_lock(&rd_mutex);
+
+    if(fd >= MAX_RAM_FILES || !fh[fd].file || !fh[fd].dir) {
+        errno = EBADF;
+        rv = -1;
+    }
+    else {
+        /* Rewind to the first file. */
+        fh[fd].ptr = (uint32)LIST_FIRST((rd_dir_t *)fh[fd].file->data);
+    }
+
+    mutex_unlock(&rd_mutex);
+
+    return rv;
+}
+
 /* Put everything together */
 static vfs_handler_t vh = {
     /* Name handler */
@@ -713,7 +733,8 @@ static vfs_handler_t vh = {
     NULL,               /* seek64 XXX */
     NULL,               /* tell64 XXX */
     NULL,               /* total64 XXX */
-    NULL                /* readlink XXX */
+    NULL,               /* readlink XXX */
+    ramdisk_rewinddir
 };
 
 /* Attach a piece of memory to a file. This works somewhat like open for

@@ -1,13 +1,20 @@
 /* KallistiOS ##version##
 
    rewinddir.c
-   Copyright (C)2004 Dan Potter
+   Copyright (C) 2004 Dan Potter
+   Copyright (C) 2014 Lawrence Sebald
 
 */
 
-#include <kos/dbglog.h>
+#include <dirent.h>
+#include <errno.h>
+#include <kos/fs.h>
 
-// This isn't properly prototyped... sosume :)
-void rewinddir() {
-    dbglog(DBG_WARNING, "rewinddir: call ignored\n");
+void rewinddir(DIR *dirp) {
+    if(!dirp) {
+        errno = EBADF;
+        return;
+    }
+
+    (void)fs_rewinddir(dirp->fd);
 }

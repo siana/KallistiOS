@@ -1,7 +1,7 @@
 /* KallistiOS ##version##
 
    fs_ext2.c
-   Copyright (C) 2012, 2013 Lawrence Sebald
+   Copyright (C) 2012, 2013, 2014 Lawrence Sebald
 */
 
 #include <time.h>
@@ -293,7 +293,7 @@ static ssize_t fs_ext2_read(void *h, void *buf, size_t cnt) {
             mutex_unlock(&ext2_mutex);
             return -1;
         }
-        
+
         if(cnt > bs - bo) {
             memcpy(bbuf, block + bo, bs - bo);
             fh[fd].ptr += bs - bo;
@@ -614,7 +614,7 @@ retry:
         errno = EIO;
         return NULL;
     }
-        
+
     /* Fill in the static directory entry. */
     fh[fd].dent.size = inode->i_size;
     memcpy(fh[fd].dent.name, dent->name, dent->name_len);
@@ -1071,7 +1071,7 @@ static int fs_ext2_unlink(vfs_handler_t *vfs, const char *fn) {
 
     /* And, we're done. Unlock the mutex. */
     mutex_unlock(&ext2_mutex);
-    return 0;    
+    return 0;
 }
 
 static int fs_ext2_mkdir(vfs_handler_t *vfs, const char *fn) {
@@ -1430,7 +1430,7 @@ static int fs_ext2_link(vfs_handler_t *vfs, const char *path1,
         errno = -rv;
         return -1;
     }
-    
+
     /* If the entry we get back is not a directory, then we've got problems. */
     if((pinode->i_mode & 0xF000) != EXT2_S_IFDIR) {
         ext2_inode_put(pinode);
@@ -1764,6 +1764,25 @@ int fs_ext2_stat(vfs_handler_t *vfs, const char *path, struct stat *buf,
     return irv;
 }
 
+static int fs_ext2_rewinddir(void *h) {
+    file_t fd = ((file_t)h) - 1;
+
+    mutex_lock(&ext2_mutex);
+
+    /* Check that the fd is valid */
+    if(fd >= MAX_EXT2_FILES || !fh[fd].inode_num || !(fh[fd].mode & O_DIR)) {
+        mutex_unlock(&ext2_mutex);
+        errno = EBADF;
+        return -1;
+    }
+
+    /* Rewind to the beginning of the directory. */
+    fh[fd].ptr = 0;
+
+    mutex_unlock(&ext2_mutex);
+    return 0;
+}
+
 /* This is a template that will be used for each mount */
 static vfs_handler_t vh = {
     /* Name Handler */
@@ -1801,7 +1820,8 @@ static vfs_handler_t vh = {
     fs_ext2_seek64,             /* seek64 */
     fs_ext2_tell64,             /* tell64 */
     fs_ext2_total64,            /* total64 */
-    fs_ext2_readlink            /* readlink */
+    fs_ext2_readlink,           /* readlink */
+    fs_ext2_rewinddir           /* rewinddir */
 };
 
 static int initted = 0;
