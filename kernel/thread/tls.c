@@ -36,7 +36,7 @@ LIST_HEAD(kthread_tls_dest_list, kthread_tls_dest);
 static struct kthread_tls_dest_list dest_list;
 
 /* What is the next key that will be given out? */
-kthread_key_t kthread_key_next()    {
+kthread_key_t kthread_key_next() {
     return next_key;
 }
 
@@ -46,8 +46,8 @@ typedef void (*destructor)(void *);
 static destructor kthread_key_get_destructor(kthread_key_t key) {
     kthread_tls_dest_t *i;
 
-    LIST_FOREACH(i, &dest_list, dest_list)  {
-        if(i->key == key)   {
+    LIST_FOREACH(i, &dest_list, dest_list) {
+        if(i->key == key) {
             return i->destructor;
         }
     }
@@ -59,8 +59,8 @@ static destructor kthread_key_get_destructor(kthread_key_t key) {
 void kthread_key_delete_destructor(kthread_key_t key) {
     kthread_tls_dest_t *i;
 
-    LIST_FOREACH(i, &dest_list, dest_list)  {
-        if(i->key == key)   {
+    LIST_FOREACH(i, &dest_list, dest_list) {
+        if(i->key == key) {
             LIST_REMOVE(i, dest_list);
             free(i);
             return;
@@ -73,7 +73,7 @@ int kthread_key_create(kthread_key_t *key, void (*destructor)(void *)) {
     kthread_tls_dest_t *dest;
 
     if(irq_inside_int() &&
-            (spinlock_is_locked(&mutex) || !malloc_irq_safe()))  {
+       (spinlock_is_locked(&mutex) || !malloc_irq_safe()))  {
         errno = EPERM;
         return -1;
     }
@@ -81,10 +81,10 @@ int kthread_key_create(kthread_key_t *key, void (*destructor)(void *)) {
     spinlock_lock(&mutex);
 
     /* Store the destructor if need be. */
-    if(destructor)  {
+    if(destructor) {
         dest = (kthread_tls_dest_t *)malloc(sizeof(kthread_tls_dest_t));
 
-        if(!dest)   {
+        if(!dest) {
             errno = ENOMEM;
             spinlock_unlock(&mutex);
             return -1;
@@ -124,7 +124,7 @@ int kthread_setspecific(kthread_key_t key, const void *value) {
     kthread_t *cur = thd_get_current();
     kthread_tls_kv_t *i;
 
-    if(irq_inside_int() && spinlock_is_locked(&mutex))  {
+    if(irq_inside_int() && spinlock_is_locked(&mutex)) {
         errno = EPERM;
         return -1;
     }
@@ -150,7 +150,7 @@ int kthread_setspecific(kthread_key_t key, const void *value) {
     /* No entry, create a new one. */
     i = (kthread_tls_kv_t *)malloc(sizeof(kthread_tls_kv_t));
 
-    if(!i)  {
+    if(!i) {
         errno = ENOMEM;
         return -1;
     }
