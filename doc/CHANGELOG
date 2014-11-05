@@ -52,6 +52,7 @@ KallistiOS version 2.0.1 -----------------------------------------------
 - DC  Added an example of the PVR's cheap shadow functionality [LS]
 - DC  Added a tool for generation of bumpmaps that was sent to the mailing list
       all the way back in 2005 [Fredrik Ehnbom = FE]
+- *** Added in C11 threading support [LS]
 
 KallistiOS version 2.0.0 -----------------------------------------------
 - DC  Broadband Adapter driver fixes [Dan Potter == DP]
