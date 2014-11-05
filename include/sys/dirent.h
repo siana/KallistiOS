@@ -111,8 +111,21 @@ struct dirent *readdir(DIR *dir);
 */
 int dirfd(DIR *dirp);
 
-/** \brief Not implemented */
+/** \brief  Rewind a directory stream to the start of the directory.
+
+    This function rewinds the directory stream so that the next call to the
+    readdir() function will return the first entry in the directory.
+
+    \param  dir         The directory stream to rewind.
+
+    \note               Some filesystems do not support this call. Notably, none
+                        of the dcload filesystems support it. Error values will
+                        be returned in errno (so set errno to 0, then check
+                        after calling the function to see if there was a problem
+                        anywhere).
+*/
 void rewinddir(DIR *dir);
+
 /** \brief Not implemented */
 int scandir(const char *dir, struct dirent ***namelist,
             int(*filter)(const struct dirent *),
