@@ -101,7 +101,7 @@ struct dirent *readdir(DIR *dir);
     This function retrieves the file descriptor of a directory stream that was
     previously opened with opendir().
 
-    \param  dir         The directory stream to retrieve the descriptor of.
+    \param  dirp        The directory stream to retrieve the descriptor of.
     \return             The file descriptor from the directory stream on success
                         or -1 on failure (sets errno as appropriate).
 
