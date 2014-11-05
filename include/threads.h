@@ -171,7 +171,7 @@ extern int mtx_timedlock(mtx_t *restrict mtx,
 
     \note   This function is safe to call in an interrupt.
     \note   Always check the return value to ensure that the lock was obtained.
-*//
+*/
 extern int mtx_trylock(mtx_t *mtx);
 
 /** \brief  Unlock a previously acquired lock.
