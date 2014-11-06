@@ -53,7 +53,7 @@ What KallistiOS provides optionally:
 What KallistiOS is NOT:
 - UNIX (or even compatible)
 - Linux/BSD (those are their own ports! =)
-- Memory protection; programs can overwrite eachother at will#
+- Memory protection; programs can overwrite each other at will#
 - Pretty much anything else you can think of that's not in the above list
 
 (# There is an MMU module for the DC port, but nothing really uses it at
@@ -79,7 +79,7 @@ of the software distributed with KOS (newlib math routines, Xing MP3
 engine, modplug, etc) are under different licenses. Please read "LICENSE"
 if in doubt!
 
-This software is based in part on the work of the Independent JPEG
+This software is optinoally based in part on the work of the Independent JPEG
 Group (see addons/libjpeg/README).
 
 I have also added a somewhat informative "licensing" section to the FAQ.
@@ -107,7 +107,7 @@ for some more instructions (and perhaps a build script that may help you):
 
 On the Dreamcast, the 4.x series of GCC works pretty well. Look at the patches
 provided in utils/dc-chain/patches to see what versions have been tested and
-are known to work. In addition, many people still use earlier versions of GCC,
+are known to work. In addition, some people still use earlier versions of GCC,
 such as 3.4.6 and 3.0.4. There are often strange bugs with GCC for SuperH, so
 if you deviate from these suggested versions, you're on your own (for instance,
 pretty much the entire 3.1.x, 3.2.x, and 3.3.x branches of GCC were broken for
@@ -183,6 +183,12 @@ properly, or I will probably reject your patches. You should also provide
 useful commit messages, with a summary on the first line to make it easier
 on me later.
 
+In addition, for those used to working with pull requests on GitHub, I accept
+those as well. I assume you know how to make things work that way if you wish
+to go that route. The mirror of the repository at GitHub is currently at the
+following url:
+        https://github.com/ljsebald/KallistiOS
+
 I don't guarantee that any patch will get included (especially if your patch
 contains a lot of reformatting, sloppy coding, things at cross-purposes with
 the primary thrust of KOS, etc), but I will make an effort to at least
@@ -208,7 +214,7 @@ OS MODE IS GONE FOR GOOD
 ------------------------
 
 All the interesting and maintainable pieces of the KOS 1.0.x "os mode" have
-been fully integrated back into the mainline KOS 2.0.x tree. It is now used
+been fully integrated back into the mainline KOS 2.0.0 tree. It is now used
 for dynamic module loading and does not include process support, etc. This
 is unlikely to be revived again in the future.
 

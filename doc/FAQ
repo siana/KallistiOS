@@ -223,7 +223,8 @@ support), and is slowly being worked out.
 
 Q) What VFS modules are available?
 
-A) Presently there are six (and one in an addon library):
+A) Presently there are six that you might interact with on a semi-
+regular basis (and one in an addon library):
 
 - ISO9660 -- mounts on /cd, and is a decent implementation of the
 ISO9660 file system standard used on CDs. Note that because of the
@@ -308,11 +309,13 @@ support. I recommend old school debugging (calling malloc_stats() every
 so often to see when it bombs and narrowing it down, or perhaps
 commenting out blocks until it works again).
 
-You can also edit kernel/mm/malloc.c and enable the memory debugging
-defines at the top. These will track all memory usage and look for buffer
-overruns/underruns, reporting any issues as they happen. It will also
-show leaked buffers remaining at the end of the program. There is a
-similar facility for the PVR on the DC port.
+You can also edit include/kos/opts.h and enable the memory debugging
+defines (anything that starts with KM_ as well as MALLOC_DEBUG). These
+will track all memory usage and look for buffer overruns/underruns,
+reporting any issues as they happen. It will also show leaked buffers
+remaining at the end of the program. There is a similar facility for the
+PVR on the DC port (the PVR_KM_* and PVR_MALLOC_DEBUG macros in the same
+file).
 
 
 3 --- Networking ---------------------------------------------------
@@ -329,9 +332,8 @@ tree. Note that lwIP is pretty much considered deprecated now, and
 isn't actively tested anymore. You should use the internal network stack
 for all new code.
 
-There is also a driver for the Dreamcast modem, however there is no PPP
-stack, which would be needed to connect to the internet and the rest of
-the TCP/IP stack with it.
+There is also a driver for the Dreamcast modem and a PPP stack that links
+it into the rest of the TCP/IP stack.
 
 
 3.2
@@ -355,10 +357,11 @@ thread primitives now in KOS this might not be as hard.
 Q) I'm having an issue building KOS; it gives me errors about not
 finding Makefiles or not finding include files.
 
-A) Make sure you check the paths in environ.sh and/or environ.tcsh, and
-make sure you are running one of those with the 'source' command (see the
-README). If in doubt, use 'set' or 'setenv' to find the environment
-variables. You should have a KOS_BASE variable.
+A) Make sure you check the paths in environ.sh, and make sure you are
+running the script with the 'source' command (see the README). If in
+doubt, use 'set' or 'setenv' to find the environment variables. You
+should have a KOS_BASE variable. If you don't, then you haven't set up
+the and/or sourced environment script correctly in your shell.
 
 
 4.2
@@ -380,7 +383,7 @@ debug output?
 
 A) Use dc-load-ip with your broadband adapter or lan adapter on the
 Dreamcast. If you don't have one of those, you might look into fb_console,
-which you can redirect to either the whole framebuffer or a texture
+which you can redirect to either the whole frame buffer or a texture
 somewhere in VRAM.
 
 
@@ -389,9 +392,8 @@ somewhere in VRAM.
 Q) I want to use the serial line but the pesky kernel debug output is
 getting in my way.
 
-A) You'll want to either disable all debug output (using dbglog_set_level)
-or redirect it elsewhere using dbgio_set_printk(). You can also add
-INIT_QUIET to your init flags.
+A) Use INIT_QUIET in your init flags or make sure the debugging output
+is not sent to the serial port by using dbgio_dev_select().
 
 
 5.3

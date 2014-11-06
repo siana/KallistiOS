@@ -20,18 +20,18 @@ package like newlib), you can assume that this text is attached to them:
  KOS License (README.KOS) for more details.
 
  You should have received a copy of the KOS License along with this
- program; if not, please visit Cryptic Allusion DCDev at:
+ program; if not, please visit Cryptic Allusion Game Dev at:
 
-   http://dcdev.allusion.net/
+   http://gamedev.allusion.net/
 
 Please read "README.KOS" for the full details.
 
 If there is ever a question or you want to ask permission to do something
-else with it, please contact the authors and we'll see how we can accomidate
+else with it, please contact the authors and we'll see how we can accomodate
 you.
 
 The Free Software Foundation has a very good source of information on
-the various licenses. Please see this page if you have license compatability
+the various licenses. Please see this page if you have license compatabality
 questions:
 
 http://www.gnu.org/philosophy/license-list.html
@@ -42,10 +42,10 @@ on the BSD code, please reference README.BSD. Be aware, though, that
 the BSD license is basically identical, but ours has been cleaned up (the
 "advertising clause" is gone completely).
 
-KOS also contains code from the "lwIP" TCP/IP stack, copyright 2001
-Swedish Institute of Computer Science. This code is licensed under a
-license basically identical to the KOS license, but with their name.
-You can find the license in any of their files.
+KOS also optionally contains code from the "lwIP" TCP/IP stack,
+copyright 2001 Swedish Institute of Computer Science. This code is
+licensed under a license basically identical to the KOS license, but
+with their name. You can find the license in any of their files.
 
 One final note: some of the software included with the KOS distribution
 is not copyrighted by us, nor is it part of the codebase of KOS. Pretty
@@ -53,9 +53,9 @@ much all of that code is contained in the "utils" directory, and will
 shortly be contained as well (or perhaps only) in the "addons"
 directory. Licenses on these pieces vary; please see the source of the
 program in question to be sure. In particular, genromfs, dialog, and the
-XingMP3 library (in addons/libmp3/xingmp3) are covered under the GPL, and
-MPGLIB (in addons/libmp3/mpglib) is covered under the LGPL. I don't yell
-lightly, so pay attention to this:
+XingMP3 library (in kos-ports/libmp3/xingmp3) are covered under the GPL,
+and MPGLIB (in kos-ports/libmp3/mpglib) is covered under the LGPL. I don't
+yell lightly, so pay attention to this:
 
 IF YOU USE THE XINGMP3 LIBRARY IN YOUR PROGRAM, YOUR PROGRAM
 AUTOMATICALLY BECOMES RESTRICTED BY THE GPL LICENSE. IF YOU USE THE
@@ -64,7 +64,7 @@ SOURCE CODE. END.
 
 Just in case you missed that or don't like caps, you may not include the
 Xing MP3 library in your program (this currently means linking -lmp3
-from the KOS addons tree) without making your program GPL'd, or
+from the KOS kos-ports tree) without making your program GPL'd, or
 something less restrictive (e.g., BSD license) but distributing it by
 the terms of the GPL. If you replace the MP3 engine, however, you _can_
 do this, as all of our libmp3 code is covered under the BSD license.
@@ -72,12 +72,12 @@ do this, as all of our libmp3 code is covered under the BSD license.
 There. I've said my piece =). Now if you break the license, it's your
 fault.
 
-I am currently working on porting the MPGLIB library from the unix
-player 'mpg123', but this isn't complete yet. I included the code so far
-but it doesn't work properly. If you want to play with it then email me
-for the changes to libmp3 that are required to hook into it.
+There was previously work on porting the MPGLIB library from mpg123, but
+this work was never completed. The code is included in the libmp3/mpglib
+directory. You're on your own if you want to try to get it to work, but
+please let us know if you do (patches would be really nice).
 
 Also:
 
-This software is based in part on the work of the Independent JPEG
-Group (see addons/libjpeg/README).
+This software optionally is based in part on the work of the Independent
+JPEG Group (see kos-ports/libjpeg/README).

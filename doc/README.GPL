@@ -2,7 +2,7 @@ Some packages in the util directory are covered under the GNU Public
 License, version 2 or later. This includes genromfs and dialog. Some
 pieces of code that are aggregated with the KOS distribution (and have
 been ported to work with it) but are not part of the main distribution
-(such as the Xing MP3 player library) can be found in the "addons"
+(such as the Xing MP3 player library) can be found in the "kos-ports"
 directory.
 
 PLEASE realize that if you modify or extend these programs, unlike the
