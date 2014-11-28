@@ -1,7 +1,7 @@
 /* KallistiOS ##version##
 
    kernel/net/net_udp.c
-   Copyright (C) 2005, 2006, 2007, 2008, 2009, 2012, 2013 Lawrence Sebald
+   Copyright (C) 2005, 2006, 2007, 2008, 2009, 2012, 2013, 2014 Lawrence Sebald
 
 */
 
@@ -927,6 +927,10 @@ static int net_udp_input4(netif_t *src, const ip_hdr_t *ip, const uint8 *data,
         return -1;
     }
 
+    /* Calculate the checksum if one was computed by the sender. Unfortunately,
+       with IPv4, we don't know if a zero checksum means that the sender didn't
+       calculate the checksum or if it actually came out as 0xFFFF. We pretty
+       much have to assume the former option though. */
     if(hdr->checksum != 0) {
         cs = net_ipv4_checksum_pseudo(ip->src, ip->dest, ip->protocol, size);
 
@@ -1019,17 +1023,20 @@ static int net_udp_input6(netif_t *src, const ipv6_hdr_t *ip, const uint8 *data,
         return -1;
     }
 
-    if(hdr->checksum != 0) {
-        cs = net_ipv6_checksum_pseudo(&ip->src_addr, &ip->dst_addr,
-                                      size, IPPROTO_UDP);
+    /* Calculate the checksum of the packet. Note that this is optional for IPv4
+       but required for IPv6. Thus, for IPv6, a zero checksum in the packet
+       implies that the value was actually calculated as 0xFFFF (whereas with
+       IPv4, that means that either the value was calculated as 0xFFFF or no
+       checksum was calculated). */
+    cs = net_ipv6_checksum_pseudo(&ip->src_addr, &ip->dst_addr, size,
+                                  IPPROTO_UDP);
 
-        /* If the checksum is right, we'll get zero back from the checksum
-           function */
-        if(net_ipv4_checksum(data, size, cs)) {
-            /* The checksum was wrong, bail out */
-            ++udp_stats.pkt_recv_bad_chksum;
-            return -1;
-        }
+    /* If the checksum is right, we'll get zero back from the checksum
+       function */
+    if(net_ipv4_checksum(data, size, cs)) {
+        /* The checksum was wrong, bail out */
+        ++udp_stats.pkt_recv_bad_chksum;
+        return -1;
     }
 
     if(mutex_trylock(&udp_mutex))
