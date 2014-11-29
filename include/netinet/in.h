@@ -192,6 +192,7 @@ extern const struct in6_addr in6addr_loopback;
 
     \see                so_opts
     \see                ipv6_opts
+    \see                udp_opts
 
     @{
 */
@@ -208,6 +209,7 @@ extern const struct in6_addr in6addr_loopback;
 
     \see                so_opts
     \see                ipv4_opts
+    \see                udp_opts
 
     @{
 */
@@ -218,6 +220,20 @@ extern const struct in6_addr in6addr_loopback;
 #define IPV6_MULTICAST_LOOP 21  /**< \brief Multicasts loopback (get/set) */
 #define IPV6_UNICAST_HOPS   22  /**< \brief Hop limit for unicast (get/set) */
 #define IPV6_V6ONLY         23  /**< \brief IPv6 only -- no IPv4 (get/set) */
+/** @} */
+
+/** \defgroup udp_opts                  UDP protocol level options
+
+    These are the various socket-level options that can be accessed with the
+    setsockopt() and getsockopt() functions for the IPPROTO_UDP level value.
+
+    \see                so_opts
+    \see                ipv4_opts
+    \see                ipv6_opts
+
+@{
+*/
+#define UDP_NOCHECKSUM          25  /**< \brief Don't calculate UDP checksums */
 /** @} */
 
 /** \brief  Test if an IPv6 Address is unspecified.

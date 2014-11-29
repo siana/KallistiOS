@@ -43,13 +43,17 @@ struct udp_pkt {
 
 TAILQ_HEAD(udp_pkt_queue, udp_pkt);
 
+#define UDPSOCK_NO_CHECKSUM 0x00000001
+
 struct udp_sock {
     LIST_ENTRY(udp_sock) sock_list;
     struct sockaddr_in6 local_addr;
     struct sockaddr_in6 remote_addr;
 
     uint32 flags;
+    uint32 int_flags;
     int domain;
+    int proto;
     int hop_limit;
     file_t sock;
 
@@ -64,7 +68,8 @@ static net_udp_stats_t udp_stats = { 0 };
 
 static int net_udp_send_raw(netif_t *net, const struct sockaddr_in6 *src,
                             const struct sockaddr_in6 *dst, const uint8 *data,
-                            size_t size, int flags, int hops);
+                            size_t size, uint32_t flags, int hops,
+                            uint32_t iflags);
 
 static int net_udp_accept(net_socket_t *hnd, struct sockaddr *addr,
                           socklen_t *addr_len) {
@@ -415,7 +420,8 @@ static ssize_t net_udp_sendto(net_socket_t *hnd, const void *message,
     struct udp_sock *udpsock;
     struct sockaddr_in *realaddr;
     struct sockaddr_in6 realaddr6;
-    uint32_t sflags;
+    uint32_t sflags, iflags;
+    int hops;
     struct sockaddr_in6 local_addr;
 
     (void)flags;
@@ -513,11 +519,13 @@ static ssize_t net_udp_sendto(net_socket_t *hnd, const void *message,
 
     local_addr = udpsock->local_addr;
     sflags = udpsock->flags;
+    iflags = udpsock->int_flags;
+    hops = udpsock->hop_limit;
     mutex_unlock(&udp_mutex);
 
     return net_udp_send_raw(NULL, &local_addr, &realaddr6,
-                            (const uint8 *)message, length, sflags,
-                            udpsock->hop_limit);
+                            (const uint8 *)message, length, sflags, hops,
+                            iflags);
 err:
     mutex_unlock(&udp_mutex);
     return -1;
@@ -570,9 +578,15 @@ static int net_udp_socket(net_socket_t *hnd, int domain, int type, int proto) {
         return -1;
     }
 
+    if(proto && proto != IPPROTO_UDP) {
+        errno = EPROTONOSUPPORT;
+        return -1;
+    }
+
     memset(udpsock, 0, sizeof(struct udp_sock));
     TAILQ_INIT(&udpsock->packets);
     udpsock->domain = domain;
+    udpsock->proto = IPPROTO_UDP;
     udpsock->hop_limit = UDP_DEFAULT_HOPS;
 
     if(irq_inside_int()) {
@@ -650,7 +664,6 @@ static int net_udp_getsockopt(net_socket_t *hnd, int level, int option_name,
 
     switch(level) {
         case SOL_SOCKET:
-
             switch(option_name) {
                 case SO_ACCEPTCONN:
                     tmp = 0;
@@ -664,7 +677,6 @@ static int net_udp_getsockopt(net_socket_t *hnd, int level, int option_name,
             break;
 
         case IPPROTO_IP:
-
             if(sock->domain != AF_INET)
                 goto ret_inval;
 
@@ -677,7 +689,6 @@ static int net_udp_getsockopt(net_socket_t *hnd, int level, int option_name,
             break;
 
         case IPPROTO_IPV6:
-
             if(sock->domain != AF_INET6)
                 goto ret_inval;
 
@@ -688,6 +699,24 @@ static int net_udp_getsockopt(net_socket_t *hnd, int level, int option_name,
 
                 case IPV6_V6ONLY:
                     tmp = !!(sock->flags & FS_SOCKET_V6ONLY);
+                    goto copy_int;
+            }
+
+            break;
+
+        case IPPROTO_UDP:
+            switch(option_name) {
+                case UDP_NOCHECKSUM:
+                    if(sock->proto != IPPROTO_UDP)
+                        goto ret_inval;
+
+                    /* UDP/IPv6 packets must always have a checksum. */
+                    if(sock->domain == AF_INET6) {
+                        tmp = 0;
+                        goto copy_int;
+                    }
+
+                    tmp = !!(sock->int_flags & UDPSOCK_NO_CHECKSUM);
                     goto copy_int;
             }
 
@@ -741,7 +770,6 @@ static int net_udp_setsockopt(net_socket_t *hnd, int level, int option_name,
 
     switch(level) {
         case SOL_SOCKET:
-
             switch(option_name) {
                 case SO_ACCEPTCONN:
                 case SO_ERROR:
@@ -752,13 +780,11 @@ static int net_udp_setsockopt(net_socket_t *hnd, int level, int option_name,
             break;
 
         case IPPROTO_IP:
-
             if(sock->domain != AF_INET)
                 goto ret_inval;
 
             switch(option_name) {
                 case IP_TTL:
-
                     if(option_len != sizeof(int))
                         goto ret_inval;
 
@@ -777,13 +803,11 @@ static int net_udp_setsockopt(net_socket_t *hnd, int level, int option_name,
             break;
 
         case IPPROTO_IPV6:
-
             if(sock->domain != AF_INET6)
                 goto ret_inval;
 
             switch(option_name) {
                 case IPV6_UNICAST_HOPS:
-
                     if(option_len != sizeof(int))
                         goto ret_inval;
 
@@ -799,7 +823,6 @@ static int net_udp_setsockopt(net_socket_t *hnd, int level, int option_name,
                     goto ret_success;
 
                 case IPV6_V6ONLY:
-
                     if(option_len != sizeof(int))
                         goto ret_inval;
 
@@ -809,6 +832,31 @@ static int net_udp_setsockopt(net_socket_t *hnd, int level, int option_name,
                         sock->flags |= FS_SOCKET_V6ONLY;
                     else
                         sock->flags &= ~FS_SOCKET_V6ONLY;
+
+                    goto ret_success;
+            }
+
+            break;
+
+        case IPPROTO_UDP:
+            switch(option_name) {
+                case UDP_NOCHECKSUM:
+                    /* UDP/IPv6 packets must always have a checksum. */
+                    if(sock->domain == AF_INET6)
+                        goto ret_inval;
+
+                    if(sock->proto != IPPROTO_UDP)
+                        goto ret_inval;
+
+                    if(option_len != sizeof(int))
+                        goto ret_inval;
+
+                    tmp = *((int *)option_value);
+
+                    if(tmp)
+                        sock->int_flags |= UDPSOCK_NO_CHECKSUM;
+                    else
+                        sock->int_flags &= ~(UDPSOCK_NO_CHECKSUM);
 
                     goto ret_success;
             }
@@ -1118,7 +1166,8 @@ static int net_udp_input(netif_t *src, int domain, const void *hdr,
 
 static int net_udp_send_raw(netif_t *net, const struct sockaddr_in6 *src,
                             const struct sockaddr_in6 *dst, const uint8 *data,
-                            size_t size, int flags, int hops) {
+                            size_t size, uint32_t flags, int hops,
+                            uint32_t iflags) {
     uint8 buf[size + sizeof(udp_hdr_t)];
     udp_hdr_t *hdr = (udp_hdr_t *)buf;
     uint16 cs;
@@ -1177,7 +1226,9 @@ static int net_udp_send_raw(netif_t *net, const struct sockaddr_in6 *src,
     hdr->dst_port = dst->sin6_port;
     hdr->length = htons(size);
     hdr->checksum = 0;
-    hdr->checksum = net_ipv4_checksum(buf, size, cs);
+
+    if(!(iflags & UDPSOCK_NO_CHECKSUM))
+        hdr->checksum = net_ipv4_checksum(buf, size, cs);
 
     /* Pass everything off to the network layer to do the rest. */
     err = net_ipv6_send(net, buf, size, hops, IPPROTO_UDP, &srcaddr,

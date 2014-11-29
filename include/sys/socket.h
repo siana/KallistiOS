@@ -113,6 +113,8 @@ struct sockaddr_storage {
     completeness.
 
     \see                ipv6_opts
+    \see                ipv4_opts
+    \see                udp_opts
 
     @{
 */
@@ -355,6 +357,9 @@ int socket(int domain, int type, int protocol);
                             appropriate.
 
     \see                    so_opts
+    \see                    ipv4_opts
+    \see                    ipv6_opts
+    \see                    udp_opts
 */
 int getsockopt(int socket, int level, int option_name, void *option_value,
                socklen_t *option_len);
@@ -374,6 +379,9 @@ int getsockopt(int socket, int level, int option_name, void *option_value,
                             appropriate.
 
     \see                    so_opts
+    \see                    ipv4_opts
+    \see                    ipv6_opts
+    \see                    udp_opts
 */
 int setsockopt(int socket, int level, int option_name, const void *option_value,
                socklen_t option_len);
