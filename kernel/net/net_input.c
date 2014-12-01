@@ -22,9 +22,9 @@ static int net_default_input(netif_t *nif, const uint8 *data, int len) {
     /* If this is bound for a multicast address, make sure we actually care
        about the one that it gets sent to. */
     if((data[0] & 0x01) &&
-            (data[0] != 0xFF || data[1] != 0xFF || data[2] != 0xFF ||
-             data[3] != 0xFF || data[4] != 0xFF || data[5] != 0xFF) &&
-            !net_multicast_check(data)) {
+       (data[0] != 0xFF || data[1] != 0xFF || data[2] != 0xFF ||
+        data[3] != 0xFF || data[4] != 0xFF || data[5] != 0xFF) &&
+       !net_multicast_check(data)) {
         return 0;
     }
 
