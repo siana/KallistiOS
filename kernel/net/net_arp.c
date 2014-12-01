@@ -74,7 +74,7 @@ struct netarp_list net_arp_cache = LIST_HEAD_INITIALIZER(0);
 /* Cache management */
 
 /* Garbage collect timed out entries */
-int net_arp_gc(void) {
+static int net_arp_gc(netif_t *nif) {
     netarp_t *a1, *a2;
 
     a1 = LIST_FIRST(&net_arp_cache);
@@ -82,15 +82,27 @@ int net_arp_gc(void) {
     while(a1 != NULL) {
         a2 = LIST_NEXT(a1, ac_list);
 
-        if(a1->timestamp && jiffies >= (a1->timestamp + 600 * HZ)) {
-            LIST_REMOVE(a1, ac_list);
+        if(a1->timestamp) {
+            if(jiffies >= (a1->timestamp + 120 * HZ)) {
+                LIST_REMOVE(a1, ac_list);
 
-            if(a1->pkt) {
-                free(a1->pkt);
-                free(a1->data);
+                if(a1->pkt) {
+                    free(a1->pkt);
+                    free(a1->data);
+                }
+
+                free(a1);
+                a1 = a2;
+                continue;
             }
 
-            free(a1);
+            /* If the entry is incomplete and it's been more than 5 seconds
+               since we queried it, try again. */
+            if(a1->mac[0] == 0 && a1->mac[1] == 0 && a1->mac[2] == 0 &&
+               a1->mac[3] == 0 && a1->mac[4] == 0 && a1->mac[5] == 0 &&
+               jiffies > (a1->timestamp + 5 * HZ)) {
+                net_arp_query(nif, a1->ip);
+            }
         }
 
         a1 = a2;
@@ -136,7 +148,7 @@ int net_arp_insert(netif_t *nif, const uint8 mac[6], const uint8 ip[4],
     LIST_INSERT_HEAD(&net_arp_cache, cur, ac_list);
 
     /* Garbage collect expired entries */
-    net_arp_gc();
+    net_arp_gc(nif);
 
     return 0;
 }
@@ -150,14 +162,14 @@ int net_arp_lookup(netif_t *nif, const uint8 ip_in[4], uint8 mac_out[6],
     netarp_t *cur;
 
     /* Garbage collect expired entries */
-    net_arp_gc();
+    net_arp_gc(nif);
 
     /* Look for the entry */
     LIST_FOREACH(cur, &net_arp_cache, ac_list) {
         if(!memcmp(ip_in, cur->ip, 4)) {
             if(cur->mac[0] == 0 && cur->mac[1] == 0 &&
-                    cur->mac[2] == 0 && cur->mac[3] == 0 &&
-                    cur->mac[4] == 0 && cur->mac[5] == 0) {
+               cur->mac[2] == 0 && cur->mac[3] == 0 &&
+               cur->mac[4] == 0 && cur->mac[5] == 0) {
                 return -1;
             }
 

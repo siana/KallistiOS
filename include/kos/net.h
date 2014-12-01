@@ -250,14 +250,6 @@ int net_arp_init(void);
 /** \brief  Shutdown ARP. */
 void net_arp_shutdown(void);
 
-/** \brief  Garbage collect timed out ARP entries.
-
-    This will be done periodically as ARP lookups are requested.
-
-    \retval 0               On success (no error conditions defined).
-*/
-int net_arp_gc(void);
-
 /** \brief  Add an entry to the ARP cache manually.
 
     \param  nif             The network device in use.
