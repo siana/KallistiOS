@@ -10,6 +10,7 @@
 #include <stdlib.h>
 #include <errno.h>
 #include <poll.h>
+#include <stdint.h>
 #include <arpa/inet.h>
 #include <kos/net.h>
 #include <kos/mutex.h>
@@ -44,6 +45,7 @@ struct udp_pkt {
 TAILQ_HEAD(udp_pkt_queue, udp_pkt);
 
 #define UDPSOCK_NO_CHECKSUM 0x00000001
+#define UDPSOCK_LITE_RCVCOV 0x00000002
 
 struct udp_sock {
     LIST_ENTRY(udp_sock) sock_list;
@@ -57,6 +59,11 @@ struct udp_sock {
     int hop_limit;
     file_t sock;
 
+    struct {
+        uint16_t send_cscov;
+        uint16_t recv_cscov;
+    } udp_lite;
+
     struct udp_pkt_queue packets;
 };
 
@@ -69,7 +76,7 @@ static net_udp_stats_t udp_stats = { 0 };
 static int net_udp_send_raw(netif_t *net, const struct sockaddr_in6 *src,
                             const struct sockaddr_in6 *dst, const uint8 *data,
                             size_t size, uint32_t flags, int hops,
-                            uint32_t iflags);
+                            uint32_t iflags, int proto, uint16_t cscov);
 
 static int net_udp_accept(net_socket_t *hnd, struct sockaddr *addr,
                           socklen_t *addr_len) {
@@ -421,7 +428,8 @@ static ssize_t net_udp_sendto(net_socket_t *hnd, const void *message,
     struct sockaddr_in *realaddr;
     struct sockaddr_in6 realaddr6;
     uint32_t sflags, iflags;
-    int hops;
+    int hops, proto;
+    uint16_t cscov;
     struct sockaddr_in6 local_addr;
 
     (void)flags;
@@ -449,7 +457,7 @@ static ssize_t net_udp_sendto(net_socket_t *hnd, const void *message,
     }
 
     if(!IN6_IS_ADDR_UNSPECIFIED(&udpsock->remote_addr.sin6_addr) &&
-            udpsock->remote_addr.sin6_port != 0) {
+       udpsock->remote_addr.sin6_port != 0) {
         if(addr) {
             errno = EISCONN;
             goto err;
@@ -521,11 +529,13 @@ static ssize_t net_udp_sendto(net_socket_t *hnd, const void *message,
     sflags = udpsock->flags;
     iflags = udpsock->int_flags;
     hops = udpsock->hop_limit;
+    proto = udpsock->proto;
+    cscov = udpsock->udp_lite.send_cscov;
     mutex_unlock(&udp_mutex);
 
     return net_udp_send_raw(NULL, &local_addr, &realaddr6,
                             (const uint8 *)message, length, sflags, hops,
-                            iflags);
+                            iflags, proto, cscov);
 err:
     mutex_unlock(&udp_mutex);
     return -1;
@@ -578,7 +588,10 @@ static int net_udp_socket(net_socket_t *hnd, int domain, int type, int proto) {
         return -1;
     }
 
-    if(proto && proto != IPPROTO_UDP) {
+    if(!proto) {
+        proto = IPPROTO_UDP;
+    }
+    else if(proto != IPPROTO_UDP && proto != IPPROTO_UDPLITE) {
         errno = EPROTONOSUPPORT;
         return -1;
     }
@@ -586,7 +599,7 @@ static int net_udp_socket(net_socket_t *hnd, int domain, int type, int proto) {
     memset(udpsock, 0, sizeof(struct udp_sock));
     TAILQ_INIT(&udpsock->packets);
     udpsock->domain = domain;
-    udpsock->proto = IPPROTO_UDP;
+    udpsock->proto = proto;
     udpsock->hop_limit = UDP_DEFAULT_HOPS;
 
     if(irq_inside_int()) {
@@ -705,11 +718,11 @@ static int net_udp_getsockopt(net_socket_t *hnd, int level, int option_name,
             break;
 
         case IPPROTO_UDP:
+            if(sock->proto != IPPROTO_UDP)
+                goto ret_inval;
+
             switch(option_name) {
                 case UDP_NOCHECKSUM:
-                    if(sock->proto != IPPROTO_UDP)
-                        goto ret_inval;
-
                     /* UDP/IPv6 packets must always have a checksum. */
                     if(sock->domain == AF_INET6) {
                         tmp = 0;
@@ -717,6 +730,22 @@ static int net_udp_getsockopt(net_socket_t *hnd, int level, int option_name,
                     }
 
                     tmp = !!(sock->int_flags & UDPSOCK_NO_CHECKSUM);
+                    goto copy_int;
+            }
+
+            break;
+
+        case IPPROTO_UDPLITE:
+            if(sock->proto != IPPROTO_UDPLITE)
+                goto ret_inval;
+
+            switch(option_name) {
+                case UDPLITE_SEND_CSCOV:
+                    tmp = sock->udp_lite.send_cscov;
+                    goto copy_int;
+
+                case UDPLITE_RECV_CSCOV:
+                    tmp = sock->udp_lite.recv_cscov;
                     goto copy_int;
             }
 
@@ -734,7 +763,6 @@ ret_inval:
     return -1;
 
 copy_int:
-
     if(*option_len >= sizeof(int)) {
         memcpy(option_value, &tmp, sizeof(int));
         *option_len = sizeof(int);
@@ -839,13 +867,13 @@ static int net_udp_setsockopt(net_socket_t *hnd, int level, int option_name,
             break;
 
         case IPPROTO_UDP:
+            if(sock->proto != IPPROTO_UDP)
+                goto ret_inval;
+
             switch(option_name) {
                 case UDP_NOCHECKSUM:
                     /* UDP/IPv6 packets must always have a checksum. */
                     if(sock->domain == AF_INET6)
-                        goto ret_inval;
-
-                    if(sock->proto != IPPROTO_UDP)
                         goto ret_inval;
 
                     if(option_len != sizeof(int))
@@ -858,6 +886,43 @@ static int net_udp_setsockopt(net_socket_t *hnd, int level, int option_name,
                     else
                         sock->int_flags &= ~(UDPSOCK_NO_CHECKSUM);
 
+                    goto ret_success;
+            }
+
+            break;
+
+        case IPPROTO_UDPLITE:
+            if(sock->proto != IPPROTO_UDPLITE)
+                goto ret_inval;
+
+            switch(option_name) {
+                case UDPLITE_SEND_CSCOV:
+                    if(option_len != sizeof(int))
+                        goto ret_inval;
+
+                    tmp = *((int *)option_value);
+
+                    if(tmp && tmp < 8)
+                        goto ret_inval;
+                    else if(tmp > 0xFFFF)
+                        tmp = 0xFFFF;
+
+                    sock->udp_lite.send_cscov = (uint16_t)tmp;
+                    goto ret_success;
+
+                case UDPLITE_RECV_CSCOV:
+                    if(option_len != sizeof(int))
+                        goto ret_inval;
+
+                    tmp = *((int *)option_value);
+
+                    if(tmp && tmp < 8)
+                        goto ret_inval;
+                    else if(tmp > 0xFFFF)
+                        tmp = 0xFFFF;
+
+                    sock->udp_lite.recv_cscov = (uint16_t)tmp;
+                    sock->int_flags |= UDPSOCK_LITE_RCVCOV;
                     goto ret_success;
             }
 
@@ -963,7 +1028,8 @@ extern void __poll_event_trigger(int fd, short event);
 static int net_udp_input4(netif_t *src, const ip_hdr_t *ip, const uint8 *data,
                           size_t size) {
     udp_hdr_t *hdr = (udp_hdr_t *)data;
-    uint16 cs;
+    uint16 cs, cscov = 0;
+    int partial = 1;
     struct udp_sock *sock;
     struct udp_pkt *pkt;
 
@@ -975,17 +1041,44 @@ static int net_udp_input4(netif_t *src, const ip_hdr_t *ip, const uint8 *data,
         return -1;
     }
 
-    /* Calculate the checksum if one was computed by the sender. Unfortunately,
-       with IPv4, we don't know if a zero checksum means that the sender didn't
-       calculate the checksum or if it actually came out as 0xFFFF. We pretty
-       much have to assume the former option though. */
-    if(hdr->checksum != 0) {
-        cs = net_ipv4_checksum_pseudo(ip->src, ip->dest, ip->protocol, size);
+    if(ip->protocol == IPPROTO_UDP) {
+        /* Calculate the checksum if one was computed by the sender.
+           Unfortunately, with IPv4, we don't know if a zero checksum means that
+           the sender didn't calculate the checksum or if it actually came out
+           as 0xFFFF. We pretty much have to assume the former option though. */
+        if(hdr->checksum != 0) {
+            cs = net_ipv4_checksum_pseudo(ip->src, ip->dest, IPPROTO_UDP, size);
+
+            /* If the checksum is right, we'll get zero back from the checksum
+               function */
+            if(net_ipv4_checksum(data, size, cs)) {
+                /* The checksum was wrong, bail out */
+                ++udp_stats.pkt_recv_bad_chksum;
+                return -1;
+            }
+        }
+    }
+    else {
+        cscov = ntohs(hdr->length);
+
+        /* Make sure the checksum coverage is sane. */
+        if(cscov && (cscov < 8 || cscov > size)) {
+            ++udp_stats.pkt_recv_bad_chksum;
+            return -1;
+        }
+        else if(!cscov) {
+            cscov = size;
+            partial = 0;
+        }
+        else if(cscov == size) {
+            partial = 0;
+        }
+
+        cs = net_ipv4_checksum_pseudo(ip->src, ip->dest, IPPROTO_UDPLITE, size);
 
         /* If the checksum is right, we'll get zero back from the checksum
-           function */
-        if(net_ipv4_checksum(data, size, cs)) {
-            /* The checksum was wrong, bail out */
+           function. */
+        if(net_ipv4_checksum(data, cscov, cs)) {
             ++udp_stats.pkt_recv_bad_chksum;
             return -1;
         }
@@ -1008,15 +1101,31 @@ static int net_udp_input4(netif_t *src, const ip_hdr_t *ip, const uint8 *data,
         /* If the socket has a remote port set and it isn't the one that this
            packet came from, bail */
         if(sock->remote_addr.sin6_port != 0 &&
-                sock->remote_addr.sin6_port != hdr->src_port)
+           sock->remote_addr.sin6_port != hdr->src_port)
             continue;
 
         /* If we have a address specified, and its not v4-mapped or its not the
            address this packet came from, bail out */
         if(!IN6_IS_ADDR_UNSPECIFIED(&sock->remote_addr.sin6_addr) &&
-                (!IN6_IS_ADDR_V4MAPPED(&sock->remote_addr.sin6_addr) ||
-                 sock->remote_addr.sin6_addr.__s6_addr.__s6_addr32[3] != ip->src))
+           (!IN6_IS_ADDR_V4MAPPED(&sock->remote_addr.sin6_addr) ||
+            sock->remote_addr.sin6_addr.__s6_addr.__s6_addr32[3] != ip->src))
             continue;
+
+        /* Make sure we have the right protocol */
+        if(sock->proto != ip->protocol)
+            continue;
+
+        /* If this packet is UDP-Lite, make sure the checksum coverage is valid
+           for the socket. We have to be careful here not to reject packets with
+           full coverage that just happen to be smaller than the coverage set by
+           the userspace program. Note that failing this check DOES NOT change
+           any of the statistics counters at all, by design. */
+        if((sock->int_flags & UDPSOCK_LITE_RCVCOV) && partial &&
+           cscov < sock->udp_lite.recv_cscov) {
+            /* Silently drop packets that fail the partial coverage check. */
+            mutex_unlock(&udp_mutex);
+            return 0;
+        }
 
         if(!(pkt = (struct udp_pkt *)malloc(sizeof(struct udp_pkt)))) {
             mutex_unlock(&udp_mutex);
@@ -1059,7 +1168,8 @@ static int net_udp_input4(netif_t *src, const ip_hdr_t *ip, const uint8 *data,
 static int net_udp_input6(netif_t *src, const ipv6_hdr_t *ip, const uint8 *data,
                           size_t size) {
     udp_hdr_t *hdr = (udp_hdr_t *)data;
-    uint16 cs;
+    uint16 cs, cscov = 0;
+    int partial = 1;
     struct udp_sock *sock;
     struct udp_pkt *pkt;
 
@@ -1071,20 +1181,45 @@ static int net_udp_input6(netif_t *src, const ipv6_hdr_t *ip, const uint8 *data,
         return -1;
     }
 
-    /* Calculate the checksum of the packet. Note that this is optional for IPv4
-       but required for IPv6. Thus, for IPv6, a zero checksum in the packet
-       implies that the value was actually calculated as 0xFFFF (whereas with
-       IPv4, that means that either the value was calculated as 0xFFFF or no
-       checksum was calculated). */
-    cs = net_ipv6_checksum_pseudo(&ip->src_addr, &ip->dst_addr, size,
-                                  IPPROTO_UDP);
+    if(ip->next_header == IPPROTO_UDP) {
+        /* Calculate the checksum of the packet. Note that this is optional for
+           IPv4 but required for IPv6. */
+        cs = net_ipv6_checksum_pseudo(&ip->src_addr, &ip->dst_addr, size,
+                                      IPPROTO_UDP);
 
-    /* If the checksum is right, we'll get zero back from the checksum
-       function */
-    if(net_ipv4_checksum(data, size, cs)) {
-        /* The checksum was wrong, bail out */
-        ++udp_stats.pkt_recv_bad_chksum;
-        return -1;
+        /* If the checksum is right, we'll get zero back from the checksum
+           function. */
+        if(net_ipv4_checksum(data, size, cs)) {
+            /* The checksum was wrong, bail out */
+            ++udp_stats.pkt_recv_bad_chksum;
+            return -1;
+        }
+    }
+    else {
+        cscov = ntohs(hdr->length);
+
+        /* Make sure the checksum coverage is sane. */
+        if(cscov && (cscov < 8 || cscov > size)) {
+            ++udp_stats.pkt_recv_bad_chksum;
+            return -1;
+        }
+        else if(!cscov) {
+            cscov = size;
+            partial = 0;
+        }
+        else if(cscov == size) {
+            partial = 0;
+        }
+
+        cs = net_ipv6_checksum_pseudo(&ip->src_addr, &ip->dst_addr, size,
+                                      IPPROTO_UDPLITE);
+
+        /* If the checksum is right, we'll get zero back from the checksum
+           function. */
+        if(net_ipv4_checksum(data, cscov, cs)) {
+            ++udp_stats.pkt_recv_bad_chksum;
+            return -1;
+        }
     }
 
     if(mutex_trylock(&udp_mutex))
@@ -1104,15 +1239,31 @@ static int net_udp_input6(netif_t *src, const ipv6_hdr_t *ip, const uint8 *data,
         /* If the socket has a remote port set and it isn't the one that this
            packet came from, bail */
         if(sock->remote_addr.sin6_port != 0 &&
-                sock->remote_addr.sin6_port != hdr->src_port)
+           sock->remote_addr.sin6_port != hdr->src_port)
             continue;
 
         /* If we have a address specified and it is not the address this packet
            came from, bail out */
         if(!IN6_IS_ADDR_UNSPECIFIED(&sock->remote_addr.sin6_addr) &&
-                memcmp(&sock->remote_addr.sin6_addr, &ip->src_addr,
-                       sizeof(struct in6_addr)))
+           memcmp(&sock->remote_addr.sin6_addr, &ip->src_addr,
+                  sizeof(struct in6_addr)))
             continue;
+
+        /* Make sure we have the right protocol */
+        if(sock->proto != ip->next_header)
+            continue;
+
+        /* If this packet is UDP-Lite, make sure the checksum coverage is valid
+           for the socket. We have to be careful here not to reject packets with
+           full coverage that just happen to be smaller than the coverage set by
+           the userspace program. Note that failing this check DOES NOT change
+           any of the statistics counters at all, by design. */
+        if((sock->int_flags & UDPSOCK_LITE_RCVCOV) && partial &&
+           cscov < sock->udp_lite.recv_cscov) {
+            /* Silently drop packets that fail the partial coverage check. */
+            mutex_unlock(&udp_mutex);
+            return 0;
+        }
 
         if(!(pkt = (struct udp_pkt *)malloc(sizeof(struct udp_pkt)))) {
             mutex_unlock(&udp_mutex);
@@ -1164,10 +1315,11 @@ static int net_udp_input(netif_t *src, int domain, const void *hdr,
     return -1;
 }
 
+/* XXX */
 static int net_udp_send_raw(netif_t *net, const struct sockaddr_in6 *src,
                             const struct sockaddr_in6 *dst, const uint8 *data,
                             size_t size, uint32_t flags, int hops,
-                            uint32_t iflags) {
+                            uint32_t iflags, int proto, uint16_t cscov) {
     uint8 buf[size + sizeof(udp_hdr_t)];
     udp_hdr_t *hdr = (udp_hdr_t *)buf;
     uint16 cs;
@@ -1220,18 +1372,36 @@ static int net_udp_send_raw(netif_t *net, const struct sockaddr_in6 *src,
 
     memcpy(buf + sizeof(udp_hdr_t), data, size);
     size += sizeof(udp_hdr_t);
-    cs = net_ipv6_checksum_pseudo(&srcaddr, &dst->sin6_addr, size, IPPROTO_UDP);
 
     hdr->src_port = src->sin6_port;
     hdr->dst_port = dst->sin6_port;
-    hdr->length = htons(size);
     hdr->checksum = 0;
 
-    if(!(iflags & UDPSOCK_NO_CHECKSUM))
+    /* Is this UDP or UDP-Lite? */
+    if(proto == IPPROTO_UDP) {
+        hdr->length = htons(size);
+
+        if(!(iflags & UDPSOCK_NO_CHECKSUM)) {
+            cs = net_ipv6_checksum_pseudo(&srcaddr, &dst->sin6_addr, size,
+                                          proto);
+            hdr->checksum = net_ipv4_checksum(buf, size, cs);
+        }
+    }
+    else {
+        if(cscov <= size) {
+            hdr->length = htons(cscov);
+        }
+        else {
+            hdr->length = 0;
+            cscov = size;
+        }
+
+        cs = net_ipv6_checksum_pseudo(&srcaddr, &dst->sin6_addr, size, proto);
         hdr->checksum = net_ipv4_checksum(buf, size, cs);
+    }
 
     /* Pass everything off to the network layer to do the rest. */
-    err = net_ipv6_send(net, buf, size, hops, IPPROTO_UDP, &srcaddr,
+    err = net_ipv6_send(net, buf, size, hops, proto, &srcaddr,
                         &dst->sin6_addr);
 
     if(err < 0) {
@@ -1270,10 +1440,32 @@ static fs_socket_proto_t proto = {
     net_udp_poll
 };
 
+static fs_socket_proto_t proto_lite = {
+    FS_SOCKET_PROTO_ENTRY,
+    PF_INET6,                           /* domain */
+    SOCK_DGRAM,                         /* type */
+    IPPROTO_UDPLITE,                    /* protocol */
+    net_udp_socket,
+    net_udp_close,
+    net_udp_accept,
+    net_udp_bind,
+    net_udp_connect,
+    net_udp_listen,
+    net_udp_recvfrom,
+    net_udp_sendto,
+    net_udp_shutdownsock,
+    net_udp_input,
+    net_udp_getsockopt,
+    net_udp_setsockopt,
+    net_udp_fcntl,
+    net_udp_poll
+};
+
 int net_udp_init(void) {
-    return fs_socket_proto_add(&proto);
+    return fs_socket_proto_add(&proto) | fs_socket_proto_add(&proto_lite);
 }
 
 void net_udp_shutdown(void) {
     fs_socket_proto_remove(&proto);
+    fs_socket_proto_remove(&proto_lite);
 }

@@ -182,6 +182,9 @@ extern const struct in6_addr in6addr_loopback;
 /** \brief  Internet Protocol Version 6. */
 #define IPPROTO_IPV6    41
 
+/** \brief  Lightweight User Datagram Protocol. */
+#define IPPROTO_UDPLITE 136
+
 /** \defgroup ipv4_opts                 IPv4 protocol level options
 
     These are the various socket-level optoins that can be accessed with the
@@ -193,6 +196,7 @@ extern const struct in6_addr in6addr_loopback;
     \see                so_opts
     \see                ipv6_opts
     \see                udp_opts
+    \see                udplite_opts
 
     @{
 */
@@ -210,6 +214,7 @@ extern const struct in6_addr in6addr_loopback;
     \see                so_opts
     \see                ipv4_opts
     \see                udp_opts
+    \see                udplite_opts
 
     @{
 */
@@ -230,10 +235,27 @@ extern const struct in6_addr in6addr_loopback;
     \see                so_opts
     \see                ipv4_opts
     \see                ipv6_opts
+    \see                udplite_opts
 
-@{
+    @{
 */
 #define UDP_NOCHECKSUM          25  /**< \brief Don't calculate UDP checksums */
+/** @} */
+
+/** \defgroup udplite_opts              UDP-Lite protocol level options
+
+    These are the various socket-level options that can be accessed with the
+    setsockopt() and getsockopt() functions for the IPPROTO_UDPLITE level value.
+
+    \see                so_opts
+    \see                ipv4_opts
+    \see                ipv6_opts
+    \see                udp_opts
+
+    @{
+*/
+#define UDPLITE_SEND_CSCOV      26 /**< \brief Sending checksum coverage. */
+#define UDPLITE_RECV_CSCOV      27 /**< \brief Receiving checksum coverage. */
 /** @} */
 
 /** \brief  Test if an IPv6 Address is unspecified.
