@@ -153,8 +153,8 @@ $(build_binutils): logdir
 	-mkdir -p $(build)
 	> $(log)
 	cd $(build); ../$(src_dir)/configure --target=$(target) --prefix=$(prefix) --disable-werror CXX=$(CXX) $(to_log)
-	make $(makejobs) -C $(build) DESTDIR=$(DESTDIR) $(to_log)
-	make -C $(build) install DESTDIR=$(DESTDIR) $(to_log)
+	$(MAKE) $(makejobs) -C $(build) DESTDIR=$(DESTDIR) $(to_log)
+	$(MAKE) -C $(build) install DESTDIR=$(DESTDIR) $(to_log)
 	$(clean_up)
 
 $(build_gcc_pass1) $(build_gcc_pass2): build = build-gcc-$(target)-$(gcc_ver)
@@ -165,8 +165,8 @@ $(build_gcc_pass1): logdir
 	-mkdir -p $(build)
 	> $(log)
 	cd $(build);  ../$(src_dir)/configure --target=$(target) --prefix=$(prefix) --without-headers --with-newlib --enable-languages=c --disable-libssp --disable-tls $(extra_configure_args) CXX=$(CXX) $(to_log)
-	make $(makejobs) -C $(build) DESTDIR=$(DESTDIR) $(to_log)
-	make -C $(build) install DESTDIR=$(DESTDIR) $(to_log)
+	$(MAKE) $(makejobs) -C $(build) DESTDIR=$(DESTDIR) $(to_log)
+	$(MAKE) -C $(build) install DESTDIR=$(DESTDIR) $(to_log)
 
 $(build_newlib): build = build-newlib-$(target)-$(newlib_ver)
 $(build_newlib): src_dir = newlib-$(newlib_ver)
@@ -176,8 +176,8 @@ $(build_newlib): logdir
 	-mkdir -p $(build)
 	> $(log)
 	cd $(build); ../$(src_dir)/configure --target=$(target) --prefix=$(prefix) $(extra_configure_args) $(to_log)
-	make $(makejobs) -C $(build) DESTDIR=$(DESTDIR) $(to_log)
-	make -C $(build) install DESTDIR=$(DESTDIR) $(to_log)
+	$(MAKE) $(makejobs) -C $(build) DESTDIR=$(DESTDIR) $(to_log)
+	$(MAKE) -C $(build) install DESTDIR=$(DESTDIR) $(to_log)
 	$(clean_up)
 
 fixup-sh4-newlib: newlib_inc=$(DESTDIR)$(sh_prefix)/$(sh_target)/include
@@ -203,8 +203,8 @@ $(build_gcc_pass2): logdir
 	> $(log)
 	cd $(build);  ../$(src_dir)/configure --target=$(target) --prefix=$(prefix) --with-newlib --disable-libssp --disable-tls \
 	   --enable-threads=$(thread_model) --enable-languages=$(pass2_languages) $(extra_configure_args) CXX=$(CXX) $(to_log)
-	make $(makejobs) -C $(build) DESTDIR=$(DESTDIR) $(to_log)
-	make -C $(build) install DESTDIR=$(DESTDIR) $(to_log)
+	$(MAKE) $(makejobs) -C $(build) DESTDIR=$(DESTDIR) $(to_log)
+	$(MAKE) -C $(build) install DESTDIR=$(DESTDIR) $(to_log)
 	$(clean_up)
 
 # ---- }}}}
@@ -236,9 +236,10 @@ build_gdb_stamp:
 	rm -rf build-gdb-$(gdb_ver)
 	mkdir build-gdb-$(gdb_ver)
 	cd build-gdb-$(gdb_ver); ../gdb-$(gdb_ver)/configure \
+	    --disable-werror \
 	    --prefix=$(sh_prefix) \
 	    --target=$(sh_target) $(to_log)
-	make $(makejobs) -C build-gdb-$(gdb_ver) $(to_log)
+	$(MAKE) $(makejobs) -C build-gdb-$(gdb_ver) $(to_log)
 	touch $@
 
 install_gdb: log = $(logdir)/gdb-$(gdb_ver).log
@@ -248,7 +249,7 @@ install_gdb: build_gdb install_gdb_stamp
 install_gdb_stamp:
 	@echo "+++ Installing GDB..."
 	rm -f $@
-	make -C build-gdb-$(gdb_ver) install DESTDIR=$(DESTDIR) $(to_log)
+	$(MAKE) -C build-gdb-$(gdb_ver) install DESTDIR=$(DESTDIR) $(to_log)
 	touch $@
 
 gdb: install_gdb
@@ -280,9 +281,10 @@ build_insight_stamp:
 	rm -rf build-insight-$(insight_ver)
 	mkdir build-insight-$(insight_ver)
 	cd build-insight-$(insight_ver); ../insight-$(insight_ver)/configure \
+	    --disable-werror \
 	    --prefix=$(sh_prefix) \
 	    --target=$(sh_target) $(to_log)
-	make $(makejobs) -C build-insight-$(insight_ver) $(to_log)
+	$(MAKE) $(makejobs) -C build-insight-$(insight_ver) $(to_log)
 	touch $@
 
 install_insight: log = $(logdir)/insight-$(insight_ver).log
@@ -292,7 +294,7 @@ install_insight: build_insight install_insight_stamp
 install_insight_stamp:
 	@echo "+++ Installing INSIGHT..."
 	rm -f $@
-	make -C build-insight-$(insight_ver) install DESTDIR=$(DESTDIR) $(to_log)
+	$(MAKE) -C build-insight-$(insight_ver) install DESTDIR=$(DESTDIR) $(to_log)
 	touch $@
 
 insight: install_insight
