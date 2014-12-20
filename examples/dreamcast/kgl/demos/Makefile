@@ -9,7 +9,7 @@
 # This will make all the examples, leaving only the elf files.
 # If you want to clean everything, use 'clean'.
 
-SUBDIRS = blur mipmap multitexture multitexture-arrays specular
+SUBDIRS = blur mipmap specular
 
 all: $(patsubst %, _dir_%, $(SUBDIRS))
 

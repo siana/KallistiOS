@@ -18,51 +18,61 @@
 /* Load a PVR texture - located in pvr-texture.c */
 extern GLuint glTextureLoadPVR(char *fname, unsigned char isMipMapped, unsigned char glMipMap);
 
-GLfloat VERTEX_ARRAY[4 * 3 * 2] = { -100.0f, -10.0f, -100.0f,
-                                    100.0f, -10.0f, -100.0f,
-                                    -100.0f, -10.0f, 100.0f,
-                                    100.0f, -10.0f, 100.0f,
-                                    -100.0f, -10.0f, 300.0f,
-                                    100.0f, -10.0f, 300.0f,
-                                  };
+typedef struct
+{
+    GLfloat position[3];
+    GLfloat texCoord[2];
+    GLuint  color;
+} Vertex3tc; // 3 float vertex, textured, colored
 
-GLfloat TEXCOORD_ARRAY[4 * 2 * 2] = { 0, 0,
-                                      1, 0,
-                                      0, 1,
-                                      1, 1,
-                                      0, 0,
-                                      1, 0,
-                                      0, 1,
-                                      1, 1
-                                    };
+static Vertex3tc * vertex;
 
-GLuint ARGB_ARRAY[4 * 2] = { 0xFFFF0000, 0xFF00FF00, 0xFF0000FF, 0xFFFFFF00,
-                             0xFFFF0000, 0xFF00FF00, 0xFF0000FF, 0xFFFFFF00
-                           };
+static void SetVertex3tc(Vertex3tc * vertex, GLfloat x, GLfloat y, GLfloat z,
+                         GLfloat u, GLfloat v, GLuint color)
+{
+    vertex->position[0] = x;
+    vertex->position[1] = y;
+    vertex->position[2] = z;  
+    vertex->texCoord[0] = u;
+    vertex->texCoord[1] = v; 
+    vertex->color = color;    
+}
+static void buildDemoArray()
+{
+    vertex = malloc( sizeof( Vertex3tc ) * 6 );
+    
+    SetVertex3tc(&vertex[0], -100.0f, -10.0f, -100.0f, 0, 0, 0xFFFF0000);
+    SetVertex3tc(&vertex[1], 100.0f, -10.0f, -100.0f, 1, 0, 0xFF00FF00);
+    SetVertex3tc(&vertex[2], -100.0f, -10.0f, 100.0f, 0, 1, 0xFF0000FF);
+    SetVertex3tc(&vertex[3], 100.0f, -10.0f, 100.0f, 1, 1, 0xFFFFFF00);
+    SetVertex3tc(&vertex[4], -100.0f, -10.0f, 300.0f, 0, 0, 0xFFFF0000);
+    SetVertex3tc(&vertex[5], 100.0f, -10.0f, 300.0f, 1, 0, 0xFF00FF00);       
+}
 
 static GLfloat rx = 1.0f;
 
 /* Example using Open GL Vertex Array Submission. */
 void RenderCallback(GLuint texID) {
     glEnable(GL_KOS_NEARZ_CLIPPING);
-
+    
+    /* Rotate the matrix to make sure transforms and clipping are working */
     glLoadIdentity();
     glRotatef(rx++, 0, 1, 0);
 
     /* Enable 2D Texturing and bind the Texture */
     glEnable(GL_TEXTURE_2D);
     glBindTexture(GL_TEXTURE_2D, texID);
-
+    
     /* Enable Vertex, Color and Texture Coord Arrays */
     glEnableClientState(GL_VERTEX_ARRAY);
     glEnableClientState(GL_TEXTURE_COORD_ARRAY);
     glEnableClientState(GL_COLOR_ARRAY);
-
-    /* Bind Array Data */
-    glColorPointer(1, GL_UNSIGNED_INT, 0, ARGB_ARRAY);
-    glTexCoordPointer(2, GL_FLOAT, 0, TEXCOORD_ARRAY);
-    glVertexPointer(3, GL_FLOAT, 0, VERTEX_ARRAY);
-
+    
+    /* Bind Vertex Array Data, Using Strided Vertices */
+    glColorPointer(1, GL_UNSIGNED_INT, sizeof(Vertex3tc), &vertex[0].color);
+    glTexCoordPointer(2, GL_FLOAT, sizeof(Vertex3tc), vertex[0].texCoord);
+    glVertexPointer(3, GL_FLOAT, sizeof(Vertex3tc), vertex[0].position);    
+    
     /* Render the Submitted Vertex Data */
     glDrawArrays(GL_TRIANGLE_STRIP, 0, 6);
 
@@ -89,7 +99,9 @@ int main(int argc, char **argv) {
 
     /* Load a PVR texture to OpenGL */
     GLuint texID = glTextureLoadPVR("/rd/wp001vq.pvr", 0, 0);
-
+    
+    buildDemoArray();
+    
     while(1) {
         /* Draw the "scene" */
         RenderCallback(texID);
